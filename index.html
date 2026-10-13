@@ -78,33 +78,36 @@
     }
 
     /* ====== Estado visual de botones (evita romper dark: al mutar className) ====== */
-    .mode-btn, .format-btn, .photo-copies-btn {
+    .mode-btn, .format-btn, .photo-copies-btn, .pass-orient-btn {
       border: 2px solid rgb(226 232 240);
       background: #fff;
       transition: all .15s ease;
     }
-    .dark .mode-btn, .dark .format-btn, .dark .photo-copies-btn {
+    .dark .mode-btn, .dark .format-btn, .dark .photo-copies-btn, .dark .pass-orient-btn {
       border-color: rgb(51 65 85);
       background: rgba(30 41 59 / .8);
     }
     .mode-btn:hover:not(.is-active),
     .format-btn:hover:not(.is-active),
-    .photo-copies-btn:hover:not(.is-active) {
+    .photo-copies-btn:hover:not(.is-active),
+    .pass-orient-btn:hover:not(.is-active) {
       border-color: rgb(203 213 225);
     }
     .dark .mode-btn:hover:not(.is-active),
     .dark .format-btn:hover:not(.is-active),
-    .dark .photo-copies-btn:hover:not(.is-active) {
+    .dark .photo-copies-btn:hover:not(.is-active),
+    .dark .pass-orient-btn:hover:not(.is-active) {
       border-color: rgb(71 85 105);
     }
-    .mode-btn.is-active, .format-btn.is-active, .photo-copies-btn.is-active {
+    .mode-btn.is-active, .format-btn.is-active, .photo-copies-btn.is-active, .pass-orient-btn.is-active {
       border-color: rgb(79 70 229);
       background: rgba(238 242 255 / .6);
       box-shadow: 0 1px 3px rgba(0,0,0,.06);
     }
     .dark .mode-btn.is-active,
     .dark .format-btn.is-active,
-    .dark .photo-copies-btn.is-active {
+    .dark .photo-copies-btn.is-active,
+    .dark .pass-orient-btn.is-active {
       border-color: rgb(99 102 241);
       background: rgba(30 27 75 / .5);
     }
@@ -112,6 +115,8 @@
     .format-btn .active-badge { display: none; }
     .mode-btn.is-active .active-badge,
     .format-btn.is-active .active-badge { display: inline-block; }
+    .pass-orient-btn .orient-check { display: none; }
+    .pass-orient-btn.is-active .orient-check { display: inline-block; }
 
     /* ====== Tabs de categoría ====== */
     .cat-tab {
@@ -189,13 +194,15 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
         </div>
-        <div class="min-w-0">
-          <div class="flex items-center gap-1.5 flex-wrap">
+        <div class="min-w-max">
+          <div class="flex items-center gap-1.5">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v2.4.0</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v2.4.1</span>
           </div>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">Desarrollado por <span class="font-semibold text-slate-700 dark:text-slate-200">Paco Iglesias</span> • Escala 1:1</p>
+          <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap">
+            Desarrollado por <strong class="text-indigo-600 dark:text-indigo-400 font-bold">Paco Iglesias</strong> • Escala 1:1
+          </p>
         </div>
       </div>
 
@@ -445,28 +452,31 @@
             <div>
               <div class="flex items-center gap-1.5">
                 <p class="title-main font-bold text-sm text-slate-900 dark:text-white">Pasaporte ABIERTO</p>
-                <span class="text-[9px] font-bold uppercase tracking-wider bg-indigo-600 text-white px-1.5 py-0.5 rounded">Visas / Trámites</span>
+                <span class="text-[9px] font-bold uppercase tracking-wider bg-indigo-600 text-white px-1.5 py-0.5 rounded">Libreta Completa</span>
               </div>
-              <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">Doble página extendida (Página de datos + Firma juntas). Exigido en embajadas y bancos.</p>
+              <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">Doble página (Firma arriba + Datos abajo). Se imprime centrado en 1 sola cara.</p>
             </div>
             <span class="active-badge text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
             </span>
           </div>
-          <div class="mt-2.5 inline-block text-[11px] font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/70 px-2 py-0.5 rounded-md">17.6 × 12.5 cm (176 × 125 mm)</div>
+          <div id="badgePassportOpenDim" class="mt-2.5 inline-block text-[11px] font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/70 px-2 py-0.5 rounded-md">12.5 × 17.6 cm (125 × 176 mm)</div>
         </button>
 
         <button type="button" data-format="passport" class="format-btn relative text-left p-3.5 rounded-xl flex flex-col justify-between">
           <div class="flex items-start justify-between w-full gap-2">
             <div>
-              <p class="title-main font-bold text-sm text-slate-900 dark:text-white">Pasaporte (1 Sola Página)</p>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Únicamente la hoja de datos biográficos inferior (Cerrado / Estándar B7)</p>
+              <div class="flex items-center gap-1.5">
+                <p class="title-main font-bold text-sm text-slate-900 dark:text-white">Pasaporte (1 Sola Página)</p>
+                <span class="text-[9px] font-bold uppercase tracking-wider bg-slate-600 text-white px-1.5 py-0.5 rounded">Datos / Biográfico</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Hoja de datos personales y código MRZ (o portada/visa). Permite 1 cara o 2 caras.</p>
             </div>
             <span class="active-badge text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
             </span>
           </div>
-          <div class="mt-2.5 inline-block text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/70 px-2 py-0.5 rounded-md">12.5 × 8.8 cm (125 × 88 mm)</div>
+          <div id="badgePassportPageDim" class="mt-2.5 inline-block text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/70 px-2 py-0.5 rounded-md">12.5 × 8.8 cm (125 × 88 mm)</div>
         </button>
 
         <button type="button" data-format="document_a6" class="format-btn relative text-left p-3.5 rounded-xl flex flex-col justify-between">
@@ -494,6 +504,63 @@
           </div>
           <div class="mt-2.5 inline-block text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/70 px-2 py-0.5 rounded-md">9.0 × 5.0 cm (90 × 50 mm)</div>
         </button>
+      </div>
+
+      <!-- Opciones dinámicas de Orientación para Pasaporte -->
+      <div id="containerPassportOptions" class="hidden p-3.5 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/60 dark:bg-indigo-950/40 space-y-2.5 transition-all">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+            <span>🔄 Orientación y Medida Exacta:</span>
+            <span id="passportOptionsSubLabel" class="text-[10.5px] font-mono text-indigo-700 dark:text-indigo-300 font-semibold"></span>
+          </p>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-200 dark:bg-indigo-800 text-indigo-900 dark:text-indigo-100">Escala 1:1 Real</span>
+        </div>
+
+        <!-- Grupo Pasaporte Abierto -->
+        <div id="optPassportOpenGroup" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <button type="button" id="btnPassOpenPortrait" class="pass-orient-btn is-active p-2.5 rounded-xl border-2 transition-all text-left flex items-center justify-between">
+            <div>
+              <p class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <span>📄 Vertical: 12.5 × 17.6 cm</span>
+                <span class="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.2 rounded">Estándar</span>
+              </p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Libreta abierta hacia arriba (Firma arriba + Datos abajo)</p>
+            </div>
+            <span class="orient-check text-indigo-600 dark:text-indigo-400 font-bold shrink-0 ml-1">✓</span>
+          </button>
+          <button type="button" id="btnPassOpenLandscape" class="pass-orient-btn p-2.5 rounded-xl border-2 transition-all text-left flex items-center justify-between">
+            <div>
+              <p class="font-bold text-slate-900 dark:text-white">📑 Horizontal: 17.6 × 12.5 cm</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Apaisado / Escaneado de lado</p>
+            </div>
+            <span class="orient-check text-indigo-600 dark:text-indigo-400 font-bold shrink-0 ml-1">✓</span>
+          </button>
+        </div>
+
+        <!-- Grupo Pasaporte 1 Página -->
+        <div id="optPassportPageGroup" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <button type="button" id="btnPassPageLandscape" class="pass-orient-btn is-active p-2.5 rounded-xl border-2 transition-all text-left flex items-center justify-between">
+            <div>
+              <p class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <span>📑 Horizontal: 12.5 × 8.8 cm</span>
+                <span class="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.2 rounded">Oficial</span>
+              </p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Página de datos biográficos, fotografía y MRZ</p>
+            </div>
+            <span class="orient-check text-indigo-600 dark:text-indigo-400 font-bold shrink-0 ml-1">✓</span>
+          </button>
+          <button type="button" id="btnPassPagePortrait" class="pass-orient-btn p-2.5 rounded-xl border-2 transition-all text-left flex items-center justify-between">
+            <div>
+              <p class="font-bold text-slate-900 dark:text-white">📄 Vertical: 8.8 × 12.5 cm</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Portada cerrada de la libreta o Visa vertical</p>
+            </div>
+            <span class="orient-check text-indigo-600 dark:text-indigo-400 font-bold shrink-0 ml-1">✓</span>
+          </button>
+        </div>
+
+        <div id="passportOptionsNote" class="p-2 rounded-lg bg-indigo-100/60 dark:bg-indigo-900/40 text-[11px] text-indigo-900 dark:text-indigo-200">
+          💡 La libreta abierta ya incluye la doble página en una sola toma. Se imprime centrada en 1 hoja A4 a escala 1:1 real.
+        </div>
       </div>
 
       <!-- TAB PHOTOS -->
@@ -954,11 +1021,14 @@
       <div id="statusToast" role="status" aria-live="polite" class="hidden text-xs py-2 px-3 rounded-lg text-center font-medium transition-all"></div>
     </section>
 
-    <footer class="text-center text-xs text-slate-500 space-y-1 py-4 border-t border-slate-200/70 mt-6">
-      <p class="font-medium text-slate-700 dark:text-slate-300">
-        <strong class="text-indigo-600">RealScan</strong> <span class="text-slate-500 dark:text-slate-400 font-mono text-[10px] bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700">v2.4.0</span> — Desarrollado por <strong class="text-slate-900 dark:text-white">Paco Iglesias</strong>
-      </p>
-      <p class="text-[11px] text-slate-400 dark:text-slate-500">100% procesado de forma privada en tu dispositivo local. Tus documentos nunca viajan por internet.</p>
+    <footer class="text-center text-xs text-slate-500 space-y-2.5 py-6 border-t border-slate-200 dark:border-slate-800 mt-8">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v2.4.1</span>
+        <span class="text-slate-300 dark:text-slate-600">•</span>
+        <span class="font-medium">Desarrollado por <strong class="font-bold text-slate-900 dark:text-white">Paco Iglesias</strong></span>
+      </div>
+      <p class="text-[11px] text-slate-400 dark:text-slate-500">100% procesamiento privado en tu dispositivo local • Escala 1:1 calibrada • Impresión segura</p>
     </footer>
   </main>
 
@@ -1083,7 +1153,7 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
         </div>
         <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Acceso al Sistema</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">RealScan Pro <span class="font-bold text-indigo-600 dark:text-indigo-400 font-mono">v2.4.0</span> • Impresión 1:1</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">RealScan Pro <span class="font-bold text-indigo-600 dark:text-indigo-400 font-mono">v2.4.1</span> • Impresión 1:1</p>
       </div>
 
       <form id="loginForm" class="space-y-3.5" autocomplete="on">
@@ -1301,6 +1371,8 @@
       activeCameraSide: 'front',
       cameraStream: null,
       facingMode: 'environment',
+      passportOpenOrientation: 'portrait', // 'portrait' (125 x 176 mm) o 'landscape' (176 x 125 mm)
+      passportPageOrientation: 'landscape', // 'landscape' (125 x 88 mm) o 'portrait' (88 x 125 mm)
       images: {
         front: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false },
         back:  { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false }
@@ -1310,8 +1382,8 @@
 
     const FORMAT_SPECS = {
       card:            { category:'docs',   name:'Tarjetas Estándar (DNI, INE, Licencias Puebla/España, Bancarias)', shortName:'DNI / INE / Licencia', fileName:'tarjeta_identificacion_a4', widthMm:85.6, heightMm:53.98 },
-      passport_open:   { category:'docs',   name:'Pasaporte ABIERTO (Doble Página / Libreta Extendida)', shortName:'Pasaporte Abierto (2 págs)', fileName:'pasaporte_abierto_a4', widthMm:176.0, heightMm:125.0 },
-      passport:        { category:'docs',   name:'Pasaporte (1 Sola Página de Datos / Cerrado)', shortName:'Pasaporte 1 Página', fileName:'pasaporte_1_pagina_a4', widthMm:125.0, heightMm:88.0 },
+      passport_open:   { category:'docs',   name:'Pasaporte ABIERTO (Doble Página / Libreta Completa)', shortName:'Pasaporte Abierto', fileName:'pasaporte_abierto_a4', widthMm:125.0, heightMm:176.0 },
+      passport:        { category:'docs',   name:'Pasaporte (1 Sola Página de Datos / Visa)', shortName:'Pasaporte 1 Pág', fileName:'pasaporte_1_pagina_a4', widthMm:125.0, heightMm:88.0 },
       document_a6:     { category:'docs',   name:'Documento A6 / Cuartilla', shortName:'Documento A6', fileName:'documento_a6_a4', widthMm:148.0, heightMm:105.0 },
       business_card:   { category:'docs',   name:'Tarjetas de Visita / Presentación', shortName:'Tarjeta de Visita', fileName:'tarjeta_visita_a4', widthMm:90.0, heightMm:50.0 },
       photo_infantil:  { category:'photos', name:'Foto Infantil (México - 2.5 × 3.0 cm)', shortName:'Foto Infantil (2.5×3cm)', fileName:'foto_infantil_mexico', widthMm:25.0, heightMm:30.0 },
@@ -1357,7 +1429,7 @@
     /* ============================================================
        SISTEMA DE SEGURIDAD, AUTENTICACIÓN Y AUDITORÍA (SHA-256)
        ============================================================ */
-    const APP_VERSION = 'v2.4.0';
+    const APP_VERSION = 'v2.4.1';
     const AUTH_STORAGE_KEY = 'realscan_auth_v2';
     const AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
     const DEFAULT_USER = 'admin';
@@ -2085,6 +2157,26 @@
         const label = $(side === 'front' ? 'zoomLabelFront' : 'zoomLabelBack');
         if (label) label.textContent = '1.0x';
 
+        // Auto-adaptar orientación de Pasaporte según la proporción de la imagen capturada/subida
+        const imgAspect = img.naturalWidth / img.naturalHeight;
+        if (state.format === 'passport_open') {
+          if (imgAspect > 1.15 && state.passportOpenOrientation !== 'landscape') {
+            state.passportOpenOrientation = 'landscape';
+            updatePassportOptionsUI();
+          } else if (imgAspect < 0.88 && state.passportOpenOrientation !== 'portrait') {
+            state.passportOpenOrientation = 'portrait';
+            updatePassportOptionsUI();
+          }
+        } else if (state.format === 'passport') {
+          if (imgAspect < 0.88 && state.passportPageOrientation !== 'portrait') {
+            state.passportPageOrientation = 'portrait';
+            updatePassportOptionsUI();
+          } else if (imgAspect > 1.15 && state.passportPageOrientation !== 'landscape') {
+            state.passportPageOrientation = 'landscape';
+            updatePassportOptionsUI();
+          }
+        }
+
         const croppedData = detectAndCropCard(img);
         const toggleBtn = $(side === 'front' ? 'btnToggleCropFront' : 'btnToggleCropBack');
 
@@ -2099,8 +2191,9 @@
             state.images[side].naturalWidth = ci.naturalWidth;
             state.images[side].naturalHeight = ci.naturalHeight;
             const spec = getActiveSpec();
-            const isPortrait = spec.heightMm > spec.widthMm;
-            state.images[side].rotation = isPortrait ? 0 : (ci.naturalHeight > ci.naturalWidth ? 90 : 0);
+            const specIsPortrait = spec.heightMm > spec.widthMm;
+            const imgIsPortrait = ci.naturalHeight > ci.naturalWidth;
+            state.images[side].rotation = (specIsPortrait === imgIsPortrait) ? 0 : 90;
             renderProcessedImage(side);
             showToast('✂️ ¡Bordes blancos eliminados automáticamente! Escala 1:1 real.', 'success');
           };
@@ -2114,8 +2207,9 @@
         if (toggleBtn) toggleBtn.classList.add('hidden');
 
         const spec = getActiveSpec();
-        const isPortrait = spec.heightMm > spec.widthMm;
-        state.images[side].rotation = isPortrait ? 0 : (img.naturalHeight > img.naturalWidth ? 90 : 0);
+        const specIsPortrait = spec.heightMm > spec.widthMm;
+        const imgIsPortrait = img.naturalHeight > img.naturalWidth;
+        state.images[side].rotation = (specIsPortrait === imgIsPortrait) ? 0 : 90;
         renderProcessedImage(side);
       };
       img.src = rawSrc;
@@ -2293,6 +2387,30 @@
           fileName: 'documento_personalizado',
           widthMm: Math.round(w * 10) / 10,
           heightMm: Math.round(h * 10) / 10
+        };
+      }
+      if (state.format === 'passport_open') {
+        const isLandscape = state.passportOpenOrientation === 'landscape';
+        return {
+          category: 'docs',
+          name: 'Pasaporte ABIERTO (' + (isLandscape ? 'Doble Pág. Horizontal 17.6 × 12.5 cm' : 'Doble Pág. Vertical 12.5 × 17.6 cm') + ')',
+          shortName: 'Pasaporte Abierto (' + (isLandscape ? '17.6×12.5cm' : '12.5×17.6cm') + ')',
+          fileName: 'pasaporte_abierto_a4',
+          widthMm: isLandscape ? 176.0 : 125.0,
+          heightMm: isLandscape ? 125.0 : 176.0,
+          orientation: isLandscape ? 'landscape' : 'portrait'
+        };
+      }
+      if (state.format === 'passport') {
+        const isPortrait = state.passportPageOrientation === 'portrait';
+        return {
+          category: 'docs',
+          name: 'Pasaporte 1 Página (' + (isPortrait ? 'Vertical 8.8 × 12.5 cm' : 'Horizontal 12.5 × 8.8 cm') + ')',
+          shortName: 'Pasaporte 1 Pág (' + (isPortrait ? '8.8×12.5cm' : '12.5×8.8cm') + ')',
+          fileName: 'pasaporte_1_pagina_a4',
+          widthMm: isPortrait ? 88.0 : 125.0,
+          heightMm: isPortrait ? 125.0 : 88.0,
+          orientation: isPortrait ? 'portrait' : 'landscape'
         };
       }
       return FORMAT_SPECS[state.format] || FORMAT_SPECS.card;
@@ -2485,8 +2603,16 @@
         btn.classList.toggle('is-active', active);
       });
 
+      // Si se selecciona Pasaporte Abierto, cambiar a 'single' (1 cara) automáticamente
+      if (formatKey === 'passport_open') {
+        setPrintMode('single');
+      }
+
+      updatePassportOptionsUI();
+
       const msg = {
-        passport_open: 'Formato Pasaporte Abierto seleccionado (17.6 × 12.5 cm).',
+        passport_open: 'Pasaporte ABIERTO seleccionado (' + (state.passportOpenOrientation === 'landscape' ? '17.6 × 12.5 cm' : '12.5 × 17.6 cm') + '). Modo 1 Cara activo.',
+        passport: 'Pasaporte (1 Sola Página) seleccionado (' + (state.passportPageOrientation === 'portrait' ? '8.8 × 12.5 cm' : '12.5 × 8.8 cm') + ').',
         photo_infantil: 'Foto Infantil seleccionada (2.5 × 3.0 cm).',
         photo_carnet: 'Foto Carnet / DNI seleccionada (2.6 × 3.2 cm).',
         photo_passport: 'Foto Pasaporte OACI seleccionada (3.5 × 4.5 cm).',
@@ -2501,6 +2627,69 @@
       if (state.images.front.originalSrc) renderProcessedImage('front');
       if (state.images.back.originalSrc) renderProcessedImage('back');
       updateUI();
+    }
+
+    function setPassportOrientation(type, orientation) {
+      if (type === 'open') {
+        state.passportOpenOrientation = orientation;
+      } else {
+        state.passportPageOrientation = orientation;
+      }
+      updatePassportOptionsUI();
+      if (state.images.front.originalSrc) renderProcessedImage('front');
+      if (state.images.back.originalSrc) renderProcessedImage('back');
+      updateUI();
+      savePreferences();
+      const spec = getActiveSpec();
+      showToast('Orientación cambiada: ' + spec.shortName, 'info');
+    }
+
+    function updatePassportOptionsUI() {
+      const container = $('containerPassportOptions');
+      if (!container) return;
+
+      const isPassOpen = state.format === 'passport_open';
+      const isPassPage = state.format === 'passport';
+
+      if (!isPassOpen && !isPassPage) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      container.classList.remove('hidden');
+
+      const groupOpen = $('optPassportOpenGroup');
+      const groupPage = $('optPassportPageGroup');
+      const subLabel = $('passportOptionsSubLabel');
+      const note = $('passportOptionsNote');
+      const badgeOpenDim = $('badgePassportOpenDim');
+      const badgePageDim = $('badgePassportPageDim');
+
+      if (isPassOpen) {
+        if (groupOpen) groupOpen.classList.remove('hidden');
+        if (groupPage) groupPage.classList.add('hidden');
+        const isLand = state.passportOpenOrientation === 'landscape';
+        if (subLabel) subLabel.textContent = isLand ? '17.6 × 12.5 cm (Horizontal)' : '12.5 × 17.6 cm (Vertical)';
+        if (note) note.textContent = '💡 La libreta abierta incluye ambas páginas en 1 sola toma. Se imprime en 1 cara a escala 1:1 real.';
+        if (badgeOpenDim) badgeOpenDim.textContent = isLand ? '17.6 × 12.5 cm (176 × 125 mm)' : '12.5 × 17.6 cm (125 × 176 mm)';
+
+        const btnPort = $('btnPassOpenPortrait');
+        const btnLand = $('btnPassOpenLandscape');
+        if (btnPort) btnPort.classList.toggle('is-active', !isLand);
+        if (btnLand) btnLand.classList.toggle('is-active', isLand);
+      } else if (isPassPage) {
+        if (groupOpen) groupOpen.classList.add('hidden');
+        if (groupPage) groupPage.classList.remove('hidden');
+        const isPort = state.passportPageOrientation === 'portrait';
+        if (subLabel) subLabel.textContent = isPort ? '8.8 × 12.5 cm (Vertical)' : '12.5 × 8.8 cm (Horizontal)';
+        if (note) note.textContent = '💡 Puedes imprimir solo la página de datos (' + (state.printMode === 'both' ? 'cambia a Solo 1 Cara' : 'Solo 1 Cara activo') + ') o añadir visa/portada en Anverso + Reverso.';
+        if (badgePageDim) badgePageDim.textContent = isPort ? '8.8 × 12.5 cm (88 × 125 mm)' : '12.5 × 8.8 cm (125 × 88 mm)';
+
+        const btnLand = $('btnPassPageLandscape');
+        const btnPort = $('btnPassPagePortrait');
+        if (btnLand) btnLand.classList.toggle('is-active', !isPort);
+        if (btnPort) btnPort.classList.toggle('is-active', isPort);
+      }
     }
 
     /* ============================================================
@@ -3334,6 +3523,20 @@
         });
       });
 
+      // Orientación de Pasaporte
+      if ($('btnPassOpenPortrait')) {
+        on($('btnPassOpenPortrait'), 'click', function(){ setPassportOrientation('open', 'portrait'); });
+      }
+      if ($('btnPassOpenLandscape')) {
+        on($('btnPassOpenLandscape'), 'click', function(){ setPassportOrientation('open', 'landscape'); });
+      }
+      if ($('btnPassPageLandscape')) {
+        on($('btnPassPageLandscape'), 'click', function(){ setPassportOrientation('page', 'landscape'); });
+      }
+      if ($('btnPassPagePortrait')) {
+        on($('btnPassPagePortrait'), 'click', function(){ setPassportOrientation('page', 'portrait'); });
+      }
+
       // Unit toggle
       on($('btnUnitCm'), 'click', function(){ setCustomUnit('cm'); savePreferences(); });
       on($('btnUnitMm'), 'click', function(){ setCustomUnit('mm'); savePreferences(); });
@@ -3470,6 +3673,7 @@
       checkAuthSession();
       loadPreferences();
       updatePhotoGridStats();
+      updatePassportOptionsUI();
       updateUI();
     }
 
