@@ -164,9 +164,18 @@ function setPhotoCopies(num) {
 function setDocumentPages(count) {
   const c = Math.max(1, Math.min(4, parseInt(count, 10) || 1));
   state.documentPageCount = c;
-  if (c === 1) state.printMode = 'single';
-  else if (c === 2) state.printMode = 'both';
-  else state.printMode = 'multi';
+  if (c === 1) {
+    state.printMode = 'single';
+    state.sheetLayout = 'same_page';
+  } else if (c === 2) {
+    if (state.printMode !== 'both_separate') {
+      state.printMode = 'both';
+      state.sheetLayout = 'same_page';
+    }
+  } else {
+    state.printMode = 'multi';
+    state.sheetLayout = 'auto';
+  }
 
   // Sincronizar botones de modo en Paso 1
   $$('.mode-btn').forEach(function(btn) {
@@ -243,21 +252,37 @@ function updateSlotLabels() {
   const noteText = $('docsModeNoteText');
   if (noteText) {
     if (fmt === 'business_card') {
-      noteText.innerHTML = '💡 <strong>Tarjetas de Visita:</strong> Selecciona <strong>"2 Caras / Págs"</strong> para imprimir Frente y Reverso con QR alineados a tamaño real 1:1.';
+      noteText.innerHTML = '💡 <strong>Tarjetas de Visita:</strong> Elige <strong>"2 Caras en 1 Hoja"</strong> para imprimir Frente y Reverso con QR alineados juntos en la misma hoja A4 a tamaño real 1:1.';
     } else if (fmt === 'passport') {
-      noteText.innerHTML = '💡 <strong>Pasaporte:</strong> Puedes imprimir la página de datos (1 Pág) o seleccionar <strong>"3 o 4 Páginas"</strong> para incluir visas y sellos consulares.';
+      noteText.innerHTML = '💡 <strong>Pasaporte:</strong> Puedes imprimir la página de datos (1 Cara) o seleccionar <strong>"3 o 4 Páginas"</strong> para incluir visas y sellos consulares.';
     } else if (fmt === 'passport_open') {
       noteText.innerHTML = '💡 <strong>Pasaporte Abierto:</strong> La libreta abierta ocupa la hoja A4 completa en 1 sola toma.';
     } else {
-      noteText.innerHTML = '💡 <strong>Documentos:</strong> Escala 1:1 real. Imprime 1 cara, Anverso + Reverso (2 caras) o hasta 4 páginas de forma sencilla.';
+      noteText.innerHTML = '💡 <strong>DNI / INE / Documentos:</strong> Elige <strong>"2 Caras en 1 Hoja"</strong> para tener Anverso y Reverso juntos en la misma hoja (ahorro de papel y trámites bancarios), o <strong>"2 Caras Separadas"</strong> para imprimir una cara por hoja.';
     }
   }
 }
 
 function setPrintMode(mode) {
-  if (mode === 'single') setDocumentPages(1);
-  else if (mode === 'both') setDocumentPages(2);
-  else if (mode === 'multi') setDocumentPages(Math.max(3, state.documentPageCount || 3));
+  if (mode === 'single') {
+    state.sheetLayout = 'same_page';
+    setDocumentPages(1);
+    showToast('📄 Modo 1 Cara activado (Solo Anverso)', 'info');
+  } else if (mode === 'both') {
+    state.printMode = 'both';
+    state.sheetLayout = 'same_page';
+    setDocumentPages(2);
+    showToast('📋 Modo 2 Caras en 1 Hoja A4 activado (Anverso y Reverso juntos)', 'info');
+  } else if (mode === 'both_separate') {
+    state.printMode = 'both_separate';
+    state.sheetLayout = 'separate_sheets';
+    setDocumentPages(2);
+    showToast('📑 Modo 2 Caras Separadas activado (Hoja 1: Frente, Hoja 2: Reverso)', 'info');
+  } else if (mode === 'multi') {
+    state.sheetLayout = 'auto';
+    setDocumentPages(Math.max(3, state.documentPageCount || 3));
+    showToast('📚 Modo 3 o 4 Páginas activado', 'info');
+  }
 }
 
 function selectFormat(formatKey) {
@@ -880,6 +905,24 @@ function bindEvents() {
           await clearAllScansFromStorage();
           if (typeof renderHistoryUI === 'function') renderHistoryUI();
         }
+      }
+    });
+  }
+
+  if ($('btnExportHistoryJson')) {
+    on($('btnExportHistoryJson'), 'click', function() {
+      if (typeof exportAllScansAsJson === 'function') exportAllScansAsJson();
+    });
+  }
+
+  if ($('btnImportHistoryTrigger') && $('fileInputImportHistory')) {
+    on($('btnImportHistoryTrigger'), 'click', function() {
+      $('fileInputImportHistory').click();
+    });
+    on($('fileInputImportHistory'), 'change', function(e) {
+      if (e.target.files && e.target.files[0] && typeof importScansFromJson === 'function') {
+        importScansFromJson(e.target.files[0]);
+        e.target.value = '';
       }
     });
   }

@@ -49,6 +49,9 @@
   <!-- jsPDF CDN (v2.5.1) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+  <!-- JSZip CDN (v3.10.1) para exportar paquetes de fotos y respaldos -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
   <!-- PDF.js CDN (v3.11.174) para leer PDFs escaneados -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
@@ -168,24 +171,40 @@
       </div>
       <h2 class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white" id="step1Title">¿Cómo deseas imprimir en la hoja A4?</h2>
 
-      <div id="step1DocsMode" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <button type="button" id="btnModeBoth" data-mode="both" class="mode-btn is-active relative text-left p-3 rounded-xl flex flex-col justify-between">
+      <div id="step1DocsMode" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+        <button type="button" id="btnModeBoth" data-mode="both" class="mode-btn is-active relative text-left p-3 rounded-xl flex flex-col justify-between transition-all">
           <div class="flex items-start justify-between w-full gap-2">
             <div>
               <div class="flex items-center gap-1">
-                <p class="title-main font-bold text-xs sm:text-sm text-slate-900 dark:text-white">2 Caras / Págs</p>
-                <span class="text-[8.5px] font-bold uppercase tracking-wider bg-indigo-600 text-white px-1.5 py-0.2 rounded">Popular</span>
+                <p class="title-main font-bold text-xs sm:text-sm text-slate-900 dark:text-white">2 Caras en 1 Hoja</p>
+                <span class="text-[8.5px] font-bold uppercase tracking-wider bg-emerald-600 text-white px-1.5 py-0.2 rounded">Trámites</span>
               </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Anverso y Reverso o Pág. 1 y 2</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Anverso + Reverso juntos en la misma hoja A4</p>
             </div>
             <span class="active-badge text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
             </span>
           </div>
-          <p class="mt-1.5 text-[10px] font-medium text-indigo-700 dark:text-indigo-300">DNI, INE, Licencias, Tarjetas 2 Caras</p>
+          <p class="mt-1.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">DNI, INE, Licencias, Bancos (1 sola página física)</p>
         </button>
 
-        <button type="button" id="btnModeSingle" data-mode="single" class="mode-btn relative text-left p-3 rounded-xl flex flex-col justify-between">
+        <button type="button" id="btnModeSeparate" data-mode="both_separate" class="mode-btn relative text-left p-3 rounded-xl flex flex-col justify-between transition-all">
+          <div class="flex items-start justify-between w-full gap-2">
+            <div>
+              <div class="flex items-center gap-1">
+                <p class="title-main font-bold text-xs sm:text-sm text-slate-900 dark:text-white">2 Caras Separadas</p>
+                <span class="text-[8.5px] font-bold uppercase tracking-wider bg-blue-600 text-white px-1.5 py-0.2 rounded">Dúplex</span>
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Hoja 1: Frente • Hoja 2: Reverso</p>
+            </div>
+            <span class="active-badge text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            </span>
+          </div>
+          <p class="mt-1.5 text-[10px] font-medium text-blue-700 dark:text-blue-300">1 cara por hoja (Impresión a 2 caras o archivo)</p>
+        </button>
+
+        <button type="button" id="btnModeSingle" data-mode="single" class="mode-btn relative text-left p-3 rounded-xl flex flex-col justify-between transition-all">
           <div class="flex items-start justify-between w-full gap-2">
             <div>
               <div class="flex items-center gap-1">
@@ -200,7 +219,7 @@
           <p class="mt-1.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">Pasaporte Abierto o 1 sola cara</p>
         </button>
 
-        <button type="button" id="btnModeMulti" data-mode="multi" class="mode-btn relative text-left p-3 rounded-xl flex flex-col justify-between">
+        <button type="button" id="btnModeMulti" data-mode="multi" class="mode-btn relative text-left p-3 rounded-xl flex flex-col justify-between transition-all">
           <div class="flex items-start justify-between w-full gap-2">
             <div>
               <div class="flex items-center gap-1">
@@ -219,7 +238,7 @@
 
       <div id="docsModeNote" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
         <span id="docsModeNoteText" class="text-slate-600 dark:text-slate-300">
-          💡 <strong>Consejo:</strong> Para Pasaporte con visas o sellos puedes elegir "3 o 4 Páginas". Para tarjetas de presentación puedes elegir 1 o 2 Caras.
+          💡 <strong>Opciones para DNI y Documentos:</strong> Puedes colocar <strong>Anverso y Reverso en 1 sola hoja A4</strong> (ideal para trámites y bancos) o en <strong>Hojas Separadas</strong> si deseas imprimir frente y vuelta por la impresora.
         </span>
       </div>
 
@@ -1122,7 +1141,7 @@
     <footer class="text-center text-xs text-slate-500 space-y-2.5 py-6 border-t border-slate-200 dark:border-slate-800 mt-8">
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v2.4.1</span>
+        <span class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v2.6.0-Enterprise</span>
         <span class="text-slate-300 dark:text-slate-600">•</span>
         <span class="font-medium">Desarrollado por <strong class="font-bold text-slate-900 dark:text-white">Paco Iglesias</strong></span>
       </div>
@@ -1283,7 +1302,7 @@
       </form>
 
       <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-center">
-        <p class="text-[11px] text-slate-400 dark:text-slate-500">Credenciales iniciales: <strong class="text-slate-600 dark:text-slate-300">admin</strong> / PIN: <strong class="text-slate-600 dark:text-slate-300">2026</strong></p>
+        <p class="text-[11px] text-slate-400 dark:text-slate-500">Credenciales iniciales: <strong class="text-slate-600 dark:text-slate-300">admin</strong> / PIN: <strong class="text-slate-600 dark:text-slate-300">1313</strong></p>
       </div>
     </div>
   </div>
@@ -1506,13 +1525,26 @@
       </div>
 
       <!-- Footer del modal: Acciones masivas y Cerrar -->
-      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between gap-2">
-        <button type="button" id="btnClearAllHistory" class="px-3 py-2 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 font-semibold text-xs transition-colors flex items-center gap-1.5">
-          <span>🗑️</span>
-          <span>Vaciar Historial</span>
-        </button>
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button type="button" id="btnClearAllHistory" class="px-2.5 py-1.5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 font-semibold text-xs transition-colors flex items-center gap-1">
+            <span>🗑️</span>
+            <span>Vaciar</span>
+          </button>
 
-        <button type="button" data-close-modal="historyModal" class="px-5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+          <button type="button" id="btnExportHistoryJson" class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors flex items-center gap-1" title="Descargar archivo de respaldo JSON con todos los escaneos">
+            <span>📥</span>
+            <span>Exportar Respaldo</span>
+          </button>
+
+          <button type="button" id="btnImportHistoryTrigger" class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors flex items-center gap-1" title="Restaurar escaneos desde un archivo JSON">
+            <span>📤</span>
+            <span>Importar</span>
+          </button>
+          <input type="file" id="fileInputImportHistory" accept=".json,application/json" class="hidden" aria-hidden="true" />
+        </div>
+
+        <button type="button" data-close-modal="historyModal" class="px-4 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
           Cerrar
         </button>
       </div>

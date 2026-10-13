@@ -176,9 +176,10 @@ function generatePdfDoc() {
       if (!ok) return null;
     }
 
+    const isSeparateSheets = (state.printMode === 'both_separate' || state.sheetLayout === 'separate_sheets');
     const posX = (pageW - targetW) / 2;
     const topMargin = (targetH > 100) ? 18 : 22;
-    const fitsTwo = (topMargin + targetH * 2 + 14) < 255;
+    const fitsTwo = !isSeparateSheets && ((topMargin + targetH * 2 + 14) < 255);
     const itemsPerSheet = fitsTwo ? 2 : 1;
 
     let itemsOnCurrentSheet = 0;

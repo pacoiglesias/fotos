@@ -301,6 +301,10 @@ async function renderHistoryUI() {
         </div>
       </div>
       <div class="flex items-center gap-1.5 shrink-0 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800">
+        <button type="button" class="btn-zip-scan px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors flex items-center gap-1" data-id="${s.id}" title="Descargar paquete ZIP con todas las imágenes de este documento">
+          <span>📦</span>
+          <span>ZIP</span>
+        </button>
         <button type="button" class="btn-restore-scan px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/70 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 font-semibold text-xs transition-colors flex items-center gap-1" data-id="${s.id}" title="Restaurar escaneo para imprimir o editar">
           <span>🔄</span>
           <span>Cargar</span>
@@ -315,6 +319,12 @@ async function renderHistoryUI() {
   });
 
   // Event bindings para la lista renderizada
+  container.querySelectorAll('.btn-zip-scan').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      exportScanAsZip(btn.getAttribute('data-id'));
+    });
+  });
+
   container.querySelectorAll('.btn-restore-scan').forEach(function(btn) {
     btn.addEventListener('click', function() {
       restoreScanToApp(btn.getAttribute('data-id'));
@@ -329,6 +339,151 @@ async function renderHistoryUI() {
       }
     });
   });
+}
+
+/* Exportar un escaneo en ZIP (imágenes de cada página + metadata) */
+async function exportScanAsZip(id) {
+  try {
+    const scans = await getAllScansFromStorage();
+    const scan = scans.find(function(s) { return s.id === id; });
+    if (!scan) {
+      showToast('No se encontró el escaneo a exportar.', 'warning');
+      return;
+    }
+
+    if (!window.JSZip) {
+      showToast('Descargando imágenes individuales...', 'info');
+      scan.pages.forEach(function(p, i) {
+        const a = document.createElement('a');
+        a.href = p.dataUrl;
+        a.download = (scan.format || 'documento') + '_pag_' + (i + 1) + '.jpg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+      return;
+    }
+
+    showToast('Generando paquete ZIP...', 'info');
+    const zip = new JSZip();
+    const folder = zip.folder(scan.title.replace(/[^a-zA-Z0-9_\-]/g, '_'));
+
+    scan.pages.forEach(function(p, idx) {
+      const base64Data = p.dataUrl.split(',')[1];
+      const ext = p.dataUrl.indexOf('image/png') >= 0 ? 'png' : 'jpg';
+      const slotName = p.slot || ('pagina_' + (idx + 1));
+      folder.file((idx + 1) + '_' + slotName + '.' + ext, base64Data, { base64: true });
+    });
+
+    const metaTxt = 'REALSCAN PRO — FICHA DE ESCANEO\n' +
+      'Desarrollado por Paco Iglesias\n' +
+      '--------------------------------------------------\n' +
+      'Título: ' + scan.title + '\n' +
+      'Formato: ' + scan.formatName + ' (' + scan.format + ')\n' +
+      'Fecha: ' + scan.createdFormatted + '\n' +
+      'Total de páginas: ' + (scan.pages ? scan.pages.length : 1) + '\n' +
+      'Retención: ' + (scan.retentionDays > 0 ? (scan.retentionDays + ' días') : 'Permanente') + '\n';
+    folder.file('detalles_escaneo.txt', metaTxt);
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'RealScan_' + (scan.format || 'documento') + '_' + scan.id + '.zip';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 2000);
+
+    if (typeof logActivity === 'function') {
+      logActivity('Exportación ZIP', 'Escaneo: ' + scan.title);
+    }
+    showToast('¡Paquete ZIP descargado exitosamente!', 'success');
+  } catch (err) {
+    console.error('Error exportando ZIP:', err);
+    showToast('Error al generar ZIP: ' + err.message, 'warning');
+  }
+}
+
+/* Exportar todo el historial en formato JSON */
+async function exportAllScansAsJson() {
+  try {
+    const scans = await getAllScansFromStorage();
+    if (scans.length === 0) {
+      showToast('No hay escaneos para exportar en el historial.', 'warning');
+      return;
+    }
+
+    const payload = {
+      app: 'RealScan Pro',
+      version: window.APP_VERSION,
+      author: 'Paco Iglesias',
+      exportedAt: new Date().toISOString(),
+      count: scans.length,
+      scans: scans
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'RealScan_Respaldo_Historial_' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 2000);
+
+    if (typeof logActivity === 'function') {
+      logActivity('Respaldo de Historial', 'Exportación JSON de ' + scans.length + ' escaneos');
+    }
+    showToast('¡Respaldo JSON descargado con éxito!', 'success');
+  } catch (err) {
+    showToast('Error exportando respaldo JSON: ' + err.message, 'warning');
+  }
+}
+
+/* Importar respaldo JSON */
+async function importScansFromJson(file) {
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    const items = Array.isArray(data) ? data : (data && Array.isArray(data.scans) ? data.scans : null);
+
+    if (!items || items.length === 0) {
+      showToast('El archivo seleccionado no contiene escaneos válidos.', 'warning');
+      return;
+    }
+
+    const db = await getDB();
+    let imported = 0;
+
+    for (let i = 0; i < items.length; i++) {
+      const s = items[i];
+      if (s && s.id && s.pages) {
+        await new Promise(function(resolve, reject) {
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          const store = tx.objectStore(STORE_NAME);
+          const req = store.put(s);
+          req.onsuccess = function() { imported++; resolve(true); };
+          req.onerror = function(e) { reject(e.target.error); };
+        });
+      }
+    }
+
+    updateHistoryBadge();
+    renderHistoryUI();
+    if (typeof logActivity === 'function') {
+      logActivity('Importación de Respaldo', 'Importados ' + imported + ' escaneos desde JSON');
+    }
+    showToast('¡Se importaron ' + imported + ' escaneos al historial correctamente!', 'success');
+  } catch (err) {
+    showToast('Error leyendo archivo de respaldo: ' + err.message, 'warning');
+  }
 }
 
 // Inicialización de limpieza al cargar

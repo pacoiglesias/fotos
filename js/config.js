@@ -3,19 +3,22 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v2.5.0';
+window.APP_VERSION = 'v2.6.0-Enterprise';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
 window.DEFAULT_USER = 'admin';
-window.DEFAULT_PIN_HASH = '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab'; // sha256('2026')
+window.DEFAULT_PIN = '1313';
+window.DEFAULT_PIN_HASH = '1cfafff6d51a03662b85b93dc3417f51687034ba9a46682f5328257eff7133ed'; // sha256('1313')
+window.LEGACY_PIN_HASH = '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab'; // sha256('2026')
 window.TARGET_DPI = 300;
 window.MAX_OUT_PX = 4000;
 
 // Estado Global de la Aplicación
 window.state = {
   activeCategory: 'docs',
-  printMode: 'both', // 'both' (2 caras), 'single' (1 cara) o 'multi' (3-4 páginas)
+  printMode: 'both', // 'both' (2 caras en 1 hoja), 'both_separate' (2 caras en hojas separadas), 'single' (1 cara) o 'multi' (3-4 páginas)
+  sheetLayout: 'same_page', // 'same_page' (juntas en 1 hoja A4) o 'separate_pages' (1 por hoja)
   format: 'card',
   photoCopies: 4,
   customWidth: 8.5,

@@ -55,5 +55,5 @@ firebase deploy --only hosting:fotos-cobertores
 
 ## 🔒 Acceso Predeterminado Inicial
 - **Usuario:** `admin`
-- **PIN:** `2026`  
+- **PIN:** `1313`  
 *(Modificable en la interfaz dentro de ⚙️ Ajustes)*
