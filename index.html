@@ -104,6 +104,17 @@
 
         <button
           type="button"
+          id="btnOpenHistory"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-indigo-300 dark:border-indigo-700 bg-indigo-50/80 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-[11px] font-semibold text-indigo-800 dark:text-indigo-200 transition-colors shadow-xs"
+          title="Historial de Escaneos Guardados y Auto-Expiración"
+        >
+          <span class="text-xs">📁</span>
+          <span class="hidden sm:inline">Historial</span>
+          <span id="historyCountBadge" class="hidden text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-indigo-600 text-white font-mono">0</span>
+        </button>
+
+        <button
+          type="button"
           id="btnOpenSettings"
           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[11px] font-semibold text-slate-700 dark:text-slate-200 transition-colors shadow-sm"
           title="Ajustes de Seguridad, Usuarios y Bitácora"
@@ -157,35 +168,59 @@
       </div>
       <h2 class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white" id="step1Title">¿Cómo deseas imprimir en la hoja A4?</h2>
 
-      <div id="step1DocsMode" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        <button type="button" id="btnModeBoth" data-mode="both" class="mode-btn is-active relative text-left p-3.5 rounded-xl flex flex-col justify-between">
+      <div id="step1DocsMode" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button type="button" id="btnModeBoth" data-mode="both" class="mode-btn is-active relative text-left p-3 rounded-xl flex flex-col justify-between">
           <div class="flex items-start justify-between w-full gap-2">
             <div>
-              <div class="flex items-center gap-1.5">
-                <p class="title-main font-bold text-sm text-slate-900 dark:text-white">Anverso + Reverso</p>
-                <span class="text-[9px] font-bold uppercase tracking-wider bg-indigo-600 text-white px-1.5 py-0.5 rounded">Popular</span>
+              <div class="flex items-center gap-1">
+                <p class="title-main font-bold text-xs sm:text-sm text-slate-900 dark:text-white">2 Caras / Págs</p>
+                <span class="text-[8.5px] font-bold uppercase tracking-wider bg-indigo-600 text-white px-1.5 py-0.2 rounded">Popular</span>
               </div>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Frente y Vuelta juntos en la misma hoja A4</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Anverso y Reverso o Pág. 1 y 2</p>
             </div>
             <span class="active-badge text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
             </span>
           </div>
-          <p class="mt-2 text-[11px] font-medium text-indigo-700 dark:text-indigo-300">Ideal para DNI, INE, Licencias de Conducir</p>
+          <p class="mt-1.5 text-[10px] font-medium text-indigo-700 dark:text-indigo-300">DNI, INE, Licencias, Tarjetas 2 Caras</p>
         </button>
 
-        <button type="button" id="btnModeSingle" data-mode="single" class="mode-btn relative text-left p-3.5 rounded-xl flex flex-col justify-between">
+        <button type="button" id="btnModeSingle" data-mode="single" class="mode-btn relative text-left p-3 rounded-xl flex flex-col justify-between">
           <div class="flex items-start justify-between w-full gap-2">
             <div>
-              <p class="title-main font-bold text-sm text-slate-900 dark:text-white">Solo 1 Cara</p>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Únicamente la cara frontal del documento</p>
+              <div class="flex items-center gap-1">
+                <p class="title-main font-bold text-xs sm:text-sm text-slate-900 dark:text-white">Solo 1 Cara</p>
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Únicamente la cara frontal</p>
             </div>
             <span class="active-badge text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
             </span>
           </div>
-          <p class="mt-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">Para Pasaporte o tarjetas de 1 cara</p>
+          <p class="mt-1.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">Pasaporte Abierto o 1 sola cara</p>
         </button>
+
+        <button type="button" id="btnModeMulti" data-mode="multi" class="mode-btn relative text-left p-3 rounded-xl flex flex-col justify-between">
+          <div class="flex items-start justify-between w-full gap-2">
+            <div>
+              <div class="flex items-center gap-1">
+                <p class="title-main font-bold text-xs sm:text-sm text-slate-900 dark:text-white">3 o 4 Páginas</p>
+                <span class="text-[8.5px] font-bold uppercase tracking-wider bg-purple-600 text-white px-1.5 py-0.2 rounded">Visas</span>
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Pasaporte + Visas o 2 tarjetas</p>
+            </div>
+            <span class="active-badge text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            </span>
+          </div>
+          <p class="mt-1.5 text-[10px] font-medium text-purple-700 dark:text-purple-300">Página de datos + Visas + Sellos</p>
+        </button>
+      </div>
+
+      <div id="docsModeNote" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
+        <span id="docsModeNoteText" class="text-slate-600 dark:text-slate-300">
+          💡 <strong>Consejo:</strong> Para Pasaporte con visas o sellos puedes elegir "3 o 4 Páginas". Para tarjetas de presentación puedes elegir 1 o 2 Caras.
+        </span>
       </div>
 
       <div id="step1PhotosMode" class="hidden space-y-3">
@@ -609,6 +644,8 @@
 
       <input type="file" id="fileInputFront" accept="image/*,application/pdf,.pdf" class="hidden" aria-hidden="true" />
       <input type="file" id="fileInputBack" accept="image/*,application/pdf,.pdf" class="hidden" aria-hidden="true" />
+      <input type="file" id="fileInputPage3" accept="image/*,application/pdf,.pdf" class="hidden" aria-hidden="true" />
+      <input type="file" id="fileInputPage4" accept="image/*,application/pdf,.pdf" class="hidden" aria-hidden="true" />
 
       <!-- FRONT SLOT -->
       <div id="dropzoneFront" class="p-4 rounded-xl border-2 border-indigo-200/90 dark:border-indigo-800/80 bg-indigo-50/30 dark:bg-indigo-950/30 space-y-3 transition-colors">
@@ -769,6 +806,154 @@
           </div>
         </div>
       </div>
+
+      <!-- SLOT 3 (Página 3 / Visa 1) -->
+      <div id="cardPage3Container" class="hidden p-4 rounded-xl border-2 border-purple-200/90 dark:border-purple-800/80 bg-purple-50/30 dark:bg-purple-950/30 space-y-3 transition-colors">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-purple-600 text-white font-bold text-xs flex items-center justify-center" aria-hidden="true">3</span>
+            <span id="slot3Title" class="font-bold text-sm text-slate-900 dark:text-white">Página 3 (Visa o Sello Adicional)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="badgeStatusPage3" class="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">Sin foto</span>
+            <button type="button" id="btnRemovePage3" class="text-[11px] font-semibold text-red-600 hover:text-red-700 dark:text-red-400 px-2 py-0.5 rounded hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors" title="Eliminar Página 3">🗑️ Quitar</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" data-camera="page3" class="cam-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-medium text-xs active:scale-95 transition-all shadow-sm">
+            <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span>Cámara</span>
+          </button>
+          <button type="button" data-upload="page3" class="upload-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-medium text-xs active:scale-95 transition-all">
+            <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <span>Subir Archivo</span>
+          </button>
+          <button type="button" data-paste="page3" class="paste-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-900 dark:text-purple-200 font-medium text-xs active:scale-95 transition-all" title="Copia la imagen y pégala aquí">
+            <svg class="w-4 h-4 text-purple-700 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            <span>📋 Pegar</span>
+          </button>
+        </div>
+
+        <div id="toolsPage3" class="hidden space-y-2 pt-1 border-t border-purple-200 dark:border-purple-900/60 mt-2">
+          <div class="flex flex-wrap items-center justify-between gap-1.5">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">✓ Listo</span>
+              <button type="button" id="btnToggleCropPage3" data-crop="page3" class="hidden px-2 py-0.5 rounded-md border border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/70 text-[10px] font-semibold text-purple-800 dark:text-purple-300 hover:bg-purple-100 transition-colors">✂️ Recorte Auto</button>
+              <button type="button" data-guide="page3" class="guide-btn px-2 py-0.5 rounded-md border border-purple-300 dark:border-purple-800 bg-white dark:bg-slate-800 hover:bg-purple-50 text-[10px] font-semibold text-purple-800 dark:text-purple-300 transition-colors">👤 Guía OACI</button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button type="button" data-zoom="page3:-0.15" class="zoom-btn px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold">-</button>
+              <span id="zoomLabelPage3" class="text-[10px] font-mono text-slate-500 dark:text-slate-400 w-7 text-center">1.0x</span>
+              <button type="button" data-zoom="page3:0.15" class="zoom-btn px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold">+</button>
+              <button type="button" data-rotate="page3" class="rotate-btn inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium"><span>Rotar 90°</span></button>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2 p-2 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-purple-200 dark:border-purple-900/40 text-xs">
+            <div class="flex items-center gap-1">
+              <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Filtro:</span>
+              <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md text-[10px]" role="group">
+                <button type="button" data-filter="page3:color" class="filter-btn is-active px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">🎨 Color</button>
+                <button type="button" data-filter="page3:bw" class="filter-btn px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">⚫ B/N</button>
+                <button type="button" data-filter="page3:scanner" class="filter-btn px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">📄 Escáner</button>
+              </div>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Centrar:</span>
+              <button type="button" data-pan="page3:0:-5" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">↑</button>
+              <button type="button" data-pan="page3:0:5" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">↓</button>
+              <button type="button" data-pan="page3:-5:0" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">←</button>
+              <button type="button" data-pan="page3:5:0" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">→</button>
+              <button type="button" data-pan-reset="page3" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">🎯 Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLOT 4 (Página 4 / Visa 2) -->
+      <div id="cardPage4Container" class="hidden p-4 rounded-xl border-2 border-teal-200/90 dark:border-teal-800/80 bg-teal-50/30 dark:bg-teal-950/30 space-y-3 transition-colors">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center" aria-hidden="true">4</span>
+            <span id="slot4Title" class="font-bold text-sm text-slate-900 dark:text-white">Página 4 (Visa o Sello Adicional)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="badgeStatusPage4" class="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">Sin foto</span>
+            <button type="button" id="btnRemovePage4" class="text-[11px] font-semibold text-red-600 hover:text-red-700 dark:text-red-400 px-2 py-0.5 rounded hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors" title="Eliminar Página 4">🗑️ Quitar</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" data-camera="page4" class="cam-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-medium text-xs active:scale-95 transition-all shadow-sm">
+            <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span>Cámara</span>
+          </button>
+          <button type="button" data-upload="page4" class="upload-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-medium text-xs active:scale-95 transition-all">
+            <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <span>Subir Archivo</span>
+          </button>
+          <button type="button" data-paste="page4" class="paste-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-teal-300 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900/60 text-teal-900 dark:text-teal-200 font-medium text-xs active:scale-95 transition-all" title="Copia la imagen y pégala aquí">
+            <svg class="w-4 h-4 text-teal-700 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            <span>📋 Pegar</span>
+          </button>
+        </div>
+
+        <div id="toolsPage4" class="hidden space-y-2 pt-1 border-t border-teal-200 dark:border-teal-900/60 mt-2">
+          <div class="flex flex-wrap items-center justify-between gap-1.5">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">✓ Listo</span>
+              <button type="button" id="btnToggleCropPage4" data-crop="page4" class="hidden px-2 py-0.5 rounded-md border border-teal-300 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/70 text-[10px] font-semibold text-teal-800 dark:text-teal-300 hover:bg-teal-100 transition-colors">✂️ Recorte Auto</button>
+              <button type="button" data-guide="page4" class="guide-btn px-2 py-0.5 rounded-md border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-800 hover:bg-teal-50 text-[10px] font-semibold text-teal-800 dark:text-teal-300 transition-colors">👤 Guía OACI</button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button type="button" data-zoom="page4:-0.15" class="zoom-btn px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold">-</button>
+              <span id="zoomLabelPage4" class="text-[10px] font-mono text-slate-500 dark:text-slate-400 w-7 text-center">1.0x</span>
+              <button type="button" data-zoom="page4:0.15" class="zoom-btn px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold">+</button>
+              <button type="button" data-rotate="page4" class="rotate-btn inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium"><span>Rotar 90°</span></button>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2 p-2 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-teal-200 dark:border-teal-900/40 text-xs">
+            <div class="flex items-center gap-1">
+              <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Filtro:</span>
+              <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md text-[10px]" role="group">
+                <button type="button" data-filter="page4:color" class="filter-btn is-active px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">🎨 Color</button>
+                <button type="button" data-filter="page4:bw" class="filter-btn px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">⚫ B/N</button>
+                <button type="button" data-filter="page4:scanner" class="filter-btn px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">📄 Escáner</button>
+              </div>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Centrar:</span>
+              <button type="button" data-pan="page4:0:-5" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">↑</button>
+              <button type="button" data-pan="page4:0:5" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">↓</button>
+              <button type="button" data-pan="page4:-5:0" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">←</button>
+              <button type="button" data-pan="page4:5:0" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">→</button>
+              <button type="button" data-pan-reset="page4" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">🎯 Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra dinámica: Añadir Página y Guardar en Historial -->
+      <div class="flex flex-col sm:flex-row items-center gap-2 pt-2">
+        <button
+          type="button"
+          id="btnAddDocumentPage"
+          class="w-full py-2.5 px-3 rounded-xl border-2 border-dashed border-indigo-400 dark:border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-semibold text-xs transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
+        >
+          <span>➕</span>
+          <span id="labelAddDocumentPage">Añadir otra Página de Pasaporte / Visa / Tarjeta</span>
+        </button>
+
+        <button
+          type="button"
+          id="btnSaveToHistory"
+          class="w-full sm:w-auto shrink-0 py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs"
+          title="Guardar este escaneo en tu historial local privado con auto-expiración"
+        >
+          <span>💾</span>
+          <span>Guardar Escaneo</span>
+        </button>
+      </div>
     </section>
 
     <!-- Paso 4 -->
@@ -837,6 +1022,40 @@
               </svg>
             </div>
             <span class="absolute bottom-0.5 right-1 text-[8px] font-mono text-amber-700 bg-white/90 px-1 rounded shadow-sm font-semibold">REVERSO</span>
+          </div>
+
+          <div id="canvasDocPage3" class="hidden w-full border-2 border-dashed border-purple-400 bg-purple-50/50 rounded flex flex-col items-center justify-center p-1 mt-2.5 transition-all relative overflow-hidden" style="min-height: 65px;">
+            <div id="placeholderPage3" class="text-center p-1.5">
+              <svg class="w-5 h-5 mx-auto text-purple-300 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <p class="text-[10px] font-bold text-purple-700">3. PÁGINA 3 (VISA / EXTRA)</p>
+              <p class="text-[9px] text-purple-400">Cámara, archivo o Ctrl+V</p>
+            </div>
+            <img id="previewImgPage3" class="hidden w-full h-full object-contain rounded-sm" alt="Vista previa de página 3" />
+            <div id="oaciGuidePage3" class="hidden pointer-events-none absolute inset-0 flex items-center justify-center z-10 p-2">
+              <svg class="w-full h-full max-w-[85%] max-h-[92%] text-purple-600/90 drop-shadow-sm" viewBox="0 0 100 130" fill="none" stroke="currentColor">
+                <ellipse cx="50" cy="56" rx="26" ry="38" stroke-width="2" stroke-dasharray="3,2" />
+              </svg>
+            </div>
+            <span class="absolute bottom-0.5 right-1 text-[8px] font-mono text-purple-700 bg-white/90 px-1 rounded shadow-sm font-semibold">PÁGINA 3</span>
+          </div>
+
+          <div id="canvasDocPage4" class="hidden w-full border-2 border-dashed border-teal-400 bg-teal-50/50 rounded flex flex-col items-center justify-center p-1 mt-2.5 transition-all relative overflow-hidden" style="min-height: 65px;">
+            <div id="placeholderPage4" class="text-center p-1.5">
+              <svg class="w-5 h-5 mx-auto text-teal-300 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <p class="text-[10px] font-bold text-teal-700">4. PÁGINA 4 (SELLO / EXTRA)</p>
+              <p class="text-[9px] text-teal-400">Cámara, archivo o Ctrl+V</p>
+            </div>
+            <img id="previewImgPage4" class="hidden w-full h-full object-contain rounded-sm" alt="Vista previa de página 4" />
+            <div id="oaciGuidePage4" class="hidden pointer-events-none absolute inset-0 flex items-center justify-center z-10 p-2">
+              <svg class="w-full h-full max-w-[85%] max-h-[92%] text-teal-600/90 drop-shadow-sm" viewBox="0 0 100 130" fill="none" stroke="currentColor">
+                <ellipse cx="50" cy="56" rx="26" ry="38" stroke-width="2" stroke-dasharray="3,2" />
+              </svg>
+            </div>
+            <span class="absolute bottom-0.5 right-1 text-[8px] font-mono text-teal-700 bg-white/90 px-1 rounded shadow-sm font-semibold">PÁGINA 4</span>
           </div>
 
           <div id="canvasDocPhotosGrid" class="hidden w-full flex-col items-center justify-center p-1 my-auto transition-all">
@@ -1232,11 +1451,81 @@
     </div>
   </div>
 
+  <!-- Modal Historial y Almacenamiento Local Privado -->
+  <div id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      
+      <!-- Header del modal -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-lg">
+            📁
+          </div>
+          <div>
+            <h3 id="historyModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Historial de Escaneos Locales</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Almacenamiento privado en tu navegador con auto-expiración</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="historyModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <!-- Configuración de Retención y Auto-Expiración -->
+      <div class="p-3 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-200/70 dark:border-indigo-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+        <div class="min-w-0">
+          <p class="text-xs font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+            <span>⏳</span> <span>Auto-Expiración y Privacidad:</span>
+          </p>
+          <p class="text-[11px] text-indigo-800/80 dark:text-indigo-300">
+            Los escaneos se eliminan automáticamente tras el período elegido para proteger tu privacidad.
+          </p>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <select id="selectRetentionDays" class="px-2.5 py-1.5 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="1">1 Día</option>
+            <option value="3" selected>3 Días (Recomendado)</option>
+            <option value="7">7 Días (1 Semana)</option>
+            <option value="30">30 Días (1 Mes)</option>
+            <option value="0">Permanente (Sin borrar)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Contenedor scrolleable de items -->
+      <div class="flex-1 overflow-y-auto pr-1 space-y-2.5 min-h-[180px]">
+        <div id="historyEmptyState" class="text-center py-12 px-4 space-y-2">
+          <span class="text-4xl block">📭</span>
+          <p class="font-bold text-sm text-slate-700 dark:text-slate-300">No hay escaneos guardados aún</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+            Cuando tengas fotos cargadas en el lienzo, presiona "Guardar Escaneo" para conservarlas durante el tiempo que necesites.
+          </p>
+        </div>
+
+        <div id="historyItemsContainer" class="space-y-2.5">
+          <!-- Renderizado dinámico desde IndexedDB -->
+        </div>
+      </div>
+
+      <!-- Footer del modal: Acciones masivas y Cerrar -->
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between gap-2">
+        <button type="button" id="btnClearAllHistory" class="px-3 py-2 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 font-semibold text-xs transition-colors flex items-center gap-1.5">
+          <span>🗑️</span>
+          <span>Vaciar Historial</span>
+        </button>
+
+        <button type="button" data-close-modal="historyModal" class="px-5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ============================================================
        SCRIPTS MODULARES (100% Offline y Producción Firebase)
        ============================================================ -->
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/storage.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/pdf.js"></script>
   <script src="js/export.js"></script>

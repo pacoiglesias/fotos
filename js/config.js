@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v2.4.1';
+window.APP_VERSION = 'v2.5.0';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -15,7 +15,7 @@ window.MAX_OUT_PX = 4000;
 // Estado Global de la Aplicación
 window.state = {
   activeCategory: 'docs',
-  printMode: 'both',
+  printMode: 'both', // 'both' (2 caras), 'single' (1 cara) o 'multi' (3-4 páginas)
   format: 'card',
   photoCopies: 4,
   customWidth: 8.5,
@@ -26,9 +26,12 @@ window.state = {
   facingMode: 'environment',
   passportOpenOrientation: 'portrait', // 'portrait' (125 x 176 mm) o 'landscape' (176 x 125 mm)
   passportPageOrientation: 'landscape', // 'landscape' (125 x 88 mm) o 'portrait' (88 x 125 mm)
+  documentPageCount: 2, // 1, 2, 3 o 4 páginas/caras
   images: {
     front: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false },
-    back:  { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false }
+    back:  { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false },
+    page3: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false },
+    page4: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false }
   },
   mixTwoPhotos: false
 };
@@ -37,9 +40,9 @@ window.state = {
 window.FORMAT_SPECS = {
   card:            { category:'docs',   name:'Tarjetas Estándar (DNI, INE, Licencias Puebla/España, Bancarias)', shortName:'DNI / INE / Licencia', fileName:'tarjeta_identificacion_a4', widthMm:85.6, heightMm:53.98 },
   passport_open:   { category:'docs',   name:'Pasaporte ABIERTO (Doble Página / Libreta Completa)', shortName:'Pasaporte Abierto', fileName:'pasaporte_abierto_a4', widthMm:125.0, heightMm:176.0 },
-  passport:        { category:'docs',   name:'Pasaporte (1 Sola Página de Datos / Visa)', shortName:'Pasaporte 1 Pág', fileName:'pasaporte_1_pagina_a4', widthMm:125.0, heightMm:88.0 },
+  passport:        { category:'docs',   name:'Pasaporte (Páginas Individuales, Visas y Sellos)', shortName:'Pasaporte (1-4 Págs)', fileName:'pasaporte_paginas_a4', widthMm:125.0, heightMm:88.0 },
   document_a6:     { category:'docs',   name:'Documento A6 / Cuartilla', shortName:'Documento A6', fileName:'documento_a6_a4', widthMm:148.0, heightMm:105.0 },
-  business_card:   { category:'docs',   name:'Tarjetas de Visita / Presentación', shortName:'Tarjeta de Visita', fileName:'tarjeta_visita_a4', widthMm:90.0, heightMm:50.0 },
+  business_card:   { category:'docs',   name:'Tarjetas de Visita / Presentación (1 Cara o 2 Caras)', shortName:'Tarjeta de Visita (1-2 Caras)', fileName:'tarjeta_visita_a4', widthMm:90.0, heightMm:50.0 },
   photo_infantil:  { category:'photos', name:'Foto Infantil (México - 2.5 × 3.0 cm)', shortName:'Foto Infantil (2.5×3cm)', fileName:'foto_infantil_mexico', widthMm:25.0, heightMm:30.0 },
   photo_carnet:    { category:'photos', name:'Foto Carnet / DNI (España / UE - 2.6 × 3.2 cm)', shortName:'Foto Carnet / DNI (2.6×3.2cm)', fileName:'foto_carnet_espana', widthMm:26.0, heightMm:32.0 },
   photo_passport:  { category:'photos', name:'Foto Pasaporte / Cartilla (OACI/ICAO - 3.5 × 4.5 cm)', shortName:'Foto Pasaporte (3.5×4.5cm)', fileName:'foto_pasaporte_oaci', widthMm:35.0, heightMm:45.0 },

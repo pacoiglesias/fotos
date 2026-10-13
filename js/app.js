@@ -161,28 +161,103 @@ function setPhotoCopies(num) {
   updateUI();
 }
 
-function setPrintMode(mode) {
-  state.printMode = mode;
+function setDocumentPages(count) {
+  const c = Math.max(1, Math.min(4, parseInt(count, 10) || 1));
+  state.documentPageCount = c;
+  if (c === 1) state.printMode = 'single';
+  else if (c === 2) state.printMode = 'both';
+  else state.printMode = 'multi';
+
+  // Sincronizar botones de modo en Paso 1
   $$('.mode-btn').forEach(function(btn) {
-    const active = btn.getAttribute('data-mode') === mode;
-    btn.classList.toggle('is-active', active);
+    const m = btn.getAttribute('data-mode');
+    btn.classList.toggle('is-active', m === state.printMode);
   });
 
-  const cardBackContainer = $('cardBackContainer');
-  const canvasDocBack = $('canvasDocBack');
-  const previewSubtext = $('previewSubtext');
+  // Mostrar / ocultar ranuras en Paso 3
+  const cardBack = $('cardBackContainer');
+  const cardPage3 = $('cardPage3Container');
+  const cardPage4 = $('cardPage4Container');
 
-  if (mode === 'both') {
-    if (state.activeCategory !== 'photos') {
-      if (cardBackContainer) cardBackContainer.classList.remove('hidden');
-      if (canvasDocBack) canvasDocBack.classList.remove('hidden');
-    }
-    if (previewSubtext) previewSubtext.textContent = 'Anverso y Reverso alineados en 1 sola hoja A4 a escala 1:1';
-  } else {
-    if (cardBackContainer) cardBackContainer.classList.add('hidden');
-    if (canvasDocBack) canvasDocBack.classList.add('hidden');
-    if (previewSubtext) previewSubtext.textContent = 'Solo Anverso centrado en 1 hoja A4 a escala 1:1';
+  if (state.activeCategory !== 'photos') {
+    if (cardBack) cardBack.classList.toggle('hidden', c < 2);
+    if (cardPage3) cardPage3.classList.toggle('hidden', c < 3);
+    if (cardPage4) cardPage4.classList.toggle('hidden', c < 4);
   }
+
+  // Mostrar / ocultar ranuras en el lienzo de vista previa A4 (Paso 4)
+  const canvasBack = $('canvasDocBack');
+  const canvasPage3 = $('canvasDocPage3');
+  const canvasPage4 = $('canvasDocPage4');
+
+  if (state.activeCategory !== 'photos') {
+    if (canvasBack) canvasBack.classList.toggle('hidden', c < 2);
+    if (canvasPage3) canvasPage3.classList.toggle('hidden', c < 3);
+    if (canvasPage4) canvasPage4.classList.toggle('hidden', c < 4);
+  }
+
+  // Botón añadir más páginas: ocultar si ya hay 4
+  const btnAdd = $('btnAddDocumentPage');
+  const labelAdd = $('labelAddDocumentPage');
+  if (btnAdd) {
+    btnAdd.classList.toggle('hidden', c >= 4 || state.activeCategory === 'photos');
+  }
+  if (labelAdd) {
+    if (c === 1) labelAdd.textContent = '➕ Añadir Reverso / Página 2';
+    else if (c === 2) labelAdd.textContent = (state.format === 'passport') ? '➕ Añadir Página 3 (Visa o Sello)' : '➕ Añadir Página 3';
+    else if (c === 3) labelAdd.textContent = (state.format === 'passport') ? '➕ Añadir Página 4 (Visa o Sello)' : '➕ Añadir Página 4';
+  }
+
+  updateSlotLabels();
+  updateUI();
+  savePreferences();
+}
+
+function updateSlotLabels() {
+  const slot1 = $('slot1Title'), slot2 = $('slot2Title'), slot3 = $('slot3Title'), slot4 = $('slot4Title');
+  const fmt = state.format;
+
+  if (fmt === 'business_card') {
+    if (slot1) slot1.textContent = 'Cara Frontal (Logo, Contacto y Nombre)';
+    if (slot2) slot2.textContent = 'Cara Posterior (QR, Redes, Servicios o Mapa)';
+    if (slot3) slot3.textContent = 'Tarjeta 2 (Frente)';
+    if (slot4) slot4.textContent = 'Tarjeta 2 (Reverso)';
+  } else if (fmt === 'passport') {
+    if (slot1) slot1.textContent = 'Página 1 (Datos Biográficos y Fotografía)';
+    if (slot2) slot2.textContent = 'Página 2 (Visa, Firma o Sellos)';
+    if (slot3) slot3.textContent = 'Página 3 (Visa o Sello Adicional)';
+    if (slot4) slot4.textContent = 'Página 4 (Visa o Sello Adicional)';
+  } else if (fmt === 'card') {
+    if (slot1) slot1.textContent = 'Anverso (Frente con Foto)';
+    if (slot2) slot2.textContent = 'Reverso (Atrás / Huella / Código)';
+    if (slot3) slot3.textContent = 'Documento 2: Anverso';
+    if (slot4) slot4.textContent = 'Documento 2: Reverso';
+  } else {
+    if (slot1) slot1.textContent = 'Página 1 (Frente)';
+    if (slot2) slot2.textContent = 'Página 2 (Reverso)';
+    if (slot3) slot3.textContent = 'Página 3 (Adicional)';
+    if (slot4) slot4.textContent = 'Página 4 (Adicional)';
+  }
+
+  // Nota explicativa en Paso 1
+  const noteText = $('docsModeNoteText');
+  if (noteText) {
+    if (fmt === 'business_card') {
+      noteText.innerHTML = '💡 <strong>Tarjetas de Visita:</strong> Selecciona <strong>"2 Caras / Págs"</strong> para imprimir Frente y Reverso con QR alineados a tamaño real 1:1.';
+    } else if (fmt === 'passport') {
+      noteText.innerHTML = '💡 <strong>Pasaporte:</strong> Puedes imprimir la página de datos (1 Pág) o seleccionar <strong>"3 o 4 Páginas"</strong> para incluir visas y sellos consulares.';
+    } else if (fmt === 'passport_open') {
+      noteText.innerHTML = '💡 <strong>Pasaporte Abierto:</strong> La libreta abierta ocupa la hoja A4 completa en 1 sola toma.';
+    } else {
+      noteText.innerHTML = '💡 <strong>Documentos:</strong> Escala 1:1 real. Imprime 1 cara, Anverso + Reverso (2 caras) o hasta 4 páginas de forma sencilla.';
+    }
+  }
+}
+
+function setPrintMode(mode) {
+  if (mode === 'single') setDocumentPages(1);
+  else if (mode === 'both') setDocumentPages(2);
+  else if (mode === 'multi') setDocumentPages(Math.max(3, state.documentPageCount || 3));
 }
 
 function selectFormat(formatKey) {
@@ -192,16 +267,21 @@ function selectFormat(formatKey) {
     btn.classList.toggle('is-active', active);
   });
 
-  // Si se selecciona Pasaporte Abierto, cambiar a 'single' (1 cara) automáticamente
-  if (formatKey === 'passport_open') {
-    setPrintMode('single');
+  // Adaptación automática según formato
+  if (formatKey === 'business_card') {
+    setDocumentPages(2);
+  } else if (formatKey === 'passport_open') {
+    setDocumentPages(1);
+  } else {
+    updateSlotLabels();
   }
 
   updatePassportOptionsUI();
 
   const msg = {
+    business_card: 'Tarjetas de Visita / Presentación seleccionadas (2 Caras activas).',
     passport_open: 'Pasaporte ABIERTO seleccionado (' + (state.passportOpenOrientation === 'landscape' ? '17.6 × 12.5 cm' : '12.5 × 17.6 cm') + '). Modo 1 Cara activo.',
-    passport: 'Pasaporte (1 Sola Página) seleccionado (' + (state.passportPageOrientation === 'portrait' ? '8.8 × 12.5 cm' : '12.5 × 8.8 cm') + ').',
+    passport: 'Pasaporte (Páginas individuales / Visas) seleccionado (' + (state.passportPageOrientation === 'portrait' ? '8.8 × 12.5 cm' : '12.5 × 8.8 cm') + ').',
     photo_infantil: 'Foto Infantil seleccionada (2.5 × 3.0 cm).',
     photo_carnet: 'Foto Carnet / DNI seleccionada (2.6 × 3.2 cm).',
     photo_passport: 'Foto Pasaporte OACI seleccionada (3.5 × 4.5 cm).',
@@ -213,8 +293,9 @@ function selectFormat(formatKey) {
     updatePhotoGridStats();
   }
 
-  if (state.images.front.originalSrc && typeof renderProcessedImage === 'function') renderProcessedImage('front');
-  if (state.images.back.originalSrc && typeof renderProcessedImage === 'function') renderProcessedImage('back');
+  ['front', 'back', 'page3', 'page4'].forEach(function(s) {
+    if (state.images[s].originalSrc && typeof renderProcessedImage === 'function') renderProcessedImage(s);
+  });
   updateUI();
 }
 
@@ -439,25 +520,27 @@ function updateUI() {
       if (previewSubtext) previewSubtext.textContent = 'Medida personalizada (' + spec.widthMm + ' × ' + spec.heightMm + ' mm) a escala 1:1 real en 1 hoja A4';
     } else {
       if (tag) tag.textContent = spec.widthMm + ' × ' + spec.heightMm + ' mm';
-      if (previewSubtext) previewSubtext.textContent = (state.printMode === 'both')
-        ? 'Anverso y Reverso alineados en 1 sola hoja A4 a escala 1:1'
-        : 'Solo Anverso centrado en 1 hoja A4 a escala 1:1';
+      const pCount = state.documentPageCount || 2;
+      if (pCount === 1) {
+        if (previewSubtext) previewSubtext.textContent = 'Solo 1 Cara centrada en 1 hoja A4 a escala 1:1 real';
+      } else if (pCount === 2) {
+        if (previewSubtext) previewSubtext.textContent = 'Anverso y Reverso alineados en 1 sola hoja A4 a escala 1:1 real';
+      } else {
+        if (previewSubtext) previewSubtext.textContent = pCount + ' páginas a escala 1:1 real (Págs 1-2 en Hoja 1 • Págs 3-4 en Hoja 2)';
+      }
     }
-    if (canvasBack) canvasBack.classList.toggle('hidden', state.printMode !== 'both');
+    if (canvasBack) canvasBack.classList.toggle('hidden', state.printMode === 'single');
 
     const scalePercent = Math.max(38, Math.min(94, (spec.widthMm / 210) * 100));
-    if (canvasFront) {
-      canvasFront.style.width = scalePercent + '%';
-      const ratio = spec.widthMm + ' / ' + spec.heightMm;
-      canvasFront.style.aspectRatio = ratio;
-      canvasFront.style.minHeight = 'auto';
-    }
-    if (canvasBack) {
-      canvasBack.style.width = scalePercent + '%';
-      const ratio = spec.widthMm + ' / ' + spec.heightMm;
-      canvasBack.style.aspectRatio = ratio;
-      canvasBack.style.minHeight = 'auto';
-    }
+    const ratio = spec.widthMm + ' / ' + spec.heightMm;
+    ['canvasDocFront', 'canvasDocBack', 'canvasDocPage3', 'canvasDocPage4'].forEach(function(cId) {
+      const cEl = $(cId);
+      if (cEl) {
+        cEl.style.width = scalePercent + '%';
+        cEl.style.aspectRatio = ratio;
+        cEl.style.minHeight = 'auto';
+      }
+    });
   }
 }
 
@@ -471,6 +554,7 @@ function savePreferences() {
       activeCategory: state.activeCategory,
       format: state.format,
       printMode: state.printMode,
+      documentPageCount: state.documentPageCount || 2,
       photoCopies: state.photoCopies,
       customWidth: state.customWidth,
       customHeight: state.customHeight,
@@ -503,7 +587,8 @@ function loadPreferences() {
       }
     }
     if (p.photoCopies) state.photoCopies = p.photoCopies;
-    if (p.printMode) state.printMode = p.printMode;
+    if (p.documentPageCount) state.documentPageCount = p.documentPageCount;
+    if (p.printMode) setPrintMode(p.printMode);
     if (p.mixTwoPhotos !== undefined) {
       state.mixTwoPhotos = p.mixTwoPhotos;
       const chk = $('chkMixTwoPhotos');
@@ -710,9 +795,11 @@ function bindEvents() {
     on(b, 'click', function(){ if (typeof toggleOaciGuide === 'function') toggleOaciGuide(b.getAttribute('data-guide')); });
   });
 
-  // File inputs
+  // File inputs para todas las 4 ranuras
   on($('fileInputFront'), 'change', function(e){ if (typeof handleImageFile === 'function') handleImageFile(e, 'front'); });
   on($('fileInputBack'), 'change', function(e){ if (typeof handleImageFile === 'function') handleImageFile(e, 'back'); });
+  on($('fileInputPage3'), 'change', function(e){ if (typeof handleImageFile === 'function') handleImageFile(e, 'page3'); });
+  on($('fileInputPage4'), 'change', function(e){ if (typeof handleImageFile === 'function') handleImageFile(e, 'page4'); });
 
   // Camera / Upload / Paste buttons
   $$('.cam-btn').forEach(function(b) { on(b, 'click', function(){ if (typeof handleCameraClick === 'function') handleCameraClick(b.getAttribute('data-camera')); }); });
@@ -733,20 +820,96 @@ function bindEvents() {
     on(b, 'click', function(){ if (typeof toggleAutoCrop === 'function') toggleAutoCrop(b.getAttribute('data-crop')); });
   });
 
-  // Drag to pan interactivo en la vista previa del documento
+  // Botón añadir más páginas a documentos (Pasaporte / Visas / Tarjetas)
+  if ($('btnAddDocumentPage')) {
+    on($('btnAddDocumentPage'), 'click', function() {
+      const current = state.documentPageCount || 2;
+      if (current < 4) {
+        setDocumentPages(current + 1);
+        showToast('Página ' + (current + 1) + ' añadida. Puedes capturarla o subir el archivo.', 'success');
+      }
+    });
+  }
+
+  // Botones quitar página 3 y 4
+  if ($('btnRemovePage3')) {
+    on($('btnRemovePage3'), 'click', function() {
+      state.images.page3 = { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false };
+      if (state.images.page4 && state.images.page4.originalSrc) {
+        state.images.page3 = Object.assign({}, state.images.page4);
+        state.images.page4 = { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false };
+        if (typeof updateSidePreview === 'function') updateSidePreview('page3');
+        setDocumentPages(3);
+      } else {
+        setDocumentPages(2);
+      }
+      showToast('Página 3 eliminada.', 'info');
+    });
+  }
+
+  if ($('btnRemovePage4')) {
+    on($('btnRemovePage4'), 'click', function() {
+      state.images.page4 = { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false };
+      setDocumentPages(3);
+      showToast('Página 4 eliminada.', 'info');
+    });
+  }
+
+  // Historial Local Privado e IndexedDB
+  if ($('btnOpenHistory')) {
+    on($('btnOpenHistory'), 'click', function() {
+      openModal('historyModal');
+      if (typeof renderHistoryUI === 'function') renderHistoryUI();
+    });
+  }
+
+  if ($('btnSaveToHistory')) {
+    on($('btnSaveToHistory'), 'click', async function() {
+      const sel = $('selectRetentionDays');
+      const days = sel ? parseInt(sel.value, 10) : 3;
+      if (typeof saveScanToStorage === 'function') {
+        await saveScanToStorage(null, days);
+      }
+    });
+  }
+
+  if ($('btnClearAllHistory')) {
+    on($('btnClearAllHistory'), 'click', async function() {
+      if (confirm('¿Estás seguro de vaciar todos los escaneos guardados en este navegador?')) {
+        if (typeof clearAllScansFromStorage === 'function') {
+          await clearAllScansFromStorage();
+          if (typeof renderHistoryUI === 'function') renderHistoryUI();
+        }
+      }
+    });
+  }
+
+  if ($('selectRetentionDays')) {
+    const savedDays = localStorage.getItem('realscan_retention_days');
+    if (savedDays !== null) $('selectRetentionDays').value = savedDays;
+    on($('selectRetentionDays'), 'change', function(e) {
+      const days = parseInt(e.target.value, 10);
+      try { localStorage.setItem('realscan_retention_days', days); } catch(err) {}
+      showToast('Preferencia de retención actualizada: ' + (days > 0 ? (days + ' días') : 'Permanente'), 'info');
+    });
+  }
+
+  // Drag to pan interactivo en la vista previa del documento para las 4 ranuras
   setupDragToPan('canvasDocFront', 'front');
   setupDragToPan('canvasDocBack', 'back');
+  setupDragToPan('canvasDocPage3', 'page3');
+  setupDragToPan('canvasDocPage4', 'page4');
 
   // Dropzones
-  const dzF = $('dropzoneFront'), dzB = $('cardBackContainer');
-  if (typeof handleDragOver === 'function') {
-    on(dzF, 'dragover', handleDragOver);
-    on(dzF, 'dragleave', handleDragLeave);
-    on(dzF, 'drop', function(e){ handleDrop(e, 'front'); });
-    on(dzB, 'dragover', handleDragOver);
-    on(dzB, 'dragleave', handleDragLeave);
-    on(dzB, 'drop', function(e){ handleDrop(e, 'back'); });
-  }
+  ['dropzoneFront', 'cardBackContainer', 'cardPage3Container', 'cardPage4Container'].forEach(function(dzId) {
+    const dz = $(dzId);
+    const side = (dzId === 'dropzoneFront') ? 'front' : ((dzId === 'cardBackContainer') ? 'back' : ((dzId === 'cardPage3Container') ? 'page3' : 'page4'));
+    if (dz && typeof handleDragOver === 'function') {
+      on(dz, 'dragover', handleDragOver);
+      on(dz, 'dragleave', handleDragLeave);
+      on(dz, 'drop', function(e){ handleDrop(e, side); });
+    }
+  });
 
   // Evitar navegación accidental al arrastrar archivo fuera de la ranura
   on(window, 'dragover', function(e){ e.preventDefault(); });

@@ -139,49 +139,87 @@ function generatePdfDoc() {
       currentPagePhotos++;
     }
   } else {
+    // Modo Documentos: Soporte completo para 1, 2, 3 o 4 páginas (Pasaporte, Tarjetas de Visita, DNI, etc.)
+    const candidateSlots = (state.printMode === 'single') 
+      ? ['front']
+      : ['front', 'back', 'page3', 'page4'].slice(0, state.documentPageCount || 2);
+
+    const activeItems = [];
+    candidateSlots.forEach(function(slotKey, idx) {
+      if (state.images[slotKey] && state.images[slotKey].processedDataUrl) {
+        let label = 'PÁGINA ' + (idx + 1);
+        if (state.format === 'business_card') {
+          label = (idx === 0) ? 'FRENTE (CONTACTO Y LOGO)' : (idx === 1 ? 'REVERSO (QR / SERVICIOS / MAPA)' : ('TARJETA 2 (PÁG. ' + (idx - 1) + ')'));
+        } else if (state.format === 'passport') {
+          label = (idx === 0) ? 'PÁG. 1 (DATOS BIOGRÁFICOS / FOTO)' : (idx === 1 ? 'PÁG. 2 (VISA / FIRMA / SELLO)' : ('PÁGINA ' + (idx + 1) + ' (VISA O SELLO)'));
+        } else if (state.format === 'card') {
+          label = (idx === 0) ? 'ANVERSO (FRENTE CON FOTO)' : (idx === 1 ? 'REVERSO (VUELTA / CÓDIGO)' : ('DOCUMENTO 2 (PÁG. ' + (idx - 1) + ')'));
+        } else {
+          label = (idx === 0) ? 'ANVERSO (FRENTE)' : (idx === 1 ? 'REVERSO (VUELTA)' : ('PÁGINA ' + (idx + 1)));
+        }
+
+        activeItems.push({
+          slot: slotKey,
+          label: label,
+          dataUrl: state.images[slotKey].processedDataUrl
+        });
+      }
+    });
+
+    if (activeItems.length === 0) {
+      showToast('Por favor captura o sube al menos una imagen.', 'warning');
+      return null;
+    }
+
+    if (activeItems.length === 1 && state.printMode !== 'single') {
+      const ok = confirm('Has seleccionado imprimir múltiples caras o páginas, pero solo has cargado 1 foto.\n\n¿Deseas generar el PDF incluyendo solo esta página?');
+      if (!ok) return null;
+    }
+
     const posX = (pageW - targetW) / 2;
-    const topMarginFront = (targetH > 100) ? 18 : 25;
+    const topMargin = (targetH > 100) ? 18 : 22;
+    const fitsTwo = (topMargin + targetH * 2 + 14) < 255;
+    const itemsPerSheet = fitsTwo ? 2 : 1;
 
-    doc.setDrawColor(190,190,190);
-    doc.setLineWidth(0.25);
-    doc.setLineDashPattern([1.5, 1.5], 0);
-    doc.rect(posX - 0.5, topMarginFront - 0.5, targetW + 1, targetH + 1);
-    doc.addImage(state.images.front.processedDataUrl, 'JPEG', posX, topMarginFront, targetW, targetH, undefined, 'FAST');
-    drawCornerCutMarks(doc, posX, topMarginFront, targetW, targetH);
+    let itemsOnCurrentSheet = 0;
+    let currentSheetIndex = 0;
+    const totalSheets = Math.ceil(activeItems.length / itemsPerSheet);
 
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.setTextColor(110,110,110);
-    doc.text((spec.shortName || 'DOCUMENTO') + ' — ' + targetW + ' × ' + targetH + ' mm', posX, topMarginFront - 2.5);
-
-    if (state.printMode === 'both' && state.images.back.processedDataUrl) {
-      const fits = (topMarginFront + targetH * 2 + 15) < 255;
-      if (fits) {
-        const topMarginBack = topMarginFront + targetH + 15;
-        doc.setDrawColor(190,190,190);
-        doc.setLineWidth(0.25);
-        doc.setLineDashPattern([1.5, 1.5], 0);
-        doc.rect(posX - 0.5, topMarginBack - 0.5, targetW + 1, targetH + 1);
-        doc.addImage(state.images.back.processedDataUrl, 'JPEG', posX, topMarginBack, targetW, targetH, undefined, 'FAST');
-        drawCornerCutMarks(doc, posX, topMarginBack, targetW, targetH);
-        doc.setFont('Helvetica', 'bold');
-        doc.setFontSize(7.5);
-        doc.setTextColor(110,110,110);
-        doc.text('REVERSO (VUELTA) — ' + targetW + ' × ' + targetH + ' mm', posX, topMarginBack - 2.5);
-      } else {
+    for (let i = 0; i < activeItems.length; i++) {
+      if (itemsOnCurrentSheet >= itemsPerSheet) {
         drawCalibrationFooter(doc, pageW, spec);
         doc.addPage();
-        doc.setDrawColor(190,190,190);
-        doc.setLineWidth(0.25);
-        doc.setLineDashPattern([1.5, 1.5], 0);
-        doc.rect(posX - 0.5, topMarginFront - 0.5, targetW + 1, targetH + 1);
-        doc.addImage(state.images.back.processedDataUrl, 'JPEG', posX, topMarginFront, targetW, targetH, undefined, 'FAST');
-        drawCornerCutMarks(doc, posX, topMarginFront, targetW, targetH);
-        doc.setFont('Helvetica', 'bold');
-        doc.setFontSize(7.5);
-        doc.setTextColor(110,110,110);
-        doc.text('REVERSO (VUELTA) — ' + targetW + ' × ' + targetH + ' mm', posX, topMarginFront - 2.5);
+        itemsOnCurrentSheet = 0;
+        currentSheetIndex++;
       }
+
+      const item = activeItems[i];
+      let itemY = topMargin;
+      if (itemsPerSheet === 2 && itemsOnCurrentSheet === 1) {
+        itemY = topMargin + targetH + 14;
+      } else if (itemsPerSheet === 1 && targetH <= 180) {
+        // Centrar verticalmente en la zona útil de la hoja (antes de la regla en 262mm)
+        itemY = Math.max(16, Math.round((255 - targetH) / 2));
+      }
+
+      // Borde punteado de corte
+      doc.setDrawColor(190, 190, 190);
+      doc.setLineWidth(0.25);
+      doc.setLineDashPattern([1.5, 1.5], 0);
+      doc.rect(posX - 0.5, itemY - 0.5, targetW + 1, targetH + 1);
+
+      // Imagen procesada a escala 1:1 real
+      doc.addImage(item.dataUrl, 'JPEG', posX, itemY, targetW, targetH, undefined, 'FAST');
+      drawCornerCutMarks(doc, posX, itemY, targetW, targetH);
+
+      // Título y dimensiones físicas
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(90, 90, 90);
+      const sheetInfo = totalSheets > 1 ? (' [Hoja ' + (currentSheetIndex + 1) + '/' + totalSheets + ']') : '';
+      doc.text(item.label + ' — ' + targetW + ' × ' + targetH + ' mm' + sheetInfo, posX, itemY - 2.5);
+
+      itemsOnCurrentSheet++;
     }
   }
 

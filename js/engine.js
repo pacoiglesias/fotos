@@ -6,6 +6,22 @@
 /* ============================================================
    CÁMARA EN VIVO Y DISPOSITIVO NATIVO
    ============================================================ */
+function getSlotIdSuffix(side) {
+  if (side === 'front') return 'Front';
+  if (side === 'back') return 'Back';
+  if (side === 'page3') return 'Page3';
+  if (side === 'page4') return 'Page4';
+  return 'Front';
+}
+
+function getSlotFriendlyName(side) {
+  if (side === 'front') return 'Anverso / Pág. 1';
+  if (side === 'back') return 'Reverso / Pág. 2';
+  if (side === 'page3') return 'Página 3 / Visa 1';
+  if (side === 'page4') return 'Página 4 / Visa 2';
+  return 'Página';
+}
+
 function handleCameraClick(side) {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   if (isMobile || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -18,7 +34,7 @@ function handleCameraClick(side) {
 async function openLiveCamera(side) {
   state.activeCameraSide = side;
   const titleEl = $('cameraModalTitle');
-  if (titleEl) titleEl.textContent = 'Cámara en Vivo — ' + (side === 'front' ? 'Anverso' : 'Reverso');
+  if (titleEl) titleEl.textContent = 'Cámara en Vivo — ' + getSlotFriendlyName(side);
   const video = $('liveVideo');
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     triggerNativeUpload(side, true);
@@ -56,7 +72,7 @@ function captureLivePhoto() {
   const side = state.activeCameraSide;
   closeLiveCamera();
   processRawDataUrl(dataUrl, side);
-  showToast('¡Foto capturada para ' + (side === 'front' ? 'Anverso' : 'Reverso') + '!', 'success');
+  showToast('¡Foto capturada para ' + getSlotFriendlyName(side) + '!', 'success');
 }
 
 function closeLiveCamera() {
@@ -68,7 +84,7 @@ function closeLiveCamera() {
 }
 
 function triggerNativeUpload(side, isCamera) {
-  const input = side === 'front' ? $('fileInputFront') : $('fileInputBack');
+  const input = $('fileInput' + getSlotIdSuffix(side));
   if (!input) return;
   if (isCamera) input.setAttribute('capture', 'environment');
   else input.removeAttribute('capture');
@@ -100,16 +116,22 @@ async function handlePdfFile(file, targetSide) {
     const arrayBuffer = await file.arrayBuffer();
     const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
-    if (pdfDoc.numPages >= 2 && state.printMode === 'both') {
-      const p1 = await pdfDoc.getPage(1);
-      processRawDataUrl(await renderPdfPageToDataUrl(p1), 'front');
-      const p2 = await pdfDoc.getPage(2);
-      processRawDataUrl(await renderPdfPageToDataUrl(p2), 'back');
-      showToast('¡PDF de 2 páginas detectado! Anverso y Reverso cargados.', 'success');
+    if (pdfDoc.numPages >= 2 && state.printMode !== 'single') {
+      const numToLoad = Math.min(pdfDoc.numPages, 4);
+      if (typeof setDocumentPages === 'function' && numToLoad > 2) {
+        setDocumentPages(numToLoad);
+      }
+      const slots = ['front', 'back', 'page3', 'page4'];
+      for (let i = 1; i <= numToLoad; i++) {
+        const page = await pdfDoc.getPage(i);
+        const dataUrl = await renderPdfPageToDataUrl(page);
+        processRawDataUrl(dataUrl, slots[i - 1]);
+      }
+      showToast('¡PDF de ' + numToLoad + ' páginas detectado y cargado con éxito!', 'success');
     } else {
       const p = await pdfDoc.getPage(1);
       processRawDataUrl(await renderPdfPageToDataUrl(p), targetSide);
-      showToast('¡PDF cargado en ' + (targetSide === 'front' ? 'Anverso' : 'Reverso') + '!', 'success');
+      showToast('¡PDF cargado en ' + getSlotFriendlyName(targetSide) + '!', 'success');
     }
   } catch (err) {
     showToast('No se pudo leer el PDF. Asegúrate de que no tenga contraseña.', 'warning');
@@ -184,7 +206,7 @@ function toggleAutoCrop(side) {
   if (!imgData.rawOriginalSrc || !imgData.croppedSrc) return;
   imgData.isCropApplied = !imgData.isCropApplied;
   const targetSrc = imgData.isCropApplied ? imgData.croppedSrc : imgData.rawOriginalSrc;
-  const btn = $(side === 'front' ? 'btnToggleCropFront' : 'btnToggleCropBack');
+  const btn = $('btnToggleCrop' + getSlotIdSuffix(side));
   if (btn) btn.textContent = imgData.isCropApplied ? '✂️ Recorte Auto' : 'Original';
 
   const img = new Image();
@@ -206,7 +228,7 @@ function processRawDataUrl(rawSrc, side) {
   img.onload = function() {
     state.images[side].rawOriginalSrc = rawSrc;
     state.images[side].zoom = 1.0;
-    const label = $(side === 'front' ? 'zoomLabelFront' : 'zoomLabelBack');
+    const label = $('zoomLabel' + getSlotIdSuffix(side));
     if (label) label.textContent = '1.0x';
 
     // Auto-adaptar orientación de Pasaporte según la proporción de la imagen capturada/subida
@@ -230,7 +252,7 @@ function processRawDataUrl(rawSrc, side) {
     }
 
     const croppedData = detectAndCropCard(img);
-    const toggleBtn = $(side === 'front' ? 'btnToggleCropFront' : 'btnToggleCropBack');
+    const toggleBtn = $('btnToggleCrop' + getSlotIdSuffix(side));
 
     if (croppedData) {
       state.images[side].croppedSrc = croppedData;
@@ -278,7 +300,7 @@ function adjustZoom(side, delta) {
   let z = state.images[side].zoom || 1.0;
   z = Math.max(0.5, Math.min(3.5, z + delta));
   state.images[side].zoom = parseFloat(z.toFixed(2));
-  const label = $(side === 'front' ? 'zoomLabelFront' : 'zoomLabelBack');
+  const label = $('zoomLabel' + getSlotIdSuffix(side));
   if (label) label.textContent = state.images[side].zoom + 'x';
   renderProcessedImage(side);
 }
@@ -380,7 +402,7 @@ function resetPan(side) {
 
 function toggleOaciGuide(side) {
   state.images[side].showOaciGuide = !state.images[side].showOaciGuide;
-  const oaciOverlay = $(side === 'front' ? 'oaciGuideFront' : 'oaciGuideBack');
+  const oaciOverlay = $('oaciGuide' + getSlotIdSuffix(side));
   if (oaciOverlay) oaciOverlay.classList.toggle('hidden', !state.images[side].showOaciGuide);
   const guideBtn = document.querySelector('[data-guide="' + side + '"]');
   if (guideBtn) {
@@ -391,31 +413,83 @@ function toggleOaciGuide(side) {
 }
 
 function updateSidePreview(side) {
-  const isFront = side === 'front';
+  const suffix = getSlotIdSuffix(side);
   const imgData = state.images[side];
-  const previewImg = $(isFront ? 'previewImgFront' : 'previewImgBack');
-  const placeholder = $(isFront ? 'placeholderFront' : 'placeholderBack');
-  const tools = $(isFront ? 'toolsFront' : 'toolsBack');
-  const badge = $(isFront ? 'badgeStatusFront' : 'badgeStatusBack');
+  const previewImg = $('previewImg' + suffix);
+  const placeholder = $('placeholder' + suffix);
+  const tools = $('tools' + suffix);
+  const badge = $('badgeStatus' + suffix);
 
   if (imgData.processedDataUrl) {
-    previewImg.src = imgData.processedDataUrl;
-    previewImg.classList.remove('hidden');
-    previewImg.className = 'w-full h-full object-cover rounded-sm';
-    placeholder.classList.add('hidden');
-    tools.classList.remove('hidden');
+    if (previewImg) {
+      previewImg.src = imgData.processedDataUrl;
+      previewImg.classList.remove('hidden');
+      previewImg.className = 'w-full h-full object-cover rounded-sm';
+    }
+    if (placeholder) placeholder.classList.add('hidden');
+    if (tools) tools.classList.remove('hidden');
 
-    badge.textContent = 'Listo';
-    badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200';
+    if (badge) {
+      badge.textContent = 'Listo';
+      badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200';
+    }
 
     $$('[data-filter^="' + side + ':"]').forEach(function(b) {
       const f = b.getAttribute('data-filter').split(':')[1];
       b.classList.toggle('is-active', f === (imgData.filter || 'color'));
     });
 
-    const oaciOverlay = $(isFront ? 'oaciGuideFront' : 'oaciGuideBack');
+    const oaciOverlay = $('oaciGuide' + suffix);
     if (oaciOverlay) oaciOverlay.classList.toggle('hidden', !imgData.showOaciGuide);
 
     if (typeof updateUI === 'function') updateUI();
   }
 }
+
+/* ============================================================
+   PORTAPAPELES (PEGAR DIRECTO CON CTRL + V O BOTÓN)
+   ============================================================ */
+async function pasteFromClipboard(side) {
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.read) {
+      showToast('Presiona Ctrl + V en tu teclado para pegar la imagen copiada.', 'info');
+      return;
+    }
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
+      for (const type of item.types) {
+        if (type.startsWith('image/')) {
+          const blob = await item.getType(type);
+          loadBlobIntoSide(blob, side);
+          showToast('¡Imagen pegada desde el portapapeles con éxito!', 'success');
+          return;
+        }
+      }
+    }
+    showToast('No se encontró ninguna imagen en el portapapeles. Copia una imagen y reintenta.', 'warning');
+  } catch (err) {
+    showToast('Haz clic aquí y presiona Ctrl + V para pegar directo.', 'info');
+  }
+}
+
+document.addEventListener('paste', function(e) {
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf('image') !== -1) {
+      const blob = items[i].getAsFile();
+      // Encontrar la ranura destino vacía
+      let target = 'front';
+      const pageCount = state.documentPageCount || 2;
+      if (!state.images.front.processedDataUrl) target = 'front';
+      else if (pageCount >= 2 && !state.images.back.processedDataUrl) target = 'back';
+      else if (pageCount >= 3 && !state.images.page3.processedDataUrl) target = 'page3';
+      else if (pageCount >= 4 && !state.images.page4.processedDataUrl) target = 'page4';
+      loadBlobIntoSide(blob, target);
+      showToast('¡Imagen pegada con éxito en ' + getSlotFriendlyName(target) + '!', 'success');
+      e.preventDefault();
+      break;
+    }
+  }
+});
+
