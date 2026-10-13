@@ -1,0 +1,141 @@
+/* ============================================================
+   RealScan Pro — Estilos del Sistema
+   Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
+   ============================================================ */
+
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+}
+
+.a4-sheet {
+  aspect-ratio: 210 / 297;
+  background: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,.12), 0 8px 10px -6px rgba(0,0,0,.08);
+}
+
+.dropzone-active {
+  border-color: #4f46e5 !important;
+  background-color: #eef2ff !important;
+}
+
+.dark .dropzone-active {
+  background-color: rgba(30,27,75,.5) !important;
+}
+
+/* ====== Estado visual de botones (evita romper dark: al mutar className) ====== */
+.mode-btn, .format-btn, .photo-copies-btn, .pass-orient-btn {
+  border: 2px solid rgb(226 232 240);
+  background: #fff;
+  transition: all .15s ease;
+}
+
+.dark .mode-btn, .dark .format-btn, .dark .photo-copies-btn, .dark .pass-orient-btn {
+  border-color: rgb(51 65 85);
+  background: rgba(30 41 59 / .8);
+}
+
+.mode-btn:hover:not(.is-active),
+.format-btn:hover:not(.is-active),
+.photo-copies-btn:hover:not(.is-active),
+.pass-orient-btn:hover:not(.is-active) {
+  border-color: rgb(203 213 225);
+}
+
+.dark .mode-btn:hover:not(.is-active),
+.dark .format-btn:hover:not(.is-active),
+.dark .photo-copies-btn:hover:not(.is-active),
+.dark .pass-orient-btn:hover:not(.is-active) {
+  border-color: rgb(71 85 105);
+}
+
+.mode-btn.is-active, .format-btn.is-active, .photo-copies-btn.is-active, .pass-orient-btn.is-active {
+  border-color: rgb(79 70 229);
+  background: rgba(238 242 255 / .6);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+
+.dark .mode-btn.is-active,
+.dark .format-btn.is-active,
+.dark .photo-copies-btn.is-active,
+.dark .pass-orient-btn.is-active {
+  border-color: rgb(99 102 241);
+  background: rgba(30 27 75 / .5);
+}
+
+.mode-btn .active-badge,
+.format-btn .active-badge { display: none; }
+.mode-btn.is-active .active-badge,
+.format-btn.is-active .active-badge { display: inline-block; }
+
+.pass-orient-btn .orient-check { display: none; }
+.pass-orient-btn.is-active .orient-check { display: inline-block; }
+
+/* ====== Tabs de categoría ====== */
+.cat-tab {
+  color: rgb(71 85 105);
+  transition: all .15s ease;
+}
+.dark .cat-tab { color: rgb(148 163 184); }
+.cat-tab:hover { color: rgb(15 23 42); }
+.dark .cat-tab:hover { color: #fff; }
+.cat-tab.is-active {
+  background: #fff;
+  color: rgb(67 56 202);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.dark .cat-tab.is-active {
+  background: rgb(51 65 85);
+  color: rgb(165 180 252);
+}
+
+/* ====== Unit toggle ====== */
+.unit-btn { color: rgb(71 85 105); font-weight: 500; }
+.dark .unit-btn { color: rgb(203 213 225); }
+.unit-btn.is-active { background: rgb(79 70 229); color: #fff; font-weight: 700; }
+
+/* ====== Estado activo de las tarjetas de títulos dentro de botones ====== */
+.mode-btn.is-active .title-main,
+.format-btn.is-active .title-main,
+.photo-copies-btn.is-active .title-main { color: rgb(30 27 75); }
+.dark .mode-btn.is-active .title-main,
+.dark .format-btn.is-active .title-main,
+.dark .photo-copies-btn.is-active .title-main { color: rgb(224 231 255); }
+
+/* Focus visible consistente */
+button:focus-visible, input:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* ====== Settings modal tabs ====== */
+.settings-tab-btn {
+  color: rgb(100 116 139);
+}
+.dark .settings-tab-btn { color: rgb(148 163 184); }
+.settings-tab-btn.is-active {
+  background: #fff;
+  color: rgb(67 56 202);
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.dark .settings-tab-btn.is-active {
+  background: rgb(30 41 59);
+  color: rgb(165 180 252);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.animate-shake {
+  animation: shake 0.35s ease-in-out;
+}
+
+/* Modal lock */
+body.modal-open { overflow: hidden; }
