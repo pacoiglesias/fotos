@@ -1,0 +1,15 @@
+{
+  "hosting": {
+    "site": "fotos-cobertores",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/node_modules/**",
+      "*.bat",
+      "*.ps1",
+      "*.md"
+    ]
+  }
+}
