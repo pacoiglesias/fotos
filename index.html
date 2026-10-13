@@ -190,9 +190,10 @@
           </svg>
         </div>
         <div class="min-w-0">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v2.4.0</span>
           </div>
           <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">Desarrollado por <span class="font-semibold text-slate-700 dark:text-slate-200">Paco Iglesias</span> • Escala 1:1</p>
         </div>
@@ -955,7 +956,7 @@
 
     <footer class="text-center text-xs text-slate-500 space-y-1 py-4 border-t border-slate-200/70 mt-6">
       <p class="font-medium text-slate-700 dark:text-slate-300">
-        <strong class="text-indigo-600">RealScan</strong> — Desarrollado por <strong class="text-slate-900 dark:text-white">Paco Iglesias</strong>
+        <strong class="text-indigo-600">RealScan</strong> <span class="text-slate-500 dark:text-slate-400 font-mono text-[10px] bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700">v2.4.0</span> — Desarrollado por <strong class="text-slate-900 dark:text-white">Paco Iglesias</strong>
       </p>
       <p class="text-[11px] text-slate-400 dark:text-slate-500">100% procesado de forma privada en tu dispositivo local. Tus documentos nunca viajan por internet.</p>
     </footer>
@@ -1070,6 +1071,10 @@
         </div>
       </div>
 
+      <button type="button" data-close-modal="scannerHelpModal" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs transition-colors">Entendido</button>
+    </div>
+  </div>
+
   <!-- Modal / Overlay de Bloqueo y Acceso Seguro -->
   <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md transition-all duration-300">
     <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
@@ -1078,7 +1083,7 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
         </div>
         <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Acceso al Sistema</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">fotos.cobertores.com • Impresión 1:1</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">RealScan Pro <span class="font-bold text-indigo-600 dark:text-indigo-400 font-mono">v2.4.0</span> • Impresión 1:1</p>
       </div>
 
       <form id="loginForm" class="space-y-3.5" autocomplete="on">
@@ -1126,7 +1131,7 @@
             ⚙️
           </div>
           <div>
-            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad</h3>
+            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v2.4.0</span></h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400">Control de acceso y bitácora de auditoría</p>
           </div>
         </div>
@@ -1135,49 +1140,88 @@
 
       <!-- Navegación de pestañas de ajustes -->
       <div class="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl gap-1 shrink-0">
-        <button type="button" id="tabBtnCreds" class="settings-tab-btn is-active flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">🔑 Credenciales</button>
+        <button type="button" id="tabBtnCreds" class="settings-tab-btn is-active flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">👥 Usuarios</button>
         <button type="button" id="tabBtnLog" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">📋 Auditoría (Log)</button>
-        <button type="button" id="tabBtnCloud" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">🌐 Nube & Dominio</button>
+        <button type="button" id="tabBtnCloud" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">🌐 Proyecto Nube</button>
       </div>
 
       <!-- Contenido scrolleable -->
       <div class="overflow-y-auto flex-1 pr-1 space-y-4 text-xs">
         
-        <!-- Tab 1: Credenciales -->
+        <!-- Tab 1: Usuarios y Credenciales -->
         <div id="tabContentCreds" class="space-y-4">
-          <div class="p-3 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 text-slate-700 dark:text-slate-300 space-y-1">
-            <p class="font-bold text-indigo-950 dark:text-indigo-200">Cambiar Usuario o PIN de Acceso</p>
-            <p class="text-[11px]">Modifica el nombre de usuario o la contraseña/PIN con la que ingresas al sistema.</p>
+          
+          <!-- Lista de Usuarios Existentes -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <p class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <span>👥</span> <span>Usuarios Registrados</span>
+              </p>
+              <span id="usersCounterBadge" class="text-[10px] font-semibold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full">1 usuario</span>
+            </div>
+            <div id="usersListContainer" class="space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
+              <!-- Renderizado dinámico de usuarios -->
+            </div>
           </div>
 
-          <form id="formUpdateCreds" class="space-y-3">
-            <div>
-              <label for="inputNewUser" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Nombre de Usuario</label>
-              <input type="text" id="inputNewUser" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium outline-none focus:ring-2 focus:ring-indigo-500" placeholder="admin" required />
-            </div>
-
-            <div>
-              <label for="inputCurrentPass" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Contraseña o PIN Actual (por seguridad)</label>
-              <input type="password" id="inputCurrentPass" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••" required />
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div>
-                <label for="inputNewPass" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Nueva Contraseña o PIN</label>
-                <input type="password" id="inputNewPass" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nueva clave" required />
+          <!-- Formulario: Agregar Nuevo Usuario -->
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+            <p class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <span>➕</span> <span>Crear Nuevo Usuario / Empleado</span>
+            </p>
+            <form id="formAddUser" class="space-y-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label for="inputAddUserName" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">Nombre de Usuario</label>
+                  <input type="text" id="inputAddUserName" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs font-medium outline-none focus:ring-1 focus:ring-indigo-500" placeholder="ej. mostrador" required />
+                </div>
+                <div>
+                  <label for="inputAddUserPass" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">Contraseña o PIN</label>
+                  <input type="password" id="inputAddUserPass" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs font-medium outline-none focus:ring-1 focus:ring-indigo-500" placeholder="••••" required />
+                </div>
               </div>
-              <div>
-                <label for="inputConfirmPass" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Confirmar Nueva Clave</label>
-                <input type="password" id="inputConfirmPass" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Repite la clave" required />
+              <div class="flex items-center justify-between gap-2 pt-1">
+                <select id="selectAddUserRole" class="px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium outline-none">
+                  <option value="operador">Rol: Operador</option>
+                  <option value="admin">Rol: Administrador</option>
+                </select>
+                <button type="submit" id="btnAddUserSubmit" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all">
+                  ➕ Agregar Usuario
+                </button>
               </div>
-            </div>
+            </form>
+          </div>
 
-            <div id="credsAlertMsg" class="hidden p-2.5 rounded-xl text-center font-semibold"></div>
+          <!-- Formulario: Cambiar Contraseña Actual -->
+          <div class="p-3 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200/80 dark:border-indigo-900/60 space-y-2.5">
+            <p class="font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+              <span>🔑</span> <span>Cambiar Contraseña de <span id="labelPassChangeUser" class="underline">admin</span></span>
+            </p>
+            <form id="formUpdateCreds" class="space-y-2.5">
+              <div>
+                <label for="inputCurrentPass" class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-0.5">Contraseña Actual (para autorizar)</label>
+                <input type="password" id="inputCurrentPass" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium outline-none focus:ring-1 focus:ring-indigo-500" placeholder="••••" required />
+              </div>
 
-            <button type="submit" id="btnSaveCreds" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md shadow-indigo-300 dark:shadow-none">
-              💾 Guardar Nuevas Credenciales
-            </button>
-          </form>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label for="inputNewPass" class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-0.5">Nueva Contraseña / PIN</label>
+                  <input type="password" id="inputNewPass" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium outline-none focus:ring-1 focus:ring-indigo-500" placeholder="Nueva clave" required />
+                </div>
+                <div>
+                  <label for="inputConfirmPass" class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-0.5">Confirmar Nueva Clave</label>
+                  <input type="password" id="inputConfirmPass" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium outline-none focus:ring-1 focus:ring-indigo-500" placeholder="Repite la clave" required />
+                </div>
+              </div>
+
+              <div id="credsAlertMsg" class="hidden p-2 rounded-lg text-center font-semibold text-xs"></div>
+
+              <button type="submit" id="btnSaveCreds" class="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-sm">
+                💾 Actualizar Mi Contraseña
+              </button>
+            </form>
+          </div>
+
         </div>
 
         <!-- Tab 2: Auditoría (Log) -->
@@ -1207,10 +1251,10 @@
           <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-900/60 space-y-2">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <p class="font-bold text-emerald-950 dark:text-emerald-200">Firebase Hosting Configurado</p>
+              <p class="font-bold text-emerald-950 dark:text-emerald-200">Nuevo Proyecto Firebase Independiente</p>
             </div>
             <p class="text-slate-700 dark:text-slate-300 text-[11px] leading-relaxed">
-              Tu proyecto ya está preparado para desplegarse automáticamente en Firebase bajo el dominio personalizado:
+              Proyecto creado y enlazado: <code class="font-mono font-bold text-indigo-700 dark:text-indigo-300">fotos-cobertores-pro</code>.
             </p>
             <div class="bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-emerald-300 dark:border-emerald-800 font-mono text-[11px] text-indigo-600 dark:text-indigo-400 font-bold select-all">
               fotos.cobertores.com
@@ -1219,11 +1263,11 @@
 
           <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
             <p class="font-bold text-slate-800 dark:text-slate-200">URL del Sitio Firebase:</p>
-            <a href="https://fotos-cobertores.web.app" target="_blank" rel="noopener" class="text-indigo-600 dark:text-indigo-400 font-mono text-[11px] underline break-all flex items-center gap-1">
-              <span>https://fotos-cobertores.web.app</span> <span>↗</span>
+            <a href="https://fotos-cobertores-pro.web.app" target="_blank" rel="noopener" class="text-indigo-600 dark:text-indigo-400 font-mono text-[11px] underline break-all flex items-center gap-1">
+              <span>https://fotos-cobertores-pro.web.app</span> <span>↗</span>
             </a>
             <p class="text-[11px] text-slate-500 dark:text-slate-400">
-              Usa el archivo <code class="font-mono bg-white dark:bg-slate-700 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-600">subir_a_firebase.bat</code> para publicar cualquier cambio en 1 clic.
+              Despliega en 1 solo clic ejecutando <code class="font-mono bg-white dark:bg-slate-700 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-600">subir_a_firebase.bat</code>.
             </p>
           </div>
         </div>
@@ -1313,7 +1357,8 @@
     /* ============================================================
        SISTEMA DE SEGURIDAD, AUTENTICACIÓN Y AUDITORÍA (SHA-256)
        ============================================================ */
-    const AUTH_STORAGE_KEY = 'realscan_auth_v1';
+    const APP_VERSION = 'v2.4.0';
+    const AUTH_STORAGE_KEY = 'realscan_auth_v2';
     const AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
     const DEFAULT_USER = 'admin';
     const DEFAULT_PIN_HASH = '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab'; // sha256('2026')
@@ -1332,11 +1377,31 @@
     function getAuthData() {
       try {
         const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.users) && parsed.users.length > 0) return parsed;
+        }
+        // Migración automática desde v1 si existía
+        const oldRaw = localStorage.getItem('realscan_auth_v1');
+        if (oldRaw) {
+          const old = JSON.parse(oldRaw);
+          const migrated = {
+            users: [
+              { username: old.username || DEFAULT_USER, passwordHash: old.passwordHash || DEFAULT_PIN_HASH, role: 'admin' }
+            ],
+            currentUsername: old.username || DEFAULT_USER,
+            sessionToken: old.sessionToken || null,
+            sessionExpiry: old.sessionExpiry || 0
+          };
+          saveAuthData(migrated);
+          return migrated;
+        }
       } catch(e) {}
       return {
-        username: DEFAULT_USER,
-        passwordHash: DEFAULT_PIN_HASH,
+        users: [
+          { username: DEFAULT_USER, passwordHash: DEFAULT_PIN_HASH, role: 'admin' }
+        ],
+        currentUsername: DEFAULT_USER,
         sessionToken: null,
         sessionExpiry: 0
       };
@@ -1364,7 +1429,7 @@
         const entry = {
           id: 'log_' + Date.now() + '_' + Math.floor(Math.random()*1000),
           timestamp: new Date().toISOString(),
-          user: auth.username || 'invitado',
+          user: auth.currentUsername || 'invitado',
           action: action,
           details: details || ''
         };
@@ -1448,12 +1513,112 @@
       showToast('Bitácora limpiada', 'info');
     }
 
+    /* Renderizado de Usuarios en el Modal de Ajustes */
+    function renderUsersList() {
+      const container = $('usersListContainer');
+      const badge = $('usersCounterBadge');
+      if (!container) return;
+      const auth = getAuthData();
+      if (badge) badge.textContent = auth.users.length + (auth.users.length === 1 ? ' usuario' : ' usuarios');
+
+      let html = '';
+      auth.users.forEach(function(u) {
+        const isCurrent = u.username.toLowerCase() === (auth.currentUsername || '').toLowerCase();
+        const roleLabel = u.role === 'admin' ? 'Administrador' : 'Operador';
+        const roleBadgeClass = u.role === 'admin' ?
+          'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800' :
+          'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+
+        html += '<div class="p-2 rounded-xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2 shadow-sm">' +
+          '<div class="flex items-center gap-2 min-w-0">' +
+            '<span class="text-base">👤</span>' +
+            '<div class="min-w-0">' +
+              '<div class="flex items-center gap-1.5">' +
+                '<strong class="text-xs text-slate-900 dark:text-white font-bold truncate">' + escapeHtml(u.username) + '</strong>' +
+                (isCurrent ? '<span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1 rounded border border-emerald-200 dark:border-emerald-800">(Tú)</span>' : '') +
+              '</div>' +
+              '<span class="text-[10px] px-1.5 py-0.2 rounded border font-medium ' + roleBadgeClass + '">' + roleLabel + '</span>' +
+            '</div>' +
+          '</div>';
+
+        if (!isCurrent && auth.users.length > 1) {
+          html += '<button type="button" class="btn-delete-user px-2 py-1 rounded-lg text-[11px] font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900/60 transition-colors" data-delete-user="' + escapeHtml(u.username) + '" title="Eliminar usuario">🗑️ Eliminar</button>';
+        } else {
+          html += '<span class="text-[10px] text-slate-400 italic">Activo</span>';
+        }
+        html += '</div>';
+      });
+
+      container.innerHTML = html;
+
+      // Event listener para botones de borrar usuario
+      container.querySelectorAll('.btn-delete-user').forEach(function(btn) {
+        on(btn, 'click', function() {
+          handleDeleteUser(btn.getAttribute('data-delete-user'));
+        });
+      });
+    }
+
+    async function handleAddUser(e) {
+      if (e) e.preventDefault();
+      const userNameInput = $('inputAddUserName');
+      const userPassInput = $('inputAddUserPass');
+      const userRoleSelect = $('selectAddUserRole');
+      if (!userNameInput || !userPassInput) return;
+
+      const newName = (userNameInput.value || '').trim();
+      const newPass = (userPassInput.value || '').trim();
+      const newRole = userRoleSelect ? userRoleSelect.value : 'operador';
+
+      if (!newName || !newPass) {
+        showToast('Ingresa nombre de usuario y contraseña o PIN', 'warning');
+        return;
+      }
+
+      const auth = getAuthData();
+      const exists = auth.users.some(function(u) { return u.username.toLowerCase() === newName.toLowerCase(); });
+      if (exists) {
+        showToast('Ya existe un usuario con el nombre "' + newName + '"', 'warning');
+        return;
+      }
+
+      const hash = await computeSha256(newPass);
+      auth.users.push({
+        username: newName,
+        passwordHash: hash,
+        role: newRole
+      });
+      saveAuthData(auth);
+
+      userNameInput.value = '';
+      userPassInput.value = '';
+
+      renderUsersList();
+      logActivity('Creación de Usuario', 'Nuevo usuario registrado: ' + newName + ' (' + newRole + ')');
+      showToast('¡Usuario "' + newName + '" creado con éxito!', 'success');
+    }
+
+    function handleDeleteUser(usernameToDelete) {
+      if (!usernameToDelete) return;
+      if (!confirm('¿Estás seguro de que deseas eliminar al usuario "' + usernameToDelete + '"?')) return;
+
+      const auth = getAuthData();
+      auth.users = auth.users.filter(function(u) {
+        return u.username.toLowerCase() !== usernameToDelete.toLowerCase();
+      });
+      saveAuthData(auth);
+
+      renderUsersList();
+      logActivity('Eliminación de Usuario', 'Usuario eliminado: ' + usernameToDelete);
+      showToast('Usuario eliminado', 'info');
+    }
+
     /* Manejo de Sesión / Login */
     function checkAuthSession() {
       const auth = getAuthData();
       const now = Date.now();
       const label = $('currentUserLabel');
-      if (label) label.textContent = auth.username || DEFAULT_USER;
+      if (label) label.textContent = auth.currentUsername || DEFAULT_USER;
 
       const overlay = $('loginOverlay');
       if (!overlay) return;
@@ -1467,7 +1632,7 @@
         overlay.classList.remove('hidden');
         document.body.classList.add('modal-open');
         const userInput = $('loginUserInput');
-        if (userInput) userInput.value = auth.username || DEFAULT_USER;
+        if (userInput) userInput.value = auth.currentUsername || DEFAULT_USER;
         const passInput = $('loginPassInput');
         if (passInput) setTimeout(function(){ passInput.focus(); }, 100);
       }
@@ -1491,8 +1656,14 @@
       const auth = getAuthData();
       const passHash = await computeSha256(pass);
 
-      if (user.toLowerCase() === (auth.username || DEFAULT_USER).toLowerCase() && passHash === (auth.passwordHash || DEFAULT_PIN_HASH)) {
+      // Buscar si coincide con alguno de los usuarios registrados
+      const matched = auth.users.find(function(u) {
+        return u.username.toLowerCase() === user.toLowerCase() && u.passwordHash === passHash;
+      });
+
+      if (matched) {
         // Login exitoso
+        auth.currentUsername = matched.username;
         auth.sessionToken = 'token_' + Date.now() + '_' + Math.random().toString(36).substring(2);
         auth.sessionExpiry = remember ? (Date.now() + 30 * 24 * 60 * 60 * 1000) : (Date.now() + 12 * 60 * 60 * 1000);
         saveAuthData(auth);
@@ -1503,10 +1674,10 @@
         document.body.classList.remove('modal-open');
 
         const label = $('currentUserLabel');
-        if (label) label.textContent = auth.username;
+        if (label) label.textContent = matched.username;
 
-        logActivity('Inicio de Sesión', 'Acceso correcto con usuario: ' + auth.username);
-        showToast('¡Bienvenido al sistema, ' + auth.username + '!', 'success');
+        logActivity('Inicio de Sesión', 'Acceso correcto con usuario: ' + matched.username + ' (' + matched.role + ')');
+        showToast('¡Bienvenido al sistema, ' + matched.username + '!', 'success');
       } else {
         // Fallo
         if (errorBox) {
@@ -1522,7 +1693,7 @@
 
     function handleLogout() {
       const auth = getAuthData();
-      const prevUser = auth.username;
+      const prevUser = auth.currentUsername || 'admin';
       auth.sessionToken = null;
       auth.sessionExpiry = 0;
       saveAuthData(auth);
@@ -1534,7 +1705,6 @@
 
     async function handleUpdateCredentials(e) {
       if (e) e.preventDefault();
-      const newUser = ($('inputNewUser').value || '').trim();
       const currentPass = ($('inputCurrentPass').value || '').trim();
       const newPass = ($('inputNewPass').value || '').trim();
       const confirmPass = ($('inputConfirmPass').value || '').trim();
@@ -1542,49 +1712,48 @@
 
       function showAlert(msg, isSuccess) {
         if (!alertBox) return;
-        alertBox.className = 'p-2.5 rounded-xl text-center font-semibold text-xs ' +
+        alertBox.className = 'p-2 rounded-xl text-center font-semibold text-xs ' +
           (isSuccess ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-200 border border-emerald-200' :
                        'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-200 border border-red-200');
         alertBox.textContent = msg;
         alertBox.classList.remove('hidden');
       }
 
-      if (!newUser) { showAlert('El nombre de usuario no puede estar vacío', false); return; }
       if (!currentPass) { showAlert('Debes ingresar la contraseña actual para autorizar cambios', false); return; }
       if (!newPass) { showAlert('Ingresa una nueva contraseña o PIN', false); return; }
       if (newPass !== confirmPass) { showAlert('La nueva contraseña y su confirmación no coinciden', false); return; }
 
       const auth = getAuthData();
       const currentHash = await computeSha256(currentPass);
-      if (currentHash !== (auth.passwordHash || DEFAULT_PIN_HASH)) {
+      const activeUser = auth.users.find(function(u) {
+        return u.username.toLowerCase() === (auth.currentUsername || DEFAULT_USER).toLowerCase();
+      });
+
+      if (!activeUser || currentHash !== activeUser.passwordHash) {
         showAlert('La contraseña actual es incorrecta', false);
         return;
       }
 
       const newHash = await computeSha256(newPass);
-      const prevUser = auth.username;
-      auth.username = newUser;
-      auth.passwordHash = newHash;
+      activeUser.passwordHash = newHash;
       saveAuthData(auth);
 
       $('inputCurrentPass').value = '';
       $('inputNewPass').value = '';
       $('inputConfirmPass').value = '';
 
-      const label = $('currentUserLabel');
-      if (label) label.textContent = auth.username;
-
-      logActivity('Cambio de Credenciales', 'Usuario actualizado: ' + prevUser + ' -> ' + newUser);
-      showAlert('¡Credenciales actualizadas exitosamente!', true);
-      showToast('Credenciales guardadas con éxito', 'success');
+      logActivity('Cambio de Contraseña', 'Contraseña actualizada para el usuario: ' + activeUser.username);
+      showAlert('¡Contraseña actualizada exitosamente!', true);
+      showToast('Contraseña actualizada con éxito', 'success');
     }
 
     function openSettingsModal() {
       const auth = getAuthData();
-      const inputUser = $('inputNewUser');
-      if (inputUser) inputUser.value = auth.username || DEFAULT_USER;
+      const labelUser = $('labelPassChangeUser');
+      if (labelUser) labelUser.textContent = auth.currentUsername || DEFAULT_USER;
       const alertBox = $('credsAlertMsg');
       if (alertBox) alertBox.classList.add('hidden');
+      renderUsersList();
       switchSettingsTab('creds');
       renderAuditLogs();
       openModal('settingsModal');
@@ -1602,6 +1771,7 @@
         }
       });
       if (tabKey === 'log') renderAuditLogs();
+      if (tabKey === 'creds') renderUsersList();
     }
 
     function toggleLoginPasswordVisibility() {
@@ -3285,7 +3455,8 @@
       on($('tabBtnLog'), 'click', function(){ switchSettingsTab('log'); });
       on($('tabBtnCloud'), 'click', function(){ switchSettingsTab('cloud'); });
 
-      // Guardar Credenciales y Bitácora
+      // Guardar Credenciales, Usuarios y Bitácora
+      on($('formAddUser'), 'submit', handleAddUser);
       on($('formUpdateCreds'), 'submit', handleUpdateCredentials);
       on($('btnExportLogCsv'), 'click', exportAuditLogCsv);
       on($('btnClearLog'), 'click', clearAuditLog);
