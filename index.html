@@ -80,7 +80,7 @@
           <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.2.0-Enterprise</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.3.0-Enterprise</span>
           </div>
           <p class="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1 mt-0.5">
             <span class="hidden sm:inline">Desarrollado por</span>
@@ -2039,10 +2039,11 @@
       </div>
 
       <!-- Navegación de pestañas de ajustes -->
-      <div class="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl gap-1 shrink-0">
+      <div class="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl gap-1 shrink-0 flex-wrap">
         <button type="button" id="tabBtnCreds" class="settings-tab-btn is-active flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">👥 Usuarios</button>
-        <button type="button" id="tabBtnLog" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">📋 Auditoría (Log)</button>
-        <button type="button" id="tabBtnCloud" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">🌐 Proyecto Nube</button>
+        <button type="button" id="tabBtnLog" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">📋 Auditoría</button>
+        <button type="button" id="tabBtnStorage" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">💾 Almacenamiento</button>
+        <button type="button" id="tabBtnCloud" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">🌐 Nube</button>
       </div>
 
       <!-- Contenido scrolleable -->
@@ -2169,6 +2170,46 @@
             <p class="text-[11px] text-slate-500 dark:text-slate-400">
               Despliega en 1 solo clic ejecutando <code class="font-mono bg-white dark:bg-slate-700 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-600">subir_a_firebase.bat</code>.
             </p>
+          </div>
+        </div>
+
+        <!-- Tab 4: Almacenamiento & Diagnóstico Offline (M-36) -->
+        <div id="tabContentStorage" class="hidden space-y-3">
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+            <p class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <span>📊</span> <span>Uso de Almacenamiento Local Privado</span>
+            </p>
+            <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
+              <span>Espacio Ocupado:</span>
+              <strong id="labelStorageUsed" class="font-mono text-indigo-600 dark:text-indigo-400">Calculando...</strong>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
+              <span>Cuota Disponible:</span>
+              <strong id="labelStorageQuota" class="font-mono text-emerald-600 dark:text-emerald-400">Calculando...</strong>
+            </div>
+            <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden mt-1">
+              <div id="barStorageUsage" class="bg-indigo-600 h-full w-0 transition-all duration-300"></div>
+            </div>
+          </div>
+
+          <div class="p-3 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200/80 dark:border-indigo-900/60 space-y-2">
+            <p class="font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+              <span>📲</span> <span>Estado de Aplicación Offline (PWA)</span>
+            </p>
+            <div class="flex items-center justify-between text-[11px] text-indigo-900 dark:text-indigo-300">
+              <span>Service Worker:</span>
+              <span id="labelSwStatus" class="font-bold text-emerald-600 dark:text-emerald-400">● Activo y Calibrado</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-indigo-900 dark:text-indigo-300">
+              <span>Versión de Caché:</span>
+              <span id="labelSwVersion" class="font-mono font-bold">realscan-cache-v3.3.0</span>
+            </div>
+            <div class="pt-1">
+              <button type="button" id="btnRefreshAppCache" class="w-full py-2 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-300 font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                <span>🔄</span>
+                <span>Verificar y Actualizar Caché Offline</span>
+              </button>
+            </div>
           </div>
         </div>
 

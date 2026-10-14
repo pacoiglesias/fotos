@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1
    ============================================================ */
 
-const CACHE_NAME = 'realscan-cache-v3.2.0';
+const CACHE_NAME = 'realscan-cache-v3.3.0';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   './js/config.js',
   './js/auth.js',
   './js/storage.js',
+  './js/crop-warp.js',
   './js/engine.js',
   './js/layout-engine.js',
   './js/pdf.js',

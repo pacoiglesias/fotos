@@ -414,8 +414,8 @@ function openSettingsModal() {
 }
 
 function switchSettingsTab(tabKey) {
-  const tabs = { creds: $('tabContentCreds'), log: $('tabContentLog'), cloud: $('tabContentCloud') };
-  const btns = { creds: $('tabBtnCreds'), log: $('tabBtnLog'), cloud: $('tabBtnCloud') };
+  const tabs = { creds: $('tabContentCreds'), log: $('tabContentLog'), storage: $('tabContentStorage'), cloud: $('tabContentCloud') };
+  const btns = { creds: $('tabBtnCreds'), log: $('tabBtnLog'), storage: $('tabBtnStorage'), cloud: $('tabBtnCloud') };
   Object.keys(tabs).forEach(function(k) {
     if (tabs[k]) {
       if (k === tabKey) tabs[k].classList.remove('hidden'); else tabs[k].classList.add('hidden');
@@ -426,6 +426,7 @@ function switchSettingsTab(tabKey) {
   });
   if (tabKey === 'log') renderAuditLogs();
   if (tabKey === 'creds') renderUsersList();
+  if (tabKey === 'storage' && typeof updateStorageTelemetryUI === 'function') updateStorageTelemetryUI();
 }
 
 function toggleLoginPasswordVisibility() {
