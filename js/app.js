@@ -469,6 +469,114 @@ function setCustomPreset(w, h, unit) {
 }
 
 /* ============================================================
+   UI: ANOTACIONES, ENCABEZADOS Y REGLA EN VISTA PREVIA
+   ============================================================ */
+function updatePreviewAnnotations() {
+  const spec = getActiveSpec();
+  const ruler = $('footerCalibrationRuler');
+  const badgeRuler = $('badgeRulerStatus');
+  const badgeLabels = $('badgeDocLabelsStatus');
+  const badgeTitle = $('badgeDocTitleState');
+  const isRuler = state.includeRulerFooter !== false;
+  const isLabels = state.includeDocLabels !== false;
+
+  // 1. Sincronizar Regla
+  if (ruler) {
+    ruler.classList.toggle('hidden', !isRuler);
+  }
+  if (badgeRuler) {
+    badgeRuler.textContent = isRuler ? 'Visible' : 'Oculta';
+    badgeRuler.className = isRuler 
+      ? 'text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded shrink-0'
+      : 'text-[9.5px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.2 rounded shrink-0';
+  }
+
+  // 2. Sincronizar Checkboxes
+  const chkRuler = $('chkIncludeRulerFooter');
+  if (chkRuler && chkRuler.checked !== isRuler) chkRuler.checked = isRuler;
+
+  const chkLabels = $('chkIncludeDocLabels');
+  if (chkLabels && chkLabels.checked !== isLabels) chkLabels.checked = isLabels;
+
+  if (badgeLabels) {
+    badgeLabels.textContent = isLabels ? 'Visible' : 'Oculto';
+    badgeLabels.className = isLabels 
+      ? 'text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded shrink-0'
+      : 'text-[9.5px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.2 rounded shrink-0';
+  }
+
+  // 3. Título personalizado
+  const hasCustomTitle = Boolean((state.documentCustomTitle || '').trim());
+  const chkTitle = $('chkEnableDocTitle');
+  const containerTitle = $('containerDocTitleInput');
+  if (chkTitle && chkTitle.checked !== hasCustomTitle) chkTitle.checked = hasCustomTitle;
+  if (containerTitle) containerTitle.classList.toggle('hidden', !hasCustomTitle);
+  if (badgeTitle) {
+    badgeTitle.textContent = hasCustomTitle ? 'Activado' : 'Opcional';
+    badgeTitle.className = hasCustomTitle ? 'text-[10px] font-bold text-indigo-600 dark:text-indigo-400 font-mono' : 'text-[10px] font-semibold text-slate-400 font-mono';
+  }
+
+  // 4. Header de la hoja A4
+  const sheetTitle = $('previewSheetTitle');
+  if (sheetTitle) {
+    if (!isLabels && !isRuler) {
+      sheetTitle.innerHTML = '<span class="text-amber-600 dark:text-amber-400 font-bold">🏛️ Hoja 100% Limpia</span> <span class="text-slate-400 font-normal text-[7.5px]">(Trámite Oficial)</span>';
+    } else if (hasCustomTitle) {
+      sheetTitle.textContent = state.documentCustomTitle;
+    } else {
+      sheetTitle.textContent = (state.activeCategory === 'photos') ? 'Planilla de Fotos Oficiales' : (spec.shortName + ' — Escala 1:1 Real');
+    }
+  }
+
+  // 5. Encabezados de ranuras individuales en la vista previa
+  const slots = [
+    { key: 'front', headerId: 'previewHeaderFront', titleId: 'previewTitleFront', dimId: 'previewDimFront', fallback: 'ANVERSO' },
+    { key: 'back', headerId: 'previewHeaderBack', titleId: 'previewTitleBack', dimId: 'previewDimBack', fallback: 'REVERSO' },
+    { key: 'page3', headerId: 'previewHeaderPage3', titleId: 'previewTitlePage3', dimId: 'previewDimPage3', fallback: 'PÁGINA 3' },
+    { key: 'page4', headerId: 'previewHeaderPage4', titleId: 'previewTitlePage4', dimId: 'previewDimPage4', fallback: 'PÁGINA 4' }
+  ];
+
+  const pageCount = state.documentPageCount || 2;
+  const isPhotos = state.activeCategory === 'photos';
+
+  slots.forEach(function(slot, idx) {
+    const headerEl = $(slot.headerId);
+    const titleEl = $(slot.titleId);
+    const dimEl = $(slot.dimId);
+    const isVisibleSlot = !isPhotos && (idx < pageCount);
+
+    if (headerEl) {
+      if (isVisibleSlot && isLabels) {
+        headerEl.classList.remove('hidden');
+      } else {
+        headerEl.classList.add('hidden');
+      }
+    }
+
+    if (titleEl && isVisibleSlot) {
+      let label = slot.fallback;
+      if (state.format === 'business_card') {
+        label = (idx === 0) ? 'FRENTE (CONTACTO Y LOGO)' : (idx === 1 ? 'REVERSO (QR / SERVICIOS)' : ('TARJETA 2 (PÁG. ' + (idx - 1) + ')'));
+      } else if (state.format === 'passport') {
+        label = (idx === 0) ? 'PÁG. 1 (DATOS BIOGRÁFICOS / FOTO)' : (idx === 1 ? 'PÁG. 2 (VISA / FIRMA / SELLO)' : ('PÁGINA ' + (idx + 1)));
+      } else if (state.format === 'card') {
+        label = (idx === 0) ? 'ANVERSO (FRENTE CON FOTO)' : (idx === 1 ? 'REVERSO (VUELTA / CÓDIGO)' : ('DOCUMENTO 2 (PÁG. ' + (idx - 1) + ')'));
+      }
+      titleEl.textContent = hasCustomTitle ? (state.documentCustomTitle + ' • ' + label) : label;
+    }
+
+    if (dimEl && isVisibleSlot) {
+      dimEl.textContent = spec.widthMm + ' × ' + spec.heightMm + ' mm';
+    }
+  });
+
+  // 6. Rótulos dentro de las ranuras de la hoja A4
+  $$('.preview-slot-label').forEach(function(lbl) {
+    lbl.classList.toggle('hidden', !isLabels || isPhotos);
+  });
+}
+
+/* ============================================================
    UI: VISTA PREVIA A4
    ============================================================ */
 function updateUI() {
@@ -567,6 +675,8 @@ function updateUI() {
       }
     });
   }
+
+  updatePreviewAnnotations();
 }
 
 /* ============================================================
@@ -1027,9 +1137,11 @@ function bindEvents() {
   }
 
   // Nombre / Titular del Documento
+  // Nombre / Titular del Documento
   if ($('inputDocumentTitle')) {
     on($('inputDocumentTitle'), 'input', function(e) {
       state.documentCustomTitle = (e.target.value || '').trim();
+      updatePreviewAnnotations();
       savePreferences();
     });
   }
@@ -1037,8 +1149,46 @@ function bindEvents() {
     on($('btnClearDocTitle'), 'click', function() {
       if ($('inputDocumentTitle')) $('inputDocumentTitle').value = '';
       state.documentCustomTitle = '';
+      updatePreviewAnnotations();
       savePreferences();
       showToast('Título del documento restablecido.', 'info');
+    });
+  }
+
+  // Checklist: Activar / Desactivar Título
+  if ($('chkEnableDocTitle')) {
+    on($('chkEnableDocTitle'), 'change', function(e) {
+      const container = $('containerDocTitleInput');
+      if (container) container.classList.toggle('hidden', !e.target.checked);
+      if (e.target.checked) {
+        if ($('inputDocumentTitle')) $('inputDocumentTitle').focus();
+      } else {
+        if ($('inputDocumentTitle')) $('inputDocumentTitle').value = '';
+        state.documentCustomTitle = '';
+        updatePreviewAnnotations();
+        savePreferences();
+      }
+    });
+  }
+
+  // Presets Rápidos de Limpieza / Acabado
+  if ($('btnQuickOfficialClean')) {
+    on($('btnQuickOfficialClean'), 'click', function() {
+      state.includeRulerFooter = false;
+      state.includeDocLabels = false;
+      updatePreviewAnnotations();
+      savePreferences();
+      showToast('🏛️ Modo Trámite Oficial: Hoja 100% limpia sin regla ni anotaciones al pie.', 'success');
+    });
+  }
+
+  if ($('btnQuickStandardChecked')) {
+    on($('btnQuickStandardChecked'), 'click', function() {
+      state.includeRulerFooter = true;
+      state.includeDocLabels = true;
+      updatePreviewAnnotations();
+      savePreferences();
+      showToast('📐 Modo Estándar activado: Regla física de 5 cm y medidas visibles.', 'info');
     });
   }
 
@@ -1046,10 +1196,7 @@ function bindEvents() {
   if ($('chkIncludeRulerFooter')) {
     on($('chkIncludeRulerFooter'), 'change', function(e) {
       state.includeRulerFooter = e.target.checked;
-      const ruler = $('footerCalibrationRuler');
-      if (ruler) {
-        ruler.classList.toggle('hidden', !state.includeRulerFooter);
-      }
+      updatePreviewAnnotations();
       savePreferences();
       if (!state.includeRulerFooter) {
         showToast('Regla e instrucciones desactivadas: Hoja 100% limpia para trámites oficiales.', 'success');
@@ -1062,8 +1209,39 @@ function bindEvents() {
   if ($('chkIncludeDocLabels')) {
     on($('chkIncludeDocLabels'), 'change', function(e) {
       state.includeDocLabels = e.target.checked;
+      updatePreviewAnnotations();
       savePreferences();
-      showToast(state.includeDocLabels ? 'Rótulos superiores activados.' : 'Rótulos desactivados para máxima pulcritud.', 'info');
+      showToast(state.includeDocLabels ? 'Rótulos y medidas activados en la vista previa e impresión.' : 'Rótulos desactivados para máxima pulcritud.', 'info');
+    });
+  }
+
+  // Botones de Ampliación Rápida (+25%, +50%)
+  $$('.scale-preset-btn').forEach(function(b) {
+    on(b, 'click', function() {
+      const parts = b.getAttribute('data-scale-preset').split(':');
+      const side = parts[0];
+      const targetZoom = parseFloat(parts[1]) || 1.25;
+      if (typeof setZoomScale === 'function') {
+        setZoomScale(side, targetZoom);
+      }
+    });
+  });
+
+  // Acciones del Dashboard de Escaneos Guardados
+  if ($('btnDashboardQuickSave')) {
+    on($('btnDashboardQuickSave'), 'click', async function() {
+      const sel = $('selectRetentionDays');
+      const days = sel ? parseInt(sel.value, 10) : 3;
+      if (typeof saveScanToStorage === 'function') {
+        await saveScanToStorage(state.documentCustomTitle || null, days);
+      }
+    });
+  }
+
+  if ($('btnDashboardOpenModal')) {
+    on($('btnDashboardOpenModal'), 'click', function() {
+      openModal('historyModal');
+      if (typeof renderHistoryUI === 'function') renderHistoryUI();
     });
   }
 
@@ -1109,6 +1287,7 @@ function init() {
   updatePhotoGridStats();
   updatePassportOptionsUI();
   updateUI();
+  if (typeof renderSavedScansDashboard === 'function') renderSavedScansDashboard();
 }
 
 if (document.readyState === 'loading') {

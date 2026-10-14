@@ -127,13 +127,36 @@ Se agregaron 4 botones dedicados con etiquetas claras y descriptivas:
 3. **Control Estricto de Versiones:**
    - Versión del sistema elevada a **`v2.8.0-Enterprise`**.
 
+## 7. 🚀 Versión v2.9.1-Enterprise: Ampliación Inteligente de DNI Pequeño, Reactividad en Vivo y Dashboard de Escaneos
+1. **Ampliación y Ajuste Automático/Manual de DNI o Fotos Pequeñas:**
+   - **Problema planteado:** Al subir una foto o PDF donde el DNI fue tomado de lejos o aparece pequeño, la impresión estándar salía con menor tamaño que el documento físico real.
+   - **Solución implementada:**
+     - **Botón `⚡ Ampliar 1:1`**: Aplica recorte automático inteligente si hay bordes blancos o contrastados. Si ya está recortado o no hay bordes definidos, amplía el documento un +25% de forma progresiva hasta llenar con exactitud el marco físico de 85.60 × 53.98 mm a 300 DPI.
+     - **Presets Rápidos de Zoom (`+25%`, `+50%`)**: Botones táctiles inmediatos en la barra de cada ranura para escalar fotos reducidas sin perder nitidez.
+     - **Encuadre por Arrastre (Drag-to-Pan)**: Al hacer zoom, el usuario puede arrastrar directamente sobre la imagen para encuadrar la credencial o cara del pasaporte a la perfección.
+
+2. **Reactividad Inmediata en la Vista Previa de la Hoja A4:**
+   - Al marcar o desmarcar *"📐 Regla de 5 cm e Instrucciones"* o *"🏷️ Imprimir Nombre y Medidas"*, la hoja A4 se actualiza en tiempo real de forma instantánea.
+   - Si se activa *"🏛️ Trámite Oficial (Hoja Limpia)"*, todos los encabezados, rótulos de mm y reglas desaparecen inmediatamente de la hoja en pantalla, del PDF y de la impresión física.
+
+3. **Checklist Visual Unificado en el Paso 4:**
+   - Reemplazo de controles dispersos por una caja de checklist visual con insignias de estado en vivo (*"Visible"* / *"Oculto"*).
+   - Presets de 1 solo clic:
+     - `🏛️ Hoja 100% Limpia (Trámite Oficial)`: Desmarca todo automáticamente para evitar rechazos en juzgados, bancos o embajadas.
+     - `📐 Estándar Completo (Con Regla)`: Activa regla de calibración y rótulos de tamaño milimétrico.
+
+4. **Dashboard Visible de Documentos Guardados en la Página Principal:**
+   - Se integró la sección `#sectionSavedScansDashboard` directamente en la interfaz principal.
+   - Muestra tarjetas interactivas con miniatura, cantidad de caras, fecha de creación y estado de caducidad.
+   - Permite con 1 solo toque: `🔄 Cargar al Lienzo`, `📄 Exportar PDF 1:1`, `🖨️ Imprimir Directo` y `🗑️ Eliminar`.
+
+5. **Control de Versiones:**
+   - Versión del sistema elevada a **`v2.9.1-Enterprise`** en `js/config.js`, `index.html` y documentación.
+
 ---
 
-## 7. 🚀 Despliegue y Sincronización Total
+## 8. 🚀 Despliegue y Sincronización Total
 - **Local:** `http://localhost:5500/`
 - **Producción:** `https://fotos-cobertores-pro.web.app` / `https://fotos-cobertores-pro.firebaseapp.com`
 - **Integridad:** Código modular sincronizado al 100%, validado sintácticamente y con cero errores de consola.
 - **Autoría:** Desarrollado por **Paco Iglesias**.
-
-
- 

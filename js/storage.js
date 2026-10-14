@@ -95,6 +95,7 @@ async function saveScanToStorage(customTitle, retentionDays) {
       req.onsuccess = function() {
         showToast('💾 Escaneo guardado en tu historial local (' + (days > 0 ? ('Auto-elimina en ' + days + ' días') : 'Permanente') + ').', 'success');
         updateHistoryBadge();
+        if (typeof renderSavedScansDashboard === 'function') renderSavedScansDashboard();
         resolve(record);
       };
       req.onerror = function(e) {
@@ -159,6 +160,7 @@ async function clearAllScansFromStorage() {
       req.onsuccess = function() {
         showToast('Historial local vaciado por completo.', 'info');
         updateHistoryBadge();
+        if (typeof renderSavedScansDashboard === 'function') renderSavedScansDashboard();
         resolve(true);
       };
       req.onerror = function(e) { reject(e.target.error); };
@@ -234,7 +236,7 @@ async function restoreScanToApp(id) {
   }
 }
 
-/* Actualizar contador visual en la cabecera */
+/* Actualizar contador visual en la cabecera y en el panel visible */
 async function updateHistoryBadge() {
   try {
     const scans = await getAllScansFromStorage();
@@ -243,8 +245,123 @@ async function updateHistoryBadge() {
       badge.textContent = scans.length;
       badge.classList.toggle('hidden', scans.length === 0);
     }
+    const tag = $('savedScansCountTag');
+    if (tag) {
+      tag.textContent = scans.length + (scans.length === 1 ? ' guardado' : ' guardados');
+    }
   } catch (e) {}
 }
+
+/* Renderizar el Dashboard Principal de Escaneos Guardados en la Página */
+async function renderSavedScansDashboard() {
+  const grid = $('mainSavedScansGrid');
+  const tag = $('savedScansCountTag');
+  if (!grid) return;
+
+  const scans = await getAllScansFromStorage();
+  if (tag) {
+    tag.textContent = scans.length + (scans.length === 1 ? ' guardado' : ' guardados');
+  }
+
+  grid.innerHTML = '';
+  if (scans.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full py-8 px-4 text-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 space-y-2">
+        <div class="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center text-xl">
+          📂
+        </div>
+        <p class="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200">No tienes escaneos guardados en este equipo todavía</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+          Cuando captures o subas un documento, presiona <strong>"💾 Guardar Escaneo Actual"</strong> para tenerlo siempre a mano y volverlo a imprimir con 1 clic.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  const now = Date.now();
+  scans.forEach(function(s) {
+    const card = document.createElement('div');
+    card.className = 'p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 shadow-sm flex flex-col justify-between gap-3 transition-all hover:border-indigo-300 dark:hover:border-indigo-700';
+
+    let expireTag = '';
+    if (s.expiresAt > 0) {
+      const diffMs = s.expiresAt - now;
+      if (diffMs <= 0) {
+        expireTag = '<span class="text-[9.5px] font-bold text-red-600 bg-red-50 dark:bg-red-950/60 px-1.5 py-0.2 rounded border border-red-200 dark:border-red-900">Expirado</span>';
+      } else {
+        const daysLeft = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+        expireTag = '<span class="text-[9.5px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.2 rounded border border-amber-200 dark:border-amber-800">⏳ ' + daysLeft + (daysLeft === 1 ? ' día' : ' días') + '</span>';
+      }
+    } else {
+      expireTag = '<span class="text-[9.5px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-200 dark:border-emerald-800">♾️ Permanente</span>';
+    }
+
+    card.innerHTML = `
+      <div class="flex items-start gap-3 min-w-0">
+        <div class="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center cursor-pointer btn-dash-restore" data-id="${s.id}" title="Hacer clic para cargar en el lienzo">
+          ${s.thumbnail ? `<img src="${s.thumbnail}" class="w-full h-full object-cover" alt="Miniatura" />` : `<span class="text-2xl">📄</span>`}
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-xs text-slate-900 dark:text-white truncate" title="${s.title}">${s.title}</p>
+          <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
+            <span class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded">${s.pages ? s.pages.length : 1} cara(s)</span>
+            <span class="text-[9.5px] text-slate-400 font-mono">${s.createdFormatted}</span>
+          </div>
+          <div class="mt-1">${expireTag}</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-4 gap-1 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+        <button type="button" class="btn-dash-restore py-1 px-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/70 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-bold flex items-center justify-center gap-1 transition-colors" data-id="${s.id}" title="Cargar este documento en el lienzo de trabajo">
+          <span>🔄</span><span class="hidden sm:inline">Cargar</span>
+        </button>
+        <button type="button" class="btn-dash-pdf py-1 px-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold flex items-center justify-center gap-1 transition-colors" data-id="${s.id}" title="Descargar PDF 1:1 directo">
+          <span>📄</span><span class="hidden sm:inline">PDF</span>
+        </button>
+        <button type="button" class="btn-dash-print py-1 px-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold flex items-center justify-center gap-1 transition-colors" data-id="${s.id}" title="Imprimir directo a escala 100%">
+          <span>🖨️</span><span class="hidden sm:inline">Imprimir</span>
+        </button>
+        <button type="button" class="btn-dash-delete py-1 px-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white hover:bg-red-50 dark:bg-slate-800 dark:hover:bg-red-950/60 text-slate-500 hover:text-red-600 font-semibold flex items-center justify-center transition-colors" data-id="${s.id}" title="Eliminar escaneo">
+          <span>🗑️</span>
+        </button>
+      </div>
+    `;
+
+    grid.appendChild(card);
+  });
+
+  // Bindings del Dashboard
+  grid.querySelectorAll('.btn-dash-restore').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      restoreScanToApp(btn.getAttribute('data-id'));
+    });
+  });
+
+  grid.querySelectorAll('.btn-dash-pdf').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      await restoreScanToApp(btn.getAttribute('data-id'));
+      if (typeof handleExportPDF === 'function') handleExportPDF(false);
+    });
+  });
+
+  grid.querySelectorAll('.btn-dash-print').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      await restoreScanToApp(btn.getAttribute('data-id'));
+      if (typeof handlePrintDirect === 'function') handlePrintDirect();
+    });
+  });
+
+  grid.querySelectorAll('.btn-dash-delete').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      if (confirm('¿Deseas eliminar este escaneo guardado?')) {
+        await deleteScanFromStorage(btn.getAttribute('data-id'));
+        renderSavedScansDashboard();
+        renderHistoryUI();
+      }
+    });
+  });
+}
+window.renderSavedScansDashboard = renderSavedScansDashboard;
 
 /* Renderizar la lista dentro del Modal de Historial */
 async function renderHistoryUI() {

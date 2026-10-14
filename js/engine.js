@@ -295,12 +295,19 @@ function autoFitSlotToCard(side) {
     return;
   }
 
-  // Si existe versión recortada pero no está activa, aplicarla
+  // 1. Si existe versión recortada pero no está activa, aplicarla
   if (imgData.croppedSrc && !imgData.isCropApplied) {
     imgData.isCropApplied = true;
     imgData.originalSrc = imgData.croppedSrc;
     const btn = $('btnToggleCrop' + getSlotIdSuffix(side));
     if (btn) btn.textContent = '✂️ Recorte Auto';
+    imgData.zoom = 1.0;
+    imgData.panX = 0;
+    imgData.panY = 0;
+    const label = $('zoomLabel' + getSlotIdSuffix(side));
+    if (label) label.textContent = '1.0x';
+    renderProcessedImage(side);
+    showToast('¡Ajuste 1:1 aplicado! Documento ampliado para rellenar la ranura exacta.', 'success');
   } else if (!imgData.croppedSrc && imgData.rawOriginalSrc) {
     const tempImg = new Image();
     tempImg.onload = function() {
@@ -311,26 +318,48 @@ function autoFitSlotToCard(side) {
         imgData.originalSrc = cropped;
         imgData.naturalWidth = tempImg.naturalWidth;
         imgData.naturalHeight = tempImg.naturalHeight;
+        imgData.zoom = 1.0;
+      } else {
+        // Si la foto no tiene bordes detectables pero el DNI es pequeño, ampliarlo un paso (+25%)
+        imgData.zoom = parseFloat(((imgData.zoom || 1.0) + 0.25).toFixed(2));
       }
-      imgData.zoom = 1.0;
       imgData.panX = 0;
       imgData.panY = 0;
       const label = $('zoomLabel' + getSlotIdSuffix(side));
-      if (label) label.textContent = '1.0x';
+      if (label) label.textContent = (imgData.zoom || 1.0) + 'x';
       renderProcessedImage(side);
-      showToast('¡Ajuste 1:1 aplicado! Documento ampliado para rellenar la ranura exacta.', 'success');
+      showToast('⚡ ¡DNI ampliado (' + imgData.zoom + 'x) para llenar el tamaño real 1:1! Arrastra sobre la vista previa para centrarlo.', 'success');
     };
     tempImg.src = imgData.rawOriginalSrc;
     return;
+  } else {
+    // Si ya está activo o recortado, ampliar incrementalmente (+25%) con cada clic para fotos pequeñas
+    let currentZ = imgData.zoom || 1.0;
+    if (currentZ >= 2.5) {
+      currentZ = 1.0;
+      showToast('🔄 Zoom restablecido a 1.0x (Tamaño estándar).', 'info');
+    } else {
+      currentZ = parseFloat((currentZ + 0.25).toFixed(2));
+      showToast('🔍 DNI ampliado a ' + currentZ + 'x para llenar la ranura real (85.6 × 54.0 mm).', 'success');
+    }
+    imgData.zoom = currentZ;
+    const label = $('zoomLabel' + getSlotIdSuffix(side));
+    if (label) label.textContent = currentZ + 'x';
+    renderProcessedImage(side);
   }
+}
 
-  imgData.zoom = 1.0;
-  imgData.panX = 0;
-  imgData.panY = 0;
+function setZoomScale(side, targetZoom) {
+  const imgData = state.images[side];
+  if (!imgData || !imgData.originalSrc) {
+    showToast('Carga primero una foto para ajustar su tamaño.', 'warning');
+    return;
+  }
+  imgData.zoom = parseFloat(targetZoom.toFixed(2));
   const label = $('zoomLabel' + getSlotIdSuffix(side));
-  if (label) label.textContent = '1.0x';
+  if (label) label.textContent = imgData.zoom + 'x';
   renderProcessedImage(side);
-  showToast('¡Ajuste 1:1 aplicado! Documento ampliado para rellenar la ranura exacta.', 'success');
+  showToast('🔍 Ampliación fijada a ' + imgData.zoom + 'x en ' + getSlotFriendlyName(side) + '. Arrastra la foto para encuadrarla.', 'info');
 }
 
 function clearSlot(side) {
