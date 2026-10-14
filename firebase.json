@@ -6,10 +6,17 @@
       "firebase.json",
       ".firebaserc",
       "**/.*",
+      ".git/**",
+      "**/.git/**",
+      ".audit/**",
+      "**/.audit/**",
       "**/node_modules/**",
-      "*.bat",
-      "*.ps1",
-      "*.md"
+      "**/*.bat",
+      "**/*.cmd",
+      "**/*.ps1",
+      "**/*.sh",
+      "**/*.md",
+      "test_*.js"
     ]
   }
 }
