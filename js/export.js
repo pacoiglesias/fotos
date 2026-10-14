@@ -1,6 +1,6 @@
 /* ============================================================
    RealScan Pro — Módulo de Exportación, Impresión Directa e Imagen
-   Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
+   Desarrollado por Paco Iglesias • Escala 1:1 Físicamente Calibrada
    ============================================================ */
 
 /**
@@ -20,7 +20,7 @@ function downloadPdfBlob(doc, fileName) {
       if (a.parentNode) a.parentNode.removeChild(a);
       URL.revokeObjectURL(url);
     }, 2000);
-    showToast('¡PDF generado! Ábrelo e imprime al 100%.', 'success');
+    showToast('¡PDF generado! Ábrelo e imprime al 100% de escala.', 'success');
   } catch (err) {
     doc.save(fileName);
     showToast('¡PDF descargado!', 'success');
@@ -46,23 +46,23 @@ async function handleExportPDF(tryShare) {
       showToast('Abriendo menú para compartir...', 'info');
       await navigator.share({
         files: [pdfFile],
-        title: 'RealScan - Documento en tamaño real A4',
-        text: 'PDF con Anverso y Reverso a tamaño físico 1:1 en una sola hoja A4.'
+        title: 'RealScan - Documento en tamaño real',
+        text: 'PDF a escala física 1:1 real listo para imprimir al 100%.'
       });
       if (typeof logActivity === 'function') {
-        logActivity('Compartir PDF A4', (state.activeCategory === 'photos' ? state.photoCopies + ' fotos' : spec.name));
+        logActivity('Compartir PDF', (state.activeCategory === 'photos' ? state.photoCopies + ' fotos' : spec.name));
       }
       showToast('¡Archivo compartido con éxito!', 'success');
       return;
     }
     if (typeof logActivity === 'function') {
-      logActivity('Descarga PDF A4 (1:1)', (state.activeCategory === 'photos' ? state.photoCopies + ' fotos' : spec.name));
+      logActivity('Descarga PDF (1:1)', (state.activeCategory === 'photos' ? state.photoCopies + ' fotos' : spec.name));
     }
     downloadPdfBlob(doc, fileName);
   } catch (err) {
     if (err && err.name === 'AbortError') { showToast('Envío cancelado.', 'info'); return; }
     if (typeof logActivity === 'function') {
-      logActivity('Descarga PDF A4 (Fallback)', spec.name);
+      logActivity('Descarga PDF (Fallback)', spec.name);
     }
     downloadPdfBlob(doc, fileName);
   }
@@ -98,7 +98,6 @@ function handlePrintDirect() {
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
     } catch (e) {
-      // Fallback a ventana nueva si iframe falla en navegadores móviles estrictos
       window.open(blobUrl, '_blank');
     }
     setTimeout(function() {
@@ -112,19 +111,12 @@ function handlePrintDirect() {
 }
 
 /**
- * Descarga de Imagen A4 Calibrada (300 DPI Constantes)
+ * Dibuja una página completa en un elemento Canvas a 300 DPI calibrados
+ * usando las posiciones milimétricas de RealScanLayout
  */
-function downloadA4Image() {
-  if (!state.images.front.processedDataUrl) {
-    showToast('Por favor captura o sube al menos una imagen.', 'warning');
-    return;
-  }
-
-  const paper = (typeof getActivePaperSpec === 'function') ? getActivePaperSpec() : { widthMm: 210, heightMm: 297, name: 'A4', shortName: 'A4' };
-  showToast('Generando imagen ' + paper.shortName + ' a 300 DPI...', 'info');
-
-  // Papel físico a 300 DPI calibrados
-  const pxPerMm = 300 / 25.4;
+function renderPageToCanvas(page, layout, loadedImages) {
+  const paper = layout.paper;
+  const pxPerMm = 300 / 25.4; // 11.811 px por mm a 300 DPI
   const sheetW = Math.round(paper.widthMm * pxPerMm);
   const sheetH = Math.round(paper.heightMm * pxPerMm);
 
@@ -133,18 +125,89 @@ function downloadA4Image() {
   canvas.height = sheetH;
   const ctx = canvas.getContext('2d');
 
+  // Fondo blanco 100% puro
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, sheetW, sheetH);
 
-  const spec = getActiveSpec();
+  // 1. Encabezado de página
+  if (!layout.isCleanSheet && page.sheetTitle) {
+    ctx.fillStyle = '#475569';
+    ctx.font = 'bold ' + Math.round(8.5 * pxPerMm * 0.35) + 'px Helvetica, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(page.sheetTitle.toUpperCase(), sheetW / 2, 12 * pxPerMm);
+  }
 
-  // Regla de calibración en imagen (5 cm) — Opcional
-  if (state.includeRulerFooter !== false) {
+  // 2. Colocar cada imagen en la página según sus coordenadas mm
+  page.placements.forEach(function(item) {
+    const x = item.xMm * pxPerMm;
+    const y = item.yMm * pxPerMm;
+    const w = item.widthMm * pxPerMm;
+    const h = item.heightMm * pxPerMm;
+
+    const imgObj = loadedImages[item.slot] || loadedImages.front;
+
+    // A. Borde y marcas de corte
+    if (item.drawOvalGuide) {
+      ctx.save();
+      ctx.setLineDash([12, 10]);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.ellipse(x + w / 2, y + h / 2, w / 2 - 2, h / 2 - 2, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    } else if (item.drawBorder) {
+      ctx.save();
+      ctx.setLineDash([12, 12]);
+      ctx.strokeStyle = '#b0b0b0';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+      ctx.restore();
+    }
+
+    // B. Dibujar imagen a escala física 1:1
+    if (imgObj && imgObj.complete && imgObj.naturalWidth > 0) {
+      ctx.drawImage(imgObj, x, y, w, h);
+    }
+
+    // C. Marcas de corte en esquinas
+    if (item.drawCutMarks && !item.drawOvalGuide) {
+      ctx.save();
+      ctx.strokeStyle = '#777777';
+      ctx.lineWidth = 2.2;
+      const tick = 25, off = 10;
+      ctx.beginPath();
+      ctx.moveTo(x - off, y); ctx.lineTo(x - off + tick, y);
+      ctx.moveTo(x, y - off); ctx.lineTo(x, y - off + tick);
+      ctx.moveTo(x + w + off - tick, y); ctx.lineTo(x + w + off, y);
+      ctx.moveTo(x + w, y - off); ctx.lineTo(x + w, y - off + tick);
+      ctx.moveTo(x - off, y + h); ctx.lineTo(x - off + tick, y + h);
+      ctx.moveTo(x, y + h + off - tick); ctx.lineTo(x, y + h + off);
+      ctx.moveTo(x + w + off - tick, y + h); ctx.lineTo(x + w + off, y + h);
+      ctx.moveTo(x + w, y + h + off - tick); ctx.lineTo(x + w, y + h + off);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // D. Rótulo del documento
+    if (item.label) {
+      ctx.save();
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold ' + Math.round(7 * pxPerMm * 0.35) + 'px Helvetica, Arial, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(item.label, x, y - 6);
+      ctx.restore();
+    }
+  });
+
+  // 3. Regla de calibración al pie (5 cm exacta)
+  if (page.hasRuler) {
     const rulerLengthMm = 50;
     const rulerLengthPx = rulerLengthMm * pxPerMm;
     const rulerStartX = (sheetW - rulerLengthPx) / 2;
     const rulerY = (paper.heightMm - 35) * pxPerMm;
 
+    ctx.save();
     ctx.strokeStyle = '#444444';
     ctx.lineWidth = 3.5;
     ctx.beginPath();
@@ -177,142 +240,115 @@ function downloadA4Image() {
     ctx.fillText('INSTRUCCIONES: IMPRIMIR AL 100% (TAMAÑO REAL) — LA REGLA DEBE MEDIR 5 CM', sheetW / 2, rulerY + 95);
     ctx.font = '20px Helvetica, Arial, sans-serif';
     ctx.fillStyle = '#666666';
-    ctx.fillText('RealScan por Paco Iglesias | Formato: ' + spec.name + ' • Hoja: ' + paper.name + ' (300 DPI)', sheetW / 2, rulerY + 130);
-  }
-
-  function drawImageWithMarks(imgObj, xMm, yMm, wMm, hMm) {
-    const x = xMm * pxPerMm;
-    const y = yMm * pxPerMm;
-    const w = wMm * pxPerMm;
-    const h = hMm * pxPerMm;
-
-    // Líneas de corte
-    ctx.save();
-    if (spec.isOval) {
-      ctx.setLineDash([12, 10]);
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.ellipse(x + w / 2, y + h / 2, w / 2 - 2, h / 2 - 2, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    } else {
-      ctx.setLineDash([12, 12]);
-      ctx.strokeStyle = '#b0b0b0';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
-    }
+    ctx.fillText('RealScan por Paco Iglesias | Formato: ' + layout.spec.name + ' • Hoja: ' + paper.name + ' (300 DPI)', sheetW / 2, rulerY + 130);
     ctx.restore();
-
-    // Imagen 1:1
-    ctx.drawImage(imgObj, x, y, w, h);
-
-    // Guías de corte
-    if (!spec.isOval) {
-      ctx.save();
-      ctx.strokeStyle = '#777777';
-      ctx.lineWidth = 2.2;
-      const tick = 25, off = 10;
-      ctx.beginPath();
-      ctx.moveTo(x-off, y); ctx.lineTo(x-off+tick, y);
-      ctx.moveTo(x, y-off); ctx.lineTo(x, y-off+tick);
-      ctx.moveTo(x+w+off-tick, y); ctx.lineTo(x+w+off, y);
-      ctx.moveTo(x+w, y-off); ctx.lineTo(x+w, y-off+tick);
-      ctx.moveTo(x-off, y+h); ctx.lineTo(x-off+tick, y+h);
-      ctx.moveTo(x, y+h+off-tick); ctx.lineTo(x, y+h+off);
-      ctx.moveTo(x+w+off-tick, y+h); ctx.lineTo(x+w+off, y+h);
-      ctx.moveTo(x+w, y+h+off-tick); ctx.lineTo(x+w, y+h+off);
-      ctx.stroke();
-      ctx.restore();
-    }
   }
 
-  function triggerDownload() {
+  return canvas;
+}
+
+/**
+ * Descarga de Imagen(es) a 300 DPI Constantes con soporte para todas las páginas
+ */
+async function downloadA4Image() {
+  if (!state.images.front || !state.images.front.processedDataUrl) {
+    showToast('Por favor captura o sube al menos una imagen.', 'warning');
+    return;
+  }
+
+  const layout = window.RealScanLayout.computeDocumentLayout(state);
+  const paper = layout.paper;
+  const spec = layout.spec;
+
+  showToast('Generando ' + layout.totalPages + ' hoja(s) ' + paper.shortName + ' a 300 DPI...', 'info');
+
+  // Cargar imágenes necesarias de forma asíncrona y segura
+  const slotsToLoad = ['front', 'back', 'page3', 'page4'];
+  const loadedImages = {};
+
+  const loadPromises = slotsToLoad.map(function(s) {
+    return new Promise(function(resolve) {
+      if (state.images[s] && state.images[s].processedDataUrl) {
+        const img = new Image();
+        img.onload = function() { loadedImages[s] = img; resolve(); };
+        img.onerror = function() { resolve(); };
+        img.src = state.images[s].processedDataUrl;
+      } else {
+        resolve();
+      }
+    });
+  });
+
+  await Promise.all(loadPromises);
+
+  const customTitle = (state.documentCustomTitle || '').trim().replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const baseName = customTitle ? customTitle : ('RealScan_' + spec.fileName);
+
+  // Caso 1: 1 sola página -> Descarga directa de archivo JPG
+  if (layout.totalPages === 1) {
+    const canvas = renderPageToCanvas(layout.pages[0], layout, loadedImages);
     canvas.toBlob(function(blob) {
       if (!blob) return;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'RealScan_' + spec.fileName + '_' + paper.shortName.replace(/\s+/g, '_') + '_300DPI.jpg';
+      a.download = baseName + '_' + paper.shortName.toLowerCase() + '_300DPI.jpg';
       document.body.appendChild(a);
       a.click();
       setTimeout(function() {
         if (a.parentNode) a.parentNode.removeChild(a);
         URL.revokeObjectURL(url);
       }, 2000);
-      if (typeof logActivity === 'function') {
-        logActivity('Descarga Imagen ' + paper.shortName + ' (300 DPI)', (state.activeCategory === 'photos' ? state.photoCopies + ' fotos' : spec.name));
-      }
       showToast('¡Imagen ' + paper.shortName + ' a 300 DPI descargada con éxito!', 'success');
     }, 'image/jpeg', 0.95);
+    return;
   }
 
-  const frontImg = new Image();
-  frontImg.onload = function() {
-    if (state.activeCategory === 'photos') {
-      const copies = state.photoCopies;
-      const info = (typeof getPhotoLayoutInfo === 'function') ? getPhotoLayoutInfo(spec.widthMm, spec.heightMm, copies) : { cols: 4, gap: 4 };
-      const cols = info.cols;
-      const gap = info.gap;
-      const totalGridW = cols * spec.widthMm + (cols - 1) * gap;
-      const startXMm = (paper.widthMm - totalGridW) / 2;
-      const startYMm = 22;
+  // Caso 2: Múltiples páginas -> Empaquetar en ZIP si JSZip está presente, o descargar secuencialmente
+  if (typeof window.JSZip !== 'undefined') {
+    const zip = new window.JSZip();
+    const folder = zip.folder(baseName + '_hojas_300DPI');
 
-      ctx.fillStyle = '#333333';
-      ctx.font = 'bold 30px Helvetica, Arial, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('PLANILLA DE FOTOS: ' + spec.name.toUpperCase() + ' (' + copies + ' FOTOS)', sheetW / 2, (startYMm - 9) * pxPerMm);
+    const pageBlobs = layout.pages.map(function(page, idx) {
+      const canvas = renderPageToCanvas(page, layout, loadedImages);
+      return new Promise(function(resolve) {
+        canvas.toBlob(function(blob) {
+          folder.file('Hoja_' + (idx + 1) + '_' + paper.shortName.toLowerCase() + '.jpg', blob);
+          resolve();
+        }, 'image/jpeg', 0.95);
+      });
+    });
 
-      ctx.font = '22px Helvetica, Arial, sans-serif';
-      ctx.fillStyle = '#777777';
-      ctx.fillText('Medida física: ' + spec.widthMm + ' × ' + spec.heightMm + ' mm | Escala 1:1 real en papel ' + paper.name, sheetW / 2, (startYMm - 4.5) * pxPerMm);
-
-      const backImg = (state.mixTwoPhotos && state.images.back.processedDataUrl) ? new Image() : null;
-      const halfCopies = Math.floor(copies / 2);
-
-      function renderAllGrid() {
-        for (let i = 0; i < copies; i++) {
-          const useBack = (backImg && i >= halfCopies);
-          const curImg = useBack ? backImg : frontImg;
-          const c = i % cols;
-          const r = Math.floor(i / cols);
-          const pxMm = startXMm + c * (spec.widthMm + gap);
-          const pyMm = startYMm + r * (spec.heightMm + gap);
-          if (pyMm + spec.heightMm <= (paper.heightMm - 41)) {
-            drawImageWithMarks(curImg, pxMm, pyMm, spec.widthMm, spec.heightMm);
-          }
-        }
-        triggerDownload();
-      }
-
-      if (backImg) {
-        backImg.onload = renderAllGrid;
-        backImg.src = state.images.back.processedDataUrl;
-      } else {
-        renderAllGrid();
-      }
-    } else {
-      // Documentos
-      const targetW = spec.widthMm;
-      const targetH = spec.heightMm;
-      const posX = (paper.widthMm - targetW) / 2;
-      const topMarginFront = (targetH > 100) ? 18 : 25;
-
-      drawImageWithMarks(frontImg, posX, topMarginFront, targetW, targetH);
-
-      if (state.printMode === 'both' && state.images.back.processedDataUrl) {
-        const backImg = new Image();
-        backImg.onload = function() {
-          const topMarginBack = (targetH > 100) ? (topMarginFront + targetH + 14) : (topMarginFront + targetH + 15);
-          if (topMarginBack + targetH <= (paper.heightMm - 41)) {
-            drawImageWithMarks(backImg, posX, topMarginBack, targetW, targetH);
-          }
-          triggerDownload();
-        };
-        backImg.src = state.images.back.processedDataUrl;
-        return;
-      }
-      triggerDownload();
-    }
-  };
-  frontImg.src = state.images.front.processedDataUrl;
+    await Promise.all(pageBlobs);
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const zipUrl = URL.createObjectURL(zipBlob);
+    const a = document.createElement('a');
+    a.href = zipUrl;
+    a.download = baseName + '_' + layout.totalPages + '_hojas_300DPI.zip';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+      if (a.parentNode) a.parentNode.removeChild(a);
+      URL.revokeObjectURL(zipUrl);
+    }, 2000);
+    showToast('¡Paquete ZIP con ' + layout.totalPages + ' hojas descargado!', 'success');
+  } else {
+    // Fallback: descargar cada página individualmente
+    layout.pages.forEach(function(page, idx) {
+      const canvas = renderPageToCanvas(page, layout, loadedImages);
+      canvas.toBlob(function(blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = baseName + '_Hoja_' + (idx + 1) + '_300DPI.jpg';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+          if (a.parentNode) a.parentNode.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 2000);
+      }, 'image/jpeg', 0.95);
+    });
+    showToast('¡' + layout.totalPages + ' imágenes descargadas!', 'success');
+  }
 }

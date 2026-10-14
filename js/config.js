@@ -22,6 +22,8 @@ window.state = {
   sheetLayout: 'same_page', // 'same_page' (juntas en 1 hoja) o 'separate_pages' (1 por hoja)
   includeRulerFooter: true, // true (con regla de 5cm e instrucciones) o false (página 100% limpia para trámites oficiales)
   includeDocLabels: true, // true (con títulos y mm sobre cada cara) o false
+  includeCutMarks: true, // true (con marcas y guías de corte en esquinas) o false (hoja 100% limpia)
+  previewActivePage: 1, // Página activa en la vista previa interactiva
   documentCustomTitle: '', // Nombre o titular personalizado (ej: "DNI de Juan Pérez")
   duplicateCard: false, // true (2 juegos de copias en 1 hoja: Frente+Vuelta x2)
   format: 'card',
@@ -52,8 +54,10 @@ window.PAPER_SPECS = {
   legal:  { id:'legal',  name:'Oficio Legal USA (215.9 × 355.6 mm)',shortName:'Legal USA',  widthMm:215.9, heightMm:355.6, jsPdfFormat:'legal',         icon:'📜', desc:'Formato Legal Extendido (8.5 × 14 in)' }
 };
 
-function getActivePaperSpec() {
-  return window.PAPER_SPECS[state.paperSize] || window.PAPER_SPECS.a4;
+function getActivePaperSpec(st) {
+  st = st || (typeof state !== 'undefined' ? state : window.state) || {};
+  const ps = window.PAPER_SPECS || {};
+  return ps[st.paperSize] || ps.a4;
 }
 
 // Catálogo de Formatos Oficiales Calibrados
@@ -76,21 +80,22 @@ window.FORMAT_SPECS = {
 };
 
 /* Especificación Activa según Estado */
-function getActiveSpec() {
-  if (state.activeCategory === 'custom') {
-    const w = (state.customUnit === 'cm') ? state.customWidth * 10 : state.customWidth;
-    const h = (state.customUnit === 'cm') ? state.customHeight * 10 : state.customHeight;
+function getActiveSpec(st) {
+  st = st || (typeof state !== 'undefined' ? state : window.state) || {};
+  if (st.activeCategory === 'custom') {
+    const w = (st.customUnit === 'cm') ? st.customWidth * 10 : st.customWidth;
+    const h = (st.customUnit === 'cm') ? st.customHeight * 10 : st.customHeight;
     return {
       category: 'custom',
-      name: 'Medida Personalizada (' + state.customWidth + ' × ' + state.customHeight + ' ' + state.customUnit + ')',
-      shortName: 'Personalizada ' + state.customWidth + '×' + state.customHeight + state.customUnit,
+      name: 'Medida Personalizada (' + st.customWidth + ' × ' + st.customHeight + ' ' + (st.customUnit || 'cm') + ')',
+      shortName: 'Personalizada ' + st.customWidth + '×' + st.customHeight + (st.customUnit || 'cm'),
       fileName: 'documento_personalizado',
       widthMm: Math.round(w * 10) / 10,
       heightMm: Math.round(h * 10) / 10
     };
   }
-  if (state.format === 'passport_open') {
-    const isLandscape = state.passportOpenOrientation === 'landscape';
+  if (st.format === 'passport_open') {
+    const isLandscape = st.passportOpenOrientation === 'landscape';
     return {
       category: 'docs',
       name: 'Pasaporte ABIERTO (' + (isLandscape ? 'Doble Pág. Horizontal 17.6 × 12.5 cm' : 'Doble Pág. Vertical 12.5 × 17.6 cm') + ')',
@@ -101,8 +106,8 @@ function getActiveSpec() {
       orientation: isLandscape ? 'landscape' : 'portrait'
     };
   }
-  if (state.format === 'passport') {
-    const isPortrait = state.passportPageOrientation === 'portrait';
+  if (st.format === 'passport') {
+    const isPortrait = st.passportPageOrientation === 'portrait';
     return {
       category: 'docs',
       name: 'Pasaporte 1 Página (' + (isPortrait ? 'Vertical 8.8 × 12.5 cm' : 'Horizontal 12.5 × 8.8 cm') + ')',
@@ -113,7 +118,8 @@ function getActiveSpec() {
       orientation: isPortrait ? 'portrait' : 'landscape'
     };
   }
-  return FORMAT_SPECS[state.format] || FORMAT_SPECS.card;
+  const formats = window.FORMAT_SPECS || {};
+  return formats[st.format] || formats.card;
 }
 
 /* ============================================================
@@ -171,19 +177,21 @@ function anyModalOpen() {
   return !!document.querySelector('[role="dialog"]:not(.hidden)');
 }
 
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape' && anyModalOpen()) {
-    $$('[role="dialog"]:not(.hidden)').forEach(function(m){
-      if (m.id === 'liveCameraModal' && typeof closeLiveCamera === 'function') closeLiveCamera();
-      else closeModal(m.id);
-    });
-  }
-});
+if (typeof document !== 'undefined') {
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && anyModalOpen()) {
+      $$('[role="dialog"]:not(.hidden)').forEach(function(m){
+        if (m.id === 'liveCameraModal' && typeof closeLiveCamera === 'function') closeLiveCamera();
+        else closeModal(m.id);
+      });
+    }
+  });
 
-document.addEventListener('click', function(e) {
-  const t = e.target.closest('[data-close-modal]');
-  if (!t) return;
-  const id = t.getAttribute('data-close-modal');
-  if (id === 'liveCameraModal' && typeof closeLiveCamera === 'function') closeLiveCamera();
-  else closeModal(id);
-});
+  document.addEventListener('click', function(e) {
+    const t = e.target.closest('[data-close-modal]');
+    if (!t) return;
+    const id = t.getAttribute('data-close-modal');
+    if (id === 'liveCameraModal' && typeof closeLiveCamera === 'function') closeLiveCamera();
+    else closeModal(id);
+  });
+}

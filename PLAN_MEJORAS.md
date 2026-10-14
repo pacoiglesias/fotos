@@ -5,7 +5,7 @@
 **Repositorio:** `https://github.com/pacoiglesias/fotos.git`  
 **Autor:** Antigravity AI (Pair Programming con Paco Iglesias)  
 **Fecha de Inicio:** 14 de Octubre de 2026  
-**Estado General:** En Progreso (Etapa 0 Completada — Iniciando Etapa 1)
+**Estado General:** En Progreso (Etapas 0 y 1 Completadas — Iniciando Etapa 2)
 
 ---
 
@@ -59,7 +59,7 @@
   6. Exportación completa en PDF y paquete ZIP de imágenes de todas las páginas (no solo la primera).
   7. Vista previa interactiva con paginador (Hoja 1 de N) y escala milimétrica correcta.
 * **Dependencias:** Etapa 0.
-* **Estado:** 🔄 **EN PROGRESO**
+* **Estado:** ✅ **COMPLETADA**
 
 ---
 

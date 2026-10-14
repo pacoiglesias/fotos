@@ -559,6 +559,18 @@ function updatePreviewAnnotations() {
   const chkLabels = $('chkIncludeDocLabels');
   if (chkLabels && chkLabels.checked !== isLabels) chkLabels.checked = isLabels;
 
+  const isCutMarks = (state.includeCutMarks !== false);
+  const chkCutMarks = $('chkIncludeCutMarks');
+  if (chkCutMarks && chkCutMarks.checked !== isCutMarks) chkCutMarks.checked = isCutMarks;
+
+  const badgeCutMarks = $('badgeCutMarksStatus');
+  if (badgeCutMarks) {
+    badgeCutMarks.textContent = isCutMarks ? 'Visible' : 'Ocultas';
+    badgeCutMarks.className = isCutMarks 
+      ? 'text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded shrink-0'
+      : 'text-[9.5px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.2 rounded shrink-0';
+  }
+
   if (badgeLabels) {
     badgeLabels.textContent = isLabels ? 'Visible' : 'Oculto';
     badgeLabels.className = isLabels 
@@ -577,10 +589,10 @@ function updatePreviewAnnotations() {
     badgeTitle.className = hasCustomTitle ? 'text-[10px] font-bold text-indigo-600 dark:text-indigo-400 font-mono' : 'text-[10px] font-semibold text-slate-400 font-mono';
   }
 
-  // 4. Header de la hoja A4
+  // 4. Header de la hoja
   const sheetTitle = $('previewSheetTitle');
   if (sheetTitle) {
-    if (!isLabels && !isRuler) {
+    if (!isLabels && !isRuler && !isCutMarks) {
       sheetTitle.innerHTML = '<span class="text-amber-600 dark:text-amber-400 font-bold">🏛️ Hoja 100% Limpia</span> <span class="text-slate-400 font-normal text-[7.5px]">(Trámite Oficial)</span>';
     } else if (hasCustomTitle) {
       sheetTitle.textContent = state.documentCustomTitle;
@@ -638,59 +650,107 @@ function updatePreviewAnnotations() {
 }
 
 /* ============================================================
-   UI: VISTA PREVIA A4
+   UI: VISTA PREVIA Y PAGINACIÓN BASADA EN LAYOUT ENGINE
    ============================================================ */
+function setPreviewPageIndex(idx) {
+  if (!window.RealScanLayout) return;
+  const layout = window.RealScanLayout.computeDocumentLayout(state);
+  const maxIdx = Math.max(0, layout.totalPages - 1);
+  state.activePreviewPageIndex = Math.max(0, Math.min(maxIdx, idx));
+  updateUI();
+}
+
+function nextPreviewPage() {
+  setPreviewPageIndex((state.activePreviewPageIndex || 0) + 1);
+}
+
+function prevPreviewPage() {
+  setPreviewPageIndex((state.activePreviewPageIndex || 0) - 1);
+}
+
 function updateUI() {
   const spec = getActiveSpec();
   const tag = $('previewDimensionsTag');
   const canvasFront = $('canvasDocFront');
   const canvasBack = $('canvasDocBack');
+  const canvasPage3 = $('canvasDocPage3');
+  const canvasPage4 = $('canvasDocPage4');
   const photosGridContainer = $('canvasDocPhotosGrid');
   const photosGridInner = $('photosGridInner');
   const previewSubtext = $('previewSubtext');
 
+  // Obtener el plan de composición milimétrico
+  const layout = (window.RealScanLayout && typeof window.RealScanLayout.computeDocumentLayout === 'function')
+    ? window.RealScanLayout.computeDocumentLayout(state)
+    : null;
+
+  const paper = layout ? layout.paper : ((typeof getActivePaperSpec === 'function') ? getActivePaperSpec() : { widthMm: 210, heightMm: 297, shortName: 'A4' });
+
+  // 1. Proporción física exacta de la hoja en pantalla
+  const sheetEl = document.querySelector('.a4-sheet');
+  if (sheetEl) {
+    sheetEl.style.aspectRatio = paper.widthMm + ' / ' + paper.heightMm;
+  }
+
+  // 2. Control de Paginador de Vista Previa (Hoja 1 de N)
+  const pagBar = $('previewSheetPaginationBar');
+  const labelCount = $('labelPreviewPageCounter');
+  const btnPrev = $('btnPreviewPrevPage');
+  const btnNext = $('btnPreviewNextPage');
+  const totalPages = layout ? layout.totalPages : 1;
+
+  if (pagBar) {
+    if (totalPages > 1) {
+      pagBar.classList.remove('hidden');
+      state.activePreviewPageIndex = Math.max(0, Math.min(totalPages - 1, state.activePreviewPageIndex || 0));
+      if (labelCount) labelCount.textContent = 'Hoja ' + (state.activePreviewPageIndex + 1) + ' de ' + totalPages;
+      if (btnPrev) btnPrev.disabled = (state.activePreviewPageIndex === 0);
+      if (btnNext) btnNext.disabled = (state.activePreviewPageIndex >= totalPages - 1);
+    } else {
+      pagBar.classList.add('hidden');
+      state.activePreviewPageIndex = 0;
+    }
+  }
+
+  const activePage = (layout && layout.pages[state.activePreviewPageIndex || 0]) ? layout.pages[state.activePreviewPageIndex || 0] : null;
+
+  // 3. Renderizado según Categoría
   if (state.activeCategory === 'photos') {
-    const info = getPhotoLayoutInfo(spec.widthMm, spec.heightMm, state.photoCopies);
     if (tag) tag.textContent = spec.widthMm + ' × ' + spec.heightMm + ' mm (' + state.photoCopies + ' fotos)';
-    if (previewSubtext) previewSubtext.textContent = 'Planilla de ' + state.photoCopies + ' fotos (' + spec.shortName + ') con guías de corte';
+    if (previewSubtext) {
+      previewSubtext.textContent = (layout ? layout.summary : ('Planilla de ' + state.photoCopies + ' fotos')) + (totalPages > 1 ? (' • Viendo Hoja ' + (activePage ? activePage.pageNumber : 1) + ' de ' + totalPages) : '');
+    }
     if (canvasFront) canvasFront.classList.add('hidden');
     if (canvasBack) canvasBack.classList.add('hidden');
+    if (canvasPage3) canvasPage3.classList.add('hidden');
+    if (canvasPage4) canvasPage4.classList.add('hidden');
     if (photosGridContainer) photosGridContainer.classList.remove('hidden');
 
-    if (photosGridInner) {
+    if (photosGridInner && activePage) {
       photosGridInner.innerHTML = '';
-      const cols = info.cols;
+      const placements = activePage.placements || [];
+      const cols = (placements.length <= 2) ? Math.min(2, placements.length) : ((placements.length <= 6) ? 3 : 4);
       photosGridInner.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
 
-      const totalMmW = cols * spec.widthMm + (cols - 1) * info.gap;
-      const paperW = (info.paper && info.paper.widthMm) ? info.paper.widthMm : 210;
-      const totalWidthPercent = Math.min(96, Math.max(34, (totalMmW / paperW) * 100));
-      if (photosGridContainer) photosGridContainer.style.width = totalWidthPercent + '%';
       const ratio = spec.widthMm + ' / ' + spec.heightMm;
-      const frontImgSrc = state.images.front.processedDataUrl;
-      const backImgSrc = (state.mixTwoPhotos && state.images.back.processedDataUrl) ? state.images.back.processedDataUrl : null;
-      const halfCopies = Math.floor(state.photoCopies / 2);
+      let minH = '44px';
+      if (placements.length > 20) minH = '24px';
+      else if (placements.length > 12) minH = '30px';
+      else if (placements.length > 6) minH = '36px';
 
-      let minH = '48px';
-      if (state.photoCopies > 24) minH = '24px';
-      else if (state.photoCopies > 12) minH = '32px';
-      else if (state.photoCopies > 6) minH = '38px';
-
-      // Mostrar únicamente las que físicamente caben en 1 hoja real para no deformar la escala 1:1
-      const countToShow = Math.min(state.photoCopies, info.maxPerPage);
-
-      for (let i = 0; i < countToShow; i++) {
-        const useBack = (state.mixTwoPhotos && i >= halfCopies);
-        const currentImgSrc = useBack ? backImgSrc : frontImgSrc;
-        const photoNum = useBack ? (i - halfCopies + 1) : (i + 1);
-        const personTag = state.mixTwoPhotos ? (useBack ? 'B' : 'A') : '';
+      placements.forEach(function(item) {
+        const currentImgSrc = (state.images[item.slot] && state.images[item.slot].processedDataUrl)
+          ? state.images[item.slot].processedDataUrl
+          : (state.images.front ? state.images.front.processedDataUrl : null);
 
         const cell = document.createElement('div');
-        if (spec.isOval) {
+        if (item.isOval) {
           cell.className = 'border-2 border-dashed border-amber-400 dark:border-amber-600 bg-amber-50/40 dark:bg-amber-950/30 rounded-full flex items-center justify-center relative overflow-hidden transition-all shadow-xs';
           cell.style.borderRadius = '50%';
         } else {
-          cell.className = 'border border-dashed border-indigo-400 dark:border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 rounded flex items-center justify-center relative overflow-hidden transition-all shadow-xs';
+          cell.className = (state.includeCutMarks !== false)
+            ? 'border border-dashed border-indigo-400 dark:border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 rounded flex items-center justify-center relative overflow-hidden transition-all shadow-xs'
+            : 'border border-transparent bg-slate-50 dark:bg-slate-900 rounded flex items-center justify-center relative overflow-hidden transition-all';
         }
         cell.style.aspectRatio = ratio;
         cell.style.minHeight = minH;
@@ -698,51 +758,55 @@ function updateUI() {
         if (currentImgSrc) {
           const im = document.createElement('img');
           im.src = currentImgSrc;
-          im.className = spec.isOval ? 'w-full h-full object-cover rounded-full' : 'w-full h-full object-cover rounded-[1px]';
-          if (spec.isOval) im.style.borderRadius = '50%';
-          im.alt = 'Foto ' + (i+1);
+          im.className = item.isOval ? 'w-full h-full object-cover rounded-full' : 'w-full h-full object-cover rounded-[1px]';
+          if (item.isOval) im.style.borderRadius = '50%';
+          im.alt = 'Foto ' + item.slotNumber;
           cell.appendChild(im);
-          if (state.photoCopies <= 24) {
+          if (placements.length <= 24) {
             const b = document.createElement('span');
             b.className = 'absolute bottom-0.5 right-0.5 text-[6.5px] font-mono text-indigo-700 bg-white/90 px-0.5 rounded shadow-xs font-bold leading-none';
-            b.textContent = personTag ? (personTag + '#' + photoNum) : ('#' + (i+1));
+            b.textContent = item.tag ? (item.tag + '#' + item.slotNumber) : ('#' + item.slotNumber);
             cell.appendChild(b);
           }
         } else {
-          const slotName = personTag ? ('FOTO ' + personTag + '#' + photoNum) : ('#' + (i+1));
+          const slotName = item.tag ? ('FOTO ' + item.tag + '#' + item.slotNumber) : ('#' + item.slotNumber);
           cell.innerHTML = '<div class="text-center p-0.5"><span class="text-[8px] font-bold text-indigo-700 dark:text-indigo-300">' + slotName + '</span></div>';
         }
         photosGridInner.appendChild(cell);
-      }
+      });
     }
   } else {
+    // Modo Documentos y Medidas Personalizadas
     if (photosGridContainer) photosGridContainer.classList.add('hidden');
-    if (canvasFront) canvasFront.classList.remove('hidden');
 
-    if (state.activeCategory === 'custom') {
-      if (tag) tag.textContent = spec.widthMm + ' × ' + spec.heightMm + ' mm (Personalizada)';
-      if (previewSubtext) previewSubtext.textContent = 'Medida personalizada (' + spec.widthMm + ' × ' + spec.heightMm + ' mm) a escala 1:1 real en 1 hoja A4';
-    } else {
-      if (tag) tag.textContent = spec.widthMm + ' × ' + spec.heightMm + ' mm';
-      const pCount = state.documentPageCount || 2;
-      if (pCount === 1) {
-        if (previewSubtext) previewSubtext.textContent = 'Solo 1 Cara centrada en 1 hoja A4 a escala 1:1 real';
-      } else if (pCount === 2) {
-        if (previewSubtext) previewSubtext.textContent = 'Anverso y Reverso alineados en 1 sola hoja A4 a escala 1:1 real';
-      } else {
-        if (previewSubtext) previewSubtext.textContent = pCount + ' páginas a escala 1:1 real (Págs 1-2 en Hoja 1 • Págs 3-4 en Hoja 2)';
-      }
+    if (tag) tag.textContent = spec.widthMm + ' × ' + spec.heightMm + ' mm' + (state.activeCategory === 'custom' ? ' (Personalizada)' : '');
+    if (previewSubtext) {
+      previewSubtext.textContent = (layout ? layout.summary : (spec.shortName + ' a escala 1:1 real')) + (totalPages > 1 ? (' • Viendo Hoja ' + (activePage ? activePage.pageNumber : 1) + ' de ' + totalPages) : '');
     }
-    if (canvasBack) canvasBack.classList.toggle('hidden', state.printMode === 'single');
 
-    const scalePercent = Math.max(38, Math.min(94, (spec.widthMm / 210) * 100));
+    const visibleSlots = (activePage && activePage.placements) ? activePage.placements.map(function(p){ return p.slot; }) : ['front'];
+
+    if (canvasFront) canvasFront.classList.toggle('hidden', !visibleSlots.includes('front'));
+    if (canvasBack) canvasBack.classList.toggle('hidden', !visibleSlots.includes('back'));
+    if (canvasPage3) canvasPage3.classList.toggle('hidden', !visibleSlots.includes('page3'));
+    if (canvasPage4) canvasPage4.classList.toggle('hidden', !visibleSlots.includes('page4'));
+
+    // Escala geométrica milimétrica rigurosa respecto al ancho del papel activo
+    const scalePercent = Math.max(38, Math.min(94, (spec.widthMm / paper.widthMm) * 100));
     const ratio = spec.widthMm + ' / ' + spec.heightMm;
+
     ['canvasDocFront', 'canvasDocBack', 'canvasDocPage3', 'canvasDocPage4'].forEach(function(cId) {
       const cEl = $(cId);
       if (cEl) {
         cEl.style.width = scalePercent + '%';
         cEl.style.aspectRatio = ratio;
         cEl.style.minHeight = 'auto';
+
+        // Silueta limpia si las marcas de corte están desactivadas
+        if (state.includeCutMarks === false && state.includeDocLabels === false && state.includeRulerFooter === false) {
+          cEl.classList.remove('border-dashed', 'border-indigo-400', 'border-amber-400', 'border-purple-400', 'border-teal-400');
+          cEl.classList.add('border-slate-200/40');
+        }
       }
     });
   }
@@ -849,6 +913,7 @@ function savePreferences() {
       mixTwoPhotos: state.mixTwoPhotos,
       includeRulerFooter: state.includeRulerFooter !== false,
       includeDocLabels: state.includeDocLabels !== false,
+      includeCutMarks: state.includeCutMarks !== false,
       documentCustomTitle: state.documentCustomTitle || '',
       duplicateCard: !!state.duplicateCard
     };
@@ -904,6 +969,11 @@ function loadPreferences() {
       state.includeDocLabels = p.includeDocLabels;
       const chk = $('chkIncludeDocLabels');
       if (chk) chk.checked = p.includeDocLabels;
+    }
+    if (p.includeCutMarks !== undefined) {
+      state.includeCutMarks = p.includeCutMarks;
+      const chk = $('chkIncludeCutMarks');
+      if (chk) chk.checked = p.includeCutMarks;
     }
     if (p.duplicateCard !== undefined) {
       state.duplicateCard = !!p.duplicateCard;
@@ -1343,13 +1413,16 @@ function bindEvents() {
   }
 
   // Presets Rápidos de Limpieza / Acabado
+  // Presets Rápidos de Limpieza / Acabado
   if ($('btnQuickOfficialClean')) {
     on($('btnQuickOfficialClean'), 'click', function() {
       state.includeRulerFooter = false;
       state.includeDocLabels = false;
+      state.includeCutMarks = false;
       updatePreviewAnnotations();
+      updateUI();
       savePreferences();
-      showToast('🏛️ Modo Trámite Oficial: Hoja 100% limpia sin regla ni anotaciones al pie.', 'success');
+      showToast('🏛️ Hoja 100% Limpia activada (sin regla, rótulos ni marcas para trámites oficiales).', 'success');
     });
   }
 
@@ -1357,20 +1430,23 @@ function bindEvents() {
     on($('btnQuickStandardChecked'), 'click', function() {
       state.includeRulerFooter = true;
       state.includeDocLabels = true;
+      state.includeCutMarks = true;
       updatePreviewAnnotations();
+      updateUI();
       savePreferences();
-      showToast('📐 Modo Estándar activado: Regla física de 5 cm y medidas visibles.', 'info');
+      showToast('📐 Acabado Estándar activado: Regla física de 5 cm, rótulos y guías de corte.', 'info');
     });
   }
 
-  // Opciones Oficiales de Impresión (Regla e Instrucciones Opcionales)
+  // Opciones Oficiales de Impresión (Regla, Rótulos y Guías de Corte)
   if ($('chkIncludeRulerFooter')) {
     on($('chkIncludeRulerFooter'), 'change', function(e) {
       state.includeRulerFooter = e.target.checked;
       updatePreviewAnnotations();
+      updateUI();
       savePreferences();
       if (!state.includeRulerFooter) {
-        showToast('Regla e instrucciones desactivadas: Hoja 100% limpia para trámites oficiales.', 'success');
+        showToast('Regla e instrucciones desactivadas: Hoja limpia para trámites oficiales.', 'success');
       } else {
         showToast('Regla de 5 cm e instrucciones activadas en el pie de página.', 'info');
       }
@@ -1381,9 +1457,28 @@ function bindEvents() {
     on($('chkIncludeDocLabels'), 'change', function(e) {
       state.includeDocLabels = e.target.checked;
       updatePreviewAnnotations();
+      updateUI();
       savePreferences();
       showToast(state.includeDocLabels ? 'Rótulos y medidas activados en la vista previa e impresión.' : 'Rótulos desactivados para máxima pulcritud.', 'info');
     });
+  }
+
+  if ($('chkIncludeCutMarks')) {
+    on($('chkIncludeCutMarks'), 'change', function(e) {
+      state.includeCutMarks = e.target.checked;
+      updatePreviewAnnotations();
+      updateUI();
+      savePreferences();
+      showToast(state.includeCutMarks ? 'Marcas y guías de corte visibles.' : 'Marcas de corte desactivadas.', 'info');
+    });
+  }
+
+  // Paginador interactivo de vista previa
+  if ($('btnPreviewPrevPage')) {
+    on($('btnPreviewPrevPage'), 'click', prevPreviewPage);
+  }
+  if ($('btnPreviewNextPage')) {
+    on($('btnPreviewNextPage'), 'click', nextPreviewPage);
   }
 
   // Checklist: Modo Duplicado (2 Juegos de Copias en la Misma Hoja)

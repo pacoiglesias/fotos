@@ -1,0 +1,435 @@
+/* ============================================================
+   RealScan Pro — Layout Engine (Motor Unificado de Composición en mm)
+   Desarrollado por Paco Iglesias • Escala 1:1 Físicamente Calibrada
+   ============================================================ */
+
+(function(window) {
+  'use strict';
+
+  /**
+   * Calcula el plan de composición geométrico completo en milímetros.
+   * Compartido idénticamente por:
+   * 1. Vista previa interactiva en pantalla (.a4-sheet con paginación)
+   * 2. Generador vectorial PDF (jsPDF)
+   * 3. Exportador de imágenes a 300 DPI (Canvas / JPG / ZIP)
+   * 4. Impresión nativa del navegador (@media print)
+   *
+   * @param {Object} state - Estado activo de la aplicación
+   * @returns {Object} LayoutPlan con páginas, colocaciones en mm y validaciones
+   */
+  function computeDocumentLayout(state) {
+    state = state || window.state || {};
+    const paper = (typeof window.getActivePaperSpec === 'function') 
+      ? window.getActivePaperSpec(state) 
+      : (window.PAPER_SPECS && window.PAPER_SPECS[state.paperSize]) || { widthMm: 210, heightMm: 297, shortName: 'A4', name: 'A4' };
+
+    let spec = null;
+    if (typeof window.getActiveSpec === 'function') {
+      spec = window.getActiveSpec(state);
+    } else if (state.activeCategory === 'custom') {
+      const u = state.customUnit || 'cm';
+      const mul = (u === 'cm') ? 10 : ((u === 'in') ? 25.4 : 1);
+      spec = {
+        widthMm: Math.round((parseFloat(state.customWidth) || 8.5) * mul * 10) / 10,
+        heightMm: Math.round((parseFloat(state.customHeight) || 5.5) * mul * 10) / 10,
+        shortName: 'Medida Personalizada',
+        isOval: false,
+        category: 'custom'
+      };
+    } else if (window.FORMAT_SPECS && window.FORMAT_SPECS[state.format]) {
+      spec = window.FORMAT_SPECS[state.format];
+    } else {
+      spec = { widthMm: 85.6, heightMm: 53.98, shortName: 'DNI / INE', isOval: false, category: 'docs' };
+    }
+
+    const targetW = spec.widthMm;
+    const targetH = spec.heightMm;
+    const category = state.activeCategory || spec.category || 'docs';
+    const isPhotos = (category === 'photos');
+
+    // Opciones de acabado y anotaciones
+    const includeRuler = (state.includeRulerFooter !== false);
+    const includeLabels = (state.includeDocLabels !== false);
+    const includeCutMarks = (state.includeCutMarks !== false);
+    const isCleanSheet = (!includeRuler && !includeLabels && !includeCutMarks);
+
+    // Márgenes y límites físicos de seguridad
+    const marginSide = 12; // 12 mm margen lateral mínimo
+    const marginTop = (targetH > 100) ? 16 : 20; // 20 mm o 16 mm para documentos grandes
+    const marginBottom = includeRuler ? 38 : 14; // Reserva para regla (38mm) o margen inferior (14mm)
+    const availW = paper.widthMm - (marginSide * 2);
+    const availH = paper.heightMm - marginTop - marginBottom;
+
+    const plan = {
+      paper: paper,
+      spec: spec,
+      category: category,
+      totalPages: 1,
+      pages: [],
+      warnings: [],
+      isCleanSheet: isCleanSheet,
+      cleanSheetMode: isCleanSheet,
+      includeRulerFooter: includeRuler,
+      includeDocLabels: includeLabels,
+      includeCutMarks: includeCutMarks,
+      isPhotoGrid: isPhotos,
+      summary: ''
+    };
+
+    function finalizePlan(p) {
+      p.pages.forEach(function(page) {
+        if (!page.paper) page.paper = paper;
+      });
+      return p;
+    }
+
+    // ============================================================
+    // CASO A: FOTOGRAFÍAS OFICIALES (Retícula 1:1 con guías de corte)
+    // ============================================================
+    if (isPhotos) {
+      const gap = targetW < 30 ? 3.5 : (targetW < 55 ? 4.5 : 6.0);
+      const maxCols = Math.max(1, Math.floor((availW + gap) / (targetW + gap)));
+      const maxRows = Math.max(1, Math.floor((availH + gap) / (targetH + gap)));
+      const maxPerPage = Math.max(1, maxCols * maxRows);
+      const requestedCopies = Math.max(1, parseInt(state.photoCopies, 10) || 1);
+
+      // Limitar a máximo 2 páginas para no saturar memoria
+      const maxSupportedPages = 2;
+      const totalAllowed = maxPerPage * maxSupportedPages;
+      const copies = Math.min(requestedCopies, totalAllowed);
+
+      if (requestedCopies > totalAllowed) {
+        plan.warnings.push('La cantidad máxima soportada en ' + paper.shortName + ' es de ' + totalAllowed + ' fotos (' + maxSupportedPages + ' hojas).');
+      }
+
+      const totalPages = Math.max(1, Math.ceil(copies / maxPerPage));
+      plan.totalPages = totalPages;
+
+      const halfCopies = Math.floor(copies / 2);
+      const mixTwo = !!state.mixTwoPhotos;
+
+      let photoIndex = 0;
+      for (let pIdx = 0; pIdx < totalPages; pIdx++) {
+        const remaining = copies - photoIndex;
+        const pageCopies = Math.min(remaining, maxPerPage);
+        
+        // Determinar columnas óptimas para las fotos de esta página
+        let cols = maxCols;
+        if (pageCopies === 1) cols = 1;
+        else if (pageCopies === 2) cols = Math.min(2, maxCols);
+        else if (pageCopies <= 4) cols = Math.min(2, maxCols);
+        else if (pageCopies <= 6) cols = Math.min(3, maxCols);
+        else if (pageCopies <= 8) cols = Math.min(4, maxCols);
+        else cols = maxCols;
+
+        const rows = Math.ceil(pageCopies / cols);
+        const gridW = cols * targetW + (cols - 1) * gap;
+        const gridH = rows * targetH + (rows - 1) * gap;
+        const startX = (paper.widthMm - gridW) / 2;
+        const startY = marginTop + Math.max(4, (availH - gridH) / 2);
+
+        const pageObj = {
+          pageIndex: pIdx,
+          pageNumber: pIdx + 1,
+          sheetTitle: (totalPages > 1) ? ('Planilla de Fotos Oficiales • Hoja ' + (pIdx + 1) + ' de ' + totalPages) : 'Planilla de Fotos Oficiales',
+          hasRuler: includeRuler,
+          rulerX: (paper.widthMm - 50) / 2,
+          rulerY: paper.heightMm - 24,
+          placements: []
+        };
+
+        for (let i = 0; i < pageCopies; i++) {
+          const colIdx = i % cols;
+          const rowIdx = Math.floor(i / cols);
+          const xMm = startX + colIdx * (targetW + gap);
+          const yMm = startY + rowIdx * (targetH + gap);
+
+          const currentGlobalIdx = photoIndex;
+          const useBack = (mixTwo && currentGlobalIdx >= halfCopies);
+          const personSlot = useBack ? 'back' : 'front';
+          const personTag = mixTwo ? (useBack ? 'B' : 'A') : '';
+          const photoNum = useBack ? (currentGlobalIdx - halfCopies + 1) : (currentGlobalIdx + 1);
+
+          pageObj.placements.push({
+            slot: personSlot,
+            globalIndex: currentGlobalIdx,
+            slotNumber: photoNum,
+            tag: personTag,
+            xMm: Math.round(xMm * 10) / 10,
+            yMm: Math.round(yMm * 10) / 10,
+            widthMm: targetW,
+            heightMm: targetH,
+            isOval: !!spec.isOval,
+            drawBorder: includeCutMarks && !spec.isOval,
+            drawOvalGuide: includeCutMarks && !!spec.isOval,
+            drawCutMarks: includeCutMarks,
+            label: null
+          });
+
+          photoIndex++;
+        }
+
+        plan.pages.push(pageObj);
+      }
+
+      plan.summary = copies + ' fotos (' + spec.shortName + ') distribuidas en ' + totalPages + ' hoja(s) ' + paper.shortName;
+      return finalizePlan(plan);
+    }
+
+    // ============================================================
+    // CASO B: IDENTIFICACIONES Y DOCUMENTOS (1 a 4 Caras, Duplicados)
+    // ============================================================
+    const numPagesConfig = Math.min(4, Math.max(1, state.documentPageCount || 2));
+    const isSingle = (state.printMode === 'single' || numPagesConfig === 1);
+    const isBothSamePage = (state.printMode === 'both' && numPagesConfig === 2);
+    const isBothSeparate = (state.printMode === 'both_separate');
+    const isMultiPages = (numPagesConfig >= 3 || state.printMode === 'multi');
+    const isDuplicate = !!state.duplicateCard;
+
+    // Recopilar elementos activos según la cantidad de páginas configurada
+    const allSlots = [
+      { key: 'front', fallback: '1. Frente (Delantera con Foto)', shortLabel: 'Frente' },
+      { key: 'back',  fallback: '2. Reverso (Atrás / Vuelta)',     shortLabel: 'Reverso' },
+      { key: 'page3', fallback: '3. Página 3 (Adicional / Visa)',  shortLabel: 'Pág 3' },
+      { key: 'page4', fallback: '4. Página 4 (Adicional / Visa)',  shortLabel: 'Pág 4' }
+    ];
+
+    const activeSlots = allSlots.slice(0, numPagesConfig);
+
+    // ------------------------------------------------------------
+    // SUB-CASO B1: MODO DUPLICADO (2 Juegos de Copias en 2 Columnas)
+    // ------------------------------------------------------------
+    if (isDuplicate) {
+      const gapX = 14;
+      const totalWidth2Col = targetW * 2 + gapX;
+
+      if (totalWidth2Col > (paper.widthMm - 16)) {
+        plan.warnings.push('El ancho de este formato (' + (targetW * 2) + ' mm) excede el ancho de la hoja ' + paper.shortName + ' en 2 columnas. Desactiva "2 Juegos" o selecciona una hoja más ancha.');
+      }
+
+      const startXCol1 = Math.max(marginSide, (paper.widthMm - totalWidth2Col) / 2);
+      const startXCol2 = startXCol1 + targetW + gapX;
+      const gapY = 12;
+
+      // Calcular cuántos elementos caben por página verticalmente
+      let currentY = marginTop;
+      let currentPage = {
+        pageIndex: 0,
+        pageNumber: 1,
+        sheetTitle: (state.documentCustomTitle || '').trim() || 'COPIA DOBLE OFICIAL (2 JUEGOS A TAMAÑO REAL 1:1)',
+        hasRuler: includeRuler,
+        rulerX: (paper.widthMm - 50) / 2,
+        rulerY: paper.heightMm - 24,
+        placements: []
+      };
+      plan.pages.push(currentPage);
+
+      const columns = [
+        { name: 'JUEGO 1', startX: startXCol1 },
+        { name: 'JUEGO 2', startX: startXCol2 }
+      ];
+
+      activeSlots.forEach(function(slotObj, slotIdx) {
+        // Verificar si este elemento cabe en la hoja actual
+        if ((currentY + targetH) > (paper.heightMm - marginBottom)) {
+          // PAGINACIÓN AUTOMÁTICA EN MODO DUPLICADO
+          const nextIdx = plan.pages.length;
+          currentPage = {
+            pageIndex: nextIdx,
+            pageNumber: nextIdx + 1,
+            sheetTitle: ((state.documentCustomTitle || '').trim() || 'COPIA DOBLE OFICIAL') + ' • Hoja ' + (nextIdx + 1),
+            hasRuler: includeRuler,
+            rulerX: (paper.widthMm - 50) / 2,
+            rulerY: paper.heightMm - 24,
+            placements: []
+          };
+          plan.pages.push(currentPage);
+          currentY = marginTop;
+        }
+
+        columns.forEach(function(col) {
+          const customName = (state.documentCustomTitle || '').trim();
+          const labelText = customName ? (customName + ' • ' + col.name + ': ' + slotObj.shortLabel) : (col.name + ' • ' + slotObj.fallback);
+
+          currentPage.placements.push({
+            slot: slotObj.key,
+            globalIndex: slotIdx,
+            slotNumber: slotIdx + 1,
+            columnName: col.name,
+            xMm: Math.round(col.startX * 10) / 10,
+            yMm: Math.round(currentY * 10) / 10,
+            widthMm: targetW,
+            heightMm: targetH,
+            isOval: !!spec.isOval,
+            drawBorder: includeCutMarks && !spec.isOval,
+            drawOvalGuide: includeCutMarks && !!spec.isOval,
+            drawCutMarks: includeCutMarks,
+            label: includeLabels ? (labelText + ' (' + targetW + ' × ' + targetH + ' mm)') : null,
+            labelY: currentY - 2.5
+          });
+        });
+
+        currentY += targetH + gapY;
+      });
+
+      plan.totalPages = plan.pages.length;
+      plan.summary = '2 Juegos de ' + numPagesConfig + ' caras distribuidos a escala 1:1 en ' + plan.totalPages + ' hoja(s) ' + paper.shortName;
+      return finalizePlan(plan);
+    }
+
+    // ------------------------------------------------------------
+    // SUB-CASO B2: 2 CARAS SEPARADAS (1 Hoja para Frente y 1 Hoja para Reverso)
+    // ------------------------------------------------------------
+    if (isBothSeparate) {
+      plan.totalPages = 2;
+      const posX = (paper.widthMm - targetW) / 2;
+      const posY = Math.max(marginTop, Math.round((availH - targetH) / 2) + marginTop);
+
+      activeSlots.slice(0, 2).forEach(function(slotObj, idx) {
+        const pageTitle = (state.documentCustomTitle || '').trim() 
+          ? (state.documentCustomTitle + ' • ' + slotObj.shortLabel + ' (Hoja ' + (idx + 1) + ' de 2)')
+          : (slotObj.fallback + ' • 1 Hoja Exclusiva (Hoja ' + (idx + 1) + ' de 2)');
+
+        plan.pages.push({
+          pageIndex: idx,
+          pageNumber: idx + 1,
+          sheetTitle: pageTitle,
+          hasRuler: includeRuler,
+          rulerX: (paper.widthMm - 50) / 2,
+          rulerY: paper.heightMm - 24,
+          placements: [{
+            slot: slotObj.key,
+            globalIndex: idx,
+            slotNumber: idx + 1,
+            xMm: Math.round(posX * 10) / 10,
+            yMm: Math.round(posY * 10) / 10,
+            widthMm: targetW,
+            heightMm: targetH,
+            isOval: !!spec.isOval,
+            drawBorder: includeCutMarks && !spec.isOval,
+            drawOvalGuide: includeCutMarks && !!spec.isOval,
+            drawCutMarks: includeCutMarks,
+            label: includeLabels ? (slotObj.fallback + ' (' + targetW + ' × ' + targetH + ' mm)') : null,
+            labelY: posY - 2.5
+          }]
+        });
+      });
+
+      plan.summary = 'Anverso y Reverso en 2 hojas ' + paper.shortName + ' separadas (1 cara centrada por hoja a escala 1:1)';
+      return finalizePlan(plan);
+    }
+
+    // ------------------------------------------------------------
+    // SUB-CASO B3: 1 CARA SOLA (Centrada en Hoja)
+    // ------------------------------------------------------------
+    if (isSingle) {
+      plan.totalPages = 1;
+      const posX = (paper.widthMm - targetW) / 2;
+      const posY = Math.max(marginTop, Math.round((availH - targetH) / 2) + marginTop);
+
+      plan.pages.push({
+        pageIndex: 0,
+        pageNumber: 1,
+        sheetTitle: (state.documentCustomTitle || '').trim() || (spec.shortName + ' — Escala 1:1 Real'),
+        hasRuler: includeRuler,
+        rulerX: (paper.widthMm - 50) / 2,
+        rulerY: paper.heightMm - 24,
+        placements: [{
+          slot: 'front',
+          globalIndex: 0,
+          slotNumber: 1,
+          xMm: Math.round(posX * 10) / 10,
+          yMm: Math.round(posY * 10) / 10,
+          widthMm: targetW,
+          heightMm: targetH,
+          isOval: !!spec.isOval,
+          drawBorder: includeCutMarks && !spec.isOval,
+          drawOvalGuide: includeCutMarks && !!spec.isOval,
+          drawCutMarks: includeCutMarks,
+          label: includeLabels ? (activeSlots[0].fallback + ' (' + targetW + ' × ' + targetH + ' mm)') : null,
+          labelY: posY - 2.5
+        }]
+      });
+
+      plan.summary = '1 Cara centrada en 1 hoja ' + paper.shortName + ' a escala 1:1 real';
+      return finalizePlan(plan);
+    }
+
+    // ------------------------------------------------------------
+    // SUB-CASO B4: 2 CARAS EN 1 HOJA O MULTIPÁGINA (3 a 4 Páginas)
+    // ------------------------------------------------------------
+    const gapY = 14;
+    const fitsTwoPerSheet = ((marginTop + targetH * 2 + gapY) <= (paper.heightMm - marginBottom));
+    const itemsPerSheet = fitsTwoPerSheet ? 2 : 1;
+
+    if (!fitsTwoPerSheet && numPagesConfig >= 2) {
+      plan.warnings.push('Las dimensiones del formato (' + targetH + ' mm de alto) no permiten alojar 2 caras juntas en 1 hoja ' + paper.shortName + '. Se paginan automáticamente en hojas independientes a escala 1:1.');
+    }
+
+    const totalSheets = Math.ceil(activeSlots.length / itemsPerSheet);
+    plan.totalPages = totalSheets;
+
+    const posX = (paper.widthMm - targetW) / 2;
+
+    for (let sIdx = 0; sIdx < totalSheets; sIdx++) {
+      const startSlotIdx = sIdx * itemsPerSheet;
+      const currentSlots = activeSlots.slice(startSlotIdx, startSlotIdx + itemsPerSheet);
+
+      const pageTitle = (totalSheets > 1) 
+        ? ((state.documentCustomTitle || '').trim() || (spec.shortName + ' • Hoja ' + (sIdx + 1) + ' de ' + totalSheets))
+        : ((state.documentCustomTitle || '').trim() || (spec.shortName + ' — Escala 1:1 Real'));
+
+      const pageObj = {
+        pageIndex: sIdx,
+        pageNumber: sIdx + 1,
+        sheetTitle: pageTitle,
+        hasRuler: includeRuler,
+        rulerX: (paper.widthMm - 50) / 2,
+        rulerY: paper.heightMm - 24,
+        placements: []
+      };
+
+      currentSlots.forEach(function(slotObj, localIdx) {
+        let posY = marginTop;
+        if (currentSlots.length === 2) {
+          posY = (localIdx === 0) ? marginTop : (marginTop + targetH + gapY);
+        } else {
+          // Centrar verticalmente cuando solo va 1 elemento en la hoja
+          posY = Math.max(marginTop, Math.round((availH - targetH) / 2) + marginTop);
+        }
+
+        pageObj.placements.push({
+          slot: slotObj.key,
+          globalIndex: startSlotIdx + localIdx,
+          slotNumber: startSlotIdx + localIdx + 1,
+          xMm: Math.round(posX * 10) / 10,
+          yMm: Math.round(posY * 10) / 10,
+          widthMm: targetW,
+          heightMm: targetH,
+          isOval: !!spec.isOval,
+          drawBorder: includeCutMarks && !spec.isOval,
+          drawOvalGuide: includeCutMarks && !!spec.isOval,
+          drawCutMarks: includeCutMarks,
+          label: includeLabels ? (slotObj.fallback + ' (' + targetW + ' × ' + targetH + ' mm)') : null,
+          labelY: posY - 2.5
+        });
+      });
+
+      plan.pages.push(pageObj);
+    }
+
+    if (numPagesConfig === 2 && fitsTwoPerSheet) {
+      plan.summary = 'Anverso y Reverso alineados en 1 sola hoja ' + paper.shortName + ' a escala 1:1 real';
+    } else {
+      plan.summary = numPagesConfig + ' páginas distribuidas en ' + plan.totalPages + ' hoja(s) ' + paper.shortName + ' a escala 1:1 real';
+    }
+
+    return finalizePlan(plan);
+  }
+
+  // Exportar al objeto global
+  window.RealScanLayout = {
+    computeDocumentLayout: computeDocumentLayout
+  };
+
+})(typeof window !== 'undefined' ? window : this);

@@ -1201,7 +1201,20 @@
         <span id="previewDimensionsTag" class="text-[11px] font-mono font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-700 whitespace-nowrap">85.6 × 54.0 mm</span>
       </div>
 
-      <div class="bg-slate-100/70 dark:bg-slate-950/80 p-3 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex justify-center transition-colors">
+      <div class="bg-slate-100/70 dark:bg-slate-950/80 p-3 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col items-center justify-center transition-colors">
+        <!-- Paginador de Hojas para vistas previas multipágina -->
+        <div id="previewSheetPaginationBar" class="hidden mb-3 w-full max-w-[280px] sm:max-w-[320px] flex items-center justify-between bg-slate-200/90 dark:bg-slate-800/90 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs">
+          <button type="button" id="btnPreviewPrevPage" class="px-2.5 py-1 rounded bg-white dark:bg-slate-700 shadow-xs hover:bg-slate-50 text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:pointer-events-none text-[11px] font-bold transition-all">
+            ◀ Anterior
+          </button>
+          <span id="labelPreviewPageCounter" class="font-mono text-[11px] text-indigo-700 dark:text-indigo-300 font-bold">
+            Hoja 1 de 1
+          </span>
+          <button type="button" id="btnPreviewNextPage" class="px-2.5 py-1 rounded bg-white dark:bg-slate-700 shadow-xs hover:bg-slate-50 text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:pointer-events-none text-[11px] font-bold transition-all">
+            Siguiente ▶
+          </button>
+        </div>
+
         <div class="a4-sheet w-full max-w-[280px] sm:max-w-[320px] rounded-sm p-4 relative flex flex-col items-center bg-white shadow-xl">
           <div id="previewSheetHeader" class="w-full flex justify-between items-center text-[8px] text-slate-400 border-b border-dashed border-slate-200 pb-1 mb-2 transition-all">
             <span id="previewSheetTitle" class="font-semibold text-slate-700 dark:text-slate-800 truncate max-w-[70%]">RealScan — 1 SOLA PÁGINA</span>
@@ -1402,13 +1415,29 @@
             </label>
           </div>
 
-          <!-- Item 4: Modo Copia Doble / Duplicado en la Misma Hoja -->
+          <!-- Item 4: Marcas y Guías de Corte -->
+          <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+            <label class="flex items-start gap-2.5 cursor-pointer">
+              <input type="checkbox" id="chkIncludeCutMarks" checked class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer" />
+              <div class="min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-bold text-slate-800 dark:text-slate-200">4. ✂️ Guías y Marcas de Corte (Líneas para Tijera)</span>
+                  <span id="badgeCutMarksStatus" class="text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded shrink-0">Visible</span>
+                </div>
+                <span class="text-[10.5px] text-slate-500 dark:text-slate-400 block mt-0.5 leading-snug">
+                  Traza marcas de corte en esquinas y silueta punteada. Desmárcalo para una <strong>Hoja 100% limpia sin ninguna línea auxiliar</strong>.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Item 5: Modo Copia Doble / Duplicado en la Misma Hoja -->
           <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
             <label class="flex items-start gap-2.5 cursor-pointer">
               <input type="checkbox" id="chkDuplicateCard" class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer" />
               <div class="min-w-0">
                 <div class="flex items-center justify-between gap-2">
-                  <span class="font-bold text-slate-800 dark:text-slate-200">4. 👥 2 Juegos de Copias en la Misma Hoja (INE / DNI x2)</span>
+                  <span class="font-bold text-slate-800 dark:text-slate-200">5. 👥 2 Juegos de Copias en la Misma Hoja (INE / DNI x2)</span>
                   <span id="badgeDuplicateStatus" class="text-[9.5px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded shrink-0">1 Juego</span>
                 </div>
                 <span class="text-[10.5px] text-slate-500 dark:text-slate-400 block mt-0.5 leading-snug">
@@ -1985,6 +2014,7 @@
   <script src="js/auth.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/engine.js"></script>
+  <script src="js/layout-engine.js"></script>
   <script src="js/pdf.js"></script>
   <script src="js/export.js"></script>
   <script src="js/app.js"></script>

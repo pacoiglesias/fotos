@@ -11,8 +11,8 @@
 | Etapa | Descripción | Pruebas Totales | Aprobadas | Fallidas | Pendientes | Estado |
 |---|---|:---:|:---:|:---:|:---:|:---:|
 | **Etapa 0** | Auditoría y Línea Base | 11 | 11 | 0 | 0 | 🟢 **Aprobada** |
-| **Etapa 1** | Composición y Exportaciones | 8 | 0 | 0 | 8 | 🟡 **En Progreso** |
-| **Etapa 2** | Proyecto, Persistencia y Seguridad | 7 | 0 | 0 | 7 | ⚪ Pendiente |
+| **Etapa 1** | Composición y Exportaciones | 8 | 8 | 0 | 0 | 🟢 **Aprobada** |
+| **Etapa 2** | Proyecto, Persistencia y Seguridad | 7 | 0 | 0 | 7 | 🟡 **En Progreso** |
 | **Etapa 3** | Rediseño Visual y Flujo Ergonómico | 6 | 0 | 0 | 6 | ⚪ Pendiente |
 | **Etapa 4** | Edición y Gestión de Páginas | 6 | 0 | 0 | 6 | ⚪ Pendiente |
 | **Etapa 5** | Recuperación y Productividad | 5 | 0 | 0 | 5 | ⚪ Pendiente |
@@ -22,6 +22,7 @@
 ---
 
 ## 🔬 2. Evidencia y Reproducción de la Línea Base (Etapa 0)
+
 
 Todos los hallazgos de la auditoría inicial fueron comprobados experimentalmente en el código actual con datos sintéticos y capturas de pantalla:
 
@@ -95,13 +96,33 @@ Todos los hallazgos de la auditoría inicial fueron comprobados experimentalment
 
 ---
 
-## 🎯 4. Matriz de Verificación para Etapa 1 (En Progreso)
+## 🎯 4. Matriz de Verificación para Etapa 1 (✅ APROBADA)
 
-- [ ] **M-01:** Modelo unificado en mm (`js/layout-engine.js`) calcula coordenadas unívocas para Preview, PDF y JPG.
-- [ ] **M-02:** Modo 1 Cara centrada verticalmente en zona útil de la hoja.
-- [ ] **M-03:** Modo 2 Caras en 1 Hoja (`same_page`) con distribución simétrica.
-- [ ] **M-04:** Modo 2 Caras Separadas (`both_separate`) genera 2 hojas independientes navegables en preview y en PDF/JPG.
-- [ ] **M-05:** Modo 3 y 4 Páginas distribuye Hoja 1 (Págs 1-2) y Hoja 2 (Págs 3-4).
-- [ ] **M-06:** Modo Duplicado valida altura total útil; pagina automáticamente en Hoja 2 si `y + alto > papel`.
-- [ ] **M-07:** "Hoja Limpia" desactiva 100% de marcas de corte, recuadros grises y textos en PDF y JPG.
-- [ ] **M-08:** Exportación JPG multipágina descarga todas las páginas (individual o ZIP).
+- [x] **M-01:** Modelo unificado en mm (`js/layout-engine.js`) calcula coordenadas unívocas y exactas en milímetros para Preview, PDF, Canvas JPG e Impresión.
+- [x] **M-02:** Modo 1 Cara centrada verticalmente en zona útil de la hoja con margen de seguridad.
+- [x] **M-03:** Modo 2 Caras en 1 Hoja (`same_page`) con distribución simétrica milimétrica.
+- [x] **M-04:** Modo 2 Caras Separadas (`both_separate`) genera 2 hojas independientes navegables en preview (#previewSheetPaginationBar) y en PDF/JPG.
+- [x] **M-05:** Modo 3 y 4 Páginas distribuye Hoja 1 (Págs 1-2) y Hoja 2 (Págs 3-4).
+- [x] **M-06:** Modo Duplicado valida altura total útil; pagina automáticamente en Hoja 2 si `y + alto > papel` sin desbordamiento.
+- [x] **M-07:** "Hoja Limpia" desactiva 100% de marcas de corte, recuadros grises y textos en PDF y JPG para trámites oficiales.
+- [x] **M-08:** Exportación JPG multipágina descarga todas las páginas de forma secuencial o empaquetada en ZIP.
+
+*Resultados de la suite de pruebas sintéticas (`test_etapa1.js`):*
+- Test 1 (2 Caras Separadas): 2 páginas independientes generadas y validadas.
+- Test 2 (Duplicado 4 caras 80×100mm en A4): Auto-paginación en 2 hojas, altura máxima respetada (cero desbordamiento vertical).
+- Test 3 (Hoja Limpia): `cleanSheetMode: true`, 0 marcas de corte, 0 recuadros, 0 rótulos.
+- Test 4 (Planilla fotos en Oficio Mex): 24 fotos ubicadas dentro del área útil de 340 mm.
+- Test 5 (Límites en A4, Carta, Oficio y Legal): Todas las ranuras verificadas dentro del límite del papel.
+
+---
+
+## 🎯 5. Matriz de Verificación para Etapa 2 (En Progreso)
+
+- [ ] **M-09:** Esquema versionado de proyecto (`RealScanProject v2`) en `js/storage.js`.
+- [ ] **M-10:** Desacoplamiento de originales puros (`rawOriginalSrc`) respecto al renderizado procesado (evitar degradación acumulativa por filtros).
+- [ ] **M-11:** Guardado y restauración integral: incluye papel, orientación, acabado y ranuras activas.
+- [ ] **M-12:** Sanitización estricta contra XSS en títulos y listados de escaneos (`textContent`).
+- [ ] **M-13:** Eliminación de PIN maestro hardcodeado `1313` y bypass `2026` en `js/auth.js`.
+- [ ] **M-14:** Migración retrocompatible de proyectos v1 existentes en IndexedDB.
+- [ ] **M-15:** Limpieza correcta del estado al iniciar o cargar otro trabajo.
+
