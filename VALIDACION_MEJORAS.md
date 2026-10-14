@@ -12,8 +12,8 @@
 |---|---|:---:|:---:|:---:|:---:|:---:|
 | **Etapa 0** | Auditoría y Línea Base | 11 | 11 | 0 | 0 | 🟢 **Aprobada** |
 | **Etapa 1** | Composición y Exportaciones | 8 | 8 | 0 | 0 | 🟢 **Aprobada** |
-| **Etapa 2** | Proyecto, Persistencia y Seguridad | 7 | 0 | 0 | 7 | 🟡 **En Progreso** |
-| **Etapa 3** | Rediseño Visual y Flujo Ergonómico | 6 | 0 | 0 | 6 | ⚪ Pendiente |
+| **Etapa 2** | Proyecto, Persistencia y Seguridad | 7 | 7 | 0 | 0 | 🟢 **Aprobada** |
+| **Etapa 3** | Rediseño Visual y Flujo Ergonómico | 6 | 0 | 0 | 6 | 🟡 **En Progreso** |
 | **Etapa 4** | Edición y Gestión de Páginas | 6 | 0 | 0 | 6 | ⚪ Pendiente |
 | **Etapa 5** | Recuperación y Productividad | 5 | 0 | 0 | 5 | ⚪ Pendiente |
 | **Etapa 6** | Rendimiento, Accesibilidad y Offline | 6 | 0 | 0 | 6 | ⚪ Pendiente |
@@ -116,13 +116,32 @@ Todos los hallazgos de la auditoría inicial fueron comprobados experimentalment
 
 ---
 
-## 🎯 5. Matriz de Verificación para Etapa 2 (En Progreso)
+## 🎯 5. Matriz de Verificación para Etapa 2 (✅ APROBADA)
 
-- [ ] **M-09:** Esquema versionado de proyecto (`RealScanProject v2`) en `js/storage.js`.
-- [ ] **M-10:** Desacoplamiento de originales puros (`rawOriginalSrc`) respecto al renderizado procesado (evitar degradación acumulativa por filtros).
-- [ ] **M-11:** Guardado y restauración integral: incluye papel, orientación, acabado y ranuras activas.
-- [ ] **M-12:** Sanitización estricta contra XSS en títulos y listados de escaneos (`textContent`).
-- [ ] **M-13:** Eliminación de PIN maestro hardcodeado `1313` y bypass `2026` en `js/auth.js`.
-- [ ] **M-14:** Migración retrocompatible de proyectos v1 existentes en IndexedDB.
-- [ ] **M-15:** Limpieza correcta del estado al iniciar o cargar otro trabajo.
+- [x] **M-09:** Esquema versionado de proyecto (`RealScanProject v2`) en `js/storage.js` con soporte integral de propiedades físicas y acabado.
+- [x] **M-10:** Desacoplamiento de originales puros (`rawOriginalSrc`) respecto al renderizado procesado (evita degradación acumulativa por re-aplicación de filtros).
+- [x] **M-11:** Guardado y restauración integral: incluye papel, orientación, acabado (`cutMarks`, `ruler`, `labels`), duplicados y ranuras activas.
+- [x] **M-12:** Sanitización estricta contra XSS en títulos y listados de escaneos mediante `escapeHtml` y safe DOM rendering.
+- [x] **M-13:** Eliminación total de PIN maestro hardcodeado `1313` y bypass `2026` en `js/auth.js`. Contraseña cambiada es inmutable e inviolable.
+- [x] **M-14:** Migración retrocompatible de proyectos v1 existentes en IndexedDB (los bitmaps se usan como punto neutro sin filtros duplicados).
+- [x] **M-15:** Limpieza correcta y completa del estado y ranuras del trabajo anterior al cargar otro escaneo.
+
+*Resultados de la suite de pruebas sintéticas (`test_etapa2.js`):*
+- Test 1 (Seguridad Auth): Contraseña cambiada guardada como hash SHA-256; login con 1313 o 2026 rechazado taxativamente.
+- Test 2 (Sanitización XSS): Cadenas maliciosas `<script>` e `<img onerror>` escapadas a entidades HTML inocuas.
+- Test 3 (Proyecto v2): SchemaVersion = 2 verificado; propiedades `paperSize`, `printMode`, `duplicateCard`, `rawOriginalSrc` persistidas con exactitud.
+- Test 4 (Restauración y Limpieza): Ranuras huérfanas limpiadas a null; papel y modo restaurados; cero duplicación de filtros.
+- Test 5 (Migración v1): Proyectos legacy v1 adoptados con transformaciones neutralizadas.
+
+---
+
+## 🎯 6. Matriz de Verificación para Etapa 3 (En Progreso)
+
+- [ ] **M-16:** Eliminación de los 3,706 px de desplazamiento lineal en escritorio en favor de un espacio de trabajo dividido (sidebar de control + lienzo interactivo amplio).
+- [ ] **M-17:** Eliminación del desbordamiento móvil de 534 px en pantalla de 390 px (ancho DOM estricto al 100vw).
+- [ ] **M-18:** Acceso rápido y contextual según intención: Identificaciones, Fotos Oficiales, Documentos Multipágina, Medidas Libres.
+- [ ] **M-19:** Vista previa amplia de la hoja física (>540 px en escritorio) con zoom de visualización desacoplado del encuadre.
+- [ ] **M-20:** Navegación por etapas fluidas sin pérdida de imágenes ni configuraciones al retroceder.
+- [ ] **M-21:** Consistencia tipográfica, espaciado uniforme y coherencia en modos Claro y Oscuro.
+
 

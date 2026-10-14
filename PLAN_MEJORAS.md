@@ -5,7 +5,7 @@
 **Repositorio:** `https://github.com/pacoiglesias/fotos.git`  
 **Autor:** Antigravity AI (Pair Programming con Paco Iglesias)  
 **Fecha de Inicio:** 14 de Octubre de 2026  
-**Estado General:** En Progreso (Etapas 0 y 1 Completadas — Iniciando Etapa 2)
+**Estado General:** En Progreso (Etapas 0, 1 y 2 Completadas — Iniciando Etapa 3)
 
 ---
 
@@ -73,7 +73,7 @@
   5. Eliminación de PINs maestros ocultos o bypass no revocables (`1313`, `2026`) tras el cambio de credenciales de administrador.
   6. Migración transparente de proyectos v1 existentes en IndexedDB hacia el nuevo esquema.
 * **Dependencias:** Etapa 1.
-* **Estado:** ⏳ Pendiente
+* **Estado:** ✅ **COMPLETADA**
 
 ---
 
@@ -85,7 +85,7 @@
   3. Jerarquía visual refinada: Reducción de ruido visual, emojis excesivos e insignias redundantes; paleta sobria profesional (Dark/Light).
   4. Acceso rápido por intenciones de trabajo (Identificaciones, Fotos Oficiales, Documentos Multipágina, Medidas Libres).
 * **Dependencias:** Etapas 1 y 2.
-* **Estado:** ⏳ Pendiente
+* **Estado:** 🔄 **EN PROGRESO**
 
 ---
 
