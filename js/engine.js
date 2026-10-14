@@ -149,55 +149,123 @@ async function renderPdfPageToDataUrl(page) {
 }
 
 /* ============================================================
-   RECORTE AUTOMÁTICO DE BORDES BLANCOS (SCANNER AUTO-TRIM)
+   RECORTE AUTOMÁTICO DE BORDES BLANCOS (SCANNER AUTO-TRIM & RELLENO 1:1)
    ============================================================ */
 function detectAndCropCard(img) {
   try {
     const canvas = document.createElement('canvas');
-    const maxDim = 1400;
+    const maxDim = 1000;
     let scale = 1;
     if (img.naturalWidth > maxDim || img.naturalHeight > maxDim) {
       scale = maxDim / Math.max(img.naturalWidth, img.naturalHeight);
     }
     const w = Math.round(img.naturalWidth * scale);
     const h = Math.round(img.naturalHeight * scale);
-    canvas.width = w; canvas.height = h;
-    const ctx = canvas.getContext('2d');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(img, 0, 0, w, h);
     const imgData = ctx.getImageData(0, 0, w, h);
     const d = imgData.data;
 
-    function getRGB(x, y) { const i = (y*w + x)*4; return { r:d[i], g:d[i+1], b:d[i+2], a:d[i+3] }; }
-    const c1 = getRGB(4,4), c2 = getRGB(w-5,4), c3 = getRGB(4,h-5), c4 = getRGB(w-5,h-5);
-    const isLight = function(c){ return c.r>225 && c.g>225 && c.b>225; };
-    const hasWhiteBg = isLight(c1) || isLight(c2) || isLight(c3) || isLight(c4);
-    function isBackground(x, y) {
+    function getRGB(x, y) {
+      const idx = (y * w + x) * 4;
+      return { r: d[idx], g: d[idx + 1], b: d[idx + 2], a: d[idx + 3] };
+    }
+
+    // Muestreo de las 4 esquinas exteriores para determinar fondo
+    const c1 = getRGB(3, 3), c2 = getRGB(w - 4, 3), c3 = getRGB(3, h - 4), c4 = getRGB(w - 4, h - 4);
+    const bgR = (c1.r + c2.r + c3.r + c4.r) / 4;
+    const bgG = (c1.g + c2.g + c3.g + c4.g) / 4;
+    const bgB = (c1.b + c2.b + c3.b + c4.b) / 4;
+    const isLightBg = (bgR > 210 && bgG > 210 && bgB > 210);
+    const isDarkBg = (bgR < 45 && bgG < 45 && bgB < 45);
+
+    function isBackgroundPixel(x, y) {
       const p = getRGB(x, y);
-      if (p.a < 30) return true;
-      if (hasWhiteBg) return p.r>230 && p.g>230 && p.b>230;
-      const diff = Math.abs(p.r-c1.r) + Math.abs(p.g-c1.g) + Math.abs(p.b-c1.b);
-      return diff < 38;
+      if (p.a < 35) return true; // transparente
+      if (isLightBg) {
+        // En fondos claros de escáner / PDF, los píxeles blancos o muy claros son fondo
+        return p.r > 220 && p.g > 220 && p.b > 220;
+      }
+      if (isDarkBg) {
+        return p.r < 45 && p.g < 45 && p.b < 45;
+      }
+      const diff = Math.abs(p.r - bgR) + Math.abs(p.g - bgG) + Math.abs(p.b - bgB);
+      return diff < 42;
     }
-    let top=0, bottom=h-1, left=0, right=w-1;
-    for (let y=0; y<h*0.45; y++) { let n=0; for (let x=Math.round(w*0.1); x<w*0.9; x+=4) if(!isBackground(x,y)) n++; if(n>(w*0.8/4)*0.08){ top=Math.max(0,y-2); break; } }
-    for (let y=h-1; y>h*0.55; y--) { let n=0; for (let x=Math.round(w*0.1); x<w*0.9; x+=4) if(!isBackground(x,y)) n++; if(n>(w*0.8/4)*0.08){ bottom=Math.min(h-1,y+2); break; } }
-    for (let x=0; x<w*0.45; x++) { let n=0; for (let x=Math.round(h*0.1); y<h*0.9; y+=4) if(!isBackground(x,y)) n++; if(n>(h*0.8/4)*0.08){ left=Math.max(0,x-2); break; } }
-    for (let x=w-1; x>w*0.55; x--) { let n=0; for (let y=Math.round(h*0.1); y<h*0.9; y+=4) if(!isBackground(x,y)) n++; if(n>(h*0.8/4)*0.08){ right=Math.min(w-1,x+2); break; } }
 
-    const cropW = right-left+1, cropH = bottom-top+1;
-    const wasTrimmed = (top>5) || (bottom<h-6) || (left>5) || (right<w-6);
+    // Escaneo completo para encontrar el rectángulo del documento (DNI, carnet, pasaporte)
+    let top = 0, bottom = h - 1, left = 0, right = w - 1;
 
-    if (wasTrimmed && cropW>80 && cropH>50) {
-      const oL = Math.round(left/scale), oT = Math.round(top/scale);
-      const oW = Math.min(img.naturalWidth-oL, Math.round(cropW/scale));
-      const oH = Math.min(img.naturalHeight-oT, Math.round(cropH/scale));
-      const cc = document.createElement('canvas');
-      cc.width = oW; cc.height = oH;
-      const cx = cc.getContext('2d');
-      cx.drawImage(img, oL, oT, oW, oH, 0, 0, oW, oH);
-      return cc.toDataURL('image/jpeg', 0.96);
+    // Escanear de arriba hacia abajo
+    for (let y = 0; y < h; y++) {
+      let nonBg = 0;
+      for (let x = 0; x < w; x += 4) {
+        if (!isBackgroundPixel(x, y)) nonBg++;
+      }
+      if (nonBg > (w / 4) * 0.035) {
+        top = Math.max(0, y - 2);
+        break;
+      }
     }
-  } catch (err) { /* silent */ }
+
+    // Escanear de abajo hacia arriba
+    for (let y = h - 1; y >= 0; y--) {
+      let nonBg = 0;
+      for (let x = 0; x < w; x += 4) {
+        if (!isBackgroundPixel(x, y)) nonBg++;
+      }
+      if (nonBg > (w / 4) * 0.035) {
+        bottom = Math.min(h - 1, y + 2);
+        break;
+      }
+    }
+
+    // Escanear de izquierda a derecha
+    for (let x = 0; x < w; x++) {
+      let nonBg = 0;
+      for (let y = 0; y < h; y += 4) {
+        if (!isBackgroundPixel(x, y)) nonBg++;
+      }
+      if (nonBg > (h / 4) * 0.035) {
+        left = Math.max(0, x - 2);
+        break;
+      }
+    }
+
+    // Escanear de derecha a izquierda
+    for (let x = w - 1; x >= 0; x--) {
+      let nonBg = 0;
+      for (let y = 0; y < h; y += 4) {
+        if (!isBackgroundPixel(x, y)) nonBg++;
+      }
+      if (nonBg > (h / 4) * 0.035) {
+        right = Math.min(w - 1, x + 2);
+        break;
+      }
+    }
+
+    const cropW = right - left + 1;
+    const cropH = bottom - top + 1;
+    const wasTrimmed = (top > 8 || bottom < h - 9 || left > 8 || right < w - 9);
+
+    if (wasTrimmed && cropW > 60 && cropH > 40 && top < bottom && left < right) {
+      const origLeft = Math.round(left / scale);
+      const origTop = Math.round(top / scale);
+      const origWidth = Math.min(img.naturalWidth - origLeft, Math.round(cropW / scale));
+      const origHeight = Math.min(img.naturalHeight - origTop, Math.round(cropH / scale));
+
+      const cropCanvas = document.createElement('canvas');
+      cropCanvas.width = origWidth;
+      cropCanvas.height = origHeight;
+      const cropCtx = cropCanvas.getContext('2d');
+      cropCtx.drawImage(img, origLeft, origTop, origWidth, origHeight, 0, 0, origWidth, origHeight);
+      return cropCanvas.toDataURL('image/jpeg', 0.96);
+    }
+  } catch (err) {
+    console.warn('[RealScan] Error en auto-crop:', err);
+  }
   return null;
 }
 
@@ -215,9 +283,85 @@ function toggleAutoCrop(side) {
     imgData.naturalWidth = img.naturalWidth;
     imgData.naturalHeight = img.naturalHeight;
     renderProcessedImage(side);
-    showToast(imgData.isCropApplied ? 'Recorte de bordes activado' : 'Mostrando imagen sin recortar', 'info');
+    showToast(imgData.isCropApplied ? 'Recorte de bordes activado (relleno 1:1)' : 'Mostrando imagen sin recortar', 'info');
   };
   img.src = targetSrc;
+}
+
+function autoFitSlotToCard(side) {
+  const imgData = state.images[side];
+  if (!imgData.originalSrc) {
+    showToast('Primero captura o sube una imagen en esta ranura.', 'warning');
+    return;
+  }
+
+  // Si existe versión recortada pero no está activa, aplicarla
+  if (imgData.croppedSrc && !imgData.isCropApplied) {
+    imgData.isCropApplied = true;
+    imgData.originalSrc = imgData.croppedSrc;
+    const btn = $('btnToggleCrop' + getSlotIdSuffix(side));
+    if (btn) btn.textContent = '✂️ Recorte Auto';
+  } else if (!imgData.croppedSrc && imgData.rawOriginalSrc) {
+    const tempImg = new Image();
+    tempImg.onload = function() {
+      const cropped = detectAndCropCard(tempImg);
+      if (cropped) {
+        imgData.croppedSrc = cropped;
+        imgData.isCropApplied = true;
+        imgData.originalSrc = cropped;
+        imgData.naturalWidth = tempImg.naturalWidth;
+        imgData.naturalHeight = tempImg.naturalHeight;
+      }
+      imgData.zoom = 1.0;
+      imgData.panX = 0;
+      imgData.panY = 0;
+      const label = $('zoomLabel' + getSlotIdSuffix(side));
+      if (label) label.textContent = '1.0x';
+      renderProcessedImage(side);
+      showToast('¡Ajuste 1:1 aplicado! Documento ampliado para rellenar la ranura exacta.', 'success');
+    };
+    tempImg.src = imgData.rawOriginalSrc;
+    return;
+  }
+
+  imgData.zoom = 1.0;
+  imgData.panX = 0;
+  imgData.panY = 0;
+  const label = $('zoomLabel' + getSlotIdSuffix(side));
+  if (label) label.textContent = '1.0x';
+  renderProcessedImage(side);
+  showToast('¡Ajuste 1:1 aplicado! Documento ampliado para rellenar la ranura exacta.', 'success');
+}
+
+function clearSlot(side) {
+  state.images[side] = {
+    rawOriginalSrc: null,
+    croppedSrc: null,
+    isCropApplied: true,
+    originalSrc: null,
+    processedDataUrl: null,
+    naturalWidth: 0,
+    naturalHeight: 0,
+    rotation: 0,
+    zoom: 1.0,
+    filter: 'color',
+    panX: 0,
+    panY: 0,
+    showOaciGuide: false
+  };
+
+  const suffix = getSlotIdSuffix(side);
+  const input = $('fileInput' + suffix);
+  if (input) input.value = '';
+
+  const zoomLabel = $('zoomLabel' + suffix);
+  if (zoomLabel) zoomLabel.textContent = '1.0x';
+
+  const cropBtn = $('btnToggleCrop' + suffix);
+  if (cropBtn) cropBtn.classList.add('hidden');
+
+  updateSidePreview(side);
+  showToast('Foto eliminada de ' + getSlotFriendlyName(side) + '. Ranura lista para nueva captura o archivo.', 'info');
 }
 
 /* ============================================================
@@ -419,8 +563,9 @@ function updateSidePreview(side) {
   const placeholder = $('placeholder' + suffix);
   const tools = $('tools' + suffix);
   const badge = $('badgeStatus' + suffix);
+  const btnDelete = $('btnDelete' + suffix);
 
-  if (imgData.processedDataUrl) {
+  if (imgData && imgData.processedDataUrl) {
     if (previewImg) {
       previewImg.src = imgData.processedDataUrl;
       previewImg.classList.remove('hidden');
@@ -428,6 +573,7 @@ function updateSidePreview(side) {
     }
     if (placeholder) placeholder.classList.add('hidden');
     if (tools) tools.classList.remove('hidden');
+    if (btnDelete) btnDelete.classList.remove('hidden');
 
     if (badge) {
       badge.textContent = 'Listo';
@@ -441,6 +587,24 @@ function updateSidePreview(side) {
 
     const oaciOverlay = $('oaciGuide' + suffix);
     if (oaciOverlay) oaciOverlay.classList.toggle('hidden', !imgData.showOaciGuide);
+
+    if (typeof updateUI === 'function') updateUI();
+  } else {
+    if (previewImg) {
+      previewImg.src = '';
+      previewImg.classList.add('hidden');
+    }
+    if (placeholder) placeholder.classList.remove('hidden');
+    if (tools) tools.classList.add('hidden');
+    if (btnDelete) btnDelete.classList.add('hidden');
+
+    if (badge) {
+      badge.textContent = 'Sin foto';
+      badge.className = 'text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400';
+    }
+
+    const oaciOverlay = $('oaciGuide' + suffix);
+    if (oaciOverlay) oaciOverlay.classList.add('hidden');
 
     if (typeof updateUI === 'function') updateUI();
   }

@@ -865,6 +865,24 @@ function bindEvents() {
     on(b, 'click', function(){ if (typeof toggleAutoCrop === 'function') toggleAutoCrop(b.getAttribute('data-crop')); });
   });
 
+  // Auto-Fit / Rellenar Ranura 1:1
+  $$('[data-autofit]').forEach(function(b) {
+    on(b, 'click', function() {
+      const side = b.getAttribute('data-autofit');
+      if (typeof autoFitSlotToCard === 'function') autoFitSlotToCard(side);
+    });
+  });
+
+  // Eliminar / Borrar Foto de Ranura
+  $$('[data-delete]').forEach(function(b) {
+    on(b, 'click', function() {
+      const side = b.getAttribute('data-delete');
+      if (confirm('¿Eliminar la foto cargada en ' + getSlotFriendlyName(side) + '? Podrás subir o capturar una nueva.')) {
+        if (typeof clearSlot === 'function') clearSlot(side);
+      }
+    });
+  });
+
   // Botón añadir más páginas a documentos (Pasaporte / Visas / Tarjetas)
   if ($('btnAddDocumentPage')) {
     on($('btnAddDocumentPage'), 'click', function() {

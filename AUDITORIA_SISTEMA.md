@@ -108,10 +108,32 @@ Se agregaron 4 botones dedicados con etiquetas claras y descriptivas:
 
 ---
 
-## 6. 🚀 Despliegue y Sincronización Total
+---
+
+## 6. 🚀 Versión v2.8.0-Enterprise: Auto-Relleno 1:1 para PDFs y Botones de Eliminación
+1. **Solución a Impresión de DNI Pequeño en PDFs Escaneados:**
+   - **Diagnóstico del problema:** Al subir un PDF que contiene un DNI escaneado en una hoja completa (como una página blanca de escáner plano), el sistema cargaba la página entera en lugar de la tarjeta, provocando que el DNI quedara flotando en medio de márgenes blancos y se imprimiera con un tamaño inferior al real.
+   - **Algoritmo de Detección de Bordes Mejorado:** Implementado en `js/engine.js` (`detectAndCropCard`). Ahora escanea las 4 dimensiones completas de la imagen/PDF, identifica los límites de la tarjeta o documento frente al fondo del escáner y la recorta de manera milimétrica.
+   - **Escala 1:1 Exacta:** Al aislar la tarjeta, el motor de renderizado a 300 DPI (`renderProcessedImage`) escala la credencial exactamente al tamaño oficial (85.60 × 53.98 mm), eliminando bordes residuales y asegurando que la impresión en papel coincida 100% con la tarjeta real.
+   - **Botón `⚡ Rellenar 1:1`:** Añadido en la barra de herramientas de cada ranura para forzar el ajuste perfecto y eliminar márgenes en cualquier momento con un solo toque.
+
+2. **Botón "🗑️ Borrar / Eliminar" en Cada Ranura:**
+   - **Solicitud del usuario:** Posibilidad de eliminar fotos o PDFs subidos por error sin necesidad de reiniciar la aplicación.
+   - **Ubicación:**
+     - Botón `🗑️ Borrar` visible en la cabecera de cada tarjeta (junto al distintivo de estado).
+     - Botón `🗑️ Eliminar` dentro de la fila de herramientas de edición de cada ranura.
+   - **Comportamiento:** Limpia la memoria del slot (`state.images[side]`), vacía el selector de archivos nativo, oculta las herramientas, restablece el estado a *"Sin foto"* y limpia la vista previa en la hoja A4.
+
+3. **Control Estricto de Versiones:**
+   - Versión del sistema elevada a **`v2.8.0-Enterprise`**.
+
+---
+
+## 7. 🚀 Despliegue y Sincronización Total
 - **Local:** `http://localhost:5500/`
 - **Producción:** `https://fotos-cobertores-pro.web.app` / `https://fotos-cobertores-pro.firebaseapp.com`
 - **Integridad:** Código modular sincronizado al 100%, validado sintácticamente y con cero errores de consola.
 - **Autoría:** Desarrollado por **Paco Iglesias**.
+
 
  
