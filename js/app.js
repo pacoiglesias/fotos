@@ -2728,11 +2728,17 @@ function setupPwaSupport() {
   });
 }
 
+const APP_VERSION = 'v3.3.0-Enterprise';
+window.APP_VERSION = APP_VERSION;
+
 function syncAppVersion() {
   const version = window.APP_VERSION || 'v3.3.0-Enterprise';
-  ['appVersionHeader', 'labelSwVersion', 'labelActiveVersionSettings'].forEach(function(id) {
+  ['appVersionHeader', 'appVersionFooter', 'labelSwVersion', 'labelActiveVersionSettings'].forEach(function(id) {
     const el = $(id);
-    if (el) el.textContent = version;
+    if (el) {
+      if (id === 'appVersionFooter') el.textContent = 'RealScan Pro ' + version;
+      else el.textContent = version;
+    }
   });
   $$('.app-version-label, [data-app-version]').forEach(function(el) {
     el.textContent = version;

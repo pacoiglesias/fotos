@@ -5,21 +5,21 @@
 **Repositorio:** `https://github.com/pacoiglesias/fotos.git`  
 **Autor:** Antigravity AI (Pair Programming con Paco Iglesias)  
 **Fecha de Inicio:** 14 de Octubre de 2026  
-**Estado General:** ✅ **100% COMPLETADO (Etapas 0 a 7 Concluidas — 40 de 40 Mejoras Implementadas y Certificadas)**
+**Estado General:** 🔄 **Fase de Cierre Técnico y Verificación Integral (Entregas 1 a 4)** — Correcciones funcionales comprobadas, suites de regresión automatizadas y resolución de los hallazgos de la auditoría independiente.
 
 ---
 
 ## 📌 Principios Rectores y Reglas Operativas
 1. **Calidad de Grado Profesional:** No quedarse en recomendaciones ni maquetas estéticas; implementar código robusto, modular, tipado/documentado y probado.
-2. **Modelo Físico en Milímetros:** Toda composición, visualización, corte y exportación se rige por geometría física estricta ($mm$) calibrada a 300 DPI.
+2. **Modelo Geométrico Digital en Milímetros:** Toda composición, visualización, corte y exportación se rige por especificaciones en milímetros ($mm$) proyectadas a 300 DPI en los exportadores vectoriales y raster (la precisión física final en papel está sujeta a que el usuario desactive el 'Ajustar al área imprimible' en el driver de su impresora).
 3. **Flujo de Usuario Optimizado:** Tipo de trabajo → Cargar archivos → Ajustar imágenes → Componer hojas → Verificar pre-vuelo → Exportar / Imprimir.
 4. **Respeto a Cambios y Datos:** Conservar historiales, configuraciones válidas existentes y arquitectura proporcional (sin sobreingeniería ni frameworks pesados innecesarios).
-5. **Entregas Continuas Validadas:** Cada etapa se implementa, valida con pruebas reproducibles, se documenta en `VALIDACION_MEJORAS.md`, se commitea y se sube a GitHub antes de avanzar a la siguiente.
+5. **Entregas Continuas Validadas:** Cada entrega se implementa, valida con pruebas reproducibles, se documenta en `VALIDACION_MEJORAS.md`, se commitea y se sube a GitHub antes de avanzar a la siguiente.
 
 ---
 
 ## 📋 Inventario de Capacidades que Deben Conservarse
-- [x] **Calibración 1:1 Estricta:** Regla física de 50 mm trazada vectorialmente con marcas milimétricas exactas.
+- [x] **Geometría 1:1 Digital:** Regla milimétrica de 50 mm trazada vectorialmente con marcas milimétricas exactas a 300 DPI.
 - [x] **Formatos Oficiales México e Internacionales:**
   - Identificaciones: INE/IFE, DNI Europeo, Licencias, Tarjetas de Visita ($85.6 \times 53.98\text{ mm}$ y $85 \times 55\text{ mm}$).
   - Pasaportes: Libreta Abierta ($176 \times 125\text{ mm}$), Páginas Individuales ($88 \times 125\text{ mm}$).
@@ -133,8 +133,39 @@
 * **Objetivo:** Ejecución exhaustiva de la matriz de pruebas de punta a punta, reporte comparativo antes/después, documentación técnica y cierre de PR.
 * **Criterios de Aceptación:**
   1. 100% de la matriz de pruebas aprobada sin defectos críticos ni regresiones (7 de 7 suites).
-  2. Calibración micrométrica estricta 1:1 verificada en todos los formatos ISO y México.
-  3. Cero errores en navegador real con Playwright (`errors: []`).
+  2. Cotas geométricas milimétricas verificadas contra estándares oficiales ISO y de México.
+  3. Cero errores en consola con ejecución en modo headless.
   4. Rama `codex/mejora-integral-realscan` actualizada y lista para merge o producción.
 * **Dependencias:** Etapas 0 a 6.
 * **Estado:** ✅ **COMPLETADA** (`test_etapa7.js` pasa 100%)
+
+---
+
+## 📦 Entregas de Cierre Técnico y Resolución de Auditoría Independiente
+
+### 🛡️ Entrega 1 — Integridad de Exportación y Seguridad (Commit `dfe9f3b`)
+- **Imágenes requeridas estrictas (C01):** Eliminado el fallback que sustituía caras faltantes por el frente en PDF, JPG e impresión. `runPreflightChecks` valida las caras exigidas por la composición activa y bloquea la exportación si faltan ranuras obligatorias.
+- **Validación geométrica común bloqueante (C06):** Centralización de `validateGeometry()` previa a todos los exportadores; rechazo de dimensiones no finitas, desbordamientos de página y elementos fuera del papel útil.
+- **Permisos de autenticación y saneamiento DOM (C03):** Autorización estricta por rol (operador no puede crear ni eliminar administradores; protección de al menos un administrador activo); erradicación de interpolación insegura de HTML en miniaturas mediante asignación de propiedades directas a nodos DOM.
+
+### 🔄 Entrega 2 — Ciclo de Vida del Proyecto y Aislamiento entre Trabajos (Commit `717a67a`)
+- **Aislamiento integral de ranuras (C02):** Limpieza profunda de `originalSrc`, `processedSrc`, `croppedSrc` y propiedades transitorias al cambiar de trabajo o restaurar.
+- **Vaciado de historial de edición (C02):** Las pilas de Undo/Redo no filtran estados entre diferentes proyectos.
+- **Separación de títulos (C02):** `projectTitle` (nombre de gestión en historial) y `printedSheetTitle` (rótulo impreso en la hoja) desacoplados.
+- **Preservación de ambas fotos en mezcla (C07):** Soporte de fotos de dos personas guardando ambas caras sin omisiones.
+- **Deshacer agrupado en sliders (C07):** Registro de zoom y ajustes continuos con debounce de 500ms para hacer viable el deshacer interactivo.
+- **Espera asíncrona:** `waitForProcessingComplete()` para asegurar que ninguna exportación utilice resultados transitorios obsoletos.
+
+### 📐 Entrega 3 — Vista Previa Fiel 1:1 y Herramientas Interactivas (Commit `c320422`)
+- **Composición 1:1 fiel en pantalla (C04):** `#faithfulSheetPlacements` renderiza cada elemento del plan común en sus coordenadas y dimensiones exactas relativas al papel (eliminado el ancho mínimo artificial de 38% para documentos pequeños; 4 colocaciones visibles en duplicado).
+- **Herramientas de edición integradas (C08):**
+  - Recorte manual interactivo (`cropModal`) con comparador contra imagen original.
+  - Corrección de perspectiva con 4 esquinas interactivas (`perspectiveWarpModal`) y validación de cuadrilátero convexo `isConvexQuad`.
+  - Extractor y selector de páginas PDF (`pdfPageSelectorModal`) con asignación directa a caras.
+- **Fotos multipágina y mezcla (C08):** Distribución de fotos sin clamp a 4, paginando hasta 2 hojas; cantidades independientes para Persona A y Persona B (`inputCopiesPersonA` e `inputCopiesPersonB`).
+- **Unificación de versión (C09):** Versión única `v3.3.0-Enterprise` sincronizada en cabecera, pie, settings y accesos.
+
+### 🌐 Entrega 4 — PWA Offline Resiliente, Accesibilidad y Cierre Verificable
+- **Service Worker resiliente (C05):** Separación de `CORE_ASSETS` locales y `OPTIONAL_ASSETS` (CDNs); eliminación del operador síncrono `||` entre promesas de `caches.match`; resolución asíncrona real con `await` para garantizar recargas 100% offline sin `net::ERR_FAILED`.
+- **Accesibilidad y Focus Trap (C09):** Contención estricta de foco (teclas `Tab` / `Shift+Tab`) en todos los modales; fondo inerte (`inert` y `aria-hidden="true"`); cierre con `Escape` y devolución garantizada del foco al control disparador.
+- **Transparencia y honestidad técnica (C10):** Eliminación de términos inflados ("inviolable", "calibración micrométrica física"); documentación explícita de cotas digitales milimétricas a 300 DPI y declaración de límites técnicos.

@@ -122,7 +122,7 @@ Todos los hallazgos de la auditoría inicial fueron comprobados experimentalment
 - [x] **M-10:** Desacoplamiento de originales puros (`rawOriginalSrc`) respecto al renderizado procesado (evita degradación acumulativa por re-aplicación de filtros).
 - [x] **M-11:** Guardado y restauración integral: incluye papel, orientación, acabado (`cutMarks`, `ruler`, `labels`), duplicados y ranuras activas.
 - [x] **M-12:** Sanitización estricta contra XSS en títulos y listados de escaneos mediante `escapeHtml` y safe DOM rendering.
-- [x] **M-13:** Eliminación total de PIN maestro hardcodeado `1313` y bypass `2026` en `js/auth.js`. Contraseña cambiada es inmutable e inviolable.
+- [x] **M-13:** Eliminación total de PIN maestro hardcodeado `1313` y bypass `2026` en `js/auth.js`. Las credenciales modificadas se almacenan como hash SHA-256 local en localStorage con revocación de accesos por defecto.
 - [x] **M-14:** Migración retrocompatible de proyectos v1 existentes en IndexedDB (los bitmaps se usan como punto neutro sin filtros duplicados).
 - [x] **M-15:** Limpieza correcta y completa del estado y ranuras del trabajo anterior al cargar otro escaneo.
 
@@ -203,34 +203,54 @@ Todos los hallazgos de la auditoría inicial fueron comprobados experimentalment
 
 ---
 
-## 🎯 10. Etapa 7: Pruebas End-to-End en Navegador Real, Calibración 1:1 y Auditoría Final de Cierre (Completada con Éxito)
+## 🎯 10. Etapa 7: Pruebas Automatizadas en Entorno Headless y Cotas Geométricas Digitales
 
-- [x] **M-37:** Suite E2E completa en Playwright y suites sintéticas simulando flujos reales de usuario (subida, homografía, cambio de papel, presets, exportación) con cero errores en consola (`errors: []`).
-- [x] **M-38:** Verificación micrométrica estricta de escala física 1:1 en PDF y matrices de colocación:
-  - Credencial ISO 7810 ID-1: `85.600 × 53.980` mm exactos (tolerancia < 0.001 mm).
-  - Fotos Infantiles México: `25.000 × 30.000` mm exactos.
-  - Papel Oficio México: `215.900 × 340.000` mm exactos.
-  - Papel Carta: `215.900 × 279.400` mm exactos.
-  - Papel A4: `210.000 × 297.000` mm exactos.
-- [x] **M-39:** Validación de resiliencia y rendimiento: Service Worker Cache-First operativo, telemetría local de almacenamiento sin fugas y soporte 100% offline.
-- [x] **M-40:** Consolidación final del repositorio y cierre total del Plan Maestro de 40 Mejoras (M-01 a M-40) al 100% verificado.
-
-*Resultados de la suite de calibración micrométrica (`test_etapa7.js`):*
-- Test 1 (Credencial ISO): Ancho 85.600 mm, Alto 53.980 mm (desviación 0.000 mm).
-- Test 2 (Fotos Infantiles México): 12 copias ubicadas a 25.0 × 30.0 mm dentro de los límites del papel A4.
-- Test 3 (Oficio México y Carta): 215.9 × 340.0 mm y 215.9 × 279.4 mm validados con exactitud física.
-- Test 4 (Hojas Separadas y Duplicado): Hojas separadas en 2 páginas independientes y modo duplicado con 4 colocaciones verificado.
+- [x] **M-37:** Suites automatizadas ejecutando flujos reales de usuario (subida, homografía, cambio de papel, presets, exportación) con cero errores en consola.
+- [x] **M-38:** Verificación de cotas geométricas digitales milimétricas a 300 DPI en PDF y matrices de colocación:
+  - Credencial ISO 7810 ID-1: `85.600 × 53.980` mm exactos en coordenadas vectoriales.
+  - Fotos Infantiles México: `25.000 × 30.000` mm en plan de colocación.
+  - Papel Oficio México: `215.900 × 340.000` mm.
+  - Papel Carta: `215.900 × 279.400` mm.
+  - Papel A4: `210.000 × 297.000` mm.
+  *(Nota técnica: la escala 1:1 física en papel impreso requiere que el usuario seleccione "Tamaño real" o "Escala 100%" en el cuadro de diálogo de impresión del sistema operativo, sin ajuste automático al área imprimible).*
+- [x] **M-39:** Validación de resiliencia: Service Worker con precaching separado (core/optional) y fallback asíncrono con await, almacenamiento local IndexedDB gestionado y PWA offline.
+- [x] **M-40:** Consolidación final del repositorio y seguimiento continuo de calidad en rama `codex/mejora-integral-realscan`.
 
 ---
 
-## 🏆 11. Dictamen Final de Auditoría y Certificación de Entrega
+## 🏆 11. Dictamen de Ingeniería y Estado de Verificación
 
-> **ESTADO GLOBAL:** **100% COMPLETADO (40 DE 40 MEJORAS IMPLEMENTADAS Y VERIFICADAS)**  
-> **FECHA DE CERTIFICACIÓN:** 14 de Octubre de 2026  
-> **VERSIÓN CERTIFICADA:** `v3.3.0-Enterprise`  
+> **ESTADO DEL SISTEMA:** **CIERRE TÉCNICO VERIFICADO (ENTREGAS 1 A 4 COMPLETADAS)**  
+> **FECHA:** 14 de Octubre de 2026  
+> **VERSIÓN CONSOLIDADA:** `v3.3.0-Enterprise`  
 > **RAMA GIT:** `codex/mejora-integral-realscan`  
-> **RESULTADO DE PRUEBAS:** 7 de 7 Suites Exitosas (`test_etapa1.js` a `test_etapa7.js`) + Playwright Headless sin errores (`errors: []`).  
-> **CALIBRACIÓN FÍSICA:** 1:1 Exacta e Inalterada en todos los formatos oficiales de México e internacionales.
+> **SUITES AUTOMATIZADAS:** 11 de 11 Suites Exitosas (`test_etapa1` a `test_etapa7`, `test_entrega1_seguridad`, `test_entrega2_proyecto`, `test_entrega3_preview`, `test_entrega4_offline_a11y`).  
+> **EVIDENCIA DE PRUEBAS:** 100% de aserciones aprobadas en entorno Node/Chromium con datos sintéticos y contexto aislado.
+
+---
+
+## 📋 12. Matriz de Resolución de Hallazgos de Auditoría Independiente
+
+| Código | Gravedad | Hallazgo Original | Corrección Implementada | Evidencia / Prueba |
+|:---:|:---:|:---|:---|:---:|
+| **C01** | Alta | Con frente cargado y reverso vacío, PDF dibujaba dos frentes (fallback erróneo a front). | Preflight estricto exige los slots requeridos por la composición activa y bloquea exportación sin duplicar imágenes. | `test_entrega1_seguridad.js` (Test 1.1–1.3) |
+| **C02** | Alta | Contaminación entre proyectos: orientaciones, croppedSrc e historial de edición sobrevivían al cambio de trabajo. | Operación centralizada `resetToCleanWork()` y limpieza profunda de ranuras y pilas de Undo/Redo al cambiar o restaurar. | `test_entrega2_proyecto.js` (Test 1–3) |
+| **C03** | Alta | Operador podía crear/eliminar administradores y las miniaturas interpolaban cadenas con data-attribute en HTML. | Control de roles en cada operación (`isAdmin`), protección del último admin y renderizado seguro mediante nodos DOM (`img.src`). | `test_entrega1_seguridad.js` (Test 3.1–3.4) |
+| **C04** | Alta | Vista previa en pantalla mostraba 2 ranuras estáticas mientras el plan tenía 4 en duplicado; mínimo artificial de 38% en documentos pequeños. | `#faithfulSheetPlacements` renderiza cada elemento del plan común en sus coordenadas exactas relativas al papel (4 copias visibles y proporciones reales). | `test_entrega3_preview.js` (Test 1.1–1.3) |
+| **C05** | Alta | Recarga offline fallaba con `net::ERR_FAILED` por aplicar `||` a promesas en `caches.match`. Precaching abortaba con fallas de CDN. | `sw.js` separa `CORE_ASSETS` de `OPTIONAL_ASSETS`; fallback de navegación usa `await` secuencial para index.html y raíz. | `test_entrega4_offline_a11y.js` (Test 1.1–1.5) |
+| **C06** | Media/Alta | Exportador JPG y PDF no validaban uniformemente medidas fuera de página (ej. 250 × 400 mm en A4). | `validateGeometry()` bloqueante previa a todos los exportadores; rechaza tamaños negativos, infinitos o desbordantes. | `test_entrega1_seguridad.js` (Test 2.1–2.4) |
+| **C07** | Media | Borradores omitían mixTwoPhotos y zoom continuo no registraba estado para deshacer. | Esquema compartido de borrador v2 con debounce de 500ms en sliders continuos para registro granular en historial de edición. | `test_entrega2_proyecto.js` (Test 4–6) |
+| **C08** | Media | Herramientas interactivas prometidas sin interfaz (recorte manual, perspectiva 4 esquinas, extractor PDF, fotos multipágina). | Modales accesibles interactivos `#cropModal` (con comparador), `#perspectiveWarpModal` (con `isConvexQuad`) y `#pdfPageSelectorModal`. | `test_entrega3_preview.js` (Test 2.1–2.4) |
+| **C09** | Media | Falta de contención de foco en modales (Tab escapaba a la página) y versiones discordantes entre cabecera y pie. | Focus Trap estricto con `Tab` / `Shift+Tab`, fondo `inert` / `aria-hidden`, cierre con `Escape` y versión unificada `v3.3.0-Enterprise`. | `test_entrega4_offline_a11y.js` (Test 2.1–2.7) |
+| **C10** | Media | Afirmaciones desmedidas ("inviolable", "calibración física micrométrica") sin medición en papel físico. | Documentación saneada y honesta: delimitación entre cotas digitales a 300 DPI y calibración física sujeta a driver de impresión. | `PLAN_MEJORAS.md` y `VALIDACION_MEJORAS.md` |
+
+---
+
+## ⚠️ 13. Límites Técnicos Declarados
+
+1. **Hardware Físico:** Las pruebas se ejecutaron en entornos de desarrollo y headless en Node.js y Chromium; no se realizaron impresiones en hardware físico de tóner/tinta ni pruebas con sensores de cámara física real (se usaron mocks de stream y fixtures sintéticas).
+2. **Entornos de Navegador:** Las comprobaciones directas abarcan Chromium y entornos basados en Web Standards. No se realizaron pruebas en Safari nativo (WebKit en macOS/iOS).
+3. **Escala 1:1 en Impresión Real:** La correspondencia exacta de 1:1 en papel depende de que el usuario seleccione "Escala: 100%" o "Tamaño Real" en el cuadro de diálogo de impresión de su sistema operativo y desactive opciones como "Ajustar al tamaño del papel". RealScan garantiza que el lienzo vectorial y raster mide milimétricamente las dimensiones oficiales a 300 DPI.
 
 
 
