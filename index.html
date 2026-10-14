@@ -94,6 +94,26 @@
       <div class="flex items-center gap-1.5 shrink-0">
         <button
           type="button"
+          id="btnOpenReceiveModal"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 transition-colors shadow-xs"
+          title="Recibir fotos y documentos desde celulares mediante Código QR"
+        >
+          <span class="text-xs">📲</span>
+          <span class="hidden sm:inline">Recibir Celular</span>
+        </button>
+
+        <button
+          type="button"
+          id="btnOpenDeliveryModal"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-[11px] font-bold text-emerald-800 dark:text-emerald-200 transition-colors shadow-xs"
+          title="Entrega digital directa mediante Código QR"
+        >
+          <span class="text-xs">📥</span>
+          <span class="hidden sm:inline">Entrega Digital</span>
+        </button>
+
+        <button
+          type="button"
           id="btnInstallPwa"
           class="hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-[11px] font-semibold text-emerald-800 dark:text-emerald-200 transition-colors shadow-xs"
           title="Instalar RealScan en tu dispositivo para usarlo sin conexión"
@@ -1427,7 +1447,7 @@
           </label>
           <span id="labelActivePaperDesc" class="text-[10.5px] font-mono text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded">A4 Estándar (210 × 297 mm)</span>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
           <button type="button" data-paper="a4" class="paper-size-btn is-active p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between" title="Estándar internacional ISO 216">
             <span class="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white"><span>📄</span><span>A4 Estándar</span></span>
             <span class="text-[9.5px] opacity-75 mt-1 font-mono">210 × 297 mm</span>
@@ -1444,6 +1464,40 @@
             <span class="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white"><span>📜</span><span>Oficio Legal USA</span></span>
             <span class="text-[9.5px] opacity-75 mt-1 font-mono">215.9 × 355.6 mm</span>
           </button>
+          <button type="button" data-paper="photo_10x15" class="paper-size-btn p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between" title="Papel Fotográfico Métrico 10 × 15 cm">
+            <span class="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white"><span>🖼️</span><span>Foto 10×15 cm</span></span>
+            <span class="text-[9.5px] opacity-75 mt-1 font-mono">100.0 × 150.0 mm</span>
+          </button>
+          <button type="button" data-paper="photo_4x6" class="paper-size-btn p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between" title="Papel Fotográfico Imperial 4 × 6 pulgadas">
+            <span class="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white"><span>🖼️</span><span>Foto 4×6 pulg</span></span>
+            <span class="text-[9.5px] opacity-75 mt-1 font-mono">101.6 × 152.4 mm</span>
+          </button>
+        </div>
+
+        <!-- Selector de Escala de Salida / Impresión (%) -->
+        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <label for="selectOutputScale" class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+              <span>🔍</span><span>Escala de Impresión:</span>
+            </label>
+            <select id="selectOutputScale" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200">
+              <option value="100" selected>100% — Tamaño Real 1:1 Oficial (Por defecto)</option>
+              <option value="50">50% — Reducción a la mitad</option>
+              <option value="75">75% — Reducción al 75%</option>
+              <option value="125">125% — Ampliación al 125%</option>
+              <option value="150">150% — Ampliación al 150%</option>
+              <option value="200">200% — Ampliación al doble (2×)</option>
+            </select>
+          </div>
+          <button type="button" id="btnOpenFormatRequirements" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
+            <span>📋</span><span>Ver Ficha Oficial de Trámite</span>
+          </button>
+        </div>
+
+        <!-- Banner de advertencia cuando la escala no es 100% -->
+        <div id="bannerScaleWarning" class="hidden p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs flex items-center gap-2 font-medium">
+          <span>⚠️</span>
+          <span><strong>Copia a escala modificada:</strong> Se aplicará una escala del <strong id="labelActiveScalePct">100%</strong>. El documento <u>NO</u> se imprimirá a tamaño real 1:1 original.</span>
         </div>
       </div>
 
@@ -2073,6 +2127,7 @@
         <button type="button" id="tabBtnCreds" class="settings-tab-btn is-active flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">👥 Usuarios</button>
         <button type="button" id="tabBtnLog" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">📋 Auditoría</button>
         <button type="button" id="tabBtnStorage" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">💾 Almacenamiento</button>
+        <button type="button" id="tabBtnAudio" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">🔊 Sonido</button>
         <button type="button" id="tabBtnCloud" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">🌐 Nube</button>
       </div>
 
@@ -2518,6 +2573,208 @@
         <p class="text-xs text-slate-500 dark:text-slate-400">Haz clic en una página para asignarla o usa los botones de cara.</p>
         <button type="button" data-close-modal="pdfPageSelectorModal" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
           Cerrar
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL 1: RECIBIR FOTOS Y DOCUMENTOS DESDE MÓVIL (QR)
+       ============================================================ -->
+  <div id="receiveFromPhoneModal" role="dialog" aria-modal="true" aria-labelledby="receiveModalTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-lg">📲</div>
+          <div>
+            <h3 id="receiveModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Recibir desde Celular por QR</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Escanea con la cámara del celular para subir fotos o documentos sin cables</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="receiveFromPhoneModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+        <!-- Código QR e Instrucciones -->
+        <div class="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+          <div class="shrink-0 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+            <canvas id="canvasReceiveQr" class="w-36 h-36 rounded-lg"></canvas>
+          </div>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold font-mono text-[11px]">Sesión Activa: <span id="labelReceiveSessionId">RS-0000</span></span>
+              <span class="text-[10px] text-slate-400 font-mono">15 min</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300">Pide al cliente que apunte la cámara de su celular al código QR para abrir el portal de carga sin instalar aplicaciones.</p>
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              <button type="button" id="btnCopyReceiveUrl" class="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs hover:bg-slate-100 transition-colors flex items-center gap-1">
+                <span>📋</span><span>Copiar Enlace</span>
+              </button>
+              <button type="button" id="btnTestOpenReceiveUrl" class="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs hover:bg-slate-100 transition-colors flex items-center gap-1">
+                <span>↗️</span><span>Abrir en nueva pestaña</span>
+              </button>
+              <button type="button" id="btnRenewReceiveSession" class="px-2.5 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-semibold text-xs hover:bg-indigo-100 transition-colors">
+                <span>↺</span><span>Renovar QR</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bandeja de Archivos Recibidos -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>📥</span><span>Bandeja de Archivos Recibidos (<span id="inboxCountBadge">0</span>)</span>
+            </h4>
+            <button type="button" id="btnClearQrInbox" class="text-xs text-red-500 hover:underline">Vaciar bandeja</button>
+          </div>
+          <div id="qrInboxList" class="space-y-2 max-h-48 overflow-y-auto p-1">
+            <p class="text-xs text-center text-slate-400 py-6">Esperando que el cliente envíe archivos...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0">
+        <button type="button" data-close-modal="receiveFromPhoneModal" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL 2: ENTREGA DIGITAL DIRECTA POR QR
+       ============================================================ -->
+  <div id="digitalDeliveryModal" role="dialog" aria-modal="true" aria-labelledby="deliveryModalTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-lg">📥</div>
+          <div>
+            <h3 id="deliveryModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Entrega Digital al Cliente</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Genera un enlace temporal o QR para que el cliente descargue sus fotos</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="digitalDeliveryModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
+        <!-- Selector de qué entregar -->
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+          <p class="font-bold text-slate-800 dark:text-slate-200">1. Selecciona los archivos a entregar:</p>
+          <div class="space-y-1.5">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="checkDeliverPdfSheet" checked class="rounded accent-emerald-600">
+              <span>📄 Hoja Completa de Impresión (PDF a 300 DPI)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="checkDeliverFrontJpg" checked class="rounded accent-emerald-600">
+              <span>🖼️ Frente en Alta Resolución (Recorte individual)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="checkDeliverBackJpg" class="rounded accent-emerald-600">
+              <span>🖼️ Reverso en Alta Resolución (Si aplica)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Optimización digital -->
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+          <p class="font-bold text-slate-800 dark:text-slate-200">2. Optimización para Trámites Digitales:</p>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label for="selectDeliveryFormat" class="block text-[11px] text-slate-500 mb-0.5">Formato</label>
+              <select id="selectDeliveryFormat" class="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-medium">
+                <option value="jpg">JPG (Estándar)</option>
+                <option value="png">PNG (Sin pérdida)</option>
+                <option value="pdf">PDF (Documento)</option>
+              </select>
+            </div>
+            <div>
+              <label for="selectDeliveryMaxPx" class="block text-[11px] text-slate-500 mb-0.5">Dimensión máx.</label>
+              <select id="selectDeliveryMaxPx" class="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-medium">
+                <option value="original">Original (Máxima)</option>
+                <option value="1920" selected>Full HD (1920 px)</option>
+                <option value="1200">Visa / Web (1200 px)</option>
+                <option value="600">OACI (600 px)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" id="btnGenerateDeliveryQr" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2">
+          <span>⚡</span><span>Generar Código QR de Descarga</span>
+        </button>
+
+        <!-- Contenedor del QR de Entrega -->
+        <div id="deliveryQrResultBox" class="hidden flex flex-col items-center gap-3 p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-center">
+          <div class="bg-white p-2 rounded-2xl shadow-sm border border-emerald-200">
+            <canvas id="canvasDeliveryQr" class="w-40 h-40 rounded-lg"></canvas>
+          </div>
+          <p class="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">Pide al cliente escanear este QR para descargar sus archivos directamente en su celular.</p>
+          <div class="flex items-center gap-2">
+            <button type="button" id="btnCopyDeliveryUrl" class="px-3 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 font-semibold text-xs hover:bg-emerald-50">
+              📋 Copiar Enlace
+            </button>
+            <button type="button" id="btnRevokeDeliverySession" class="px-3 py-1.5 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 font-semibold text-xs hover:bg-red-100">
+              🔒 Revocar Enlace
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0">
+        <button type="button" data-close-modal="digitalDeliveryModal" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL 3: FICHA OFICIAL DE REQUISITOS DEL TRÁMITE
+       ============================================================ -->
+  <div id="formatRequirementsModal" role="dialog" aria-modal="true" aria-labelledby="formatReqTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-lg">📋</div>
+          <div>
+            <h3 id="formatReqTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ficha Oficial de Trámite</h3>
+            <p id="formatReqSubtitle" class="text-[11px] text-slate-500 dark:text-slate-400">Normativa oficial y requisitos de impresión y archivo</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="formatRequirementsModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1.5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-mono" id="reqFormatName">DNI / INE / Licencia</p>
+          <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-mono">
+            <span>Dimensiones:</span>
+            <strong id="reqDimensionsMm" class="text-slate-900 dark:text-white font-bold">85.60 × 53.98 mm</strong>
+          </div>
+          <p class="text-[11px] text-slate-400">Fuente normativa: <span id="reqOfficialSource" class="font-semibold text-slate-700 dark:text-slate-300">ISO/IEC 7810 ID-1 • INE México</span> • Revisión: <span id="reqReviewDate" class="font-mono">Octubre 2026</span></p>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1">
+          <p class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><span>🖨️</span><span>Requisitos Físicos de Impresión</span></p>
+          <p id="reqPhysicalText" class="text-slate-600 dark:text-slate-300">Impresión en tarjeta o papel de alta densidad al 100% de escala sin ajuste automático.</p>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1">
+          <p class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><span>💾</span><span>Requisitos Digitales</span></p>
+          <p id="reqDigitalText" class="text-slate-600 dark:text-slate-300">Resolución mínima 300 DPI sin distorsión óptica ni compresión agresiva.</p>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 space-y-1">
+          <p class="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5"><span>⚖️</span><span>Restricciones Éticas y Normativas</span></p>
+          <p id="reqRestrictionsText" class="text-amber-800 dark:text-amber-300">Prohibido alterar fisonomía, rasgos, vestimenta reglamentaria o aplicar filtros que modifiquen la identidad de la persona.</p>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0">
+        <button type="button" data-close-modal="formatRequirementsModal" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+          Entendido
         </button>
       </div>
     </div>
@@ -2568,6 +2825,8 @@
        SCRIPTS MODULARES (100% Offline y Producción Firebase)
        ============================================================ -->
   <script src="js/config.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/qr-sync.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/crop-warp.js"></script>

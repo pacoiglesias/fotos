@@ -104,10 +104,35 @@ function handleImageFile(event, side) {
 async function loadBlobIntoSide(blob, side) {
   const isPdf = blob.type === 'application/pdf' || (blob.name && blob.name.toLowerCase().endsWith('.pdf'));
   if (isPdf) { await handlePdfFile(blob, side); return; }
+
+  const name = (blob.name || '').toLowerCase();
+  if (name.endsWith('.heic') || name.endsWith('.heif') || blob.type === 'image/heic' || blob.type === 'image/heif') {
+    showToast('⚠️ Archivo HEIC detectado: Los navegadores no decodifican HEIC de forma nativa. Por favor exporta la foto como JPG o PNG desde tu iPhone.', 'warning');
+    return;
+  }
+
+  if (blob.size === 0) {
+    showToast('❌ El archivo seleccionado está vacío o dañado (0 bytes).', 'error');
+    return;
+  }
+  if (blob.size > 30 * 1024 * 1024) {
+    showToast('⚠️ Archivo muy pesado (>30 MB). El navegador puede demorar en procesarlo.', 'warning');
+  }
+
   const reader = new FileReader();
   reader.onload = function(e) { processRawDataUrl(e.target.result, side); };
+  reader.onerror = function() {
+    showToast('❌ No se pudo leer el archivo seleccionado. Puede estar dañado.', 'error');
+  };
   reader.readAsDataURL(blob);
 }
+
+// Función global para inyectar archivos cargados (usada por sincronización QR)
+window.handleLoadedFile = function(side, dataUrl, name) {
+  if (dataUrl) {
+    processRawDataUrl(dataUrl, side);
+  }
+};
 
 async function handlePdfFile(file, targetSide) {
   if (!window.pdfjsLib) { showToast('Cargando motor PDF, reintenta en un segundo...', 'warning'); return; }

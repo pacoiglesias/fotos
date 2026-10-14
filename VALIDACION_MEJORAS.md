@@ -220,29 +220,35 @@ Todos los hallazgos de la auditoría inicial fueron comprobados experimentalment
 
 ## 🏆 11. Dictamen de Ingeniería y Estado de Verificación
 
-> **ESTADO DEL SISTEMA:** **CIERRE TÉCNICO VERIFICADO (ENTREGAS 1 A 4 COMPLETADAS)**  
+> **ESTADO DEL SISTEMA:** **VALIDACIÓN FINAL INTEGRAL COMPLETADA (ENTREGAS 1 A 5)**  
 > **FECHA:** 14 de Octubre de 2026  
 > **VERSIÓN CONSOLIDADA:** `v3.3.0-Enterprise`  
 > **RAMA GIT:** `codex/mejora-integral-realscan`  
-> **SUITES AUTOMATIZADAS:** 11 de 11 Suites Exitosas (`test_etapa1` a `test_etapa7`, `test_entrega1_seguridad`, `test_entrega2_proyecto`, `test_entrega3_preview`, `test_entrega4_offline_a11y`).  
-> **EVIDENCIA DE PRUEBAS:** 100% de aserciones aprobadas en entorno Node/Chromium con datos sintéticos y contexto aislado.
+> **SUITES AUTOMATIZADAS:** 12 de 12 Suites Exitosas (`test_etapa1` a `test_etapa7`, `test_entrega1_seguridad`, `test_entrega2_proyecto`, `test_entrega3_preview`, `test_entrega4_offline_a11y`, `test_maestro_integral`).  
+> **EVIDENCIA DE PRUEBAS:** 100% de aserciones aprobadas en entorno Node/Chromium con datos sintéticos y contexto aislado (154/154 pruebas superadas globalmente).
 
 ---
 
-## 📋 12. Matriz de Resolución de Hallazgos de Auditoría Independiente
+## 📋 12. Matriz de Resolución de Hallazgos y Requisitos Consolidados
 
-| Código | Gravedad | Hallazgo Original | Corrección Implementada | Evidencia / Prueba |
+| Código / Módulo | Gravedad / Tipo | Requisito / Hallazgo Original | Corrección e Implementación | Evidencia / Prueba |
 |:---:|:---:|:---|:---|:---:|
-| **C01** | Alta | Con frente cargado y reverso vacío, PDF dibujaba dos frentes (fallback erróneo a front). | Preflight estricto exige los slots requeridos por la composición activa y bloquea exportación sin duplicar imágenes. | `test_entrega1_seguridad.js` (Test 1.1–1.3) |
-| **C02** | Alta | Contaminación entre proyectos: orientaciones, croppedSrc e historial de edición sobrevivían al cambio de trabajo. | Operación centralizada `resetToCleanWork()` y limpieza profunda de ranuras y pilas de Undo/Redo al cambiar o restaurar. | `test_entrega2_proyecto.js` (Test 1–3) |
-| **C03** | Alta | Operador podía crear/eliminar administradores y las miniaturas interpolaban cadenas con data-attribute en HTML. | Control de roles en cada operación (`isAdmin`), protección del último admin y renderizado seguro mediante nodos DOM (`img.src`). | `test_entrega1_seguridad.js` (Test 3.1–3.4) |
-| **C04** | Alta | Vista previa en pantalla mostraba 2 ranuras estáticas mientras el plan tenía 4 en duplicado; mínimo artificial de 38% en documentos pequeños. | `#faithfulSheetPlacements` renderiza cada elemento del plan común en sus coordenadas exactas relativas al papel (4 copias visibles y proporciones reales). | `test_entrega3_preview.js` (Test 1.1–1.3) |
-| **C05** | Alta | Recarga offline fallaba con `net::ERR_FAILED` por aplicar `||` a promesas en `caches.match`. Precaching abortaba con fallas de CDN. | `sw.js` separa `CORE_ASSETS` de `OPTIONAL_ASSETS`; fallback de navegación usa `await` secuencial para index.html y raíz. | `test_entrega4_offline_a11y.js` (Test 1.1–1.5) |
-| **C06** | Media/Alta | Exportador JPG y PDF no validaban uniformemente medidas fuera de página (ej. 250 × 400 mm en A4). | `validateGeometry()` bloqueante previa a todos los exportadores; rechaza tamaños negativos, infinitos o desbordantes. | `test_entrega1_seguridad.js` (Test 2.1–2.4) |
-| **C07** | Media | Borradores omitían mixTwoPhotos y zoom continuo no registraba estado para deshacer. | Esquema compartido de borrador v2 con debounce de 500ms en sliders continuos para registro granular en historial de edición. | `test_entrega2_proyecto.js` (Test 4–6) |
-| **C08** | Media | Herramientas interactivas prometidas sin interfaz (recorte manual, perspectiva 4 esquinas, extractor PDF, fotos multipágina). | Modales accesibles interactivos `#cropModal` (con comparador), `#perspectiveWarpModal` (con `isConvexQuad`) y `#pdfPageSelectorModal`. | `test_entrega3_preview.js` (Test 2.1–2.4) |
-| **C09** | Media | Falta de contención de foco en modales (Tab escapaba a la página) y versiones discordantes entre cabecera y pie. | Focus Trap estricto con `Tab` / `Shift+Tab`, fondo `inert` / `aria-hidden`, cierre con `Escape` y versión unificada `v3.3.0-Enterprise`. | `test_entrega4_offline_a11y.js` (Test 2.1–2.7) |
+| **C01** | Alta | Con frente cargado y reverso vacío, PDF dibujaba dos frentes (fallback erróneo a front). | Preflight estricto exige los slots requeridos por la composición activa y bloquea exportación sin duplicar imágenes. | `test_entrega1_seguridad.js` |
+| **C02** | Alta | Contaminación entre proyectos: orientaciones, croppedSrc e historial sobrevivían al cambio de trabajo. | Operación centralizada `resetToCleanWork()` y limpieza profunda de ranuras y pilas de Undo/Redo al cambiar o restaurar. | `test_entrega2_proyecto.js` |
+| **C03** | Alta | Operador podía crear/eliminar administradores y las miniaturas interpolaban cadenas con data-attribute en HTML. | Control de roles en cada operación (`isAdmin`), protección del último admin y renderizado seguro mediante nodos DOM (`img.src`). | `test_entrega1_seguridad.js` |
+| **C04** | Alta | Vista previa en pantalla mostraba 2 ranuras estáticas mientras el plan tenía 4 en duplicado; mínimo artificial de 38% en documentos pequeños. | `#faithfulSheetPlacements` renderiza cada elemento del plan común en sus coordenadas exactas relativas al papel (4 copias visibles y proporciones reales). | `test_entrega3_preview.js` |
+| **C05** | Alta | Recarga offline fallaba con `net::ERR_FAILED` por aplicar `||` a promesas en `caches.match`. Precaching abortaba con fallas de CDN. | `sw.js` separa `CORE_ASSETS` de `OPTIONAL_ASSETS`; fallback de navegación usa `await` secuencial para index.html y raíz. | `test_entrega4_offline_a11y.js` |
+| **C06** | Media/Alta | Exportador JPG y PDF no validaban uniformemente medidas fuera de página (ej. 250 × 400 mm en A4). | `validateGeometry()` bloqueante previa a todos los exportadores; rechaza tamaños negativos, infinitos o desbordantes. | `test_entrega1_seguridad.js` |
+| **C07** | Media | Borradores omitían mixTwoPhotos y zoom continuo no registraba estado para deshacer. | Esquema compartido de borrador v2 con debounce de 500ms en sliders continuos para registro granular en historial de edición. | `test_entrega2_proyecto.js` |
+| **C08** | Media | Herramientas interactivas prometidas sin interfaz (recorte manual, perspectiva 4 esquinas, extractor PDF, fotos multipágina). | Modales accesibles interactivos `#cropModal` (con comparador), `#perspectiveWarpModal` (con `isConvexQuad`) y `#pdfPageSelectorModal`. | `test_entrega3_preview.js` |
+| **C09** | Media | Falta de contención de foco en modales (Tab escapaba a la página) y versiones discordantes entre cabecera y pie. | Focus Trap estricto con `Tab` / `Shift+Tab`, fondo `inert` / `aria-hidden`, cierre con `Escape` y versión unificada `v3.3.0-Enterprise`. | `test_entrega4_offline_a11y.js` |
 | **C10** | Media | Afirmaciones desmedidas ("inviolable", "calibración física micrométrica") sin medición en papel físico. | Documentación saneada y honesta: delimitación entre cotas digitales a 300 DPI y calibración física sujeta a driver de impresión. | `PLAN_MEJORAS.md` y `VALIDACION_MEJORAS.md` |
+| **REQ-PAP** | Funcional | Formatos fotográficos de 10 × 15 cm y 4 × 6 pulgadas como medidas distintas en catálogo. | `photo_10x15` (100.0 × 150.0 mm métrico) y `photo_4x6` (101.6 × 152.4 mm imperial) definidos e interactivos en UI. | `test_maestro_integral.js` (Bloque 1) |
+| **REQ-NORM** | Funcional | Fichas técnicas de trámites oficiales (fuente, fecha de revisión, restricciones de edición). | Metadatos enriquecidos en `FORMAT_SPECS` y modal `#formatRequirementsModal` para consulta en mostrador; prohibición explícita de filtros/IA. | `test_maestro_integral.js` (Bloque 1) |
+| **REQ-AUD** | Experiencia | Alertas sonoras discretas, accesibles y locales sin conexión a internet. | Módulo `js/audio.js` con Web Audio API (5 tonos armónicos), controles en Ajustes (activar/volumen/prueba) y switch silencioso. | `test_maestro_integral.js` (Bloque 2) |
+| **REQ-QR** | Integración | Recepción y entrega digital móvil mediante códigos QR temporales. | Módulo `js/qr-sync.js` (renderizador vectorial Canvas offline), portales cliente `phone-upload.html` y `phone-download.html`, modales en mostrador. | `test_maestro_integral.js` (Bloque 3-5) |
+| **REQ-FMT** | Confiabilidad | Detección de formatos especiales (HEIC/HEIF) y prevención de archivos dañados o vacíos. | Detección en `js/engine.js` con guía de conversión al usuario y rechazo preventivo de 0 bytes; inyección global `window.handleLoadedFile`. | `test_maestro_integral.js` (Bloque 4) |
+| **REQ-ESC** | Precisión | Escala de salida seleccionable con clara diferenciación visual respecto al 1:1 original. | Selector `#selectOutputScale` (100%, 50%, 75%, 125%, 150%, 200%) con `#bannerScaleWarning` visible cuando la escala no es 100%. | `test_maestro_integral.js` (Bloque 5) |
 
 ---
 
@@ -251,6 +257,7 @@ Todos los hallazgos de la auditoría inicial fueron comprobados experimentalment
 1. **Hardware Físico:** Las pruebas se ejecutaron en entornos de desarrollo y headless en Node.js y Chromium; no se realizaron impresiones en hardware físico de tóner/tinta ni pruebas con sensores de cámara física real (se usaron mocks de stream y fixtures sintéticas).
 2. **Entornos de Navegador:** Las comprobaciones directas abarcan Chromium y entornos basados en Web Standards. No se realizaron pruebas en Safari nativo (WebKit en macOS/iOS).
 3. **Escala 1:1 en Impresión Real:** La correspondencia exacta de 1:1 en papel depende de que el usuario seleccione "Escala: 100%" o "Tamaño Real" en el cuadro de diálogo de impresión de su sistema operativo y desactive opciones como "Ajustar al tamaño del papel". RealScan garantiza que el lienzo vectorial y raster mide milimétricamente las dimensiones oficiales a 300 DPI.
+4. **Sincronización QR entre Dispositivos:** En la versión offline / local pura, la comunicación entre pestañas opera mediante `BroadcastChannel` y `localStorage`. Para conexión en tiempo real entre un teléfono externo y la computadora de mostrador en redes distintas, se requiere un relay de red (ej. WebRTC, WebSocket o Firebase RTDB/Firestore) con acceso a internet. La interfaz de RealScan está preparada arquitectónicamente para dicho transporte sin alterar el flujo de usuario.
 
 
 

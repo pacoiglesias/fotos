@@ -169,3 +169,30 @@
 - **Service Worker resiliente (C05):** Separación de `CORE_ASSETS` locales y `OPTIONAL_ASSETS` (CDNs); eliminación del operador síncrono `||` entre promesas de `caches.match`; resolución asíncrona real con `await` para garantizar recargas 100% offline sin `net::ERR_FAILED`.
 - **Accesibilidad y Focus Trap (C09):** Contención estricta de foco (teclas `Tab` / `Shift+Tab`) en todos los modales; fondo inerte (`inert` y `aria-hidden="true"`); cierre con `Escape` y devolución garantizada del foco al control disparador.
 - **Transparencia y honestidad técnica (C10):** Eliminación de términos inflados ("inviolable", "calibración micrométrica física"); documentación explícita de cotas digitales milimétricas a 300 DPI y declaración de límites técnicos.
+
+### 🌟 Entrega 5 — Prompt Maestro Definitivo (Validación Final Integral)
+- **Papeles y Trámites Oficiales:**
+  - Papeles fotográficos diferenciados: `photo_10x15` (100.0 × 150.0 mm métrico) y `photo_4x6` (101.6 × 152.4 mm imperial).
+  - Metadatos normativos oficiales en presets: `officialSource`, `reviewDate`, `reqsPhysical`, `reqsDigital` y `editingRestrictions` (prohibición estricta de filtros/IA).
+  - Modal `#formatRequirementsModal` para consulta de fichas normativas en mostrador.
+  - Selector de escala de salida (`#selectOutputScale`: 100% oficial 1:1, 50%, 75%, 125%, 150%, 200%) con `#bannerScaleWarning` cuando != 100%.
+- **Alertas Sonoras y Feedback Auditivo (`js/audio.js`):**
+  - Implementación con Web Audio API nativo (100% offline, cero assets externos).
+  - Tonos armónicos diferenciados: éxito, advertencia, error, obturador de cámara y campanilla de recepción móvil.
+  - Configuración persistente en `localStorage`: activar/silenciar, slider de volumen y botón de prueba en Ajustes.
+  - Integración automática con `showToast()`.
+- **Sincronización QR Móvil (Recepción y Entrega Digital):**
+  - Módulo autónomo `js/qr-sync.js` con generador vectorial de códigos QR en Canvas (cero dependencias externas).
+  - Portal móvil para clientes `phone-upload.html`: selección múltiple, cámara directa, progreso y confirmación.
+  - Portal móvil para clientes `phone-download.html`: descarga protegida de archivos aprobados por el operador.
+  - Sesiones temporales impredecibles (`RS-XXXX` y `DL-XXXX`) con caducidad a 15 minutos.
+  - Modales en mostrador `#receiveFromPhoneModal` (bandeja de entrada con inyección directa a ranuras) y `#digitalDeliveryModal`.
+- **Detección Asistida de Formatos (`js/engine.js`):**
+  - Detección de imágenes HEIC/HEIF de iPhone con guía paso a paso para el usuario.
+  - Validación de integridad de archivos: rechazo preventivo de archivos vacíos (0 bytes) y archivos dañados.
+  - Inyección global `window.handleLoadedFile` desde el sincronizador QR.
+- **Service Worker Actualizado (`sw.js`):**
+  - Precacheo de `js/audio.js`, `js/qr-sync.js`, `phone-upload.html` y `phone-download.html`.
+- **Suite de Pruebas `test_maestro_integral.js`:**
+  - 31 pruebas automatizadas cubriendo los requerimientos consolidados del Prompt Maestro.
+

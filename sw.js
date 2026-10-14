@@ -12,6 +12,8 @@ const CORE_ASSETS = [
   './manifest.json',
   './css/styles.css',
   './js/config.js',
+  './js/audio.js',
+  './js/qr-sync.js',
   './js/auth.js',
   './js/storage.js',
   './js/crop-warp.js',
@@ -19,7 +21,9 @@ const CORE_ASSETS = [
   './js/layout-engine.js',
   './js/pdf.js',
   './js/export.js',
-  './js/app.js'
+  './js/app.js',
+  './phone-upload.html',
+  './phone-download.html'
 ];
 
 // Activos externos u opcionales (CDNs)
@@ -39,6 +43,8 @@ const STATIC_ASSETS = [
   './manifest.json',
   './css/styles.css',
   './js/config.js',
+  './js/audio.js',
+  './js/qr-sync.js',
   './js/auth.js',
   './js/storage.js',
   './js/crop-warp.js',
@@ -47,6 +53,8 @@ const STATIC_ASSETS = [
   './js/pdf.js',
   './js/export.js',
   './js/app.js',
+  './phone-upload.html',
+  './phone-download.html',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',

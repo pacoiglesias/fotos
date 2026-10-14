@@ -658,6 +658,185 @@ async function openPdfPageSelector(pdfDoc, targetSide) {
   }
 }
 
+/* ============================================================
+   INTEGRACIÓN DE CÓDIGOS QR, RECEPCIÓN MÓVIL Y ENTREGA DIGITAL
+   ============================================================ */
+function openReceiveFromPhoneModal() {
+  if (!window.RealScanQrSync) return;
+  const session = window.RealScanQrSync.createReceiveSession();
+  const label = $('labelReceiveSessionId');
+  if (label) label.textContent = session.id;
+
+  const canvas = $('canvasReceiveQr');
+  if (canvas) {
+    window.RealScanQrSync.renderQrToCanvas(session.url, canvas, 5);
+  }
+
+  updateQrInboxUI();
+  openModal('receiveFromPhoneModal');
+}
+
+function updateQrInboxUI() {
+  if (!window.RealScanQrSync) return;
+  const files = window.RealScanQrSync.getInboxFiles();
+  const listEl = $('qrInboxList');
+  const countEl = $('inboxCountBadge');
+  if (countEl) countEl.textContent = files.length;
+  if (!listEl) return;
+
+  if (files.length === 0) {
+    listEl.innerHTML = '<p class="text-xs text-center text-slate-400 py-6">Esperando que el cliente envíe archivos...</p>';
+    return;
+  }
+
+  listEl.innerHTML = '';
+  files.forEach(function(f) {
+    const item = document.createElement('div');
+    item.className = 'flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 gap-2 text-xs';
+
+    const assignedTag = f.assignedTo
+      ? '<span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded">Asignado a ' + f.assignedTo.toUpperCase() + '</span>'
+      : '<span class="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded">Pendiente</span>';
+
+    item.innerHTML = `
+      <div class="flex items-center gap-2 truncate">
+        <span class="text-xl">${f.type.includes('pdf') ? '📑' : '🖼️'}</span>
+        <div class="truncate">
+          <p class="font-bold text-slate-900 dark:text-white truncate">${f.name}</p>
+          <p class="text-[10px] text-slate-400 font-mono">${f.sizeKb} KB • ${f.receivedAt} • ${assignedTag}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
+        <button type="button" data-assign-file="${f.id}" data-slot="front" class="px-2 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[11px] hover:bg-indigo-700">Frente</button>
+        <button type="button" data-assign-file="${f.id}" data-slot="back" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold text-[11px] hover:bg-slate-300">Reverso</button>
+        ${state.mixTwoPhotos ? `<button type="button" data-assign-file="${f.id}" data-slot="page3" class="px-2 py-1 rounded-lg bg-amber-600 text-white font-bold text-[11px] hover:bg-amber-700">Persona B</button>` : ''}
+      </div>
+    `;
+    listEl.appendChild(item);
+  });
+
+  listEl.querySelectorAll('[data-assign-file]').forEach(function(btn) {
+    btn.onclick = function() {
+      const fileId = this.getAttribute('data-assign-file');
+      const targetSlot = this.getAttribute('data-slot');
+      window.RealScanQrSync.assignFileToSlot(fileId, targetSlot);
+    };
+  });
+}
+window.updateQrInboxUI = updateQrInboxUI;
+
+function openDigitalDeliveryModal() {
+  if (!window.RealScanQrSync) return;
+  const resultBox = $('deliveryQrResultBox');
+  if (resultBox) resultBox.classList.add('hidden');
+  openModal('digitalDeliveryModal');
+}
+
+async function handleGenerateDeliveryQr() {
+  if (!window.RealScanQrSync) return;
+  const deliverPdf = $('checkDeliverPdfSheet') ? $('checkDeliverPdfSheet').checked : true;
+  const deliverFront = $('checkDeliverFrontJpg') ? $('checkDeliverFrontJpg').checked : true;
+  const deliverBack = $('checkDeliverBackJpg') ? $('checkDeliverBackJpg').checked : false;
+
+  const files = [];
+
+  if (deliverFront && state.images.front && state.images.front.processedDataUrl) {
+    files.push({
+      name: 'RealScan_Frente_' + Date.now() + '.jpg',
+      type: 'image/jpeg',
+      dataUrl: state.images.front.processedDataUrl
+    });
+  }
+
+  if (deliverBack && state.images.back && state.images.back.processedDataUrl) {
+    files.push({
+      name: 'RealScan_Reverso_' + Date.now() + '.jpg',
+      type: 'image/jpeg',
+      dataUrl: state.images.back.processedDataUrl
+    });
+  }
+
+  if (deliverPdf && typeof generatePdfDoc === 'function') {
+    try {
+      const doc = await generatePdfDoc(true);
+      if (doc) {
+        const pdfDataUri = doc.output('datauristring');
+        files.push({
+          name: 'RealScan_Hoja_Impresion_' + Date.now() + '.pdf',
+          type: 'application/pdf',
+          dataUrl: pdfDataUri
+        });
+      }
+    } catch(e) {
+      console.warn('Error al empaquetar PDF para entrega:', e);
+    }
+  }
+
+  if (files.length === 0) {
+    showToast('⚠️ No hay archivos procesados seleccionados para entregar.', 'warning');
+    return;
+  }
+
+  const format = $('selectDeliveryFormat') ? $('selectDeliveryFormat').value : 'jpg';
+  const maxPx = $('selectDeliveryMaxPx') ? $('selectDeliveryMaxPx').value : '1920';
+
+  const session = window.RealScanQrSync.createDeliverySession(files, { format: format, maxPx: maxPx });
+  const canvas = $('canvasDeliveryQr');
+  if (canvas) {
+    window.RealScanQrSync.renderQrToCanvas(session.url, canvas, 5);
+  }
+
+  const resultBox = $('deliveryQrResultBox');
+  if (resultBox) resultBox.classList.remove('hidden');
+
+  if (window.RealScanAudio) window.RealScanAudio.playSuccess();
+  showToast('✅ Código QR de Entrega Digital generado.', 'success');
+}
+
+function openFormatRequirementsModal() {
+  const spec = (typeof getActiveSpec === 'function') ? getActiveSpec() : (window.FORMAT_SPECS[state.format] || window.FORMAT_SPECS.card);
+  const nameEl = $('reqFormatName');
+  const dimsEl = $('reqDimensionsMm');
+  const sourceEl = $('reqOfficialSource');
+  const dateEl = $('reqReviewDate');
+  const physEl = $('reqPhysicalText');
+  const digiEl = $('reqDigitalText');
+  const restrEl = $('reqRestrictionsText');
+
+  if (nameEl) nameEl.textContent = spec.name || spec.shortName;
+  if (dimsEl) dimsEl.textContent = `${spec.widthMm.toFixed(2)} × ${spec.heightMm.toFixed(2)} mm`;
+  if (sourceEl) sourceEl.textContent = spec.officialSource || 'Estándar Oficial';
+  if (dateEl) dateEl.textContent = spec.reviewDate || 'Octubre 2026';
+  if (physEl) physEl.textContent = spec.reqsPhysical || 'Impresión al 100% de escala sin ajuste automático.';
+  if (digiEl) digiEl.textContent = spec.reqsDigital || 'Resolución mínima 300 DPI nítida.';
+  if (restrEl) restrEl.textContent = spec.editingRestrictions || 'No alterar rasgos anatómicos.';
+
+  openModal('formatRequirementsModal');
+}
+
+function setPrintScale(scalePct) {
+  scalePct = parseInt(scalePct, 10) || 100;
+  state.outputScalePercent = scalePct;
+
+  const warnEl = $('bannerScaleWarning');
+  const lblEl = $('labelActiveScalePct');
+  if (warnEl && lblEl) {
+    if (scalePct === 100) {
+      warnEl.classList.add('hidden');
+    } else {
+      lblEl.textContent = scalePct + '%';
+      warnEl.classList.remove('hidden');
+    }
+  }
+
+  updateUI();
+  if (scalePct !== 100) {
+    showToast('⚠️ Escala modificada al ' + scalePct + '%. Copia no calibrada a tamaño real.', 'warning');
+  } else {
+    showToast('Escala 1:1 Oficial restaurada al 100%.', 'info');
+  }
+}
+
 function handleSlotUndo(side) {
   if (!window.RealScanEditor || !window.RealScanEditor.canUndo(side)) {
     showToast('No hay más cambios que deshacer en esta ranura.', 'info');
@@ -2650,6 +2829,93 @@ function bindEvents() {
   on($('formUpdateCreds'), 'submit', handleUpdateCredentials);
   on($('btnExportLogCsv'), 'click', exportAuditLogCsv);
   on($('btnClearLog'), 'click', clearAuditLog);
+
+  // Botones de Sincronización QR y Trámites Oficiales
+  on($('btnOpenReceiveModal'), 'click', openReceiveFromPhoneModal);
+  on($('btnOpenDeliveryModal'), 'click', openDigitalDeliveryModal);
+  on($('btnOpenFormatRequirements'), 'click', openFormatRequirementsModal);
+  on($('btnGenerateDeliveryQr'), 'click', handleGenerateDeliveryQr);
+
+  // Acciones en modal de recepción
+  on($('btnCopyReceiveUrl'), 'click', function() {
+    if (window.RealScanQrSync) {
+      const s = window.RealScanQrSync.getActiveReceiveSession();
+      if (s && navigator.clipboard) {
+        navigator.clipboard.writeText(s.url);
+        showToast('📋 Enlace de carga copiado al portapapeles.', 'success');
+      }
+    }
+  });
+
+  on($('btnTestOpenReceiveUrl'), 'click', function() {
+    if (window.RealScanQrSync) {
+      const s = window.RealScanQrSync.getActiveReceiveSession();
+      if (s) window.open(s.url, '_blank');
+    }
+  });
+
+  on($('btnRenewReceiveSession'), 'click', function() {
+    openReceiveFromPhoneModal();
+    showToast('↺ Código QR de sesión renovado.', 'info');
+  });
+
+  on($('btnClearQrInbox'), 'click', function() {
+    if (window.RealScanQrSync) {
+      window.RealScanQrSync.clearInbox();
+      showToast('Bandeja de archivos vaciada.', 'info');
+    }
+  });
+
+  // Acciones en modal de entrega digital
+  on($('btnCopyDeliveryUrl'), 'click', function() {
+    if (window.RealScanQrSync) {
+      const s = window.RealScanQrSync.getActiveDeliverySession();
+      if (s && navigator.clipboard) {
+        navigator.clipboard.writeText(s.url);
+        showToast('📋 Enlace de descarga copiado al portapapeles.', 'success');
+      }
+    }
+  });
+
+  on($('btnRevokeDeliverySession'), 'click', function() {
+    if (window.RealScanQrSync) {
+      window.RealScanQrSync.revokeDeliverySession();
+      const resultBox = $('deliveryQrResultBox');
+      if (resultBox) resultBox.classList.add('hidden');
+      showToast('🔒 Enlace de entrega revocado por seguridad.', 'warning');
+    }
+  });
+
+  // Pestaña y Controles de Sonido (Web Audio API)
+  if ($('tabBtnAudio')) {
+    on($('tabBtnAudio'), 'click', function(){ switchSettingsTab('audio'); });
+  }
+  if ($('checkAudioEnabled')) {
+    on($('checkAudioEnabled'), 'change', function() {
+      if (window.RealScanAudio) window.RealScanAudio.setEnabled(this.checked);
+      showToast(this.checked ? '🔊 Alertas sonoras activadas' : '🔇 Alertas sonoras silenciadas', 'info');
+    });
+  }
+  if ($('rangeAudioVolume')) {
+    on($('rangeAudioVolume'), 'input', function() {
+      const volPct = parseInt(this.value, 10) || 70;
+      const lbl = $('labelAudioVolume');
+      if (lbl) lbl.textContent = volPct + '%';
+      if (window.RealScanAudio) window.RealScanAudio.setVolume(volPct / 100);
+    });
+  }
+  if ($('btnTestAudioFeedback')) {
+    on($('btnTestAudioFeedback'), 'click', function() {
+      if (window.RealScanAudio) window.RealScanAudio.testAudio();
+    });
+  }
+
+  // Selector de Escala de Impresión (%)
+  if ($('selectOutputScale')) {
+    on($('selectOutputScale'), 'change', function() {
+      setPrintScale(this.value);
+    });
+  }
 }
 
 async function updateStorageTelemetryUI() {
