@@ -1112,7 +1112,7 @@ function updateUI() {
       placements.forEach(function(item) {
         const currentImgSrc = (state.images[item.slot] && state.images[item.slot].processedDataUrl)
           ? state.images[item.slot].processedDataUrl
-          : (state.images.front ? state.images.front.processedDataUrl : null);
+          : null;
 
         const cell = document.createElement('div');
         if (item.isOval) {

@@ -246,6 +246,8 @@ async function runTests() {
 
     // Caso B: Foto con resolución insuficiente (<150 DPI físico)
     // Para credencial de 54mm de alto, 150 DPI = (54/25.4)*150 = ~318 px. Si mide 100px:
+    sb.state.printMode = 'single';
+    sb.state.documentPageCount = 1;
     sb.state.images.front.originalSrc = 'data:image/png;base64,AAA';
     sb.state.images.front.naturalWidth = 120;
     sb.state.images.front.naturalHeight = 90;
@@ -261,6 +263,8 @@ async function runTests() {
 
     // Caso D: Documento correcto con alta resolución
     sb.getActiveSpec = () => ({ name: 'Credencial', widthMm: 85.6, heightMm: 54 });
+    sb.state.printMode = 'single';
+    sb.state.documentPageCount = 1;
     sb.state.images.front.naturalWidth = 1012;
     sb.state.images.front.naturalHeight = 638;
     chk = sb.runPreflightChecks();

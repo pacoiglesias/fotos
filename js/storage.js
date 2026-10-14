@@ -411,13 +411,10 @@ async function renderSavedScansDashboard() {
     const safeCreatedFormatted = escapeHtml(s.createdFormatted || '');
     const safeId = escapeHtml(s.id);
     const pagesCount = (s.pages && Array.isArray(s.pages)) ? s.pages.length : 1;
-    const isSafeThumb = s.thumbnail && (typeof s.thumbnail === 'string') && (s.thumbnail.startsWith('data:image/') || s.thumbnail.startsWith('blob:') || s.thumbnail.startsWith('https://'));
-    const thumbHtml = isSafeThumb ? `<img src="${s.thumbnail}" class="w-full h-full object-cover" alt="Miniatura" />` : `<span class="text-2xl">📄</span>`;
 
     card.innerHTML = `
       <div class="flex items-start gap-3 min-w-0">
-        <div class="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center cursor-pointer btn-dash-restore" data-id="${safeId}" title="Hacer clic para cargar en el lienzo">
-          ${thumbHtml}
+        <div class="thumb-slot-dashboard w-16 h-16 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center cursor-pointer btn-dash-restore" data-id="${safeId}" title="Hacer clic para cargar en el lienzo">
         </div>
         <div class="min-w-0 flex-1">
           <p class="font-bold text-xs text-slate-900 dark:text-white truncate" title="${safeTitle}">${safeTitle}</p>
@@ -443,6 +440,22 @@ async function renderSavedScansDashboard() {
         </button>
       </div>
     `;
+
+    const thumbSlot = (typeof card.querySelector === 'function') ? card.querySelector('.thumb-slot-dashboard') : null;
+    if (thumbSlot) {
+      if (s.thumbnail && typeof s.thumbnail === 'string' && (s.thumbnail.startsWith('data:image/') || s.thumbnail.startsWith('blob:') || s.thumbnail.startsWith('https://'))) {
+        const img = document.createElement('img');
+        img.src = s.thumbnail;
+        img.className = 'w-full h-full object-cover';
+        img.alt = 'Miniatura';
+        thumbSlot.appendChild(img);
+      } else {
+        const span = document.createElement('span');
+        span.className = 'text-2xl';
+        span.textContent = '📄';
+        thumbSlot.appendChild(span);
+      }
+    }
 
     grid.appendChild(card);
   });
@@ -546,13 +559,10 @@ async function renderHistoryUI(filterQuery) {
     const safeCreatedFormatted = escapeHtml(s.createdFormatted || '');
     const safeId = escapeHtml(s.id);
     const pagesCount = (s.pages && Array.isArray(s.pages)) ? s.pages.length : 1;
-    const isSafeThumb = s.thumbnail && (typeof s.thumbnail === 'string') && (s.thumbnail.startsWith('data:image/') || s.thumbnail.startsWith('blob:') || s.thumbnail.startsWith('https://'));
-    const thumbHtml = isSafeThumb ? `<img src="${s.thumbnail}" class="w-full h-full object-cover" alt="Miniatura" />` : `<span class="text-xl">📄</span>`;
 
     card.innerHTML = `
       <div class="flex items-center gap-3 min-w-0">
-        <div class="w-14 h-14 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center">
-          ${thumbHtml}
+        <div class="thumb-slot-history w-14 h-14 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center">
         </div>
         <div class="min-w-0">
           <p class="font-bold text-sm text-slate-900 dark:text-white truncate">${safeTitle}</p>
@@ -578,6 +588,22 @@ async function renderHistoryUI(filterQuery) {
         </button>
       </div>
     `;
+
+    const thumbSlot = (typeof card.querySelector === 'function') ? card.querySelector('.thumb-slot-history') : null;
+    if (thumbSlot) {
+      if (s.thumbnail && typeof s.thumbnail === 'string' && (s.thumbnail.startsWith('data:image/') || s.thumbnail.startsWith('blob:') || s.thumbnail.startsWith('https://'))) {
+        const img = document.createElement('img');
+        img.src = s.thumbnail;
+        img.className = 'w-full h-full object-cover';
+        img.alt = 'Miniatura';
+        thumbSlot.appendChild(img);
+      } else {
+        const span = document.createElement('span');
+        span.className = 'text-xl';
+        span.textContent = '📄';
+        thumbSlot.appendChild(span);
+      }
+    }
 
     container.appendChild(card);
   });
@@ -1112,44 +1138,122 @@ function resetWorkspaceToNewProject() {
    ============================================================ */
 function runPreflightChecks() {
   const issues = [];
-  const activeSlots = ['front', 'back', 'page3', 'page4'].slice(0, state.documentPageCount || 2);
-  let loadedCount = 0;
+  const spec = (typeof getActiveSpec === 'function') ? getActiveSpec() : { widthMm: 85.6, heightMm: 54, shortName: 'Documento' };
+  const paper = (typeof getActivePaperSpec === 'function') ? getActivePaperSpec() : { widthMm: 210, heightMm: 297, shortName: 'A4' };
 
-  activeSlots.forEach(function(side) {
-    const imgData = state.images[side];
-    if (imgData && imgData.originalSrc) {
+  const engine = (typeof RealScanLayout !== 'undefined') ? RealScanLayout : ((typeof window !== 'undefined' && window.RealScanLayout) ? window.RealScanLayout : null);
+
+  // 1. Obtener composición activa del Layout Engine
+  const layout = (engine && typeof engine.computeDocumentLayout === 'function')
+    ? engine.computeDocumentLayout(state)
+    : { pages: [], errors: [], warnings: [] };
+
+  // 2. Validación geométrica común centralizada
+  const geomValidation = (engine && typeof engine.validateDocumentGeometry === 'function')
+    ? engine.validateDocumentGeometry(layout, spec, paper)
+    : { valid: true, errors: [], warnings: [] };
+
+  if (geomValidation.errors && geomValidation.errors.length > 0) {
+    geomValidation.errors.forEach(function(errMsg) {
+      issues.push({
+        type: 'error',
+        code: 'GEOMETRY_ERROR',
+        message: errMsg.startsWith('❌') ? errMsg : ('❌ ' + errMsg)
+      });
+    });
+  }
+
+  if (spec.widthMm > paper.widthMm || spec.heightMm > paper.heightMm) {
+    const oversizedMsg = '❌ El tamaño del documento (' + spec.widthMm + ' × ' + spec.heightMm + ' mm) supera el papel (' + paper.widthMm + ' × ' + paper.heightMm + ' mm).';
+    if (!issues.some(function(x) { return x.type === 'error' && x.message.includes('supera el papel'); })) {
+      issues.push({
+        type: 'error',
+        code: 'GEOMETRY_ERROR',
+        message: oversizedMsg
+      });
+    }
+  }
+
+  if (geomValidation.warnings && geomValidation.warnings.length > 0) {
+    geomValidation.warnings.forEach(function(warnMsg) {
+      issues.push({
+        type: 'warning',
+        code: 'GEOMETRY_WARNING',
+        message: warnMsg.startsWith('⚠️') ? warnMsg : ('⚠️ ' + warnMsg)
+      });
+    });
+  }
+
+  // 3. Determinar ranuras requeridas por la composición activa
+  let requiredSlots = [];
+  if (layout.pages && layout.pages.length > 0) {
+    const slotsSet = new Set();
+    layout.pages.forEach(function(p) {
+      (p.placements || []).forEach(function(item) {
+        if (item && item.slot) slotsSet.add(item.slot);
+      });
+    });
+    requiredSlots = Array.from(slotsSet);
+  }
+  if (requiredSlots.length === 0) {
+    requiredSlots = ['front', 'back', 'page3', 'page4'].slice(0, state.documentPageCount || 2);
+  }
+
+  let loadedCount = 0;
+  const missingSlots = [];
+
+  function resolveSlotName(s) {
+    if (typeof getSlotFriendlyName === 'function') return getSlotFriendlyName(s);
+    if (s === 'front') return 'Frente';
+    if (s === 'back') return 'Reverso';
+    if (s === 'page3') return 'Página 3';
+    if (s === 'page4') return 'Página 4';
+    return s || 'Elemento';
+  }
+
+  requiredSlots.forEach(function(side) {
+    const imgData = state.images && state.images[side];
+    const hasImage = !!(imgData && (imgData.processedDataUrl || imgData.originalSrc));
+    if (hasImage) {
       loadedCount++;
-      const spec = (typeof getActiveSpec === 'function') ? getActiveSpec() : { widthMm: 85.6, heightMm: 54 };
       const minDpiPixels = Math.round((Math.min(spec.widthMm, spec.heightMm) / 25.4) * 150);
       const minImgDim = Math.min(imgData.naturalWidth || 0, imgData.naturalHeight || 0);
       if (minImgDim > 0 && minImgDim < minDpiPixels) {
         issues.push({
           type: 'warning',
           slot: side,
-          message: '⚠️ ' + getSlotFriendlyName(side) + ': Resolución baja (' + minImgDim + ' px). La impresión física podría verse pixelada.'
+          message: '⚠️ ' + resolveSlotName(side) + ': Resolución baja (' + minImgDim + ' px). La impresión física podría verse pixelada.'
         });
       }
+    } else {
+      missingSlots.push(side);
     }
   });
 
-  if (loadedCount === 0) {
+  // Si ninguna cara está cargada en todo el documento
+  const totalAnyLoaded = Object.keys(state.images || {}).filter(function(k) {
+    return !!(state.images[k] && (state.images[k].processedDataUrl || state.images[k].originalSrc));
+  }).length;
+
+  if (totalAnyLoaded === 0) {
     issues.push({
       type: 'error',
+      code: 'NO_IMAGES',
       message: '❌ No hay ninguna foto cargada en el documento para imprimir o exportar.'
     });
-  }
-
-  const paper = (typeof getActivePaperSpec === 'function') ? getActivePaperSpec() : { widthMm: 210, heightMm: 297 };
-  const spec = (typeof getActiveSpec === 'function') ? getActiveSpec() : { widthMm: 85.6, heightMm: 54 };
-  if (spec.widthMm > paper.widthMm || spec.heightMm > paper.heightMm) {
-    issues.push({
-      type: 'error',
-      message: '❌ El tamaño del documento (' + spec.widthMm + ' × ' + spec.heightMm + ' mm) supera el papel (' + paper.widthMm + ' × ' + paper.heightMm + ' mm).'
+  } else if (missingSlots.length > 0) {
+    missingSlots.forEach(function(side) {
+      issues.push({
+        type: 'error',
+        code: 'MISSING_SLOT',
+        slot: side,
+        message: '❌ Falta la imagen para: ' + resolveSlotName(side) + '. La composición activa (' + requiredSlots.length + ' caras) requiere ambas caras.'
+      });
     });
   }
 
   return {
-    valid: issues.filter(x => x.type === 'error').length === 0,
+    valid: issues.filter(function(x) { return x.type === 'error'; }).length === 0,
     issues: issues
   };
 }

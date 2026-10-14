@@ -66,6 +66,7 @@
       category: category,
       totalPages: 1,
       pages: [],
+      errors: [],
       warnings: [],
       isCleanSheet: isCleanSheet,
       cleanSheetMode: isCleanSheet,
@@ -80,6 +81,19 @@
       p.pages.forEach(function(page) {
         if (!page.paper) page.paper = paper;
       });
+      const geom = validateDocumentGeometry(p, spec, paper);
+      if (geom.errors && geom.errors.length > 0) {
+        geom.errors.forEach(function(err) {
+          if (!p.errors) p.errors = [];
+          if (p.errors.indexOf(err) === -1) p.errors.push(err);
+        });
+      }
+      if (geom.warnings && geom.warnings.length > 0) {
+        geom.warnings.forEach(function(warn) {
+          if (!p.warnings) p.warnings = [];
+          if (p.warnings.indexOf(warn) === -1) p.warnings.push(warn);
+        });
+      }
       return p;
     }
 
@@ -427,9 +441,92 @@
     return finalizePlan(plan);
   }
 
+  /**
+   * Validación geométrica común centralizada.
+   * Comprueba dimensiones positivas/finitas, límites físicos del papel, márgenes y área útil.
+   */
+  function validateDocumentGeometry(plan, spec, paper) {
+    const errors = [];
+    const warnings = [];
+
+    const effectiveSpec = spec || (plan && plan.spec);
+    const effectivePaper = paper || (plan && plan.paper);
+
+    if (!effectiveSpec || !effectivePaper) {
+      errors.push('Especificación de documento o papel no definida.');
+      return { valid: false, errors: errors, warnings: warnings };
+    }
+
+    const w = effectiveSpec.widthMm;
+    const h = effectiveSpec.heightMm;
+    const pw = effectivePaper.widthMm;
+    const ph = effectivePaper.heightMm;
+
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+      errors.push('Las medidas del documento deben ser números positivos finitos (recibido: ' + w + ' × ' + h + ' mm).');
+    } else {
+      if (w > 1000 || h > 1000) {
+        errors.push('Las dimensiones del documento exceden el límite máximo soportado de 1000 mm (' + w + ' × ' + h + ' mm).');
+      }
+      if (w > pw || h > ph) {
+        errors.push('El documento (' + w + ' × ' + h + ' mm) supera el papel ' + (effectivePaper.shortName || 'seleccionado') + ' (' + pw + ' × ' + ph + ' mm).');
+      }
+    }
+
+    if (plan && Array.isArray(plan.pages)) {
+      plan.pages.forEach(function(page, pIdx) {
+        const pageNum = page.pageNumber || (pIdx + 1);
+        const pPaper = page.paper || effectivePaper;
+        const pageW = pPaper.widthMm;
+        const pageH = pPaper.heightMm;
+
+        (page.placements || []).forEach(function(item) {
+          const slotName = item.slot || 'elemento';
+          if (!Number.isFinite(item.xMm) || !Number.isFinite(item.yMm) || !Number.isFinite(item.widthMm) || !Number.isFinite(item.heightMm)) {
+            errors.push('Hoja ' + pageNum + ': Coordenadas o dimensiones no finitas en ' + slotName + '.');
+            return;
+          }
+
+          if (item.widthMm <= 0 || item.heightMm <= 0) {
+            errors.push('Hoja ' + pageNum + ': Dimensiones no positivas en ' + slotName + ' (' + item.widthMm + ' × ' + item.heightMm + ' mm).');
+          }
+
+          if (item.xMm < -0.1 || item.yMm < -0.1) {
+            errors.push('Hoja ' + pageNum + ': Posición fuera de página en ' + slotName + ' (X: ' + item.xMm + ' mm, Y: ' + item.yMm + ' mm).');
+          }
+
+          if ((item.xMm + item.widthMm) > (pageW + 0.5) || (item.yMm + item.heightMm) > (pageH + 0.5)) {
+            errors.push('Hoja ' + pageNum + ': ' + slotName + ' (' + item.widthMm + ' × ' + item.heightMm + ' mm en X:' + item.xMm + ', Y:' + item.yMm + ') desborda la hoja (' + pageW + ' × ' + pageH + ' mm).');
+          }
+
+          // Validación de colisión con regla de calibración si está activa
+          if (page.hasRuler && Number.isFinite(page.rulerY)) {
+            if ((item.yMm + item.heightMm) > (page.rulerY - 1)) {
+              warnings.push('Hoja ' + pageNum + ': ' + slotName + ' invade el área de la regla de calibración al pie de página.');
+            }
+          }
+        });
+      });
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors: errors,
+      warnings: warnings
+    };
+  }
+
   // Exportar al objeto global
-  window.RealScanLayout = {
-    computeDocumentLayout: computeDocumentLayout
+  const layoutExports = {
+    computeDocumentLayout: computeDocumentLayout,
+    validateDocumentGeometry: validateDocumentGeometry
   };
+
+  if (typeof window !== 'undefined') {
+    window.RealScanLayout = layoutExports;
+  }
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = layoutExports;
+  }
 
 })(typeof window !== 'undefined' ? window : this);

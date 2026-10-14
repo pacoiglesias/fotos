@@ -169,14 +169,63 @@ function clearAuditLog() {
 }
 
 /* ============================================================
-   Gestión de Usuarios y Roles
+   Gestión de Usuarios, Roles y Permisos
    ============================================================ */
+function getCurrentUserRole() {
+  const auth = getAuthData();
+  const currentName = (auth.currentUsername || window.DEFAULT_USER || '').toLowerCase();
+  const found = auth.users.find(function(u) {
+    return u.username.toLowerCase() === currentName;
+  });
+  return found ? (found.role || 'operador') : 'operador';
+}
+
+function isCurrentUserAdmin() {
+  return getCurrentUserRole() === 'admin';
+}
+
 function renderUsersList() {
   const container = $('usersListContainer');
   const badge = $('usersCounterBadge');
   if (!container) return;
   const auth = getAuthData();
+  const isAdmin = isCurrentUserAdmin();
+
   if (badge) badge.textContent = auth.users.length + (auth.users.length === 1 ? ' usuario' : ' usuarios');
+
+  // Reflejar permisos en el formulario de creación de usuario
+  const formAdd = $('formAddUser');
+  const btnAdd = $('btnAddUserSubmit');
+  const roleSelect = $('selectAddUserRole');
+  const nameInput = $('inputAddUserName');
+  const passInput = $('inputAddUserPass');
+
+  if (formAdd) {
+    let permNotice = $('addUserPermissionNotice');
+    if (!isAdmin) {
+      if (btnAdd) btnAdd.disabled = true;
+      if (roleSelect) roleSelect.disabled = true;
+      if (nameInput) nameInput.disabled = true;
+      if (passInput) passInput.disabled = true;
+      if (!permNotice) {
+        permNotice = document.createElement('p');
+        permNotice.id = 'addUserPermissionNotice';
+        permNotice.className = 'text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-1 bg-amber-50 dark:bg-amber-950/40 p-1.5 rounded-lg border border-amber-200 dark:border-amber-800';
+        permNotice.textContent = '🔒 Modo Operador: solo los administradores tienen permiso para crear o eliminar usuarios.';
+        formAdd.appendChild(permNotice);
+      }
+    } else {
+      if (btnAdd) btnAdd.disabled = false;
+      if (roleSelect) roleSelect.disabled = false;
+      if (nameInput) nameInput.disabled = false;
+      if (passInput) passInput.disabled = false;
+      if (permNotice && permNotice.parentNode) {
+        permNotice.parentNode.removeChild(permNotice);
+      }
+    }
+  }
+
+  const adminCount = auth.users.filter(function(u) { return u.role === 'admin'; }).length;
 
   let html = '';
   auth.users.forEach(function(u) {
@@ -198,25 +247,42 @@ function renderUsersList() {
         '</div>' +
       '</div>';
 
-    if (!isCurrent && auth.users.length > 1) {
-      html += '<button type="button" class="btn-delete-user px-2 py-1 rounded-lg text-[11px] font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900/60 transition-colors" data-delete-user="' + escapeHtml(u.username) + '" title="Eliminar usuario">🗑️ Eliminar</button>';
+    // Botón de eliminar solo visible y habilitado si el usuario activo es admin
+    if (isAdmin && !isCurrent && auth.users.length > 1) {
+      const isSoleAdmin = (u.role === 'admin' && adminCount <= 1);
+      if (isSoleAdmin) {
+        html += '<span class="text-[10px] text-amber-500 font-medium" title="No se puede eliminar el único administrador">Único Admin</span>';
+      } else {
+        html += '<button type="button" class="btn-delete-user px-2 py-1 rounded-lg text-[11px] font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900/60 transition-colors" data-delete-user="' + escapeHtml(u.username) + '" title="Eliminar usuario">🗑️ Eliminar</button>';
+      }
+    } else if (isCurrent) {
+      html += '<span class="text-[10px] text-slate-400 italic">Sesión activa</span>';
     } else {
-      html += '<span class="text-[10px] text-slate-400 italic">Activo</span>';
+      html += '<span class="text-[10px] text-slate-400 italic">Protegido</span>';
     }
     html += '</div>';
   });
 
   container.innerHTML = html;
 
-  container.querySelectorAll('.btn-delete-user').forEach(function(btn) {
-    on(btn, 'click', function() {
-      handleDeleteUser(btn.getAttribute('data-delete-user'));
+  if (isAdmin) {
+    container.querySelectorAll('.btn-delete-user').forEach(function(btn) {
+      on(btn, 'click', function() {
+        handleDeleteUser(btn.getAttribute('data-delete-user'));
+      });
     });
-  });
+  }
 }
 
 async function handleAddUser(e) {
   if (e) e.preventDefault();
+
+  if (!isCurrentUserAdmin()) {
+    showToast('Acceso denegado: solo administradores pueden crear usuarios', 'error');
+    if (typeof alert === 'function') alert('Operación no permitida: solo los administradores tienen permiso para registrar nuevos usuarios.');
+    return;
+  }
+
   const userNameInput = $('inputAddUserName');
   const userPassInput = $('inputAddUserPass');
   const userRoleSelect = $('selectAddUserRole');
@@ -256,9 +322,35 @@ async function handleAddUser(e) {
 
 function handleDeleteUser(usernameToDelete) {
   if (!usernameToDelete) return;
-  if (!confirm('¿Estás seguro de que deseas eliminar al usuario "' + usernameToDelete + '"?')) return;
+
+  if (!isCurrentUserAdmin()) {
+    showToast('Acceso denegado: solo administradores pueden eliminar usuarios', 'error');
+    if (typeof alert === 'function') alert('Operación no permitida: solo los administradores tienen permiso para eliminar usuarios.');
+    return;
+  }
 
   const auth = getAuthData();
+  const targetUser = auth.users.find(function(u) {
+    return u.username.toLowerCase() === usernameToDelete.toLowerCase();
+  });
+
+  if (!targetUser) {
+    showToast('El usuario no existe', 'warning');
+    return;
+  }
+
+  // Protección de continuidad: al menos un administrador activo
+  if (targetUser.role === 'admin') {
+    const adminCount = auth.users.filter(function(u) { return u.role === 'admin'; }).length;
+    if (adminCount <= 1) {
+      showToast('No se puede eliminar al único administrador del sistema', 'error');
+      if (typeof alert === 'function') alert('Operación bloqueada: debe existir al menos un administrador activo en el sistema para garantizar el acceso.');
+      return;
+    }
+  }
+
+  if (typeof confirm === 'function' && !confirm('¿Estás seguro de que deseas eliminar al usuario "' + usernameToDelete + '"?')) return;
+
   auth.users = auth.users.filter(function(u) {
     return u.username.toLowerCase() !== usernameToDelete.toLowerCase();
   });
@@ -439,5 +531,28 @@ function toggleLoginPasswordVisibility() {
     input.type = 'password';
     if ($('btnToggleLoginPass')) $('btnToggleLoginPass').textContent = '👁️';
   }
+}
+
+if (typeof window !== 'undefined') {
+  window.getCurrentUserRole = getCurrentUserRole;
+  window.isCurrentUserAdmin = isCurrentUserAdmin;
+  window.handleAddUser = handleAddUser;
+  window.handleDeleteUser = handleDeleteUser;
+  window.renderUsersList = renderUsersList;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    computeSha256,
+    getAuthData,
+    saveAuthData,
+    getCurrentUserRole,
+    isCurrentUserAdmin,
+    handleAddUser,
+    handleDeleteUser,
+    renderUsersList,
+    handleLoginSubmit,
+    handleLogout
+  };
 }
 

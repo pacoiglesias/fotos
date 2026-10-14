@@ -35,10 +35,19 @@ async function handleExportPDF(tryShare) {
   if (typeof runPreflightChecks === 'function') {
     const preflight = runPreflightChecks();
     if (!preflight.valid) {
-      const errorMsg = preflight.issues.filter(x => x.type === 'error').map(x => x.message).join('\n');
-      if (typeof showToast === 'function') showToast(errorMsg, 'error');
-      alert(errorMsg);
-      return;
+      const fatalErrors = preflight.issues.filter(x => x.type === 'error' && x.code !== 'MISSING_SLOT');
+      if (fatalErrors.length > 0) {
+        const errorMsg = fatalErrors.map(x => x.message).join('\n');
+        if (typeof showToast === 'function') showToast(errorMsg, 'error');
+        alert(errorMsg);
+        return;
+      }
+      const missingSlotErrors = preflight.issues.filter(x => x.type === 'error' && x.code === 'MISSING_SLOT');
+      if (missingSlotErrors.length > 0) {
+        const missingMsg = missingSlotErrors.map(x => x.message).join('\n') +
+          '\n\n¿Deseas exportar ÚNICAMENTE las caras disponibles (dejando el espacio vacío sin inventar contenido) o cancelar para cargar la imagen faltante?';
+        if (!confirm(missingMsg)) return;
+      }
     }
     const warnings = preflight.issues.filter(x => x.type === 'warning');
     if (warnings.length > 0) {
@@ -93,10 +102,19 @@ function handlePrintDirect() {
   if (typeof runPreflightChecks === 'function') {
     const preflight = runPreflightChecks();
     if (!preflight.valid) {
-      const errorMsg = preflight.issues.filter(x => x.type === 'error').map(x => x.message).join('\n');
-      if (typeof showToast === 'function') showToast(errorMsg, 'error');
-      alert(errorMsg);
-      return;
+      const fatalErrors = preflight.issues.filter(x => x.type === 'error' && x.code !== 'MISSING_SLOT');
+      if (fatalErrors.length > 0) {
+        const errorMsg = fatalErrors.map(x => x.message).join('\n');
+        if (typeof showToast === 'function') showToast(errorMsg, 'error');
+        alert(errorMsg);
+        return;
+      }
+      const missingSlotErrors = preflight.issues.filter(x => x.type === 'error' && x.code === 'MISSING_SLOT');
+      if (missingSlotErrors.length > 0) {
+        const missingMsg = missingSlotErrors.map(x => x.message).join('\n') +
+          '\n\n¿Deseas imprimir ÚNICAMENTE las caras disponibles (dejando el espacio vacío sin inventar contenido) o cancelar para cargar la imagen faltante?';
+        if (!confirm(missingMsg)) return;
+      }
     }
     const warnings = preflight.issues.filter(x => x.type === 'warning');
     if (warnings.length > 0) {
@@ -176,7 +194,7 @@ function renderPageToCanvas(page, layout, loadedImages) {
     const w = item.widthMm * pxPerMm;
     const h = item.heightMm * pxPerMm;
 
-    const imgObj = loadedImages[item.slot] || loadedImages.front;
+    const imgObj = (loadedImages && loadedImages[item.slot]) ? loadedImages[item.slot] : null;
 
     // A. Borde y marcas de corte
     if (item.drawOvalGuide) {
@@ -283,12 +301,45 @@ function renderPageToCanvas(page, layout, loadedImages) {
  * Descarga de Imagen(es) a 300 DPI Constantes con soporte para todas las páginas
  */
 async function downloadA4Image() {
-  if (!state.images.front || !state.images.front.processedDataUrl) {
+  // Verificación de Pre-Vuelo Estricta antes de generar imagen(es)
+  if (typeof runPreflightChecks === 'function') {
+    const preflight = runPreflightChecks();
+    if (!preflight.valid) {
+      const fatalErrors = preflight.issues.filter(x => x.type === 'error' && x.code !== 'MISSING_SLOT');
+      if (fatalErrors.length > 0) {
+        const errorMsg = fatalErrors.map(x => x.message).join('\n');
+        if (typeof showToast === 'function') showToast(errorMsg, 'error');
+        alert(errorMsg);
+        return;
+      }
+      const missingSlotErrors = preflight.issues.filter(x => x.type === 'error' && x.code === 'MISSING_SLOT');
+      if (missingSlotErrors.length > 0) {
+        const missingMsg = missingSlotErrors.map(x => x.message).join('\n') +
+          '\n\n¿Deseas exportar ÚNICAMENTE las caras disponibles (dejando el espacio vacío sin inventar contenido) o cancelar para cargar la imagen faltante?';
+        if (!confirm(missingMsg)) return;
+      }
+    }
+    const warnings = preflight.issues.filter(x => x.type === 'warning');
+    if (warnings.length > 0) {
+      const warnMsg = warnings.map(x => x.message).join('\n') + '\n\n¿Deseas continuar con la exportación de imagen?';
+      if (!confirm(warnMsg)) return;
+    }
+  }
+
+  const hasAnyImage = Object.keys(state.images || {}).some(function(k) {
+    return !!(state.images[k] && state.images[k].processedDataUrl);
+  });
+  if (!hasAnyImage) {
     showToast('Por favor captura o sube al menos una imagen.', 'warning');
     return;
   }
 
   const layout = window.RealScanLayout.computeDocumentLayout(state);
+  if (layout.errors && layout.errors.length > 0) {
+    showToast('Error de geometría: ' + layout.errors[0], 'error');
+    alert('No se puede exportar la imagen:\n' + layout.errors.join('\n'));
+    return;
+  }
   const paper = layout.paper;
   const spec = layout.spec;
 

@@ -75,9 +75,11 @@ function drawCalibrationFooter(doc, pageW, spec, pageH) {
 }
 
 function generatePdfDoc() {
-  // Comprobar imágenes disponibles
-  const hasFront = !!(state.images.front && state.images.front.processedDataUrl);
-  if (!hasFront) {
+  // Comprobar imágenes disponibles en cualquier ranura
+  const hasAnyImage = Object.keys(state.images || {}).some(function(k) {
+    return !!(state.images[k] && state.images[k].processedDataUrl);
+  });
+  if (!hasAnyImage) {
     showToast('Por favor captura o sube al menos una imagen antes de generar el PDF.', 'warning');
     return null;
   }
@@ -88,6 +90,12 @@ function generatePdfDoc() {
   const spec = layout.spec;
   const pageW = paper.widthMm;
   const pageH = paper.heightMm;
+
+  // Bloqueo estricto por errores geométricos
+  if (layout.errors && layout.errors.length > 0) {
+    showToast('Error de geometría: ' + layout.errors[0], 'error');
+    return null;
+  }
 
   // Advertencias de geometría
   if (layout.warnings && layout.warnings.length > 0) {
@@ -101,7 +109,7 @@ function generatePdfDoc() {
     doc.setProperties({
       title: 'RealScan — ' + spec.name + ' (1:1 Real)',
       author: 'Paco Iglesias (RealScan Pro)',
-      creator: 'RealScan Pro v3.2.0-Enterprise'
+      creator: 'RealScan Pro v3.3.0-Enterprise'
     });
   } catch (e) {}
 
@@ -119,11 +127,11 @@ function generatePdfDoc() {
       doc.text(page.sheetTitle.toUpperCase(), pageW / 2, 12, { align: 'center' });
     }
 
-    // 2. Elementos colocados en la página
+    // 2. Elementos colocados en la página (sin inventar caras faltantes)
     page.placements.forEach(function(item) {
       const imgData = (state.images[item.slot] && state.images[item.slot].processedDataUrl)
         ? state.images[item.slot].processedDataUrl
-        : (state.images.front ? state.images.front.processedDataUrl : null);
+        : null;
 
       if (imgData) {
         doc.addImage(imgData, 'JPEG', item.xMm, item.yMm, item.widthMm, item.heightMm, undefined, 'FAST');
