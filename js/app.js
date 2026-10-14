@@ -279,9 +279,28 @@ function initWarpCanvasEvents() {
     });
   }
 
+  function isConvexQuad(pts) {
+    if (!pts || pts.length !== 4) return false;
+    let sign = 0;
+    for (let i = 0; i < 4; i++) {
+      const p1 = pts[i];
+      const p2 = pts[(i + 1) % 4];
+      const p3 = pts[(i + 2) % 4];
+      const cross = (p2.x - p1.x) * (p3.y - p2.y) - (p2.y - p1.y) * (p3.x - p2.x);
+      if (Math.abs(cross) < 1e-4) return false; // Colineales
+      if (sign === 0) sign = cross > 0 ? 1 : -1;
+      else if ((cross > 0 ? 1 : -1) !== sign) return false; // Cóncavo o auto-intersecante
+    }
+    return true;
+  }
+
   if ($('btnApplyWarp')) {
     on($('btnApplyWarp'), 'click', function() {
       if (!warpImage || !window.RealScanEditor || !warpPoints || warpPoints.length !== 4) return;
+      if (!isConvexQuad(warpPoints)) {
+        showToast('⚠️ Las 4 esquinas están cruzadas o invertidas. Asegúrate de formar un cuadrilátero regular.', 'warning');
+        return;
+      }
       const side = activeWarpSide;
       const spec = getActiveSpec();
       const targetW = Math.round((spec.widthMm / 25.4) * window.TARGET_DPI);
@@ -305,10 +324,337 @@ function initWarpCanvasEvents() {
           renderProcessedImage(side);
           showToast('📐 ¡Documento enderezado a 300 DPI con escala 1:1 verificada!', 'success');
         } else {
-          showToast('No se pudo aplicar la corrección de perspectiva. Revisa que las 4 esquinas formen un cuadrilátero convexo.', 'warning');
+          showToast('No se pudo aplicar la corrección de perspectiva. Revisa que las esquinas formen un cuadrilátero válido.', 'warning');
         }
       }, 50);
     });
+  }
+}
+
+/* ============================================================
+   RECORTE MANUAL PRECISO (CROP & COMPARE) (M-23)
+   ============================================================ */
+let activeCropSide = 'front';
+let cropImage = null;
+let cropBox = { x: 0, y: 0, width: 100, height: 100 }; // Coordenadas nativas
+let cropDragHandle = null; // 'all', 'tl', 'tr', 'br', 'bl'
+let isComparingCropOriginal = false;
+
+function openCropModal(side) {
+  const imgData = state.images[side];
+  const src = imgData ? (imgData.rawOriginalSrc || imgData.originalSrc) : null;
+  if (!src) {
+    showToast('Carga primero una foto para recortar.', 'warning');
+    return;
+  }
+  activeCropSide = side;
+  const title = $('cropModalTitle');
+  if (title) title.textContent = 'Recorte Manual — ' + getSlotFriendlyName(side);
+
+  const img = new Image();
+  img.onload = function() {
+    cropImage = img;
+    isComparingCropOriginal = false;
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    if (imgData.cropData && typeof imgData.cropData.width === 'number' && imgData.cropData.width > 10) {
+      cropBox = Object.assign({}, imgData.cropData);
+    } else {
+      const mx = Math.round(w * 0.08);
+      const my = Math.round(h * 0.08);
+      cropBox = { x: mx, y: my, width: w - mx * 2, height: h - my * 2 };
+    }
+    openModal('cropModal');
+    renderCropCanvas();
+  };
+  img.src = src;
+}
+
+function renderCropCanvas() {
+  const canvas = $('canvasCropInteractive');
+  if (!canvas || !cropImage) return;
+  const maxW = 760;
+  const maxH = 520;
+  const scale = Math.min(maxW / cropImage.naturalWidth, maxH / cropImage.naturalHeight, 1.0);
+  const w = Math.round(cropImage.naturalWidth * scale);
+  const h = Math.round(cropImage.naturalHeight * scale);
+  canvas.width = w;
+  canvas.height = h;
+
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(cropImage, 0, 0, w, h);
+
+  // Si se está comparando contra el original, solo mostrar la imagen completa limpia
+  if (isComparingCropOriginal) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillText('Mostrando imagen original completa (sin recorte)', 12, 24);
+    ctx.restore();
+    return;
+  }
+
+  const bx = cropBox.x * scale;
+  const by = cropBox.y * scale;
+  const bw = cropBox.width * scale;
+  const bh = cropBox.height * scale;
+
+  // Oscurecer exterior
+  ctx.save();
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+  ctx.fillRect(0, 0, w, h);
+
+  // Hueco interior iluminado
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.restore();
+
+  // Borde y regla de tercios
+  ctx.save();
+  ctx.strokeStyle = '#6366f1';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(bx, by, bw, bh);
+
+  // Líneas de tercios
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(bx + bw / 3, by); ctx.lineTo(bx + bw / 3, by + bh);
+  ctx.moveTo(bx + (bw * 2) / 3, by); ctx.lineTo(bx + (bw * 2) / 3, by + bh);
+  ctx.moveTo(bx, by + bh / 3); ctx.lineTo(bx + bw, by + bh / 3);
+  ctx.moveTo(bx, by + (bh * 2) / 3); ctx.lineTo(bx + bw, by + (bh * 2) / 3);
+  ctx.stroke();
+
+  // 4 Manijas de esquina
+  const handles = [
+    { x: bx, y: by },
+    { x: bx + bw, y: by },
+    { x: bx + bw, y: by + bh },
+    { x: bx, y: by + bh }
+  ];
+  handles.forEach(function(pt) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(pt.x - 6, pt.y - 6, 12, 12);
+    ctx.strokeStyle = '#4f46e5';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(pt.x - 6, pt.y - 6, 12, 12);
+  });
+  ctx.restore();
+}
+
+function initCropCanvasEvents() {
+  const canvas = $('canvasCropInteractive');
+  if (!canvas) return;
+
+  let dragStartX = 0, dragStartY = 0;
+  let initialBox = null;
+
+  function getCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const cy = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const scale = canvas.width / (cropImage ? cropImage.naturalWidth : 1);
+    return { cx, cy, scale };
+  }
+
+  function getHandleAt(cx, cy, scale) {
+    const bx = cropBox.x * scale;
+    const by = cropBox.y * scale;
+    const bw = cropBox.width * scale;
+    const bh = cropBox.height * scale;
+    const d = 16;
+
+    if (Math.hypot(cx - bx, cy - by) <= d) return 'tl';
+    if (Math.hypot(cx - (bx + bw), cy - by) <= d) return 'tr';
+    if (Math.hypot(cx - (bx + bw), cy - (by + bh)) <= d) return 'br';
+    if (Math.hypot(cx - bx, cy - (by + bh)) <= d) return 'bl';
+    if (cx >= bx && cx <= bx + bw && cy >= by && cy <= by + bh) return 'all';
+    return null;
+  }
+
+  canvas.addEventListener('pointerdown', function(e) {
+    if (!cropImage || isComparingCropOriginal) return;
+    const { cx, cy, scale } = getCoords(e);
+    cropDragHandle = getHandleAt(cx, cy, scale);
+    if (cropDragHandle) {
+      dragStartX = cx / scale;
+      dragStartY = cy / scale;
+      initialBox = Object.assign({}, cropBox);
+      canvas.setPointerCapture(e.pointerId);
+    }
+  });
+
+  canvas.addEventListener('pointermove', function(e) {
+    if (!cropImage || isComparingCropOriginal) return;
+    const { cx, cy, scale } = getCoords(e);
+    if (cropDragHandle && initialBox) {
+      const curX = cx / scale;
+      const curY = cy / scale;
+      const dx = curX - dragStartX;
+      const dy = curY - dragStartY;
+      const imgW = cropImage.naturalWidth;
+      const imgH = cropImage.naturalHeight;
+
+      if (cropDragHandle === 'all') {
+        cropBox.x = Math.max(0, Math.min(imgW - initialBox.width, initialBox.x + dx));
+        cropBox.y = Math.max(0, Math.min(imgH - initialBox.height, initialBox.y + dy));
+      } else if (cropDragHandle === 'tl') {
+        const nx = Math.max(0, Math.min(initialBox.x + initialBox.width - 20, initialBox.x + dx));
+        const ny = Math.max(0, Math.min(initialBox.y + initialBox.height - 20, initialBox.y + dy));
+        cropBox.width = initialBox.width - (nx - initialBox.x);
+        cropBox.height = initialBox.height - (ny - initialBox.y);
+        cropBox.x = nx;
+        cropBox.y = ny;
+      } else if (cropDragHandle === 'br') {
+        cropBox.width = Math.max(20, Math.min(imgW - initialBox.x, initialBox.width + dx));
+        cropBox.height = Math.max(20, Math.min(imgH - initialBox.y, initialBox.height + dy));
+      } else if (cropDragHandle === 'tr') {
+        const ny = Math.max(0, Math.min(initialBox.y + initialBox.height - 20, initialBox.y + dy));
+        cropBox.width = Math.max(20, Math.min(imgW - initialBox.x, initialBox.width + dx));
+        cropBox.height = initialBox.height - (ny - initialBox.y);
+        cropBox.y = ny;
+      } else if (cropDragHandle === 'bl') {
+        const nx = Math.max(0, Math.min(initialBox.x + initialBox.width - 20, initialBox.x + dx));
+        cropBox.width = initialBox.width - (nx - initialBox.x);
+        cropBox.height = Math.max(20, Math.min(imgH - initialBox.y, initialBox.height + dy));
+        cropBox.x = nx;
+      }
+      renderCropCanvas();
+    } else {
+      const h = getHandleAt(cx, cy, scale);
+      canvas.style.cursor = (h === 'all') ? 'move' : (h ? 'nwse-resize' : 'default');
+    }
+  });
+
+  function stopCropDrag(e) {
+    if (cropDragHandle) {
+      cropDragHandle = null;
+      initialBox = null;
+      try { canvas.releasePointerCapture(e.pointerId); } catch(err) {}
+    }
+  }
+
+  canvas.addEventListener('pointerup', stopCropDrag);
+  canvas.addEventListener('pointercancel', stopCropDrag);
+
+  // Botón Comparar con original
+  if ($('btnCropCompareOriginal')) {
+    on($('btnCropCompareOriginal'), 'click', function() {
+      isComparingCropOriginal = !isComparingCropOriginal;
+      $('btnCropCompareOriginal').classList.toggle('bg-amber-200', isComparingCropOriginal);
+      $('btnCropCompareOriginal').classList.toggle('dark:bg-amber-900', isComparingCropOriginal);
+      renderCropCanvas();
+    });
+  }
+
+  // Botón Restablecer
+  if ($('btnCropResetBox')) {
+    on($('btnCropResetBox'), 'click', function() {
+      if (!cropImage) return;
+      cropBox = { x: 0, y: 0, width: cropImage.naturalWidth, height: cropImage.naturalHeight };
+      isComparingCropOriginal = false;
+      renderCropCanvas();
+      showToast('Recuadro de recorte restablecido al 100%.', 'info');
+    });
+  }
+
+  // Botón Aplicar Recorte
+  if ($('btnApplyCrop')) {
+    on($('btnApplyCrop'), 'click', function() {
+      if (!cropImage || !window.RealScanEditor) return;
+      const side = activeCropSide;
+      window.RealScanEditor.recordSnapshot(side, state.images[side]);
+
+      const croppedUrl = window.RealScanEditor.cropImageRegion(cropImage, cropBox);
+      if (croppedUrl) {
+        state.images[side].croppedSrc = croppedUrl;
+        state.images[side].originalSrc = croppedUrl;
+        state.images[side].isCropApplied = true;
+        state.images[side].cropData = Object.assign({}, cropBox);
+        state.images[side].panX = 0;
+        state.images[side].panY = 0;
+        closeModal('cropModal');
+        renderProcessedImage(side);
+        showToast('✂️ Recorte aplicado con éxito.', 'success');
+      } else {
+        showToast('No se pudo aplicar el recorte.', 'warning');
+      }
+    });
+  }
+}
+
+/* ============================================================
+   SELECTOR DE PÁGINAS PDF CON MINIAUTURAS (M-24)
+   ============================================================ */
+let activePdfDoc = null;
+let activePdfTargetSide = 'front';
+
+async function openPdfPageSelector(pdfDoc, targetSide) {
+  activePdfDoc = pdfDoc;
+  activePdfTargetSide = targetSide || 'front';
+  const grid = $('pdfThumbnailsGrid');
+  const sub = $('pdfPageSelectorSubtitle');
+  if (!grid || !pdfDoc) return;
+
+  grid.innerHTML = '<div class="col-span-full py-8 text-center text-xs text-slate-400">Generando miniaturas de las páginas del PDF...</div>';
+  if (sub) sub.textContent = 'El archivo PDF contiene ' + pdfDoc.numPages + ' páginas. Asigna las que necesites.';
+  openModal('pdfPageSelectorModal');
+
+  grid.innerHTML = '';
+  for (let i = 1; i <= pdfDoc.numPages; i++) {
+    const pageNum = i;
+    const page = await pdfDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale: 0.6 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    const card = document.createElement('div');
+    card.className = 'p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 flex flex-col items-center gap-2 shadow-xs';
+
+    const pLabel = document.createElement('span');
+    pLabel.className = 'font-bold font-mono text-[11px] text-slate-700 dark:text-slate-300';
+    pLabel.textContent = 'Página ' + pageNum;
+
+    canvas.className = 'rounded border border-slate-200 dark:border-slate-700 max-h-[140px] w-auto shadow-xs';
+
+    const btnGroup = document.createElement('div');
+    btnGroup.className = 'flex flex-wrap items-center justify-center gap-1 w-full pt-1';
+
+    const btnFront = document.createElement('button');
+    btnFront.type = 'button';
+    btnFront.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100';
+    btnFront.textContent = 'Frente';
+    btnFront.onclick = async function() {
+      const fullPage = await pdfDoc.getPage(pageNum);
+      const dataUrl = await renderPdfPageToDataUrl(fullPage);
+      processRawDataUrl(dataUrl, 'front');
+      closeModal('pdfPageSelectorModal');
+      showToast('Página ' + pageNum + ' asignada al Frente.', 'success');
+    };
+
+    const btnBack = document.createElement('button');
+    btnBack.type = 'button';
+    btnBack.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100';
+    btnBack.textContent = 'Reverso';
+    btnBack.onclick = async function() {
+      const fullPage = await pdfDoc.getPage(pageNum);
+      const dataUrl = await renderPdfPageToDataUrl(fullPage);
+      processRawDataUrl(dataUrl, 'back');
+      closeModal('pdfPageSelectorModal');
+      showToast('Página ' + pageNum + ' asignada al Reverso.', 'success');
+    };
+
+    btnGroup.appendChild(btnFront);
+    btnGroup.appendChild(btnBack);
+
+    card.appendChild(pLabel);
+    card.appendChild(canvas);
+    card.appendChild(btnGroup);
+    grid.appendChild(card);
   }
 }
 
@@ -440,14 +786,64 @@ function setMixTwoPhotos(val) {
   const cardBackContainer = $('cardBackContainer');
   const slot1Title = $('slot1Title');
   const slot2Title = $('slot2Title');
+  const mixContainer = $('containerMixIndependentCopies');
+
+  if (state.mixTwoPhotos) {
+    if (typeof state.photoCopiesPersonA !== 'number' || typeof state.photoCopiesPersonB !== 'number') {
+      state.photoCopiesPersonA = Math.ceil(state.photoCopies / 2);
+      state.photoCopiesPersonB = Math.floor(state.photoCopies / 2);
+    }
+  }
+
+  if (mixContainer) {
+    mixContainer.classList.toggle('hidden', !state.mixTwoPhotos);
+  }
+  updateMixTwoPhotosUI();
+
   if (state.activeCategory === 'photos') {
     if (cardBackContainer) cardBackContainer.classList.toggle('hidden', !state.mixTwoPhotos);
     if (slot1Title) slot1Title.textContent = state.mixTwoPhotos ? 'Foto 1 (Persona A / Trámite 1)' : 'Foto Oficial (Rostro / Credencial)';
     if (slot2Title) slot2Title.textContent = 'Foto 2 (Persona B / Trámite 2)';
   }
+  updatePhotoGridStats();
   updateUI();
   savePreferences();
-  showToast(state.mixTwoPhotos ? '👥 Modo 2 Fotos activado: 50% Persona A y 50% Persona B' : 'Modo 1 Foto activado', 'info');
+  showToast(state.mixTwoPhotos ? ('👥 Modo 2 Fotos activado: ' + state.photoCopiesPersonA + ' Persona A + ' + state.photoCopiesPersonB + ' Persona B') : 'Modo 1 Foto activado', 'info');
+}
+
+function updateMixTwoPhotosUI() {
+  const inpA = $('inputCopiesPersonA');
+  const inpB = $('inputCopiesPersonB');
+  const tagA = $('tagCopiesPersonA');
+  const tagB = $('tagCopiesPersonB');
+  const ratioTag = $('labelMixBadgeRatio');
+
+  if (inpA && typeof state.photoCopiesPersonA === 'number') inpA.value = state.photoCopiesPersonA;
+  if (inpB && typeof state.photoCopiesPersonB === 'number') inpB.value = state.photoCopiesPersonB;
+  if (tagA && typeof state.photoCopiesPersonA === 'number') tagA.textContent = state.photoCopiesPersonA;
+  if (tagB && typeof state.photoCopiesPersonB === 'number') tagB.textContent = state.photoCopiesPersonB;
+
+  if (ratioTag && state.mixTwoPhotos) {
+    ratioTag.textContent = (state.photoCopiesPersonA || 0) + 'A + ' + (state.photoCopiesPersonB || 0) + 'B';
+  }
+}
+
+function setIndependentPhotoCopies(person, val) {
+  val = Math.max(0, parseInt(val, 10) || 0);
+  if (person === 'A') {
+    state.photoCopiesPersonA = val;
+  } else {
+    state.photoCopiesPersonB = val;
+  }
+  const total = (state.photoCopiesPersonA || 0) + (state.photoCopiesPersonB || 0);
+  state.photoCopies = Math.max(1, total);
+  const mainInput = $('inputPhotoCopies');
+  if (mainInput) mainInput.value = state.photoCopies;
+
+  updateMixTwoPhotosUI();
+  updatePhotoGridStats();
+  updateUI();
+  savePreferences();
 }
 
 function getPhotoLayoutInfo(targetW, targetH, copies) {
@@ -528,15 +924,21 @@ function updatePhotoGridStats() {
   const spec = getActiveSpec();
   const info = getPhotoLayoutInfo(spec.widthMm, spec.heightMm, state.photoCopies);
   const paper = info.paper || { shortName: 'A4', name: 'A4' };
+  const maxSupportedPages = 2;
+  const totalAllowed = info.maxPerPage * maxSupportedPages;
 
-  // AUDITORÍA ESTRICTA: El sistema limita automáticamente al máximo físico real que cabe en 1 hoja
-  if (state.photoCopies > info.maxPerPage) {
-    state.photoCopies = info.maxPerPage;
+  if (state.photoCopies > totalAllowed) {
+    state.photoCopies = totalAllowed;
   }
 
   const badgeMax = $('badgeMaxPhotosFit');
   if (badgeMax) {
-    badgeMax.textContent = 'Caben máximo ' + info.maxPerPage + ' en 1 hoja ' + paper.shortName;
+    if (state.photoCopies > info.maxPerPage) {
+      const pagesNeeded = Math.ceil(state.photoCopies / info.maxPerPage);
+      badgeMax.textContent = state.photoCopies + ' fotos paginadas en ' + pagesNeeded + ' hojas ' + paper.shortName;
+    } else {
+      badgeMax.textContent = 'Caben ' + info.maxPerPage + ' en 1 hoja ' + paper.shortName;
+    }
   }
 
   const badgeFill = $('badgeFillA4Count');
@@ -548,28 +950,34 @@ function updatePhotoGridStats() {
 
   const inputCopies = $('inputPhotoCopies');
   if (inputCopies) {
-    inputCopies.max = info.maxPerPage;
+    inputCopies.max = totalAllowed;
     inputCopies.value = state.photoCopies;
   }
 
   const labelEff = $('labelPhotoEfficiency');
   if (labelEff) {
-    labelEff.textContent = 'Distribución 1:1: ' + info.cols + ' cols × ' + Math.ceil(state.photoCopies / info.cols) + ' filas • ' + state.photoCopies + '/' + info.maxPerPage + ' en ' + paper.shortName;
+    const pagesNeeded = Math.ceil(state.photoCopies / info.maxPerPage);
+    if (pagesNeeded > 1) {
+      labelEff.textContent = 'Distribución 1:1: ' + state.photoCopies + ' fotos en ' + pagesNeeded + ' hojas (' + info.cols + ' cols por hoja)';
+    } else {
+      labelEff.textContent = 'Distribución 1:1: ' + info.cols + ' cols × ' + Math.ceil(state.photoCopies / info.cols) + ' filas • ' + state.photoCopies + '/' + info.maxPerPage + ' en ' + paper.shortName;
+    }
   }
 }
 
 function setPhotoCopies(num) {
   const spec = getActiveSpec();
   const info = getPhotoLayoutInfo(spec.widthMm, spec.heightMm, 1);
-  const maxAllowed = info.maxPerPage;
+  const maxSupportedPages = 2;
+  const totalAllowed = info.maxPerPage * maxSupportedPages;
   const paper = info.paper || { shortName: 'A4' };
 
   const parsed = parseInt(num, 10) || 1;
-  if (parsed > maxAllowed) {
-    showToast('⚠️ No es posible: En papel ' + paper.shortName + ' caben máximo ' + maxAllowed + ' fotos (' + spec.shortName + ') a escala 1:1 real.', 'warning');
+  if (parsed > totalAllowed) {
+    showToast('⚠️ Cantidad máxima admitida: ' + totalAllowed + ' fotos en ' + maxSupportedPages + ' hojas ' + paper.shortName + '.', 'warning');
   }
 
-  const clamped = Math.max(1, Math.min(maxAllowed, parsed));
+  const clamped = Math.max(1, Math.min(totalAllowed, parsed));
   state.photoCopies = clamped;
 
   const inputCopies = $('inputPhotoCopies');
@@ -579,6 +987,11 @@ function setPhotoCopies(num) {
     const active = parseInt(btn.getAttribute('data-copies'), 10) === clamped;
     btn.classList.toggle('is-active', active);
   });
+
+  updatePhotoGridStats();
+  updateUI();
+  savePreferences();
+}
 
   updatePhotoGridStats();
   updateUI();
@@ -744,8 +1157,9 @@ function selectFormat(formatKey) {
   if (state.activeCategory === 'photos') {
     const spec = getActiveSpec();
     const info = getPhotoLayoutInfo(spec.widthMm, spec.heightMm, state.photoCopies);
-    if (state.photoCopies > info.maxPerPage) {
-      state.photoCopies = info.maxPerPage;
+    const totalAllowed = info.maxPerPage * 2;
+    if (state.photoCopies > totalAllowed) {
+      state.photoCopies = totalAllowed;
     }
     updatePhotoGridStats();
   }
@@ -1085,101 +1499,122 @@ function updateUI() {
 
   const activePage = (layout && layout.pages[state.activePreviewPageIndex || 0]) ? layout.pages[state.activePreviewPageIndex || 0] : null;
 
-  // 3. Renderizado según Categoría
-  if (state.activeCategory === 'photos') {
-    if (tag) tag.textContent = spec.widthMm + ' × ' + spec.heightMm + ' mm (' + state.photoCopies + ' fotos)';
-    if (previewSubtext) {
-      previewSubtext.textContent = (layout ? layout.summary : ('Planilla de ' + state.photoCopies + ' fotos')) + (totalPages > 1 ? (' • Viendo Hoja ' + (activePage ? activePage.pageNumber : 1) + ' de ' + totalPages) : '');
+  // 3. Renderizado de Alta Fidelidad Fiel al Layout Engine (1:1 Proporcional al Papel)
+  const faithfulLayer = $('faithfulSheetPlacements');
+  const isPhotos = (state.activeCategory === 'photos');
+
+  if (tag) {
+    if (isPhotos) {
+      tag.textContent = spec.widthMm + ' × ' + spec.heightMm + ' mm (' + state.photoCopies + ' fotos)';
+    } else {
+      tag.textContent = spec.widthMm + ' × ' + spec.heightMm + ' mm' + (state.activeCategory === 'custom' ? ' (Personalizada)' : '');
     }
+  }
+
+  if (previewSubtext) {
+    previewSubtext.textContent = (layout ? layout.summary : (spec.shortName + ' a escala 1:1 real')) + (totalPages > 1 ? (' • Viendo Hoja ' + (activePage ? activePage.pageNumber : 1) + ' de ' + totalPages) : '');
+  }
+
+  if (faithfulLayer && layout && activePage) {
+    faithfulLayer.innerHTML = '';
+    // Ocultar elementos fijos legados para evitar duplicación visual
     if (canvasFront) canvasFront.classList.add('hidden');
     if (canvasBack) canvasBack.classList.add('hidden');
     if (canvasPage3) canvasPage3.classList.add('hidden');
     if (canvasPage4) canvasPage4.classList.add('hidden');
-    if (photosGridContainer) photosGridContainer.classList.remove('hidden');
-
-    if (photosGridInner && activePage) {
-      photosGridInner.innerHTML = '';
-      const placements = activePage.placements || [];
-      const cols = (placements.length <= 2) ? Math.min(2, placements.length) : ((placements.length <= 6) ? 3 : 4);
-      photosGridInner.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
-
-      const ratio = spec.widthMm + ' / ' + spec.heightMm;
-      let minH = '44px';
-      if (placements.length > 20) minH = '24px';
-      else if (placements.length > 12) minH = '30px';
-      else if (placements.length > 6) minH = '36px';
-
-      placements.forEach(function(item) {
-        const currentImgSrc = (state.images[item.slot] && state.images[item.slot].processedDataUrl)
-          ? state.images[item.slot].processedDataUrl
-          : null;
-
-        const cell = document.createElement('div');
-        if (item.isOval) {
-          cell.className = 'border-2 border-dashed border-amber-400 dark:border-amber-600 bg-amber-50/40 dark:bg-amber-950/30 rounded-full flex items-center justify-center relative overflow-hidden transition-all shadow-xs';
-          cell.style.borderRadius = '50%';
-        } else {
-          cell.className = (state.includeCutMarks !== false)
-            ? 'border border-dashed border-indigo-400 dark:border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 rounded flex items-center justify-center relative overflow-hidden transition-all shadow-xs'
-            : 'border border-transparent bg-slate-50 dark:bg-slate-900 rounded flex items-center justify-center relative overflow-hidden transition-all';
-        }
-        cell.style.aspectRatio = ratio;
-        cell.style.minHeight = minH;
-
-        if (currentImgSrc) {
-          const im = document.createElement('img');
-          im.src = currentImgSrc;
-          im.className = item.isOval ? 'w-full h-full object-cover rounded-full' : 'w-full h-full object-cover rounded-[1px]';
-          if (item.isOval) im.style.borderRadius = '50%';
-          im.alt = 'Foto ' + item.slotNumber;
-          cell.appendChild(im);
-          if (placements.length <= 24) {
-            const b = document.createElement('span');
-            b.className = 'absolute bottom-0.5 right-0.5 text-[6.5px] font-mono text-indigo-700 bg-white/90 px-0.5 rounded shadow-xs font-bold leading-none';
-            b.textContent = item.tag ? (item.tag + '#' + item.slotNumber) : ('#' + item.slotNumber);
-            cell.appendChild(b);
-          }
-        } else {
-          const slotName = item.tag ? ('FOTO ' + item.tag + '#' + item.slotNumber) : ('#' + item.slotNumber);
-          cell.innerHTML = '<div class="text-center p-0.5"><span class="text-[8px] font-bold text-indigo-700 dark:text-indigo-300">' + slotName + '</span></div>';
-        }
-        photosGridInner.appendChild(cell);
-      });
-    }
-  } else {
-    // Modo Documentos y Medidas Personalizadas
     if (photosGridContainer) photosGridContainer.classList.add('hidden');
 
-    if (tag) tag.textContent = spec.widthMm + ' × ' + spec.heightMm + ' mm' + (state.activeCategory === 'custom' ? ' (Personalizada)' : '');
-    if (previewSubtext) {
-      previewSubtext.textContent = (layout ? layout.summary : (spec.shortName + ' a escala 1:1 real')) + (totalPages > 1 ? (' • Viendo Hoja ' + (activePage ? activePage.pageNumber : 1) + ' de ' + totalPages) : '');
+    ['previewHeaderFront', 'previewHeaderBack', 'previewHeaderPage3', 'previewHeaderPage4'].forEach(function(hId) {
+      const h = $(hId);
+      if (h) h.classList.add('hidden');
+    });
+
+    const isLabels = (state.includeDocLabels !== false);
+    const hasCustomTitle = Boolean((state.documentCustomTitle || '').trim());
+    const sheetHeader = $('previewSheetHeader');
+    if (sheetHeader) {
+      sheetHeader.classList.toggle('hidden', !isLabels && !hasCustomTitle);
+      const sheetTitle = $('previewSheetTitle');
+      if (sheetTitle) {
+        sheetTitle.textContent = activePage.sheetTitle || (isPhotos ? 'Planilla de Fotos Oficiales' : (spec.shortName + ' — Escala 1:1 Real'));
+      }
     }
 
-    const visibleSlots = (activePage && activePage.placements) ? activePage.placements.map(function(p){ return p.slot; }) : ['front'];
+    const rulerEl = $('footerCalibrationRuler');
+    if (rulerEl) {
+      rulerEl.classList.toggle('hidden', !activePage.hasRuler);
+    }
 
-    if (canvasFront) canvasFront.classList.toggle('hidden', !visibleSlots.includes('front'));
-    if (canvasBack) canvasBack.classList.toggle('hidden', !visibleSlots.includes('back'));
-    if (canvasPage3) canvasPage3.classList.toggle('hidden', !visibleSlots.includes('page3'));
-    if (canvasPage4) canvasPage4.classList.toggle('hidden', !visibleSlots.includes('page4'));
+    const placements = activePage.placements || [];
+    placements.forEach(function(p, pIdx) {
+      const pBox = document.createElement('div');
+      pBox.className = 'absolute transition-all flex flex-col items-center justify-center pointer-events-auto select-none overflow-hidden';
+      pBox.style.left = ((p.xMm / paper.widthMm) * 100) + '%';
+      pBox.style.top = ((p.yMm / paper.heightMm) * 100) + '%';
+      pBox.style.width = ((p.widthMm / paper.widthMm) * 100) + '%';
+      pBox.style.height = ((p.heightMm / paper.heightMm) * 100) + '%';
 
-    // Escala geométrica milimétrica rigurosa respecto al ancho del papel activo
-    const scalePercent = Math.max(38, Math.min(94, (spec.widthMm / paper.widthMm) * 100));
-    const ratio = spec.widthMm + ' / ' + spec.heightMm;
-
-    ['canvasDocFront', 'canvasDocBack', 'canvasDocPage3', 'canvasDocPage4'].forEach(function(cId) {
-      const cEl = $(cId);
-      if (cEl) {
-        cEl.style.width = scalePercent + '%';
-        cEl.style.aspectRatio = ratio;
-        cEl.style.minHeight = 'auto';
-
-        // Silueta limpia si las marcas de corte están desactivadas
-        if (state.includeCutMarks === false && state.includeDocLabels === false && state.includeRulerFooter === false) {
-          cEl.classList.remove('border-dashed', 'border-indigo-400', 'border-amber-400', 'border-purple-400', 'border-teal-400');
-          cEl.classList.add('border-slate-200/40');
-        }
+      if (p.isOval) {
+        pBox.style.borderRadius = '50%';
+      } else {
+        pBox.style.borderRadius = '2px';
       }
+
+      // Marcas de corte y contorno
+      if (state.includeCutMarks !== false) {
+        if (p.isOval) {
+          pBox.className += ' border-2 border-dashed border-amber-400 dark:border-amber-500 bg-amber-50/30';
+        } else {
+          pBox.className += ' border border-dashed border-indigo-400 dark:border-indigo-500 bg-indigo-50/20';
+        }
+      } else {
+        pBox.className += ' border border-transparent bg-slate-50/40';
+      }
+
+      const imgData = state.images[p.slot];
+      const imgSrc = (imgData && imgData.processedDataUrl) ? imgData.processedDataUrl : null;
+
+      if (imgSrc) {
+        const im = document.createElement('img');
+        im.src = imgSrc;
+        im.className = 'w-full h-full object-cover';
+        if (p.isOval) im.style.borderRadius = '50%';
+        im.alt = p.label || ('Elemento ' + (pIdx + 1));
+        pBox.appendChild(im);
+
+        if (imgData.showOaciGuide) {
+          const guide = document.createElement('div');
+          guide.className = 'pointer-events-none absolute inset-0 flex items-center justify-center p-0.5';
+          guide.innerHTML = '<svg class="w-full h-full max-w-[85%] max-h-[92%] text-indigo-600/90 drop-shadow-xs" viewBox="0 0 100 130" fill="none" stroke="currentColor"><ellipse cx="50" cy="56" rx="26" ry="38" stroke-width="2" stroke-dasharray="3,2" /><line x1="20" y1="52" x2="80" y2="52" stroke-width="1.5" stroke-dasharray="2,2" /><line x1="32" y1="94" x2="68" y2="94" stroke-width="2" /><line x1="32" y1="18" x2="68" y2="18" stroke-width="2" /></svg>';
+          pBox.appendChild(guide);
+        }
+
+        if (isLabels) {
+          const tag = document.createElement('span');
+          tag.className = 'absolute bottom-0.5 right-0.5 text-[6.5px] font-mono text-indigo-800 bg-white/90 px-1 rounded shadow-xs font-bold leading-none';
+          tag.textContent = p.tag ? (p.tag + '#' + p.slotNumber) : (p.label || (p.slot === 'front' ? 'FRENTE' : 'REVERSO'));
+          pBox.appendChild(tag);
+        }
+      } else {
+        pBox.className += ' bg-slate-50/90 dark:bg-slate-800/80';
+        const ph = document.createElement('div');
+        ph.className = 'text-center p-0.5 w-full';
+        const labelText = p.tag ? ('FOTO ' + p.tag + '#' + p.slotNumber) : (p.label || (p.slot === 'front' ? '1. FRENTE' : '2. REVERSO'));
+        ph.innerHTML = '<span class="text-[7.5px] font-bold text-indigo-700 dark:text-indigo-300 block truncate leading-tight">' + labelText + '</span><span class="text-[6.5px] font-mono text-slate-400 block">' + Math.round(p.widthMm) + '×' + Math.round(p.heightMm) + 'mm</span>';
+        pBox.appendChild(ph);
+      }
+
+      setupDragToPan(pBox, p.slot);
+      faithfulLayer.appendChild(pBox);
     });
+  } else {
+    // Fallback tradicional
+    if (isPhotos) {
+      if (photosGridContainer) photosGridContainer.classList.remove('hidden');
+    } else {
+      if (canvasFront) canvasFront.classList.remove('hidden');
+      if (canvasBack) canvasBack.classList.toggle('hidden', state.printMode === 'single');
+    }
   }
 
   updatePreviewAnnotations();
@@ -1369,8 +1804,8 @@ function loadPreferences() {
 /* ============================================================
    DRAG TO PAN INTERACTIVO
    ============================================================ */
-function setupDragToPan(canvasId, side) {
-  const el = $(canvasId);
+function setupDragToPan(canvasTarget, side) {
+  const el = (typeof canvasTarget === 'string') ? $(canvasTarget) : canvasTarget;
   if (!el) return;
   let startX = 0, startY = 0, isDragging = false;
   on(el, 'pointerdown', function(e) {
@@ -1442,13 +1877,21 @@ function bindEvents() {
     on($('btnToggleSavedScansSection'), 'click', toggleSavedScansSection);
   }
 
-  // Etapa 4: Herramientas avanzadas de edición (M-22 a M-26)
+  // Herramientas avanzadas de edición (M-22 a M-26)
   initWarpCanvasEvents();
+  initCropCanvasEvents();
 
   $$('.warp-btn').forEach(function(btn) {
     on(btn, 'click', function() {
       const side = btn.getAttribute('data-warp');
       if (side) openPerspectiveWarpModal(side);
+    });
+  });
+
+  $$('.crop-trigger-btn, [data-crop]').forEach(function(btn) {
+    on(btn, 'click', function() {
+      const side = btn.getAttribute('data-crop');
+      if (side) openCropModal(side);
     });
   });
 
@@ -1479,6 +1922,38 @@ function bindEvents() {
       if (side) handleSlotRedo(side);
     });
   });
+
+  // Copias independientes Persona A y Persona B
+  if ($('btnMinusCopiesA')) {
+    on($('btnMinusCopiesA'), 'click', function() {
+      setIndependentPhotoCopies('A', Math.max(1, (state.photoCopiesPersonA || 2) - 1));
+    });
+  }
+  if ($('btnPlusCopiesA')) {
+    on($('btnPlusCopiesA'), 'click', function() {
+      setIndependentPhotoCopies('A', (state.photoCopiesPersonA || 2) + 1);
+    });
+  }
+  if ($('inputCopiesPersonA')) {
+    on($('inputCopiesPersonA'), 'change', function(e) {
+      setIndependentPhotoCopies('A', e.target.value);
+    });
+  }
+  if ($('btnMinusCopiesB')) {
+    on($('btnMinusCopiesB'), 'click', function() {
+      setIndependentPhotoCopies('B', Math.max(1, (state.photoCopiesPersonB || 2) - 1));
+    });
+  }
+  if ($('btnPlusCopiesB')) {
+    on($('btnPlusCopiesB'), 'click', function() {
+      setIndependentPhotoCopies('B', (state.photoCopiesPersonB || 2) + 1);
+    });
+  }
+  if ($('inputCopiesPersonB')) {
+    on($('inputCopiesPersonB'), 'change', function(e) {
+      setIndependentPhotoCopies('B', e.target.value);
+    });
+  }
 
   // Theme toggle
   on($('btnThemeToggle'), 'click', function(){
@@ -2253,15 +2728,26 @@ function setupPwaSupport() {
   });
 }
 
+function syncAppVersion() {
+  const version = window.APP_VERSION || 'v3.3.0-Enterprise';
+  ['appVersionHeader', 'labelSwVersion', 'labelActiveVersionSettings'].forEach(function(id) {
+    const el = $(id);
+    if (el) el.textContent = version;
+  });
+  $$('.app-version-label, [data-app-version]').forEach(function(el) {
+    el.textContent = version;
+  });
+}
+
 function init() {
-  const vEl = $('appVersionHeader');
-  if (vEl && window.APP_VERSION) vEl.textContent = window.APP_VERSION;
+  syncAppVersion();
   bindEvents();
   setupPwaSupport();
   if (typeof checkAuthSession === 'function') checkAuthSession();
   loadPreferences();
   updatePhotoGridStats();
   updatePassportOptionsUI();
+  updateMixTwoPhotosUI();
   updateUI();
   if (typeof renderSavedScansDashboard === 'function') renderSavedScansDashboard();
 

@@ -110,17 +110,22 @@
       // Limitar a máximo 2 páginas para no saturar memoria
       const maxSupportedPages = 2;
       const totalAllowed = maxPerPage * maxSupportedPages;
-      const copies = Math.min(requestedCopies, totalAllowed);
+      const mixTwo = !!state.mixTwoPhotos;
+      let copiesA = Math.ceil(requestedCopies / 2);
+      let copiesB = Math.floor(requestedCopies / 2);
+      if (mixTwo && typeof state.photoCopiesPersonA === 'number' && typeof state.photoCopiesPersonB === 'number') {
+        copiesA = Math.max(0, parseInt(state.photoCopiesPersonA, 10) || 0);
+        copiesB = Math.max(0, parseInt(state.photoCopiesPersonB, 10) || 0);
+      }
+      const effectiveRequested = mixTwo ? (copiesA + copiesB) : requestedCopies;
+      const copies = Math.min(effectiveRequested, totalAllowed);
 
-      if (requestedCopies > totalAllowed) {
+      if (effectiveRequested > totalAllowed) {
         plan.warnings.push('La cantidad máxima soportada en ' + paper.shortName + ' es de ' + totalAllowed + ' fotos (' + maxSupportedPages + ' hojas).');
       }
 
       const totalPages = Math.max(1, Math.ceil(copies / maxPerPage));
       plan.totalPages = totalPages;
-
-      const halfCopies = Math.floor(copies / 2);
-      const mixTwo = !!state.mixTwoPhotos;
 
       let photoIndex = 0;
       for (let pIdx = 0; pIdx < totalPages; pIdx++) {
@@ -159,10 +164,10 @@
           const yMm = startY + rowIdx * (targetH + gap);
 
           const currentGlobalIdx = photoIndex;
-          const useBack = (mixTwo && currentGlobalIdx >= halfCopies);
+          const useBack = (mixTwo && currentGlobalIdx >= copiesA);
           const personSlot = useBack ? 'back' : 'front';
           const personTag = mixTwo ? (useBack ? 'B' : 'A') : '';
-          const photoNum = useBack ? (currentGlobalIdx - halfCopies + 1) : (currentGlobalIdx + 1);
+          const photoNum = useBack ? (currentGlobalIdx - copiesA + 1) : (currentGlobalIdx + 1);
 
           pageObj.placements.push({
             slot: personSlot,

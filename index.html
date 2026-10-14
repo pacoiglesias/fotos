@@ -447,20 +447,47 @@
         </div>
 
         <!-- Opción 2 personas / 2 fotos distintas en 1 misma hoja -->
-        <div class="p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/80 flex items-center justify-between gap-3">
-          <div class="min-w-0">
-            <p class="text-xs font-semibold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
-              <span>👥 Modo 2 Personas / 2 Fotos</span>
-              <span class="text-[9px] font-mono bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-200 px-1.5 py-0.5 rounded font-bold">50% y 50%</span>
-            </p>
-            <p class="text-[10px] text-indigo-800/80 dark:text-indigo-300">
-              Imprime 2 fotos distintas en la misma hoja (ej. 2 hermanos o 2 trámites) sin desperdiciar papel.
-            </p>
+        <div class="p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/80 space-y-2">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-xs font-semibold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+                <span>👥 Modo 2 Personas / 2 Fotos</span>
+                <span id="labelMixBadgeRatio" class="text-[9px] font-mono bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-200 px-1.5 py-0.5 rounded font-bold">Cantidades Libres</span>
+              </p>
+              <p class="text-[10px] text-indigo-800/80 dark:text-indigo-300">
+                Imprime 2 fotos distintas en la misma hoja (ej. 2 personas o 2 trámites) sin desperdiciar papel.
+              </p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" id="chkMixTwoPhotos" class="sr-only peer">
+              <div class="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
           </div>
-          <label class="relative inline-flex items-center cursor-pointer shrink-0">
-            <input type="checkbox" id="chkMixTwoPhotos" class="sr-only peer">
-            <div class="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-          </label>
+          <!-- Cantidades independientes Persona A y Persona B -->
+          <div id="containerMixIndependentCopies" class="hidden pt-2 border-t border-indigo-100 dark:border-indigo-900/60 grid grid-cols-2 gap-2 text-xs">
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 space-y-1">
+              <label for="inputCopiesPersonA" class="font-bold text-[10.5px] text-indigo-900 dark:text-indigo-200 flex items-center justify-between">
+                <span>Persona A (Frente):</span>
+                <span id="tagCopiesPersonA" class="text-indigo-600 dark:text-indigo-400 font-mono">2</span>
+              </label>
+              <div class="flex items-center gap-1">
+                <button type="button" id="btnMinusCopiesA" class="w-7 h-7 rounded border border-slate-300 dark:border-slate-600 font-bold text-xs bg-slate-50 dark:bg-slate-700 hover:bg-slate-100">-</button>
+                <input type="number" id="inputCopiesPersonA" min="1" max="48" value="2" class="w-full h-7 text-center font-bold font-mono text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
+                <button type="button" id="btnPlusCopiesA" class="w-7 h-7 rounded border border-slate-300 dark:border-slate-600 font-bold text-xs bg-slate-50 dark:bg-slate-700 hover:bg-slate-100">+</button>
+              </div>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800 space-y-1">
+              <label for="inputCopiesPersonB" class="font-bold text-[10.5px] text-amber-900 dark:text-amber-200 flex items-center justify-between">
+                <span>Persona B (Reverso):</span>
+                <span id="tagCopiesPersonB" class="text-amber-600 dark:text-amber-400 font-mono">2</span>
+              </label>
+              <div class="flex items-center gap-1">
+                <button type="button" id="btnMinusCopiesB" class="w-7 h-7 rounded border border-slate-300 dark:border-slate-600 font-bold text-xs bg-slate-50 dark:bg-slate-700 hover:bg-slate-100">-</button>
+                <input type="number" id="inputCopiesPersonB" min="1" max="48" value="2" class="w-full h-7 text-center font-bold font-mono text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
+                <button type="button" id="btnPlusCopiesB" class="w-7 h-7 rounded border border-slate-300 dark:border-slate-600 font-bold text-xs bg-slate-50 dark:bg-slate-700 hover:bg-slate-100">+</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -910,7 +937,7 @@
               <button type="button" id="btnFitModeFront" data-fit-mode="front:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa dentro del marco sin cortar nada (ideal para imágenes grandes)">📐 Encajar Todo</button>
               <button type="button" id="btnCoverModeFront" data-fit-mode="front:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Rellenar el marco completo 1:1">🔲 Llenar 1:1</button>
               <button type="button" data-autofit="front" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Ajuste automático 1:1">⚡ Auto 1:1</button>
-              <button type="button" id="btnToggleCropFront" data-crop="front" class="hidden px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 transition-colors">✂️ Recorte</button>
+              <button type="button" id="btnToggleCropFront" data-crop="front" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button>
             </div>
 
             <div class="flex items-center gap-1.5 flex-wrap">
@@ -1040,7 +1067,7 @@
               <button type="button" id="btnFitModeBack" data-fit-mode="back:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa dentro del marco sin cortar nada (ideal para imágenes grandes)">📐 Encajar Todo</button>
               <button type="button" id="btnCoverModeBack" data-fit-mode="back:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Rellenar el marco completo 1:1">🔲 Llenar 1:1</button>
               <button type="button" data-autofit="back" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Ajuste automático 1:1">⚡ Auto 1:1</button>
-              <button type="button" id="btnToggleCropBack" data-crop="back" class="hidden px-2 py-0.5 rounded text-[10px] font-bold border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/80 transition-colors">✂️ Recorte</button>
+              <button type="button" id="btnToggleCropBack" data-crop="back" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button>
             </div>
 
             <div class="flex items-center gap-1.5 flex-wrap">
@@ -1162,7 +1189,7 @@
               <button type="button" id="btnFitModePage3" data-fit-mode="page3:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa sin cortar nada">📐 Encajar Todo</button>
               <button type="button" id="btnCoverModePage3" data-fit-mode="page3:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Rellenar el marco completo 1:1">🔲 Llenar 1:1</button>
               <button type="button" data-autofit="page3" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">⚡ Auto 1:1</button>
-              <button type="button" id="btnToggleCropPage3" data-crop="page3" class="hidden px-2 py-0.5 rounded text-[10px] font-bold border border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 hover:bg-purple-100 transition-colors">✂️ Recorte</button>
+              <button type="button" id="btnToggleCropPage3" data-crop="page3" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-800 text-purple-800 dark:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button>
             </div>
 
             <div class="flex items-center gap-1.5 flex-wrap">
@@ -1274,7 +1301,7 @@
               <button type="button" id="btnFitModePage4" data-fit-mode="page4:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa sin cortar nada">📐 Encajar Todo</button>
               <button type="button" id="btnCoverModePage4" data-fit-mode="page4:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Rellenar el marco completo 1:1">🔲 Llenar 1:1</button>
               <button type="button" data-autofit="page4" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">⚡ Auto 1:1</button>
-              <button type="button" id="btnToggleCropPage4" data-crop="page4" class="hidden px-2 py-0.5 rounded text-[10px] font-bold border border-teal-300 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/70 text-teal-800 dark:text-teal-300 hover:bg-teal-100 transition-colors">✂️ Recorte</button>
+              <button type="button" id="btnToggleCropPage4" data-crop="page4" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-teal-300 dark:border-teal-700 bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-200 hover:bg-teal-50 dark:hover:bg-teal-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button>
             </div>
 
             <div class="flex items-center gap-1.5 flex-wrap">
@@ -1454,8 +1481,11 @@
 
         <div class="stage-canvas-area w-full overflow-auto">
           <div id="stageSheetWrapper" class="stage-sheet-wrapper" data-sheet-zoom="fit">
-            <div class="a4-sheet w-full max-w-[320px] lg:max-w-[580px] lg:w-[560px] rounded-sm p-4 lg:p-6 relative flex flex-col items-center bg-white shadow-xl transition-all">
-          <div id="previewSheetHeader" class="w-full flex justify-between items-center text-[8px] text-slate-400 border-b border-dashed border-slate-200 pb-1 mb-2 transition-all">
+            <div class="a4-sheet w-full max-w-[320px] lg:max-w-[580px] lg:w-[560px] rounded-sm p-4 lg:p-6 relative flex flex-col items-center bg-white shadow-xl transition-all overflow-hidden">
+          <!-- Capa interactiva de Placements de Alta Fidelidad 1:1 -->
+          <div id="faithfulSheetPlacements" class="absolute inset-0 pointer-events-none"></div>
+
+          <div id="previewSheetHeader" class="w-full flex justify-between items-center text-[8px] text-slate-400 border-b border-dashed border-slate-200 pb-1 mb-2 transition-all relative z-10">
             <span id="previewSheetTitle" class="font-semibold text-slate-700 dark:text-slate-800 truncate max-w-[70%]">RealScan — 1 SOLA PÁGINA</span>
             <span id="previewSheetScale" class="font-mono text-slate-500">Escala 100% Real</span>
           </div>
@@ -2379,6 +2409,117 @@
         </button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE CORRECCIÓN DE PERSPECTIVA (4 ESQUINAS) (M-22)
+       ============================================================ -->
+  <div id="perspectiveWarpModal" role="dialog" aria-modal="true" aria-labelledby="warpModalTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-3xl p-4 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-lg">📐</div>
+          <div>
+            <h3 id="warpModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Enderezar Perspectiva</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Arrastra los 4 círculos a las esquinas reales de tu credencial o documento</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="perspectiveWarpModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="flex-1 bg-slate-950/90 rounded-2xl p-2 flex items-center justify-center overflow-auto min-h-[300px]">
+        <canvas id="canvasWarpInteractive" class="max-w-full max-h-[60vh] rounded-lg shadow-lg"></canvas>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button type="button" id="btnWarpResetCorners" class="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors">
+            Extender a Bordes
+          </button>
+          <button type="button" id="btnWarpAutoCorners" class="px-2.5 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 font-semibold text-xs transition-colors">
+            Encuadre Tarjeta (Margen 8%)
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" data-close-modal="perspectiveWarpModal" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+            Cancelar
+          </button>
+          <button type="button" id="btnApplyWarp" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-md">
+            Aplicar Enderezado 1:1
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE RECORTE MANUAL PRECISO (CROP & COMPARE) (M-23)
+       ============================================================ -->
+  <div id="cropModal" role="dialog" aria-modal="true" aria-labelledby="cropModalTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-3xl p-4 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-lg">✂️</div>
+          <div>
+            <h3 id="cropModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Recorte Manual Preciso</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Selecciona el área que deseas conservar. Compara con el original en cualquier momento.</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="cropModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="flex-1 bg-slate-950/90 rounded-2xl p-2 flex items-center justify-center overflow-auto min-h-[300px]">
+        <canvas id="canvasCropInteractive" class="max-w-full max-h-[60vh] rounded-lg shadow-lg"></canvas>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button type="button" id="btnCropCompareOriginal" class="px-3 py-1.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 text-amber-800 dark:text-amber-200 font-bold text-xs transition-colors flex items-center gap-1">
+            <span>👁️</span> <span>Ver Original</span>
+          </button>
+          <button type="button" id="btnCropResetBox" class="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors">
+            Restablecer
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" data-close-modal="cropModal" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+            Cancelar
+          </button>
+          <button type="button" id="btnApplyCrop" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-md">
+            Aplicar Recorte
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE SELECTOR DE PÁGINAS PDF (M-24)
+       ============================================================ -->
+  <div id="pdfPageSelectorModal" role="dialog" aria-modal="true" aria-labelledby="pdfPageSelectorTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-4xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 flex items-center justify-center text-lg">📑</div>
+          <div>
+            <h3 id="pdfPageSelectorTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Seleccionar Páginas del PDF</h3>
+            <p id="pdfPageSelectorSubtitle" class="text-[11px] text-slate-500 dark:text-slate-400">Elige qué páginas del archivo PDF cargar en cada cara del documento</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="pdfPageSelectorModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div id="pdfThumbnailsGrid" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-1 min-h-[220px]">
+        <!-- Miniaturas generadas dinámicamente con pdf.js -->
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        <p class="text-xs text-slate-500 dark:text-slate-400">Haz clic en una página para asignarla o usa los botones de cara.</p>
+        <button type="button" data-close-modal="pdfPageSelectorModal" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+          Cerrar
+        </button>
+      </div>
     </div>
   </div>
 

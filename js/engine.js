@@ -116,7 +116,11 @@ async function handlePdfFile(file, targetSide) {
     const arrayBuffer = await file.arrayBuffer();
     const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
-    if (pdfDoc.numPages >= 2 && state.printMode !== 'single') {
+    if (pdfDoc.numPages >= 2) {
+      if (typeof openPdfPageSelector === 'function') {
+        await openPdfPageSelector(pdfDoc, targetSide);
+        return;
+      }
       const numToLoad = Math.min(pdfDoc.numPages, 4);
       if (typeof setDocumentPages === 'function' && numToLoad > 2) {
         setDocumentPages(numToLoad);
