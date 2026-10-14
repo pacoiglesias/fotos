@@ -4,6 +4,91 @@
    ============================================================ */
 
 /* ============================================================
+   INTENCIONES RÁPIDAS DE TRABAJO (M-18)
+   ============================================================ */
+function switchIntent(intent) {
+  $$('.intent-card').forEach(function(card) {
+    const active = card.getAttribute('data-intent') === intent;
+    card.classList.toggle('is-active', active);
+  });
+
+  if (intent === 'id') {
+    switchCategory('docs');
+    selectFormat('card');
+    setPrintMode('both');
+    showToast('🪪 Modo Identificaciones: INE / DNI calibrado a 85.6 × 54.0 mm', 'info');
+  } else if (intent === 'photos') {
+    switchCategory('photos');
+    selectFormat('photo_infantil');
+    showToast('📷 Modo Fotos Oficiales: Planilla calibrada a escala 1:1', 'info');
+  } else if (intent === 'multi') {
+    switchCategory('docs');
+    selectFormat('passport_open');
+    setPrintMode('both_separate');
+    showToast('📑 Modo Multipágina: Hojas separadas navegables para pasaportes y trámites', 'info');
+  } else if (intent === 'custom') {
+    switchCategory('custom');
+    showToast('📐 Modo Medidas Libres: Configura dimensiones en cm o mm', 'info');
+  }
+}
+
+/* ============================================================
+   ZOOM DE VISUALIZACIÓN DEL LIENZO DE LA HOJA (M-19)
+   ============================================================ */
+function setStageSheetZoom(zoomLevel) {
+  const wrapper = $('stageSheetWrapper');
+  if (!wrapper) return;
+  wrapper.setAttribute('data-sheet-zoom', zoomLevel);
+  $$('.sheet-zoom-btn').forEach(function(btn) {
+    btn.classList.toggle('is-active', btn.getAttribute('data-sheet-zoom') === zoomLevel);
+  });
+}
+
+/* ============================================================
+   NAVEGACIÓN MÓVIL POR ETAPAS FLUIDAS (M-20)
+   ============================================================ */
+function setMobileStep(step) {
+  const stepNum = parseInt(step, 10) || 1;
+  $$('.mobile-step-tab').forEach(function(tab) {
+    const s = parseInt(tab.getAttribute('data-mob-step'), 10);
+    const active = (s === stepNum);
+    tab.classList.toggle('is-active', active);
+    tab.classList.toggle('text-slate-500', !active);
+    tab.classList.toggle('dark:text-slate-400', !active);
+  });
+
+  $$('.mob-pane').forEach(function(pane) {
+    const isStep1 = pane.classList.contains('mob-pane-1');
+    const isStep2 = pane.classList.contains('mob-pane-2');
+    const isStep3 = pane.classList.contains('mob-pane-3');
+    
+    let active = false;
+    if (stepNum === 1 && isStep1) active = true;
+    else if (stepNum === 2 && isStep2) active = true;
+    else if (stepNum === 3 && isStep3) active = true;
+
+    pane.classList.toggle('mob-pane-active', active);
+  });
+
+  if (window.innerWidth < 1024) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+/* ============================================================
+   PANEL COLAPSABLE DE HISTORIAL LOCAL
+   ============================================================ */
+function toggleSavedScansSection() {
+  const grid = $('mainSavedScansGrid');
+  const icon = $('iconToggleSavedScans');
+  const label = $('labelToggleSavedScans');
+  if (!grid) return;
+  const isHidden = grid.classList.toggle('hidden');
+  if (icon) icon.textContent = isHidden ? '▶' : '▼';
+  if (label) label.textContent = isHidden ? 'Mostrar' : 'Ocultar';
+}
+
+/* ============================================================
    CATEGORÍAS / MODOS / FORMATOS
    ============================================================ */
 function switchCategory(cat) {
@@ -1036,6 +1121,41 @@ function setupDragToPan(canvasId, side) {
    BINDING DE EVENTOS
    ============================================================ */
 function bindEvents() {
+  // Quick Intent Selector (M-18)
+  $$('.intent-card').forEach(function(card) {
+    on(card, 'click', function() {
+      const intent = card.getAttribute('data-intent');
+      if (intent) switchIntent(intent);
+    });
+  });
+
+  // Stage Zoom Buttons (M-19)
+  $$('.sheet-zoom-btn').forEach(function(btn) {
+    on(btn, 'click', function() {
+      const zoom = btn.getAttribute('data-sheet-zoom');
+      if (zoom) setStageSheetZoom(zoom);
+    });
+  });
+
+  // Mobile Stepper Navigation (M-20)
+  $$('.mobile-step-tab').forEach(function(tab) {
+    on(tab, 'click', function() {
+      const step = tab.getAttribute('data-mob-step');
+      if (step) setMobileStep(step);
+    });
+  });
+  $$('.btn-mob-nav').forEach(function(btn) {
+    on(btn, 'click', function() {
+      const step = btn.getAttribute('data-mob-nav-step');
+      if (step) setMobileStep(step);
+    });
+  });
+
+  // Toggle Saved Scans Section
+  if ($('btnToggleSavedScansSection')) {
+    on($('btnToggleSavedScansSection'), 'click', toggleSavedScansSection);
+  }
+
   // Theme toggle
   on($('btnThemeToggle'), 'click', function(){
     toggleTheme();

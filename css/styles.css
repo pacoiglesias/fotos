@@ -72,6 +72,11 @@ body {
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 25px rgba(99, 102, 241, 0.3);
   border-radius: 9999px;
   padding: 0.4rem 0.75rem;
+  max-width: calc(100vw - 1rem);
+  width: max-content;
+  box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -290,3 +295,129 @@ body.modal-open { overflow: hidden; }
   color: #e0e7ff !important;
   box-shadow: 0 0 0 1.5px #818cf8, 0 4px 10px rgba(99, 102, 241, 0.25);
 }
+
+/* ============================================================
+   WORKSTATION LAYOUT & ERGONOMÍA (ETAPA 3)
+   ============================================================ */
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Contenedor de escenario amplio con fondo de estudio */
+.stage-canvas-area {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  padding: 1.5rem 1rem;
+  border-radius: 1.25rem;
+  background: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, rgba(241, 245, 249, 0.9) 100%);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  min-height: 520px;
+  width: 100%;
+  position: relative;
+}
+
+.dark .stage-canvas-area {
+  background: radial-gradient(circle at center, rgba(99, 102, 241, 0.08) 0%, rgba(2, 6, 23, 0.75) 100%);
+  border-color: rgba(51, 65, 85, 0.6);
+}
+
+/* Tamaño de la hoja en escritorio: amplia y nítida (>540px) */
+@media (min-width: 1024px) {
+  .a4-sheet {
+    width: 560px !important;
+    max-width: 580px !important;
+    min-width: 540px !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .a4-sheet {
+    width: 100% !important;
+    max-width: 320px !important;
+  }
+}
+
+/* Escala dinámica del lienzo de previsualización (Stage Zoom) */
+.stage-sheet-wrapper {
+  transform-origin: top center;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.stage-sheet-wrapper[data-sheet-zoom="fit"] {
+  transform: scale(1);
+}
+.stage-sheet-wrapper[data-sheet-zoom="75"] {
+  transform: scale(0.75);
+}
+.stage-sheet-wrapper[data-sheet-zoom="100"] {
+  transform: scale(1);
+}
+.stage-sheet-wrapper[data-sheet-zoom="125"] {
+  transform: scale(1.25);
+}
+
+/* Botones de Intención Rápida */
+.intent-card {
+  border: 2px solid rgb(226, 232, 240);
+  background: #ffffff;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+.dark .intent-card {
+  border-color: rgb(51, 65, 85);
+  background: rgba(30, 41, 59, 0.7);
+}
+.intent-card:hover {
+  border-color: rgb(199, 210, 254);
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.12);
+}
+.dark .intent-card:hover {
+  border-color: rgb(99, 102, 241, 0.6);
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
+}
+.intent-card.is-active {
+  border-color: rgb(79, 70, 229);
+  background: linear-gradient(135deg, rgba(238, 242, 255, 0.95) 0%, rgba(224, 231, 255, 0.7) 100%);
+  box-shadow: 0 4px 14px -2px rgba(79, 70, 229, 0.25);
+}
+.dark .intent-card.is-active {
+  border-color: rgb(129, 140, 248);
+  background: linear-gradient(135deg, rgba(49, 46, 129, 0.7) 0%, rgba(30, 27, 75, 0.8) 100%);
+  box-shadow: 0 4px 18px -2px rgba(99, 102, 241, 0.35);
+}
+
+/* Stepper Móvil */
+.mobile-step-tab {
+  transition: all 0.2s ease;
+  border-bottom: 2.5px solid transparent;
+}
+.mobile-step-tab.is-active {
+  border-bottom-color: #4f46e5;
+  color: #4f46e5;
+  font-weight: 700;
+}
+.dark .mobile-step-tab.is-active {
+  border-bottom-color: #818cf8;
+  color: #818cf8;
+}
+
+@media (max-width: 1023px) {
+  .mob-pane:not(.mob-pane-active) {
+    display: none !important;
+  }
+}
+

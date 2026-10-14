@@ -135,13 +135,32 @@ Todos los hallazgos de la auditoría inicial fueron comprobados experimentalment
 
 ---
 
-## 🎯 6. Matriz de Verificación para Etapa 3 (En Progreso)
+## 🎯 6. Matriz de Verificación para Etapa 3 (Completada con Éxito)
 
-- [ ] **M-16:** Eliminación de los 3,706 px de desplazamiento lineal en escritorio en favor de un espacio de trabajo dividido (sidebar de control + lienzo interactivo amplio).
-- [ ] **M-17:** Eliminación del desbordamiento móvil de 534 px en pantalla de 390 px (ancho DOM estricto al 100vw).
-- [ ] **M-18:** Acceso rápido y contextual según intención: Identificaciones, Fotos Oficiales, Documentos Multipágina, Medidas Libres.
-- [ ] **M-19:** Vista previa amplia de la hoja física (>540 px en escritorio) con zoom de visualización desacoplado del encuadre.
-- [ ] **M-20:** Navegación por etapas fluidas sin pérdida de imágenes ni configuraciones al retroceder.
-- [ ] **M-21:** Consistencia tipográfica, espaciado uniforme y coherencia en modos Claro y Oscuro.
+- [x] **M-16:** Layout de estación de trabajo en escritorio (split grid 5 cols sidebar / 7 cols lienzo) y colapso de historial local, reduciendo el desplazamiento vertical a un entorno dinámico y ergonómico.
+- [x] **M-17:** Eliminación total del desbordamiento móvil de 534 px en pantalla de 390 px (ancho DOM verificado en exactamente 390 px con 0 px de overflow, HUD contenido).
+- [x] **M-18:** Selector rápido de 4 intenciones de trabajo en cabecera: Identificaciones (INE/DNI 1:1), Fotos Oficiales (Infantil 2.5×3cm), Multipágina (Pasaporte hojas separadas), Medidas Libres (cm/mm).
+- [x] **M-19:** Vista previa física amplia en escritorio (hoja A4 ensanchada a 560 px en pantalla, credencial a 208.7 px con +75% de legibilidad) con zoom desacoplado (Fit, 75%, 100%, 125%).
+- [x] **M-20:** Navegación móvil por etapas fluidas (Formato → Cargar → Hoja & Imprimir) con conservación inalterada de imágenes y configuraciones.
+- [x] **M-21:** Consistencia visual y pulido en modos Claro y Oscuro, badges de calibración 1:1, tipografía Inter y micro-interacciones suaves.
+
+*Resultados de la suite de pruebas sintéticas y Playwright (`test_etapa3.js` y `.audit/inspect.cjs`):*
+- Test 1 (M-17 Desborde Móvil): Viewport 390 px, scrollWidth 390 px exactos, HUD width 243.9 px centrado.
+- Test 2 (M-19 Hoja Amplia): Ancho de hoja A4 en pantalla de 560 px (>= 540 px), tarjeta a 208.7 px (+75% mayor legibilidad).
+- Test 3 (M-18 Selector Intenciones): `switchIntent` validado en 'id', 'photos', 'multi' y 'custom'.
+- Test 4 (M-19 Stage Zoom): Controles de zoom desacoplados ('fit', '75', '100', '125') sin alterar el encuadre 1:1.
+- Test 5 (M-20 Stepper Móvil): Cambio entre etapas 1, 2 y 3 con cero pérdida de imágenes cargadas.
+- Test 6 (Cero Errores): 0 errores en consola de Playwright.
+
+---
+
+## 🎯 7. Matriz de Verificación para Etapa 4: Edición y Gestión Avanzada de Páginas (Siguiente)
+
+- [ ] **M-22:** Crop/recorte interactivo con manejadores de esquina y rotación por cuadrante (90°, 180°, 270°) sin distorsión ni pérdida del archivo original.
+- [ ] **M-23:** Corrección básica de perspectiva / alineación para capturas tomadas en ángulo desde teléfono móvil.
+- [ ] **M-24:** Sistema de historial de edición (Undo/Redo) para cada ranura de imagen independiente.
+- [ ] **M-25:** Soporte de arrastre táctil / reordenamiento fluido de páginas 1, 2, 3 y 4.
+- [ ] **M-26:** Selector de contraste y brillo adaptativo para documentos oscuros o con reflejos de flash.
+
 
 

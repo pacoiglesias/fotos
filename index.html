@@ -69,24 +69,24 @@
 
   <!-- Header -->
   <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
-    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-      <div class="flex items-center space-x-3 shrink-0">
-        <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 dark:shadow-none">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <div class="max-w-[1560px] mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 overflow-hidden">
+      <div class="flex items-center space-x-2.5 shrink min-w-0">
+        <div class="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 dark:shadow-none">
+          <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
         </div>
-        <div>
-          <div class="flex items-center gap-1.5">
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
             <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.2.0-Enterprise</span>
           </div>
-          <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap flex items-center gap-1 mt-0.5">
-            <span>Desarrollado por</span>
-            <strong class="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/70 px-1.5 py-0.5 rounded border border-indigo-200/60 dark:border-indigo-800/60">Paco Iglesias</strong>
+          <p class="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1 mt-0.5">
+            <span class="hidden sm:inline">Desarrollado por</span>
+            <strong class="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/70 px-1 py-0.2 rounded border border-indigo-200/60 dark:border-indigo-800/60">Paco Iglesias</strong>
             <span class="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
-            <span class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/60 hidden sm:inline">Escala 1:1</span>
+            <span class="text-[9.5px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1 py-0.2 rounded border border-emerald-200/60 dark:border-emerald-800/60 hidden sm:inline">Escala 1:1</span>
           </p>
         </div>
       </div>
@@ -95,7 +95,7 @@
         <button
           type="button"
           id="btnInstallPwa"
-          class="hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-[11px] font-semibold text-emerald-800 dark:text-emerald-200 transition-colors shadow-xs"
+          class="hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-[11px] font-semibold text-emerald-800 dark:text-emerald-200 transition-colors shadow-xs"
           title="Instalar RealScan en tu dispositivo para usarlo sin conexión"
         >
           <span class="text-xs">📲</span>
@@ -142,7 +142,7 @@
         <button
           type="button"
           id="btnLogout"
-          class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-[11px] font-semibold text-red-700 dark:text-red-300 transition-colors"
+          class="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-[11px] font-semibold text-red-700 dark:text-red-300 transition-colors"
           title="Cerrar Sesión"
         >
           <span class="text-xs">🔒</span>
@@ -152,7 +152,7 @@
         <button
           type="button"
           id="btnIphoneHelp"
-          class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 transition-colors"
+          class="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 transition-colors"
           title="Cómo abrir y guardar en tu iPhone"
         >
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
@@ -162,7 +162,7 @@
         <button
           type="button"
           id="btnScannerHelp"
-          class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[11px] font-medium text-slate-700 dark:text-slate-300 transition-colors"
+          class="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[11px] font-medium text-slate-700 dark:text-slate-300 transition-colors"
           title="Cómo conectar tu escáner físico"
         >
           <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -174,15 +174,91 @@
     </div>
   </header>
 
-  <main class="max-w-3xl mx-auto px-4 pt-4 space-y-4">
+  <main class="w-full max-w-full overflow-x-hidden px-3 sm:px-4 lg:px-6 pt-3 pb-8">
+    <div class="max-w-[1560px] mx-auto space-y-4">
 
-    <!-- Paso 1 -->
-    <section class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 transition-colors">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Paso 1</span>
-        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium" id="step1Subtitle">Configuración de hoja</span>
-      </div>
-      <h2 class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white" id="step1Title">¿Cómo deseas imprimir en la hoja A4?</h2>
+      <!-- ============================================================
+           BARRA DE ACCESO RÁPIDO POR INTENCIÓN (M-18)
+           ============================================================ -->
+      <section class="bg-white dark:bg-slate-900 rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+        <div class="flex items-center justify-between mb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Acceso Rápido</span>
+            <span class="text-slate-300 dark:text-slate-700">•</span>
+            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">¿Qué deseas imprimir hoy?</span>
+          </div>
+          <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono hidden sm:inline">Configuración en 1 clic</span>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs" role="tablist" aria-label="Intenciones de trabajo">
+          <button type="button" id="btnIntentId" data-intent="id" class="intent-card is-active p-3 rounded-xl flex items-start gap-2.5 text-left">
+            <span class="text-xl shrink-0 p-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400">🪪</span>
+            <div class="min-w-0">
+              <p class="font-bold text-slate-900 dark:text-white truncate">Identificaciones</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">INE, DNI, Licencias (8.6 × 5.4 cm)</p>
+              <span class="inline-block mt-1 text-[9px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100/70 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded font-mono">2 Caras 1 Hoja</span>
+            </div>
+          </button>
+
+          <button type="button" id="btnIntentPhotos" data-intent="photos" class="intent-card p-3 rounded-xl flex items-start gap-2.5 text-left">
+            <span class="text-xl shrink-0 p-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400">📷</span>
+            <div class="min-w-0">
+              <p class="font-bold text-slate-900 dark:text-white truncate">Fotos Oficiales</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">Infantil, Carnet, Visa, Título</p>
+              <span class="inline-block mt-1 text-[9px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded font-mono">Planilla 1:1</span>
+            </div>
+          </button>
+
+          <button type="button" id="btnIntentMulti" data-intent="multi" class="intent-card p-3 rounded-xl flex items-start gap-2.5 text-left">
+            <span class="text-xl shrink-0 p-1 rounded-lg bg-purple-50 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400">📑</span>
+            <div class="min-w-0">
+              <p class="font-bold text-slate-900 dark:text-white truncate">Multipágina / Visas</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">Pasaporte abierto o 3-4 páginas</p>
+              <span class="inline-block mt-1 text-[9px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100/70 dark:bg-purple-950/60 px-1.5 py-0.2 rounded font-mono">Dúplex / Libretas</span>
+            </div>
+          </button>
+
+          <button type="button" id="btnIntentCustom" data-intent="custom" class="intent-card p-3 rounded-xl flex items-start gap-2.5 text-left">
+            <span class="text-xl shrink-0 p-1 rounded-lg bg-amber-50 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400">📐</span>
+            <div class="min-w-0">
+              <p class="font-bold text-slate-900 dark:text-white truncate">Medidas Libres</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">Documentos en cm o mm</p>
+              <span class="inline-block mt-1 text-[9px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/60 px-1.5 py-0.2 rounded font-mono">Personalizado</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           STEPPER MÓVIL (M-20) Solo visible en móviles / tablets (< lg)
+           ============================================================ -->
+      <nav id="mobileStepperNav" class="lg:hidden flex items-center justify-between bg-white dark:bg-slate-900 rounded-xl p-1.5 border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-semibold">
+        <button type="button" id="tabMobStep1" data-mob-step="1" class="mobile-step-tab is-active flex-1 py-2 text-center flex items-center justify-center gap-1">
+          <span>1.</span><span>Formato</span>
+        </button>
+        <button type="button" id="tabMobStep2" data-mob-step="2" class="mobile-step-tab flex-1 py-2 text-center flex items-center justify-center gap-1 text-slate-500 dark:text-slate-400">
+          <span>2.</span><span>Cargar</span>
+        </button>
+        <button type="button" id="tabMobStep3" data-mob-step="3" class="mobile-step-tab flex-1 py-2 text-center flex items-center justify-center gap-1 text-slate-500 dark:text-slate-400">
+          <span>3.</span><span>Hoja & Imprimir</span>
+        </button>
+      </nav>
+
+      <!-- ============================================================
+           WORKSTATION SPLIT-GRID: 2 COLUMNAS EN ESCRITORIO (M-16 & M-19)
+           ============================================================ -->
+      <div class="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start space-y-4 lg:space-y-0">
+        
+        <!-- COLUMNA IZQUIERDA: CONTROLES, FORMATO Y RANURAS -->
+        <div id="colControlPanel" class="lg:col-span-5 xl:col-span-5 space-y-4">
+
+          <!-- Paso 1 -->
+          <section class="mob-pane mob-pane-1 mob-pane-active bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 transition-colors">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Paso 1</span>
+              <span class="text-xs text-slate-400 dark:text-slate-500 font-medium" id="step1Subtitle">Configuración de hoja</span>
+            </div>
+            <h2 class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white" id="step1Title">¿Cómo deseas imprimir en la hoja A4?</h2>
 
       <div id="step1DocsMode" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
         <button type="button" id="btnModeBoth" data-mode="both" class="mode-btn is-active relative text-left p-3 rounded-xl flex flex-col justify-between transition-all">
@@ -348,7 +424,7 @@
     </section>
 
     <!-- Paso 2 -->
-    <section class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3.5 transition-colors">
+    <section class="mob-pane mob-pane-1 mob-pane-active bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3.5 transition-colors">
       <div class="flex items-center justify-between">
         <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Paso 2</span>
         <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Tamaño físico calibrado</span>
@@ -708,10 +784,18 @@
           </div>
         </div>
       </div>
+
+      <!-- Botón de Navegación Móvil Paso 1 -> 2 -->
+      <div class="lg:hidden pt-2 flex justify-end">
+        <button type="button" class="btn-mob-nav px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1 active:scale-95" data-target-step="2">
+          <span>Continuar a Cargar Fotos</span>
+          <span>▶</span>
+        </button>
+      </div>
     </section>
 
     <!-- Paso 3 -->
-    <section class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
+    <section class="mob-pane mob-pane-2 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
       <div class="flex items-center justify-between">
         <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Paso 3</span>
         <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Cámara, Archivo o Escáner</span>
@@ -1156,10 +1240,35 @@
           <span>Guardar Escaneo</span>
         </button>
       </div>
+
+      <!-- Botones de Navegación Móvil Paso 2 -> 1 y 2 -> 3 -->
+      <div class="lg:hidden pt-3 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800">
+        <button type="button" class="btn-mob-nav px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all active:scale-95" data-target-step="1">
+          <span>◀ Volver a Formato</span>
+        </button>
+        <button type="button" class="btn-mob-nav px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1 active:scale-95" data-target-step="3">
+          <span>Ver Hoja e Imprimir</span>
+          <span>▶</span>
+        </button>
+      </div>
     </section>
+  </div>
+  <!-- Fin Columna Izquierda: Controles -->
+
+  <!-- ========================================================
+       COLUMNA DERECHA: LIENZO CENTRAL AMPLIO Y ACCIONES (7 Cols)
+       ======================================================== -->
+  <div id="colStageWorkspace" class="lg:col-span-7 xl:col-span-7 space-y-4 lg:sticky lg:top-16 mob-pane mob-pane-3">
 
     <!-- Paso 4 -->
     <section class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
+      <!-- Navegación Móvil Paso 3 -> 2 -->
+      <div class="lg:hidden pb-1">
+        <button type="button" class="btn-mob-nav px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all active:scale-95" data-target-step="2">
+          <span>◀ Volver a Cargar / Editar Ranuras</span>
+        </button>
+      </div>
+
       <div class="flex items-center justify-between">
         <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Paso 4</span>
         <span id="previewSheetBadgeTag" class="text-xs text-slate-400 dark:text-slate-500 font-medium">Hoja A4 final</span>
@@ -1193,12 +1302,22 @@
         </div>
       </div>
 
-      <div class="flex items-center justify-between gap-2">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
         <div class="min-w-0">
           <h2 id="previewMainTitle" class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">Vista previa en 1 hoja</h2>
           <p class="text-xs text-slate-500 dark:text-slate-400" id="previewSubtext">Anverso y Reverso alineados a escala 1:1 real</p>
         </div>
-        <span id="previewDimensionsTag" class="text-[11px] font-mono font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-700 whitespace-nowrap">85.6 × 54.0 mm</span>
+        <div class="flex items-center gap-2">
+          <!-- Controles de Zoom de Visualización de la Hoja (M-19) -->
+          <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px]" role="group" aria-label="Zoom de vista de hoja">
+            <span class="text-slate-400 font-bold px-1 hidden sm:inline">Zoom:</span>
+            <button type="button" data-sheet-zoom="fit" class="sheet-zoom-btn is-active px-2 py-0.5 rounded font-bold transition-all">Ajustar</button>
+            <button type="button" data-sheet-zoom="75" class="sheet-zoom-btn px-1.5 py-0.5 rounded font-medium transition-all">75%</button>
+            <button type="button" data-sheet-zoom="100" class="sheet-zoom-btn px-1.5 py-0.5 rounded font-medium transition-all">100%</button>
+            <button type="button" data-sheet-zoom="125" class="sheet-zoom-btn px-1.5 py-0.5 rounded font-medium transition-all">125%</button>
+          </div>
+          <span id="previewDimensionsTag" class="text-[11px] font-mono font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-700 whitespace-nowrap">85.6 × 54.0 mm</span>
+        </div>
       </div>
 
       <div class="bg-slate-100/70 dark:bg-slate-950/80 p-3 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col items-center justify-center transition-colors">
@@ -1215,7 +1334,9 @@
           </button>
         </div>
 
-        <div class="a4-sheet w-full max-w-[280px] sm:max-w-[320px] rounded-sm p-4 relative flex flex-col items-center bg-white shadow-xl">
+        <div class="stage-canvas-area w-full overflow-auto">
+          <div id="stageSheetWrapper" class="stage-sheet-wrapper" data-sheet-zoom="fit">
+            <div class="a4-sheet w-full max-w-[320px] lg:max-w-[580px] lg:w-[560px] rounded-sm p-4 lg:p-6 relative flex flex-col items-center bg-white shadow-xl transition-all">
           <div id="previewSheetHeader" class="w-full flex justify-between items-center text-[8px] text-slate-400 border-b border-dashed border-slate-200 pb-1 mb-2 transition-all">
             <span id="previewSheetTitle" class="font-semibold text-slate-700 dark:text-slate-800 truncate max-w-[70%]">RealScan — 1 SOLA PÁGINA</span>
             <span id="previewSheetScale" class="font-mono text-slate-500">Escala 100% Real</span>
@@ -1336,6 +1457,8 @@
             <p class="text-[8px] text-slate-400 mt-0.5 font-medium">Regla de calibración de 5 cm incluida en el PDF final</p>
           </div>
         </div>
+        </div>
+      </div>
       </div>
 
       <!-- CHECKLIST BOX: ACABADO Y LIMPIEZA DE HOJA (1-CLIC PRESETS + CONTROL EXACTO) -->
@@ -1518,12 +1641,16 @@
 
       <div id="statusToast" role="status" aria-live="polite" class="hidden text-xs py-2 px-3 rounded-lg text-center font-medium transition-all"></div>
     </section>
+  </div>
+  <!-- Fin Columna Derecha: Stage -->
+</div>
+<!-- Fin Workstation Split-Grid -->
 
     <!-- SECCIÓN: MIS ESCANEOS GUARDADOS (HISTORIAL LOCAL PERMANENTE Y VISIBLE) -->
-    <section id="sectionSavedScansDashboard" class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+    <section id="sectionSavedScansDashboard" class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3.5 transition-colors">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-slate-200 dark:border-slate-800">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
             📁
           </div>
           <div>
@@ -1533,26 +1660,30 @@
                 0 guardados
               </span>
             </div>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
               Tus documentos se guardan aquí de forma 100% privada y local en tu navegador con auto-expiración.
             </p>
           </div>
         </div>
 
         <div class="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
-          <button type="button" id="btnDashboardQuickSave" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-all flex items-center gap-1.5 shadow-xs active:scale-95" title="Guardar el escaneo actual en este panel">
+          <button type="button" id="btnDashboardQuickSave" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-all flex items-center gap-1.5 shadow-xs active:scale-95" title="Guardar el escaneo actual en este panel">
             <span>💾</span>
             <span>Guardar Escaneo Actual</span>
           </button>
-          <button type="button" id="btnDashboardOpenModal" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-300 font-medium text-xs transition-all flex items-center gap-1.5" title="Opciones avanzadas de retención, respaldo JSON y ZIP">
+          <button type="button" id="btnDashboardOpenModal" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-300 font-medium text-xs transition-all flex items-center gap-1.5" title="Opciones avanzadas de retención, respaldo JSON y ZIP">
             <span>⚙️</span>
-            <span>Ajustes y Respaldo</span>
+            <span>Ajustes</span>
+          </button>
+          <button type="button" id="btnToggleSavedScansSection" class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-300 font-medium text-xs transition-all flex items-center gap-1" title="Contraer o expandir vista rápida">
+            <span id="iconToggleSavedScans">▶</span>
+            <span id="labelToggleSavedScans">Mostrar</span>
           </button>
         </div>
       </div>
 
-      <!-- Grid de Tarjetas Guardadas -->
-      <div id="mainSavedScansGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+      <!-- Grid de Tarjetas Guardadas (Colapsable) -->
+      <div id="mainSavedScansGrid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
         <!-- Renderizado dinámico vía js/storage.js -->
       </div>
     </section>
@@ -1566,6 +1697,7 @@
       </div>
       <p class="text-[11px] text-slate-400 dark:text-slate-500">100% procesamiento privado en tu dispositivo local • Escala 1:1 calibrada • Impresión segura</p>
     </footer>
+    </div>
   </main>
 
   <!-- Modal cámara -->
