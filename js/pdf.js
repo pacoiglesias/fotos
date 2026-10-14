@@ -131,21 +131,32 @@ function generatePdfDoc() {
       const photoX = startX + c * (targetW + gapX);
       const photoY = startY + r * (targetH + gapY);
 
-      doc.setDrawColor(180,180,180);
-      doc.setLineWidth(0.22);
-      doc.setLineDashPattern([1.5, 1.5], 0);
-      doc.rect(photoX - 0.2, photoY - 0.2, targetW + 0.4, targetH + 0.4);
-
       const useBack = (state.mixTwoPhotos && state.images.back.processedDataUrl && i >= Math.floor(copies / 2));
       const curImg = useBack ? state.images.back.processedDataUrl : state.images.front.processedDataUrl;
       doc.addImage(curImg, 'JPEG', photoX, photoY, targetW, targetH, undefined, 'FAST');
+
       if (spec.isOval) {
-        doc.setDrawColor(110, 110, 110);
+        // Línea de corte elíptica calibrada oficial (SEP / Título)
+        doc.setDrawColor(120, 120, 120);
         doc.setLineWidth(0.28);
         doc.setLineDashPattern([2, 1.5], 0);
-        doc.ellipse(photoX + targetW / 2, photoY + targetH / 2, targetW / 2 - 0.2, targetH / 2 - 0.2, 'S');
+        doc.ellipse(photoX + targetW / 2, photoY + targetH / 2, targetW / 2, targetH / 2, 'S');
+
+        // Marcas de corte cardinales en los 4 extremos de la elipse
+        doc.setLineWidth(0.25);
+        doc.setLineDashPattern([], 0);
+        const tick = 2.5;
+        doc.line(photoX + targetW / 2, photoY - tick, photoX + targetW / 2, photoY);
+        doc.line(photoX + targetW / 2, photoY + targetH, photoX + targetW / 2, photoY + targetH + tick);
+        doc.line(photoX - tick, photoY + targetH / 2, photoX, photoY + targetH / 2);
+        doc.line(photoX + targetW, photoY + targetH / 2, photoX + targetW + tick, photoY + targetH / 2);
+      } else {
+        doc.setDrawColor(180, 180, 180);
+        doc.setLineWidth(0.22);
+        doc.setLineDashPattern([1.5, 1.5], 0);
+        doc.rect(photoX - 0.2, photoY - 0.2, targetW + 0.4, targetH + 0.4);
+        drawCornerCutMarks(doc, photoX, photoY, targetW, targetH);
       }
-      drawCornerCutMarks(doc, photoX, photoY, targetW, targetH);
 
       currentPagePhotos++;
     }

@@ -80,13 +80,19 @@ function setMixTwoPhotos(val) {
 }
 
 function getPhotoLayoutInfo(targetW, targetH, copies) {
-  const availW = 190;
-  const availH = 222;
-  const gap = targetW < 30 ? 3.5 : (targetW < 55 ? 4.0 : 5.0);
+  const paper = (typeof getActivePaperSpec === 'function') ? getActivePaperSpec() : { widthMm: 210, heightMm: 297, shortName: 'A4' };
+  
+  // Margen horizontal de seguridad: 12 mm a cada lado
+  const availW = paper.widthMm - 24;
+  // Margen vertical: espacio para encabezado (20 mm) y regla al pie si está activa (38 mm) o margen inferior (14 mm)
+  const footerH = (state.includeRulerFooter !== false) ? 38 : 14;
+  const availH = paper.heightMm - 20 - footerH;
+
+  const gap = targetW < 30 ? 3.5 : (targetW < 55 ? 4.5 : 6.0);
 
   const maxCols = Math.max(1, Math.floor((availW + gap) / (targetW + gap)));
   const maxRows = Math.max(1, Math.floor((availH + gap) / (targetH + gap)));
-  const maxPerPage = maxCols * maxRows;
+  const maxPerPage = Math.max(1, maxCols * maxRows);
 
   let cols = maxCols;
   if (copies === 1) cols = 1;
@@ -94,8 +100,6 @@ function getPhotoLayoutInfo(targetW, targetH, copies) {
   else if (copies <= 4) cols = Math.min(2, maxCols);
   else if (copies <= 6) cols = Math.min(3, maxCols);
   else if (copies <= 8) cols = Math.min(4, maxCols);
-  else if (copies <= 12 && maxCols >= 4) cols = 4;
-  else if (copies <= 16 && maxCols >= 4) cols = 4;
   else cols = maxCols;
 
   const rows = Math.ceil(copies / cols);
@@ -108,45 +112,93 @@ function getPhotoLayoutInfo(targetW, targetH, copies) {
     maxPerPage: maxPerPage,
     cols: cols,
     rows: rows,
-    pages: pages
+    pages: pages,
+    paper: paper
   };
+}
+
+function updatePhotoPresetButtons(maxPerPage) {
+  const presetButtons = $$('.photo-copies-btn');
+  if (!presetButtons.length) return;
+
+  // Lotes inteligentes adaptados estrictamente a la capacidad física de la hoja
+  let presets = [4, 8, 12, 18, 24, 36];
+  if (maxPerPage <= 4) {
+    presets = [1, 2, 3, 4, 4, 4];
+  } else if (maxPerPage <= 6) {
+    presets = [1, 2, 3, 4, 5, 6];
+  } else if (maxPerPage <= 8) {
+    presets = [2, 4, 6, 8, 8, 8];
+  } else if (maxPerPage <= 12) {
+    presets = [2, 4, 6, 8, 10, 12];
+  } else if (maxPerPage <= 24) {
+    presets = [4, 8, 12, 16, 20, 24];
+  }
+
+  presetButtons.forEach(function(btn, idx) {
+    const val = presets[idx] || presets[presets.length - 1];
+    btn.setAttribute('data-copies', val);
+    const pTitle = btn.querySelector('.title-main');
+    if (pTitle) pTitle.textContent = val + ' ' + (val === 1 ? 'Foto' : 'Fotos');
+    const pSub = btn.querySelector('p:last-child');
+    if (pSub) {
+      if (val === maxPerPage) pSub.textContent = 'Hoja Llena';
+      else if (val === 1) pSub.textContent = 'Individual';
+      else pSub.textContent = 'Lote ' + val;
+    }
+    // Deshabilitar botones redundantes si la capacidad de la hoja es pequeña
+    const isRedundant = (idx > 0 && presets[idx] === presets[idx - 1] && val === maxPerPage);
+    btn.classList.toggle('hidden', isRedundant);
+    btn.classList.toggle('is-active', parseInt(btn.getAttribute('data-copies'), 10) === state.photoCopies);
+  });
 }
 
 function updatePhotoGridStats() {
   const spec = getActiveSpec();
   const info = getPhotoLayoutInfo(spec.widthMm, spec.heightMm, state.photoCopies);
+  const paper = info.paper || { shortName: 'A4', name: 'A4' };
+
+  // AUDITORÍA ESTRICTA: El sistema limita automáticamente al máximo físico real que cabe en 1 hoja
+  if (state.photoCopies > info.maxPerPage) {
+    state.photoCopies = info.maxPerPage;
+  }
 
   const badgeMax = $('badgeMaxPhotosFit');
   if (badgeMax) {
-    badgeMax.textContent = 'Caben hasta ' + info.maxPerPage + ' fotos';
+    badgeMax.textContent = 'Caben máximo ' + info.maxPerPage + ' en 1 hoja ' + paper.shortName;
   }
 
   const badgeFill = $('badgeFillA4Count');
   if (badgeFill) {
-    badgeFill.textContent = info.maxPerPage + ' fotos';
+    badgeFill.textContent = info.maxPerPage + ' fotos (' + paper.shortName + ')';
   }
 
-  const btnPreset36 = $('btnPreset36');
-  if (btnPreset36) {
-    btnPreset36.setAttribute('data-copies', info.maxPerPage);
-    const pTitle = btnPreset36.querySelector('.title-main');
-    if (pTitle) pTitle.textContent = info.maxPerPage + ' Fotos';
-  }
+  updatePhotoPresetButtons(info.maxPerPage);
 
   const inputCopies = $('inputPhotoCopies');
-  if (inputCopies && parseInt(inputCopies.value, 10) !== state.photoCopies) {
+  if (inputCopies) {
+    inputCopies.max = info.maxPerPage;
     inputCopies.value = state.photoCopies;
   }
 
   const labelEff = $('labelPhotoEfficiency');
   if (labelEff) {
-    const pageText = info.pages === 1 ? '1 página A4' : (info.pages + ' páginas A4');
-    labelEff.textContent = 'Distribución: ' + info.cols + ' cols × ' + info.rows + ' filas • ' + pageText;
+    labelEff.textContent = 'Distribución 1:1: ' + info.cols + ' cols × ' + Math.ceil(state.photoCopies / info.cols) + ' filas • ' + state.photoCopies + '/' + info.maxPerPage + ' en ' + paper.shortName;
   }
 }
 
 function setPhotoCopies(num) {
-  const clamped = Math.max(1, Math.min(48, parseInt(num, 10) || 4));
+  const spec = getActiveSpec();
+  const info = getPhotoLayoutInfo(spec.widthMm, spec.heightMm, 1);
+  const maxAllowed = info.maxPerPage;
+  const paper = info.paper || { shortName: 'A4' };
+
+  const parsed = parseInt(num, 10) || 1;
+  if (parsed > maxAllowed) {
+    showToast('⚠️ No es posible: En papel ' + paper.shortName + ' caben máximo ' + maxAllowed + ' fotos (' + spec.shortName + ') a escala 1:1 real.', 'warning');
+  }
+
+  const clamped = Math.max(1, Math.min(maxAllowed, parsed));
   state.photoCopies = clamped;
 
   const inputCopies = $('inputPhotoCopies');
@@ -310,11 +362,20 @@ function selectFormat(formatKey) {
     photo_infantil: 'Foto Infantil seleccionada (2.5 × 3.0 cm).',
     photo_carnet: 'Foto Carnet / DNI seleccionada (2.6 × 3.2 cm).',
     photo_passport: 'Foto Pasaporte OACI seleccionada (3.5 × 4.5 cm).',
-    photo_visa_usa: 'Foto Visa USA 2"×2" seleccionada (5.1 × 5.1 cm).'
+    photo_visa_usa: 'Foto Visa USA 2"×2" seleccionada (5.1 × 5.1 cm).',
+    photo_titulo: 'Foto Título seleccionada (6.0 × 9.0 cm). Caben 4 fotos a escala 1:1 real en 1 hoja.',
+    photo_ovalo_titulo: 'Foto Óvalo Título Grande seleccionada (6.0 × 9.0 cm). Caben 4 fotos a escala 1:1 real en 1 hoja.',
+    photo_ovalo_mignon: 'Foto Óvalo Mignon seleccionada (5.0 × 7.0 cm). Caben 6 fotos a escala 1:1 real en 1 hoja.',
+    photo_ovalo_credencial: 'Foto Óvalo Credencial seleccionada (3.5 × 5.0 cm). Caben hasta 12 fotos a escala 1:1 real.'
   }[formatKey];
   if (msg) showToast(msg, 'info');
 
   if (state.activeCategory === 'photos') {
+    const spec = getActiveSpec();
+    const info = getPhotoLayoutInfo(spec.widthMm, spec.heightMm, state.photoCopies);
+    if (state.photoCopies > info.maxPerPage) {
+      state.photoCopies = info.maxPerPage;
+    }
     updatePhotoGridStats();
   }
 
@@ -602,7 +663,8 @@ function updateUI() {
       photosGridInner.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
 
       const totalMmW = cols * spec.widthMm + (cols - 1) * info.gap;
-      const totalWidthPercent = Math.min(96, Math.max(34, (totalMmW / 210) * 100));
+      const paperW = (info.paper && info.paper.widthMm) ? info.paper.widthMm : 210;
+      const totalWidthPercent = Math.min(96, Math.max(34, (totalMmW / paperW) * 100));
       if (photosGridContainer) photosGridContainer.style.width = totalWidthPercent + '%';
       const ratio = spec.widthMm + ' / ' + spec.heightMm;
       const frontImgSrc = state.images.front.processedDataUrl;
@@ -614,21 +676,30 @@ function updateUI() {
       else if (state.photoCopies > 12) minH = '32px';
       else if (state.photoCopies > 6) minH = '38px';
 
-      for (let i = 0; i < state.photoCopies; i++) {
+      // Mostrar únicamente las que físicamente caben en 1 hoja real para no deformar la escala 1:1
+      const countToShow = Math.min(state.photoCopies, info.maxPerPage);
+
+      for (let i = 0; i < countToShow; i++) {
         const useBack = (state.mixTwoPhotos && i >= halfCopies);
         const currentImgSrc = useBack ? backImgSrc : frontImgSrc;
         const photoNum = useBack ? (i - halfCopies + 1) : (i + 1);
         const personTag = state.mixTwoPhotos ? (useBack ? 'B' : 'A') : '';
 
         const cell = document.createElement('div');
-        cell.className = 'border border-dashed border-indigo-400 dark:border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 rounded flex items-center justify-center relative overflow-hidden transition-all shadow-xs';
+        if (spec.isOval) {
+          cell.className = 'border-2 border-dashed border-amber-400 dark:border-amber-600 bg-amber-50/40 dark:bg-amber-950/30 rounded-full flex items-center justify-center relative overflow-hidden transition-all shadow-xs';
+          cell.style.borderRadius = '50%';
+        } else {
+          cell.className = 'border border-dashed border-indigo-400 dark:border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 rounded flex items-center justify-center relative overflow-hidden transition-all shadow-xs';
+        }
         cell.style.aspectRatio = ratio;
         cell.style.minHeight = minH;
 
         if (currentImgSrc) {
           const im = document.createElement('img');
           im.src = currentImgSrc;
-          im.className = 'w-full h-full object-cover rounded-[1px]';
+          im.className = spec.isOval ? 'w-full h-full object-cover rounded-full' : 'w-full h-full object-cover rounded-[1px]';
+          if (spec.isOval) im.style.borderRadius = '50%';
           im.alt = 'Foto ' + (i+1);
           cell.appendChild(im);
           if (state.photoCopies <= 24) {
@@ -706,6 +777,11 @@ function setPaperSize(paperId, silent) {
 
   const mainTitle = $('previewMainTitle');
   if (mainTitle) mainTitle.textContent = 'Vista previa en 1 hoja ' + paper.shortName;
+
+  if (state.activeCategory === 'photos') {
+    updatePhotoGridStats();
+    updateUI();
+  }
 
   updatePreFlightBar();
   savePreferences();

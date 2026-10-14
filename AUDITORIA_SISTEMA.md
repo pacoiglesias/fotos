@@ -266,3 +266,33 @@ Desarrollado y calibrado por **Paco Iglesias** — 13 Octubre 2026.
   - Service Worker `sw.js` con estrategia Cache-First con Network Fallback.
   - Pre-caché de activos locales y librerías CDN (Tailwind, jsPDF, PDF.js, Google Fonts, JSZip).
   - Botón `#btnInstallPwa` para instalación nativa con 1 solo toque en Chrome, Edge, Safari y Android.
+
+---
+
+## 10. ⚡ Versión v3.2.0-Enterprise: Auditoría Crítica de Capacidad Física de Hoja y Corrección de Formato Óvalo
+Desarrollado y calibrado por **Paco Iglesias** — 14 Octubre 2026.
+
+### 🔴 Hallazgo de Auditoría Crítico (Feedback del Usuario):
+* **Incongruencia detectada:** El sistema permitía seleccionar lotes estáticos de 24 y 36 fotos incluso cuando el usuario elegía formatos grandes como **Foto Título u Óvalo Título (6.0 × 9.0 cm)**.
+* **Impacto en el mundo real:** En una página tamaño Carta ($215.9 \times 279.4\text{ mm}$) o A4 ($210 \times 297\text{ mm}$), una foto de $60 \times 90\text{ mm}$ **solo puede caber un máximo físico de 4 fotos (2 columnas × 2 filas)** (o hasta 6 fotos con márgenes mínimos de imprenta). Al seleccionar 24 fotos, el lienzo en pantalla intentaba apretar 24 cuadros en una sola hoja, reduciendo visualmente las fotos a un tamaño minúsculo y falseando la escala física 1:1.
+* **Segundo hallazgo (Formato Óvalo):** La foto óvalo se dibujaba como un rectángulo con una elipse encima, en lugar de estar enmascarada; además faltaban los tamaños de óvalo Mignon ($5 \times 7\text{ cm}$) y Credencial ($3.5 \times 5\text{ cm}$).
+
+### 🟢 Solución e Ingeniería Aplicada:
+1. **Límites Físicos Estrictos por Tipo de Hoja y Formato:**
+   - La función `getPhotoLayoutInfo` ahora calcula dinámicamente la capacidad real considerando las dimensiones del papel activo (Carta, A4, Oficio) descontando márgenes y la regla de calibración.
+   - **Para Título y Óvalo Título (6×9 cm):** El máximo permitido en 1 hoja es de **4 fotos** (o 6 fotos según márgenes). El sistema **bloquea y no permite** seleccionar 24 fotos en una página donde físicamente no caben.
+   - Si el usuario tenía seleccionadas 24 fotos de un trámite infantil previo y cambia a Título u Óvalo, el sistema auto-ajusta las copias inmediatamente a 4 fotos para preservar la escala 1:1 real.
+2. **Presets de Lotes Dinámicos e Inteligentes:**
+   - Si caben máximo 4 fotos (Título 6×9): Presets adaptados a `1`, `2`, `3`, `4 Fotos (Hoja Llena)`. Las opciones de 8, 12, 18, 24, 36 se ocultan automáticamente.
+   - Si caben hasta 6 fotos (Mignon 5×7): Presets `2`, `4`, `6 Fotos (Hoja Llena)`.
+   - Si caben hasta 12 fotos (Credencial 3.5×5): Presets `2`, `4`, `6`, `8`, `12 Fotos (Hoja Llena)`.
+   - Si caben hasta 36 fotos (Infantil 2.5×3): Presets `4`, `8`, `12`, `18`, `24`, `36 Fotos`.
+3. **Enmascaramiento Óvalo Real (True Ellipse Clip):**
+   - En `renderProcessedImage`: Se aplica `ctx.clip()` sobre la elipse perfecta calibrada ($outW \times outH$), dejando las **4 esquinas exteriores en 100% blanco puro**. La foto queda exactamente confinada en el óvalo oficial.
+   - En la vista previa en pantalla (`updateUI`): Las celdas e imágenes tienen `border-radius: 50%` (`rounded-full`), mostrando de inmediato una planilla con siluetas ovaladas.
+   - En `js/pdf.js`: Si `spec.isOval` es verdadero, **NO se dibuja el rectángulo exterior**; únicamente se dibuja la elipse punteada oficial con marcas de corte cardinales en los 4 polos para corte exacto con tijera o suaje.
+   - En `js/export.js`: Exportación de imagen JPG a 300 DPI con elipse punteada y esquinas limpias.
+4. **Catálogo Completo de Tamaños de Óvalo Oficiales:**
+   - `Foto Óvalo Título Grande`: $6.0 \times 9.0\text{ cm}$ (UNAM, IPN, SEP, BUAP).
+   - `Foto Óvalo Mignon / Diploma Medio`: $5.0 \times 7.0\text{ cm}$ (Bachillerato, preparatorias, certificados).
+   - `Foto Óvalo Credencial`: $3.5 \times 5.0\text{ cm}$ (Certificados escolares y credenciales).

@@ -80,7 +80,7 @@
           <div class="flex items-center gap-1.5">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.1.0-Enterprise</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.2.0-Enterprise</span>
           </div>
           <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap flex items-center gap-1 mt-0.5">
             <span>Desarrollado por</span>
@@ -592,16 +592,48 @@
           <div class="flex items-start justify-between w-full gap-2">
             <div>
               <div class="flex items-center gap-1.5">
-                <p class="title-main font-bold text-sm text-slate-900 dark:text-white">Foto Óvalo Título / Diploma</p>
-                <span class="text-[9px] font-bold uppercase tracking-wider bg-amber-600 text-white px-1.5 py-0.5 rounded">Óvalo Oficial</span>
+                <p class="title-main font-bold text-sm text-slate-900 dark:text-white">Foto Óvalo Título Grande</p>
+                <span class="text-[9px] font-bold uppercase tracking-wider bg-amber-600 text-white px-1.5 py-0.5 rounded">6×9 cm</span>
               </div>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Títulos con recorte en elipse oficial (UNAM, IPN, SEP, BUAP, Cédula Profesional).</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Títulos profesionales universitarios en elipse oficial (UNAM, IPN, SEP, BUAP).</p>
             </div>
             <span class="active-badge text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
             </span>
           </div>
-          <div class="mt-2.5 inline-block text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">6.0 × 9.0 cm (Elipse Calibrada)</div>
+          <div class="mt-2.5 inline-block text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">6.0 × 9.0 cm (Caben 4 en Hoja)</div>
+        </button>
+
+        <button type="button" data-format="photo_ovalo_mignon" class="format-btn relative text-left p-3.5 rounded-xl flex flex-col justify-between">
+          <div class="flex items-start justify-between w-full gap-2">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <p class="title-main font-bold text-sm text-slate-900 dark:text-white">Foto Óvalo Mignon / Diploma</p>
+                <span class="text-[9px] font-bold uppercase tracking-wider bg-emerald-600 text-white px-1.5 py-0.5 rounded">5×7 cm</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Diplomas de preparatoria, bachillerato, secundarias técnicas y certificados.</p>
+            </div>
+            <span class="active-badge text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            </span>
+          </div>
+          <div class="mt-2.5 inline-block text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">5.0 × 7.0 cm (Caben 6 en Hoja)</div>
+        </button>
+
+        <button type="button" data-format="photo_ovalo_credencial" class="format-btn relative text-left p-3.5 rounded-xl flex flex-col justify-between">
+          <div class="flex items-start justify-between w-full gap-2">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <p class="title-main font-bold text-sm text-slate-900 dark:text-white">Foto Óvalo Credencial</p>
+                <span class="text-[9px] font-bold uppercase tracking-wider bg-indigo-600 text-white px-1.5 py-0.5 rounded">3.5×5 cm</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Certificados escolares y credenciales con marco ovalado.</p>
+            </div>
+            <span class="active-badge text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            </span>
+          </div>
+          <div class="mt-2.5 inline-block text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/70 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800">3.5 × 5.0 cm (Caben 12 en Hoja)</div>
         </button>
 
         <button type="button" data-format="photo_credencial" class="format-btn relative text-left p-3.5 rounded-xl flex flex-col justify-between">

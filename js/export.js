@@ -186,33 +186,44 @@ function downloadA4Image() {
     const w = wMm * pxPerMm;
     const h = hMm * pxPerMm;
 
-    // Líneas punteadas de corte
+    // Líneas de corte
     ctx.save();
-    ctx.setLineDash([12, 12]);
-    ctx.strokeStyle = '#b0b0b0';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+    if (spec.isOval) {
+      ctx.setLineDash([12, 10]);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.ellipse(x + w / 2, y + h / 2, w / 2 - 2, h / 2 - 2, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      ctx.setLineDash([12, 12]);
+      ctx.strokeStyle = '#b0b0b0';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+    }
     ctx.restore();
 
     // Imagen 1:1
     ctx.drawImage(imgObj, x, y, w, h);
 
-    // Guías de corte en esquinas
-    ctx.save();
-    ctx.strokeStyle = '#777777';
-    ctx.lineWidth = 2.2;
-    const tick = 25, off = 10;
-    ctx.beginPath();
-    ctx.moveTo(x-off, y); ctx.lineTo(x-off+tick, y);
-    ctx.moveTo(x, y-off); ctx.lineTo(x, y-off+tick);
-    ctx.moveTo(x+w+off-tick, y); ctx.lineTo(x+w+off, y);
-    ctx.moveTo(x+w, y-off); ctx.lineTo(x+w, y-off+tick);
-    ctx.moveTo(x-off, y+h); ctx.lineTo(x-off+tick, y+h);
-    ctx.moveTo(x, y+h+off-tick); ctx.lineTo(x, y+h+off);
-    ctx.moveTo(x+w+off-tick, y+h); ctx.lineTo(x+w+off, y+h);
-    ctx.moveTo(x+w, y+h+off-tick); ctx.lineTo(x+w, y+h+off);
-    ctx.stroke();
-    ctx.restore();
+    // Guías de corte
+    if (!spec.isOval) {
+      ctx.save();
+      ctx.strokeStyle = '#777777';
+      ctx.lineWidth = 2.2;
+      const tick = 25, off = 10;
+      ctx.beginPath();
+      ctx.moveTo(x-off, y); ctx.lineTo(x-off+tick, y);
+      ctx.moveTo(x, y-off); ctx.lineTo(x, y-off+tick);
+      ctx.moveTo(x+w+off-tick, y); ctx.lineTo(x+w+off, y);
+      ctx.moveTo(x+w, y-off); ctx.lineTo(x+w, y-off+tick);
+      ctx.moveTo(x-off, y+h); ctx.lineTo(x-off+tick, y+h);
+      ctx.moveTo(x, y+h+off-tick); ctx.lineTo(x, y+h+off);
+      ctx.moveTo(x+w+off-tick, y+h); ctx.lineTo(x+w+off, y+h);
+      ctx.moveTo(x+w, y+h+off-tick); ctx.lineTo(x+w, y+h+off);
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   function triggerDownload() {

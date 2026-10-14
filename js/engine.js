@@ -628,6 +628,13 @@ function renderProcessedImage(side) {
     const c = imgData.contrast || 0;
 
     ctx.save();
+    // Soporte para Formatos Óvalo (Título, Mignon, Credencial): Enmascarar esquinas en blanco puro
+    if (spec.isOval) {
+      ctx.beginPath();
+      ctx.ellipse(outW / 2, outH / 2, outW / 2 - 3, outH / 2 - 3, 0, 0, Math.PI * 2);
+      ctx.clip();
+    }
+
     if (b !== 0 || c !== 0) {
       ctx.filter = 'brightness(' + (100 + b) + '%) contrast(' + (100 + c) + '%)';
     }
@@ -637,15 +644,14 @@ function renderProcessedImage(side) {
     ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
     ctx.restore();
 
-    // Soporte para Foto Óvalo Título / Diploma (SEP / Universidad 6.0 × 9.0 cm)
+    // Trazar línea de corte elíptica punteada oficial
     if (spec.isOval) {
       ctx.save();
-      // Guía punteada oficial de corte elíptico
       ctx.setLineDash([14, 10]);
-      ctx.strokeStyle = '#64748b';
+      ctx.strokeStyle = '#94a3b8';
       ctx.lineWidth = Math.max(2, Math.round(outW * 0.005));
       ctx.beginPath();
-      ctx.ellipse(outW / 2, outH / 2, outW / 2 - 6, outH / 2 - 6, 0, 0, Math.PI * 2);
+      ctx.ellipse(outW / 2, outH / 2, outW / 2 - 3, outH / 2 - 3, 0, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
     }

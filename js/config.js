@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.1.0-Enterprise';
+window.APP_VERSION = 'v3.2.0-Enterprise';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -68,7 +68,9 @@ window.FORMAT_SPECS = {
   photo_passport:  { category:'photos', name:'Foto Pasaporte / Cartilla (OACI/ICAO - 3.5 × 4.5 cm)', shortName:'Foto Pasaporte (3.5×4.5cm)', fileName:'foto_pasaporte_oaci', widthMm:35.0, heightMm:45.0 },
   photo_visa_usa:  { category:'photos', name:'Foto Visa EE.UU. (2×2 pulgadas / 5.1 × 5.1 cm)', shortName:'Foto Visa USA (5.1×5.1cm)', fileName:'foto_visa_usa', widthMm:50.8, heightMm:50.8 },
   photo_titulo:    { category:'photos', name:'Foto Título / Diploma (México - 6.0 × 9.0 cm)', shortName:'Foto Título (6×9cm)', fileName:'foto_titulo_diploma', widthMm:60.0, heightMm:90.0 },
-  photo_ovalo_titulo: { category:'photos', name:'Foto Óvalo Título / Diploma (México - 6.0 × 9.0 cm)', shortName:'Óvalo Título (6×9cm)', fileName:'foto_ovalo_titulo_diploma', widthMm:60.0, heightMm:90.0, isOval:true },
+  photo_ovalo_titulo: { category:'photos', name:'Foto Óvalo Título / Diploma Grande (México - 6.0 × 9.0 cm)', shortName:'Óvalo Título (6×9cm)', fileName:'foto_ovalo_titulo_diploma', widthMm:60.0, heightMm:90.0, isOval:true },
+  photo_ovalo_mignon: { category:'photos', name:'Foto Óvalo Mignon / Diploma Medio (México - 5.0 × 7.0 cm)', shortName:'Óvalo Mignon (5×7cm)', fileName:'foto_ovalo_mignon_diploma', widthMm:50.0, heightMm:70.0, isOval:true },
+  photo_ovalo_credencial: { category:'photos', name:'Foto Óvalo Credencial (México - 3.5 × 5.0 cm)', shortName:'Óvalo Credencial (3.5×5cm)', fileName:'foto_ovalo_credencial', widthMm:35.0, heightMm:50.0, isOval:true },
   photo_credencial:{ category:'photos', name:'Foto Tamaño Credencial (3.5 × 5.0 cm)', shortName:'Foto Credencial (3.5×5cm)', fileName:'foto_credencial', widthMm:35.0, heightMm:50.0 },
   custom:          { category:'custom', name:'Medida Personalizada', shortName:'Personalizada', fileName:'documento_personalizado', widthMm:85.0, heightMm:55.0 }
 };

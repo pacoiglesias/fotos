@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1
    ============================================================ */
 
-const CACHE_NAME = 'realscan-cache-v3.1.0';
+const CACHE_NAME = 'realscan-cache-v3.2.0';
 const STATIC_ASSETS = [
   './',
   './index.html',
