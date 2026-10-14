@@ -1,71 +1,141 @@
 /* ============================================================
-   RealScan Pro — Estilos del Sistema
+   RealScan Pro — Sistema de Diseño de Lujo, Glassmorphism y HUD
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
 :root {
   color-scheme: light dark;
+  --brand-primary: #4f46e5;
+  --brand-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%);
+  --luxury-gold: #f59e0b;
 }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-tap-highlight-color: transparent;
-  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  background-attachment: fixed;
 }
 
+/* Hoja A4 con iluminación ambiental y textura de papel */
 .a4-sheet {
   aspect-ratio: 210 / 297;
   background: #ffffff;
-  box-shadow: 0 10px 25px -5px rgba(0,0,0,.12), 0 8px 10px -6px rgba(0,0,0,.08);
+  position: relative;
+  box-shadow: 
+    0 20px 40px -15px rgba(0,0,0,0.18),
+    0 0 0 1px rgba(0,0,0,0.06),
+    0 0 50px -10px rgba(79, 70, 229, 0.15);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
 }
 
+.dark .a4-sheet {
+  box-shadow: 
+    0 25px 50px -12px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(255,255,255,0.1),
+    0 0 60px -5px rgba(99, 102, 241, 0.25);
+}
+
+.a4-sheet:hover {
+  box-shadow: 
+    0 25px 50px -10px rgba(0,0,0,0.22),
+    0 0 0 1px rgba(79, 70, 229, 0.3),
+    0 0 60px -5px rgba(79, 70, 229, 0.25);
+}
+
+/* Glassmorphism Panel de Lujo */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Barra Flotante HUD Ergonómica */
+.hud-bar {
+  position: fixed;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 25px rgba(99, 102, 241, 0.3);
+  border-radius: 9999px;
+  padding: 0.4rem 0.75rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hud-bar:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 25px 50px -10px rgba(0, 0, 0, 0.6), 0 0 35px rgba(99, 102, 241, 0.5);
+}
+
+/* Dropzone interactivo con pulso */
 .dropzone-active {
   border-color: #4f46e5 !important;
   background-color: #eef2ff !important;
+  transform: scale(1.01);
 }
 
 .dark .dropzone-active {
-  background-color: rgba(30,27,75,.5) !important;
+  background-color: rgba(30,27,75,.65) !important;
 }
 
-/* ====== Estado visual de botones (evita romper dark: al mutar className) ====== */
+/* ====== Botones y Selectores con Elevación y Relieve ====== */
 .mode-btn, .format-btn, .photo-copies-btn, .pass-orient-btn {
   border: 2px solid rgb(226 232 240);
-  background: #fff;
-  transition: all .15s ease;
+  background: #ffffff;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dark .mode-btn, .dark .format-btn, .dark .photo-copies-btn, .dark .pass-orient-btn {
   border-color: rgb(51 65 85);
-  background: rgba(30 41 59 / .8);
+  background: rgba(30 41 59 / 0.85);
 }
 
 .mode-btn:hover:not(.is-active),
 .format-btn:hover:not(.is-active),
 .photo-copies-btn:hover:not(.is-active),
 .pass-orient-btn:hover:not(.is-active) {
-  border-color: rgb(203 213 225);
+  border-color: rgb(199 210 254);
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 16px -4px rgba(79, 70, 229, 0.1);
 }
 
 .dark .mode-btn:hover:not(.is-active),
 .dark .format-btn:hover:not(.is-active),
 .dark .photo-copies-btn:hover:not(.is-active),
 .dark .pass-orient-btn:hover:not(.is-active) {
-  border-color: rgb(71 85 105);
+  border-color: rgb(99 102 241 / 0.6);
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.4);
 }
 
 .mode-btn.is-active, .format-btn.is-active, .photo-copies-btn.is-active, .pass-orient-btn.is-active {
   border-color: rgb(79 70 229);
-  background: rgba(238 242 255 / .6);
-  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  background: linear-gradient(135deg, rgba(238, 242, 255, 0.9) 0%, rgba(224, 231, 255, 0.6) 100%);
+  box-shadow: 0 8px 20px -4px rgba(79, 70, 229, 0.25), 0 0 0 1px rgba(79, 70, 229, 0.2);
+  transform: translateY(-1px);
 }
 
 .dark .mode-btn.is-active,
 .dark .format-btn.is-active,
 .dark .photo-copies-btn.is-active,
 .dark .pass-orient-btn.is-active {
-  border-color: rgb(99 102 241);
-  background: rgba(30 27 75 / .5);
+  border-color: rgb(129 140 248);
+  background: linear-gradient(135deg, rgba(49, 46, 129, 0.75) 0%, rgba(30, 27, 75, 0.85) 100%);
+  box-shadow: 0 8px 25px -4px rgba(99, 102, 241, 0.4), 0 0 0 1px rgba(129, 140 248, 0.3);
+  transform: translateY(-1px);
 }
 
 .mode-btn .active-badge,
@@ -79,53 +149,64 @@ body {
 /* ====== Tabs de categoría ====== */
 .cat-tab {
   color: rgb(71 85 105);
-  transition: all .15s ease;
+  transition: all 0.2s ease;
 }
 .dark .cat-tab { color: rgb(148 163 184); }
 .cat-tab:hover { color: rgb(15 23 42); }
-.dark .cat-tab:hover { color: #fff; }
+.dark .cat-tab:hover { color: #ffffff; }
 .cat-tab.is-active {
-  background: #fff;
+  background: #ffffff;
   color: rgb(67 56 202);
-  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.15), 0 1px 3px rgba(0,0,0,0.06);
 }
 .dark .cat-tab.is-active {
   background: rgb(51 65 85);
-  color: rgb(165 180 252);
+  color: rgb(199 210 254);
+  box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4);
 }
 
 /* ====== Unit toggle ====== */
-.unit-btn { color: rgb(71 85 105); font-weight: 500; }
+.unit-btn { color: rgb(71 85 105); font-weight: 500; transition: all 0.15s ease; }
 .dark .unit-btn { color: rgb(203 213 225); }
-.unit-btn.is-active { background: rgb(79 70 229); color: #fff; font-weight: 700; }
+.unit-btn.is-active { background: rgb(79 70 229); color: #ffffff; font-weight: 700; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35); }
 
-/* ====== Estado activo de las tarjetas de títulos dentro de botones ====== */
+/* ====== Estado activo de las tarjetas de títulos ====== */
 .mode-btn.is-active .title-main,
 .format-btn.is-active .title-main,
 .photo-copies-btn.is-active .title-main { color: rgb(30 27 75); }
 .dark .mode-btn.is-active .title-main,
 .dark .format-btn.is-active .title-main,
-.dark .photo-copies-btn.is-active .title-main { color: rgb(224 231 255); }
+.dark .photo-copies-btn.is-active .title-main { color: rgb(238 242 255); }
 
-/* Focus visible consistente */
-button:focus-visible, input:focus-visible {
+/* Focus visible de accesibilidad */
+button:focus-visible, input:focus-visible, select:focus-visible {
   outline: 2px solid #6366f1;
   outline-offset: 2px;
 }
 
-/* ====== Settings modal tabs ====== */
+/* Settings modal tabs */
 .settings-tab-btn {
   color: rgb(100 116 139);
+  transition: all 0.15s ease;
 }
 .dark .settings-tab-btn { color: rgb(148 163 184); }
 .settings-tab-btn.is-active {
-  background: #fff;
+  background: #ffffff;
   color: rgb(67 56 202);
-  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  box-shadow: 0 2px 8px -1px rgba(79, 70, 229, 0.18);
 }
 .dark .settings-tab-btn.is-active {
   background: rgb(30 41 59);
-  color: rgb(165 180 252);
+  color: rgb(199 210 254);
+}
+
+/* Indicador de Calibración 100% Pulsante */
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.5)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 14px rgba(16, 185, 129, 0.9)); }
+}
+.calibration-pulse {
+  animation: glowPulse 2.8s infinite ease-in-out;
 }
 
 @keyframes shake {
@@ -139,3 +220,4 @@ button:focus-visible, input:focus-visible {
 
 /* Modal lock */
 body.modal-open { overflow: hidden; }
+

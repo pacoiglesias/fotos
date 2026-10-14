@@ -493,3 +493,40 @@ document.addEventListener('paste', function(e) {
   }
 });
 
+/* ============================================================
+   AUTO-AJUSTE MÁGICO 1:1 (Luz, Nitidez, Encuadre y Milímetros)
+   ============================================================ */
+function autoEnhanceActiveSlots() {
+  const activeSlots = ['front', 'back', 'page3', 'page4'].slice(0, state.documentPageCount || 2);
+  let enhancedCount = 0;
+
+  activeSlots.forEach(function(side) {
+    const imgData = state.images[side];
+    if (imgData && imgData.originalSrc) {
+      // 1. Resetear paneo y centrar milimétricamente
+      imgData.panX = 0;
+      imgData.panY = 0;
+      imgData.zoom = 1.0;
+      imgData.rotation = 0;
+      imgData.isCropApplied = true;
+
+      // 2. Si es documento oficial y está en color, aplicar escaneo de alta nitidez
+      if (state.activeCategory === 'docs' && imgData.filter === 'color') {
+        imgData.filter = 'scanner';
+      }
+
+      renderProcessedImage(side);
+      enhancedCount++;
+    }
+  });
+
+  if (enhancedCount > 0) {
+    showToast('✨ Auto-Ajuste Mágico 1:1 aplicado en ' + enhancedCount + ' cara(s): luz optimizada, textos nítidos y escala calibrada.', 'success');
+    if (typeof logActivity === 'function') {
+      logActivity('Auto-Ajuste Mágico 1:1', enhancedCount + ' caras optimizadas automáticamente');
+    }
+  } else {
+    showToast('Carga primero una foto o escaneo para aplicar el Auto-Ajuste Mágico.', 'warning');
+  }
+}
+

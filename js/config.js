@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v2.6.0-Enterprise';
+window.APP_VERSION = 'v2.6.5-Enterprise';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';

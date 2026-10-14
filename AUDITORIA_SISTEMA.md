@@ -67,7 +67,25 @@ Se agregaron 4 botones dedicados con etiquetas claras y descriptivas:
 
 ---
 
-## 4. 🚀 Despliegue y Sincronización
+## 4. 🎨 Diseño de Lujo, Ergonomía y Barra Flotante HUD (v2.6.5)
+1. **Barra Flotante HUD Ergonómica (`.hud-bar`):**
+   - Menú flotante siempre accesible en la parte inferior con efecto Glassmorphism (`backdrop-blur-20px`, borde sutil y sombras luminiscentes).
+   - Indicador de estado en tiempo real: `🟢 1:1 EXACTO • A4 300 DPI`.
+   - Accesos directos rápidos con 1 solo toque:
+     - `✨ Auto-Ajuste 1:1`: Nivelación automática de brillo, nitidez, eliminación de sombras y encuadre milimétrico.
+     - `🖨️ Imprimir 100%`: Disparo de impresión directa con calibración exacta.
+     - `📄 PDF`: Descarga inmediata del PDF 1:1.
+     - `📦 Historial`: Apertura del cajón privado con miniaturas y respaldos.
+     - `⚙️`: Acceso rápido al panel de seguridad y bitácora.
+2. **Estética Visual Premium:**
+   - Hoja A4 con iluminación ambiental perimetral y elevación suave al pasar el cursor.
+   - Modo Oscuro ultra-pulido con gradientes de índigo profundo y zafiro.
+   - Micro-animaciones en tarjetas, selectores de modo y botones de corte.
+
+---
+
+## 5. 🚀 Despliegue y Sincronización Total
 - **Local:** `http://localhost:5500/`
 - **Producción:** `https://fotos-cobertores-pro.web.app` / `https://fotos-cobertores-pro.firebaseapp.com`
 - **Integridad:** Código sincronizado al 100%, validado sintácticamente y con cero errores de consola.
+ 

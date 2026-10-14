@@ -966,6 +966,28 @@ function bindEvents() {
     }
   });
 
+  // Floating HUD Quick Actions
+  if ($('hudBtnAutoEnhance')) {
+    on($('hudBtnAutoEnhance'), 'click', function() {
+      if (typeof autoEnhanceActiveSlots === 'function') autoEnhanceActiveSlots();
+    });
+  }
+  if ($('hudBtnPrintDirect')) {
+    on($('hudBtnPrintDirect'), 'click', handlePrintDirect);
+  }
+  if ($('hudBtnDownloadPdf')) {
+    on($('hudBtnDownloadPdf'), 'click', function() { handleExportPDF(false); });
+  }
+  if ($('hudBtnHistory')) {
+    on($('hudBtnHistory'), 'click', function() {
+      openModal('historyModal');
+      if (typeof renderHistoryUI === 'function') renderHistoryUI();
+    });
+  }
+  if ($('hudBtnSettings')) {
+    on($('hudBtnSettings'), 'click', openSettingsModal);
+  }
+
   // Live camera actions
   on($('btnSwitchCam'), 'click', switchCameraFacing);
   on($('btnCapture'), 'click', captureLivePhoto);
