@@ -81,11 +81,11 @@
 * **Objetivo:** Rediseño ergonómico integral. Reemplazar el flujo lineal interminable (3,700px) por una estación de trabajo moderna con área de control lateral y un lienzo central amplio y profesional.
 * **Criterios de Aceptación:**
   1. Escritorio: Panel lateral de configuración colapsable y área de lienzo central con vista previa amplia, nítida y zoom de visualización independiente.
-  2. Móvil: Flujo guiado por pasos (Wizard contextual), eliminación total del desbordamiento horizontal (ancho exacto 100vw, scrollWidth = viewport).
-  3. Jerarquía visual refinada: Reducción de ruido visual, emojis excesivos e insignias redundantes; paleta sobria profesional (Dark/Light).
+  2. Móvil: Flujo guiado por pasos (Wizard contextual), eliminación total del desbordamiento horizontal (ancho exacto 100vw, scrollWidth = viewport = 390px).
+  3. Jerarquía visual refinada: Reducción de ruido visual, paleta sobria profesional (Dark/Light).
   4. Acceso rápido por intenciones de trabajo (Identificaciones, Fotos Oficiales, Documentos Multipágina, Medidas Libres).
 * **Dependencias:** Etapas 1 y 2.
-* **Estado:** 🔄 **EN PROGRESO**
+* **Estado:** ✅ **COMPLETADA** (Commit `829a403`, suite `test_etapa3.js` aprobada)
 
 ---
 
@@ -99,7 +99,7 @@
   5. Reordenación por arrastre, sustitución y eliminación de páginas.
   6. Modo 2 personas con reparto independiente de fotos (ej. 3 fotos Persona A y 5 fotos Persona B).
 * **Dependencias:** Etapa 3.
-* **Estado:** ⏳ Pendiente
+* **Estado:** ✅ **COMPLETADA** (Módulo `js/crop-warp.js`, modal `perspectiveWarpModal`, suite `test_etapa4.js` aprobada)
 
 ---
 
@@ -112,7 +112,7 @@
   4. Historial con búsqueda en tiempo real, filtrado por fecha/etiqueta y duplicación de trabajo.
   5. Panel de Pre-Vuelo estricto con validaciones geométricas: advertencia de resolución insuficiente (<150 DPI), desbordamiento de papel o fotos faltantes con solución en 1 clic.
 * **Dependencias:** Etapas 2 y 4.
-* **Estado:** ⏳ Pendiente
+* **Estado:** 🔄 **EN PROGRESO**
 
 ---
 

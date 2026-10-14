@@ -919,6 +919,25 @@
               <button type="button" data-delete="front" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/80 transition-colors ml-1" title="Eliminar foto">🗑️</button>
             </div>
           </div>
+
+          <!-- Fila 3: Precisión Documental (Enderezar 4 esquinas, Auto-Luz, Intercambiar, Undo/Redo) -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-indigo-50/50 dark:bg-slate-900/40 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-warp="front" class="warp-btn px-2 py-0.5 rounded border border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/80 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 font-bold text-[10px] text-indigo-800 dark:text-indigo-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
+                <span>📐</span><span>Enderezar 4 Esquinas</span>
+              </button>
+              <button type="button" data-autolight="front" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+                <span>🪄</span><span>Auto-Luz</span>
+              </button>
+              <button type="button" data-swap="front:back" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con el Reverso">
+                <span>⇄</span><span>Intercambiar con Reverso</span>
+              </button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button type="button" data-undo="front" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button>
+              <button type="button" data-redo="front" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1024,10 +1043,29 @@
               <span class="text-[9.5px] font-semibold text-slate-400">Centrar:</span>
               <button type="button" data-pan="back:0:-5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Arriba">↑</button>
               <button type="button" data-pan="back:0:5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Abajo">↓</button>
-              <button type="button" data-pan="back:-5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Izquierda">←</button>
+              <button type="button" data-pan-back="back:-5:0" data-pan="back:-5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Izquierda">←</button>
               <button type="button" data-pan="back:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Derecha">→</button>
               <button type="button" data-pan-reset="back" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[9.5px] font-medium" title="Restablecer posición inicial">🎯 Reset</button>
               <button type="button" data-delete="back" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/80 transition-colors ml-1" title="Eliminar foto">🗑️</button>
+            </div>
+          </div>
+
+          <!-- Fila 3: Precisión Documental (Enderezar 4 esquinas, Auto-Luz, Intercambiar, Undo/Redo) -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-amber-50/50 dark:bg-slate-900/40 rounded-lg border border-amber-200/50 dark:border-amber-900/30 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-warp="back" class="warp-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar reverso tomado en ángulo">
+                <span>📐</span><span>Enderezar 4 Esquinas</span>
+              </button>
+              <button type="button" data-autolight="back" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+                <span>🪄</span><span>Auto-Luz</span>
+              </button>
+              <button type="button" data-swap="back:front" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con el Frente">
+                <span>⇄</span><span>Intercambiar con Frente</span>
+              </button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button type="button" data-undo="back" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button>
+              <button type="button" data-redo="back" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button>
             </div>
           </div>
         </div>
@@ -1123,6 +1161,25 @@
               <button type="button" data-delete="page3" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 ml-1">🗑️</button>
             </div>
           </div>
+
+          <!-- Fila 3: Precisión Documental (Enderezar 4 esquinas, Auto-Luz, Intercambiar, Undo/Redo) -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-purple-50/50 dark:bg-slate-900/40 rounded-lg border border-purple-200/50 dark:border-purple-900/30 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-warp="page3" class="warp-btn px-2 py-0.5 rounded border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/80 hover:bg-purple-100 dark:hover:bg-purple-900/80 font-bold text-[10px] text-purple-800 dark:text-purple-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
+                <span>📐</span><span>Enderezar 4 Esquinas</span>
+              </button>
+              <button type="button" data-autolight="page3" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+                <span>🪄</span><span>Auto-Luz</span>
+              </button>
+              <button type="button" data-swap="page3:page4" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con la Página 4">
+                <span>⇄</span><span>Intercambiar con Pág 4</span>
+              </button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button type="button" data-undo="page3" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button>
+              <button type="button" data-redo="page3" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1214,6 +1271,25 @@
               <button type="button" data-pan="page4:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">→</button>
               <button type="button" data-pan-reset="page4" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[9.5px]">🎯 Reset</button>
               <button type="button" data-delete="page4" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 ml-1">🗑️</button>
+            </div>
+          </div>
+
+          <!-- Fila 3: Precisión Documental (Enderezar 4 esquinas, Auto-Luz, Intercambiar, Undo/Redo) -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-teal-50/50 dark:bg-slate-900/40 rounded-lg border border-teal-200/50 dark:border-teal-900/30 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-warp="page4" class="warp-btn px-2 py-0.5 rounded border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/80 hover:bg-teal-100 dark:hover:bg-teal-900/80 font-bold text-[10px] text-teal-800 dark:text-teal-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
+                <span>📐</span><span>Enderezar 4 Esquinas</span>
+              </button>
+              <button type="button" data-autolight="page4" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+                <span>🪄</span><span>Auto-Luz</span>
+              </button>
+              <button type="button" data-swap="page4:page3" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con la Página 3">
+                <span>⇄</span><span>Intercambiar con Pág 3</span>
+              </button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button type="button" data-undo="page4" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button>
+              <button type="button" data-redo="page4" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button>
             </div>
           </div>
         </div>
@@ -1700,6 +1776,50 @@
     </div>
   </main>
 
+  <!-- Modal Corrección de Perspectiva de 4 Esquinas (Warp) -->
+  <div id="perspectiveWarpModal" role="dialog" aria-modal="true" aria-labelledby="warpModalTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col border border-slate-200 dark:border-slate-800 max-h-[95vh]">
+      <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+            📐
+          </div>
+          <div>
+            <h3 id="warpModalTitle" class="font-bold text-sm sm:text-base leading-tight">Enderezar Perspectiva y Recorte (4 Esquinas)</h3>
+            <p class="text-[11px] text-slate-400">Arrastra los 4 círculos a las esquinas del documento para enderezarlo a 300 DPI</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="perspectiveWarpModal" class="text-slate-400 hover:text-white text-xl font-bold px-1.5" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <!-- Área de trabajo interactiva de perspectiva -->
+      <div class="relative bg-slate-950 flex items-center justify-center p-3 overflow-hidden min-h-[300px] max-h-[62vh] select-none touch-none">
+        <canvas id="canvasWarpInteractive" class="max-w-full max-h-[60vh] object-contain rounded-lg shadow-lg cursor-crosshair"></canvas>
+      </div>
+
+      <!-- Controles y acciones -->
+      <div class="p-3.5 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button type="button" id="btnWarpAutoCorners" class="px-2.5 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-bold text-xs hover:bg-indigo-100 dark:hover:bg-indigo-900/80 transition-colors flex items-center gap-1">
+            <span>✨</span><span>Auto-Detectar</span>
+          </button>
+          <button type="button" id="btnWarpResetCorners" class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs hover:bg-slate-50 transition-colors">
+            <span>↺</span><span>Bordes Completos</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" data-close-modal="perspectiveWarpModal" class="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+            Cancelar
+          </button>
+          <button type="button" id="btnApplyWarp" class="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-sm flex items-center gap-1 active:scale-95">
+            <span>✓</span><span>Enderezar y Aplicar 1:1</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal cámara -->
   <div id="liveCameraModal" role="dialog" aria-modal="true" aria-labelledby="cameraModalTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
@@ -2145,6 +2265,7 @@
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/storage.js"></script>
+  <script src="js/crop-warp.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/layout-engine.js"></script>
   <script src="js/pdf.js"></script>

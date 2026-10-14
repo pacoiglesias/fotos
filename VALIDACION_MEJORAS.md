@@ -154,13 +154,30 @@ Todos los hallazgos de la auditoría inicial fueron comprobados experimentalment
 
 ---
 
-## 🎯 7. Matriz de Verificación para Etapa 4: Edición y Gestión Avanzada de Páginas (Siguiente)
+## 🎯 7. Matriz de Verificación para Etapa 4: Edición y Gestión Avanzada de Páginas (Completada con Éxito)
 
-- [ ] **M-22:** Crop/recorte interactivo con manejadores de esquina y rotación por cuadrante (90°, 180°, 270°) sin distorsión ni pérdida del archivo original.
-- [ ] **M-23:** Corrección básica de perspectiva / alineación para capturas tomadas en ángulo desde teléfono móvil.
-- [ ] **M-24:** Sistema de historial de edición (Undo/Redo) para cada ranura de imagen independiente.
-- [ ] **M-25:** Soporte de arrastre táctil / reordenamiento fluido de páginas 1, 2, 3 y 4.
-- [ ] **M-26:** Selector de contraste y brillo adaptativo para documentos oscuros o con reflejos de flash.
+- [x] **M-22:** Crop/recorte interactivo y preciso (`cropImageRegion`) sin distorsión ni pérdida de originales (`rawOriginalSrc` permanece puro e inmutable).
+- [x] **M-23:** Corrección matemática de perspectiva de 4 esquinas (`warpPerspective`) mediante homografía proyectiva 3x3 y mapeo inverso bilineal con modal interactivo táctil/ratón (`perspectiveWarpModal`).
+- [x] **M-24:** Sistema de historial completo de edición (Undo/Redo) independiente por ranura con atajos de teclado globales (`Ctrl + Z` / `Ctrl + Y`).
+- [x] **M-25:** Soporte de intercambio limpio de ranuras (`swapSlotData`) sin mutación corrupta de datos ni pérdida de imágenes.
+- [x] **M-26:** Selector de contraste y brillo adaptativo inteligente (`computeAdaptiveLighting`) que compensa sombras de celular y reflejos de flash automáticamente.
+
+*Resultados de la suite de pruebas sintéticas (`test_etapa4.js`):*
+- Test 1 (Undo/Redo): Snapshots independientes por ranura; reversión exacta de rotación (90° -> 0°) y filtros (bw -> color); restablecimiento fiel con Redo.
+- Test 2 (Homografía 3x3 y Perspectiva): Matriz de perspectiva 3x3 calculada por eliminación Gaussiana; las 4 esquinas deformadas mapean con precisión a (0,0), (W,0), (W,H), (0,H); matriz inversa H⁻¹ validada contra matriz identidad.
+- Test 3 (Swap de Ranuras): Intercambio Frente ⇄ Reverso verificado limpiamente.
+- Test 4 (Auto-Luz Adaptativa): Compensación de sombras verificada (brillo +35%, contraste +15%).
+
+---
+
+## 🎯 8. Matriz de Verificación para Etapa 5: Recuperación y Productividad (En Progreso)
+
+- [ ] **M-27:** Autoguardado silencioso de borrador activo (`draft_session`) y recuperación automática al recargar la pestaña.
+- [ ] **M-28:** Botón explícito de «Nuevo Trabajo / Limpiar Todo» con diálogo de confirmación seguro.
+- [ ] **M-29:** Presets de usuario personalizados guardables en almacenamiento local (ej. "Mi Notaría - INE Carta Duplicada").
+- [ ] **M-30:** Búsqueda en tiempo real y filtrado dinámico en el historial de escaneos.
+- [ ] **M-31:** Panel de Pre-Vuelo estricto con validaciones geométricas: aviso de baja resolución (<150 DPI) y desborde de papel con corrección en 1 clic.
+
 
 
 

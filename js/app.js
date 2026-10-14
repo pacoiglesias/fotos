@@ -89,6 +89,292 @@ function toggleSavedScansSection() {
 }
 
 /* ============================================================
+   ETAPA 4: EDICIÓN AVANZADA, PERSPECTIVA Y GESTIÓN DE PÁGINAS (M-22 a M-26)
+   ============================================================ */
+let activeWarpSide = 'front';
+let warpPoints = []; // [TL, TR, BR, BL] en coords nativas
+let warpImage = null;
+let warpDragIndex = -1;
+
+function openPerspectiveWarpModal(side) {
+  const imgData = state.images[side];
+  const src = imgData ? (imgData.rawOriginalSrc || imgData.originalSrc) : null;
+  if (!src) {
+    showToast('Carga primero una foto para enderezar su perspectiva.', 'warning');
+    return;
+  }
+  activeWarpSide = side;
+  const title = $('warpModalTitle');
+  if (title) title.textContent = 'Enderezar Perspectiva — ' + getSlotFriendlyName(side);
+
+  const img = new Image();
+  img.onload = function() {
+    warpImage = img;
+    if (imgData.perspectiveQuad && Array.isArray(imgData.perspectiveQuad) && imgData.perspectiveQuad.length === 4) {
+      warpPoints = JSON.parse(JSON.stringify(imgData.perspectiveQuad));
+    } else {
+      resetWarpPointsToInset(0.06);
+    }
+    openModal('perspectiveWarpModal');
+    renderWarpCanvas();
+  };
+  img.src = src;
+}
+
+function resetWarpPointsToInset(marginPercent) {
+  if (!warpImage) return;
+  const w = warpImage.naturalWidth;
+  const h = warpImage.naturalHeight;
+  const mx = w * marginPercent;
+  const my = h * marginPercent;
+  warpPoints = [
+    { x: mx, y: my },             // 0: Top-Left
+    { x: w - mx, y: my },         // 1: Top-Right
+    { x: w - mx, y: h - my },     // 2: Bottom-Right
+    { x: mx, y: h - my }          // 3: Bottom-Left
+  ];
+}
+
+function renderWarpCanvas() {
+  const canvas = $('canvasWarpInteractive');
+  if (!canvas || !warpImage) return;
+  const maxW = 760;
+  const maxH = 520;
+  const scale = Math.min(maxW / warpImage.naturalWidth, maxH / warpImage.naturalHeight, 1.0);
+  const w = Math.round(warpImage.naturalWidth * scale);
+  const h = Math.round(warpImage.naturalHeight * scale);
+  canvas.width = w;
+  canvas.height = h;
+
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(warpImage, 0, 0, w, h);
+
+  // Oscurecer exterior
+  ctx.save();
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+  ctx.fillRect(0, 0, w, h);
+
+  // Hueco interior iluminado
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath();
+  ctx.moveTo(warpPoints[0].x * scale, warpPoints[0].y * scale);
+  ctx.lineTo(warpPoints[1].x * scale, warpPoints[1].y * scale);
+  ctx.lineTo(warpPoints[2].x * scale, warpPoints[2].y * scale);
+  ctx.lineTo(warpPoints[3].x * scale, warpPoints[3].y * scale);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Líneas guías del cuadrilátero
+  ctx.save();
+  ctx.strokeStyle = '#6366f1';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(warpPoints[0].x * scale, warpPoints[0].y * scale);
+  ctx.lineTo(warpPoints[1].x * scale, warpPoints[1].y * scale);
+  ctx.lineTo(warpPoints[2].x * scale, warpPoints[2].y * scale);
+  ctx.lineTo(warpPoints[3].x * scale, warpPoints[3].y * scale);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+
+  // 4 manijas de esquina interactivas
+  const colors = ['#4f46e5', '#4f46e5', '#4f46e5', '#4f46e5'];
+  warpPoints.forEach(function(pt, idx) {
+    const px = pt.x * scale;
+    const py = pt.y * scale;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, 13, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 6;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(px, py, 9, 0, Math.PI * 2);
+    ctx.fillStyle = colors[idx];
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(idx + 1), px, py);
+    ctx.restore();
+  });
+}
+
+function initWarpCanvasEvents() {
+  const canvas = $('canvasWarpInteractive');
+  if (!canvas) return;
+
+  function getPointIndexAt(x, y, scale) {
+    for (let i = 0; i < warpPoints.length; i++) {
+      const px = warpPoints[i].x * scale;
+      const py = warpPoints[i].y * scale;
+      const dist = Math.hypot(x - px, y - py);
+      if (dist <= 26) return i;
+    }
+    return -1;
+  }
+
+  function getCanvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const cy = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const scale = canvas.width / (warpImage ? warpImage.naturalWidth : 1);
+    return { cx, cy, scale };
+  }
+
+  canvas.addEventListener('pointerdown', function(e) {
+    if (!warpImage) return;
+    const { cx, cy, scale } = getCanvasCoords(e);
+    warpDragIndex = getPointIndexAt(cx, cy, scale);
+    if (warpDragIndex >= 0) {
+      canvas.setPointerCapture(e.pointerId);
+    }
+  });
+
+  canvas.addEventListener('pointermove', function(e) {
+    if (!warpImage) return;
+    const { cx, cy, scale } = getCanvasCoords(e);
+    if (warpDragIndex >= 0) {
+      const nx = Math.max(0, Math.min(warpImage.naturalWidth, cx / scale));
+      const ny = Math.max(0, Math.min(warpImage.naturalHeight, cy / scale));
+      warpPoints[warpDragIndex].x = nx;
+      warpPoints[warpDragIndex].y = ny;
+      renderWarpCanvas();
+    } else {
+      const hoverIdx = getPointIndexAt(cx, cy, scale);
+      canvas.style.cursor = (hoverIdx >= 0) ? 'grab' : 'crosshair';
+    }
+  });
+
+  function stopDrag(e) {
+    if (warpDragIndex >= 0) {
+      warpDragIndex = -1;
+      try { canvas.releasePointerCapture(e.pointerId); } catch(err) {}
+    }
+  }
+
+  canvas.addEventListener('pointerup', stopDrag);
+  canvas.addEventListener('pointercancel', stopDrag);
+
+  if ($('btnWarpResetCorners')) {
+    on($('btnWarpResetCorners'), 'click', function() {
+      resetWarpPointsToInset(0.00);
+      renderWarpCanvas();
+      showToast('Esquinas extendidas al borde total.', 'info');
+    });
+  }
+
+  if ($('btnWarpAutoCorners')) {
+    on($('btnWarpAutoCorners'), 'click', function() {
+      resetWarpPointsToInset(0.08);
+      renderWarpCanvas();
+      showToast('Encuadre optimizado para credencial/tarjeta.', 'info');
+    });
+  }
+
+  if ($('btnApplyWarp')) {
+    on($('btnApplyWarp'), 'click', function() {
+      if (!warpImage || !window.RealScanEditor || !warpPoints || warpPoints.length !== 4) return;
+      const side = activeWarpSide;
+      const spec = getActiveSpec();
+      const targetW = Math.round((spec.widthMm / 25.4) * window.TARGET_DPI);
+      const targetH = Math.round((spec.heightMm / 25.4) * window.TARGET_DPI);
+
+      window.RealScanEditor.recordSnapshot(side, state.images[side]);
+      showToast('Calculando enderezado milimétrico a 300 DPI...', 'info');
+
+      setTimeout(function() {
+        const warpedDataUrl = window.RealScanEditor.warpPerspective(warpImage, warpPoints, targetW, targetH);
+        if (warpedDataUrl) {
+          state.images[side].croppedSrc = warpedDataUrl;
+          state.images[side].originalSrc = warpedDataUrl;
+          state.images[side].isCropApplied = true;
+          state.images[side].perspectiveQuad = JSON.parse(JSON.stringify(warpPoints));
+          state.images[side].fitMode = 'cover';
+          state.images[side].panX = 0;
+          state.images[side].panY = 0;
+          state.images[side].rotation = 0;
+          closeModal('perspectiveWarpModal');
+          renderProcessedImage(side);
+          showToast('📐 ¡Documento enderezado a 300 DPI con escala 1:1 verificada!', 'success');
+        } else {
+          showToast('No se pudo aplicar la corrección de perspectiva. Revisa que las 4 esquinas formen un cuadrilátero convexo.', 'warning');
+        }
+      }, 50);
+    });
+  }
+}
+
+function handleSlotUndo(side) {
+  if (!window.RealScanEditor || !window.RealScanEditor.canUndo(side)) {
+    showToast('No hay más cambios que deshacer en esta ranura.', 'info');
+    return;
+  }
+  const prev = window.RealScanEditor.undo(side, state.images[side]);
+  if (prev) {
+    Object.assign(state.images[side], prev);
+    renderProcessedImage(side);
+    showToast('↩️ Última edición deshecha.', 'info');
+  }
+}
+
+function handleSlotRedo(side) {
+  if (!window.RealScanEditor || !window.RealScanEditor.canRedo(side)) {
+    showToast('No hay cambios para rehacer.', 'info');
+    return;
+  }
+  const next = window.RealScanEditor.redo(side, state.images[side]);
+  if (next) {
+    Object.assign(state.images[side], next);
+    renderProcessedImage(side);
+    showToast('↪️ Cambio rehecho.', 'info');
+  }
+}
+
+function applyAdaptiveAutoLight(side) {
+  const imgData = state.images[side];
+  if (!imgData || !imgData.originalSrc || !window.RealScanEditor) {
+    showToast('Carga primero una foto para compensar la iluminación.', 'warning');
+    return;
+  }
+  const img = new Image();
+  img.onload = function() {
+    const analysis = window.RealScanEditor.computeAdaptiveLighting(img);
+    window.RealScanEditor.recordSnapshot(side, imgData);
+    imgData.brightness = analysis.brightness;
+    imgData.contrast = analysis.contrast;
+    renderProcessedImage(side);
+    showToast('🪄 ' + analysis.advice, 'success');
+  };
+  img.src = imgData.originalSrc;
+}
+
+function handleSlotSwap(sideA, sideB) {
+  const dataA = state.images[sideA];
+  const dataB = state.images[sideB];
+  if (!dataA || !dataB) return;
+  if (!dataA.originalSrc && !dataB.originalSrc) {
+    showToast('Ambas ranuras están vacías.', 'warning');
+    return;
+  }
+  if (window.RealScanEditor) {
+    window.RealScanEditor.recordSnapshot(sideA, dataA);
+    window.RealScanEditor.recordSnapshot(sideB, dataB);
+    window.RealScanEditor.swapSlotData(dataA, dataB);
+  }
+  renderProcessedImage(sideA);
+  renderProcessedImage(sideB);
+  showToast('⇄ ' + getSlotFriendlyName(sideA) + ' intercambiado con ' + getSlotFriendlyName(sideB), 'success');
+}
+
+/* ============================================================
    CATEGORÍAS / MODOS / FORMATOS
    ============================================================ */
 function switchCategory(cat) {
@@ -1156,6 +1442,44 @@ function bindEvents() {
     on($('btnToggleSavedScansSection'), 'click', toggleSavedScansSection);
   }
 
+  // Etapa 4: Herramientas avanzadas de edición (M-22 a M-26)
+  initWarpCanvasEvents();
+
+  $$('.warp-btn').forEach(function(btn) {
+    on(btn, 'click', function() {
+      const side = btn.getAttribute('data-warp');
+      if (side) openPerspectiveWarpModal(side);
+    });
+  });
+
+  $$('.autolight-btn').forEach(function(btn) {
+    on(btn, 'click', function() {
+      const side = btn.getAttribute('data-autolight');
+      if (side) applyAdaptiveAutoLight(side);
+    });
+  });
+
+  $$('.swap-btn').forEach(function(btn) {
+    on(btn, 'click', function() {
+      const parts = (btn.getAttribute('data-swap') || '').split(':');
+      if (parts.length === 2) handleSlotSwap(parts[0], parts[1]);
+    });
+  });
+
+  $$('.undo-btn').forEach(function(btn) {
+    on(btn, 'click', function() {
+      const side = btn.getAttribute('data-undo');
+      if (side) handleSlotUndo(side);
+    });
+  });
+
+  $$('.redo-btn').forEach(function(btn) {
+    on(btn, 'click', function() {
+      const side = btn.getAttribute('data-redo');
+      if (side) handleSlotRedo(side);
+    });
+  });
+
   // Theme toggle
   on($('btnThemeToggle'), 'click', function(){
     toggleTheme();
@@ -1467,11 +1791,23 @@ function bindEvents() {
   on(window, 'dragover', function(e){ e.preventDefault(); });
   on(window, 'drop', function(e){ e.preventDefault(); });
 
-  // Atajo de teclado: Ctrl + P para imprimir directo a escala 100%
+  // Atajos de teclado: Ctrl + P (imprimir), Ctrl + Z (deshacer), Ctrl + Y (rehacer)
   on(window, 'keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
       e.preventDefault();
       handlePrintDirect();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      const activeSide = state.activeCameraSide || 'front';
+      if (e.shiftKey) {
+        handleSlotRedo(activeSide);
+      } else {
+        handleSlotUndo(activeSide);
+      }
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+      e.preventDefault();
+      const activeSide = state.activeCameraSide || 'front';
+      handleSlotRedo(activeSide);
     }
   });
 

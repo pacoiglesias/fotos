@@ -573,6 +573,9 @@ function processRawDataUrl(rawSrc, side) {
 
 function rotateImage(side) {
   if (!state.images[side].originalSrc) return;
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+    RealScanEditor.recordSnapshot(side, state.images[side]);
+  }
   state.images[side].rotation = (state.images[side].rotation + 90) % 360;
   renderProcessedImage(side);
 }
@@ -719,6 +722,9 @@ function renderProcessedImage(side) {
 
 function setFilter(side, filter) {
   if (!state.images[side].originalSrc) return;
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+    RealScanEditor.recordSnapshot(side, state.images[side]);
+  }
   state.images[side].filter = filter;
   renderProcessedImage(side);
   const names = { color: 'Color original', bw: 'Blanco y Negro oficial', scanner: 'Escáner / Fotocopia nítida' };
@@ -748,6 +754,9 @@ function adjustSlotLight(side, type, delta) {
   if (!imgData || !imgData.originalSrc) {
     showToast('Carga primero una foto para ajustar la luz y sombra.', 'warning');
     return;
+  }
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+    RealScanEditor.recordSnapshot(side, imgData);
   }
   if (type === 'brightness') {
     imgData.brightness = Math.max(-60, Math.min(60, (imgData.brightness || 0) + delta));
