@@ -34,7 +34,9 @@ async function handleExportPDF(tryShare) {
   const doc = generatePdfDoc();
   if (!doc) return;
   const spec = getActiveSpec();
-  const fileName = 'RealScan_' + spec.fileName + '_' + Date.now() + '.pdf';
+  const customName = (state.documentCustomTitle || '').trim().replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const baseName = customName ? customName : ('RealScan_' + spec.fileName);
+  const fileName = baseName + '_' + Date.now() + '.pdf';
 
   try {
     const pdfBlob = doc.output('blob');
@@ -135,45 +137,47 @@ function downloadA4Image() {
 
   const spec = getActiveSpec();
 
-  // Regla de calibración en imagen (5 cm)
-  const rulerLengthMm = 50;
-  const rulerLengthPx = rulerLengthMm * pxPerMm;
-  const rulerStartX = (a4W - rulerLengthPx) / 2;
-  const rulerY = 262 * pxPerMm;
+  // Regla de calibración en imagen (5 cm) — Opcional
+  if (state.includeRulerFooter !== false) {
+    const rulerLengthMm = 50;
+    const rulerLengthPx = rulerLengthMm * pxPerMm;
+    const rulerStartX = (a4W - rulerLengthPx) / 2;
+    const rulerY = 262 * pxPerMm;
 
-  ctx.strokeStyle = '#444444';
-  ctx.lineWidth = 3.5;
-  ctx.beginPath();
-  ctx.moveTo(rulerStartX, rulerY);
-  ctx.lineTo(rulerStartX + rulerLengthPx, rulerY);
-  ctx.stroke();
-
-  ctx.lineWidth = 2.2;
-  for (let mm = 0; mm <= 50; mm++) {
-    const mx = rulerStartX + mm * pxPerMm;
-    let tickH = 10;
-    if (mm % 10 === 0) tickH = 28;
-    else if (mm % 5 === 0) tickH = 18;
+    ctx.strokeStyle = '#444444';
+    ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.moveTo(mx, rulerY);
-    ctx.lineTo(mx, rulerY + tickH);
+    ctx.moveTo(rulerStartX, rulerY);
+    ctx.lineTo(rulerStartX + rulerLengthPx, rulerY);
     ctx.stroke();
-  }
 
-  ctx.fillStyle = '#444444';
-  ctx.font = 'bold 22px Helvetica, Arial, sans-serif';
-  ctx.textAlign = 'center';
-  for (let i = 0; i <= 5; i++) {
-    const mx = rulerStartX + (i * 10) * pxPerMm;
-    ctx.fillText(i + 'cm', mx, rulerY + 54);
-  }
+    ctx.lineWidth = 2.2;
+    for (let mm = 0; mm <= 50; mm++) {
+      const mx = rulerStartX + mm * pxPerMm;
+      let tickH = 10;
+      if (mm % 10 === 0) tickH = 28;
+      else if (mm % 5 === 0) tickH = 18;
+      ctx.beginPath();
+      ctx.moveTo(mx, rulerY);
+      ctx.lineTo(mx, rulerY + tickH);
+      ctx.stroke();
+    }
 
-  ctx.font = 'bold 26px Helvetica, Arial, sans-serif';
-  ctx.fillStyle = '#222222';
-  ctx.fillText('INSTRUCCIONES: IMPRIMIR AL 100% (TAMAÑO REAL) — LA REGLA DEBE MEDIR 5 CM', a4W / 2, rulerY + 95);
-  ctx.font = '20px Helvetica, Arial, sans-serif';
-  ctx.fillStyle = '#666666';
-  ctx.fillText('RealScan por Paco Iglesias | Formato: ' + spec.name + ' (300 DPI)', a4W / 2, rulerY + 130);
+    ctx.fillStyle = '#444444';
+    ctx.font = 'bold 22px Helvetica, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    for (let i = 0; i <= 5; i++) {
+      const mx = rulerStartX + (i * 10) * pxPerMm;
+      ctx.fillText(i + 'cm', mx, rulerY + 54);
+    }
+
+    ctx.font = 'bold 26px Helvetica, Arial, sans-serif';
+    ctx.fillStyle = '#222222';
+    ctx.fillText('INSTRUCCIONES: IMPRIMIR AL 100% (TAMAÑO REAL) — LA REGLA DEBE MEDIR 5 CM', a4W / 2, rulerY + 95);
+    ctx.font = '20px Helvetica, Arial, sans-serif';
+    ctx.fillStyle = '#666666';
+    ctx.fillText('RealScan por Paco Iglesias | Formato: ' + spec.name + ' (300 DPI)', a4W / 2, rulerY + 130);
+  }
 
   function drawImageWithMarks(imgObj, xMm, yMm, wMm, hMm) {
     const x = xMm * pxPerMm;

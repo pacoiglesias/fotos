@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v2.6.5-Enterprise';
+window.APP_VERSION = 'v2.7.0-Enterprise';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -19,6 +19,9 @@ window.state = {
   activeCategory: 'docs',
   printMode: 'both', // 'both' (2 caras en 1 hoja), 'both_separate' (2 caras en hojas separadas), 'single' (1 cara) o 'multi' (3-4 páginas)
   sheetLayout: 'same_page', // 'same_page' (juntas en 1 hoja A4) o 'separate_pages' (1 por hoja)
+  includeRulerFooter: true, // true (con regla de 5cm e instrucciones) o false (página 100% limpia para trámites oficiales)
+  includeDocLabels: true, // true (con títulos y mm sobre cada cara) o false
+  documentCustomTitle: '', // Nombre o titular personalizado (ej: "DNI de Juan Pérez")
   format: 'card',
   photoCopies: 4,
   customWidth: 8.5,

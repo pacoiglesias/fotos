@@ -15,6 +15,7 @@ function drawCornerCutMarks(doc, x, y, w, h) {
 }
 
 function drawCalibrationFooter(doc, pageW, spec) {
+  if (state.includeRulerFooter === false) return; // Si el usuario lo desactiva, la hoja queda 100% limpia para trámites oficiales
   const rulerY = 262;
   const rulerLengthMm = 50;
   const rulerStartX = (pageW - rulerLengthMm) / 2;
@@ -213,12 +214,16 @@ function generatePdfDoc() {
       doc.addImage(item.dataUrl, 'JPEG', posX, itemY, targetW, targetH, undefined, 'FAST');
       drawCornerCutMarks(doc, posX, itemY, targetW, targetH);
 
-      // Título y dimensiones físicas
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.setTextColor(90, 90, 90);
-      const sheetInfo = totalSheets > 1 ? (' [Hoja ' + (currentSheetIndex + 1) + '/' + totalSheets + ']') : '';
-      doc.text(item.label + ' — ' + targetW + ' × ' + targetH + ' mm' + sheetInfo, posX, itemY - 2.5);
+      // Título y dimensiones físicas (opcional para trámites oficiales)
+      if (state.includeDocLabels !== false) {
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(90, 90, 90);
+        const customName = (state.documentCustomTitle || '').trim();
+        const displayLabel = customName ? (customName + ' • ' + item.label) : item.label;
+        const sheetInfo = totalSheets > 1 ? (' [Hoja ' + (currentSheetIndex + 1) + '/' + totalSheets + ']') : '';
+        doc.text(displayLabel + ' — ' + targetW + ' × ' + targetH + ' mm' + sheetInfo, posX, itemY - 2.5);
+      }
 
       itemsOnCurrentSheet++;
     }

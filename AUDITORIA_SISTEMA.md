@@ -84,8 +84,34 @@ Se agregaron 4 botones dedicados con etiquetas claras y descriptivas:
 
 ---
 
-## 5. 🚀 Despliegue y Sincronización Total
+## 5. 🛡️ Versión v2.7.0-Enterprise: Opciones para Trámites Oficiales y Título Personalizado
+1. **Regla de 5 cm e Instrucciones de Calibración 100% Opcionales:**
+   - **Problema resuelto:** En trámites oficiales (bancos, juzgados, embajadas, colegios profesionales, notarías), los documentos son rechazados si la fotocopia contiene textos adicionales, reglas o anotaciones externas ajenas al documento original.
+   - **Solución implementada:** Casilla de verificación *"Incluir regla de 5 cm e instrucciones"* en el Paso 4. Al desmarcarla:
+     - Se oculta de inmediato en la vista previa en vivo (`#footerCalibrationRuler`).
+     - Se omite completamente en el PDF exportado (`js/pdf.js` -> `drawCalibrationFooter`).
+     - Se omite en la descarga de imagen A4 (`js/export.js` -> `downloadA4Image`).
+     - Se imprime una hoja **100% limpia, pulcra e inmaculada** conservando la escala geométrica real 1:1 exacta.
+   - **Persistencia automática:** La preferencia se almacena en `localStorage` y se restaura en cada sesión.
+
+2. **Nombre / Titular del Documento Personalizado:**
+   - **Campo de texto:** `#inputDocumentTitle` en el Paso 4 con botón de limpieza rápida (`#btnClearDocTitle`).
+   - **Ejemplo:** *"DNI - Carlos Gómez"* o *"Pasaporte Mexicano - María Pérez"*.
+   - **Impacto directo:**
+     - El archivo PDF se descarga con el nombre sanitizado: `RealScan_DNI_Carlos_Gomez_20261013.pdf`.
+     - Si los rótulos están activos, se incluye en el encabezado de cada ranura.
+   - **Rótulos superiores opcionales:** Casilla *"Incluir rótulo del documento"* para omitir también los títulos superiores si la institución requiere una copia 100% fotográfica sin ninguna palabra externa.
+
+3. **Control Estricto de Versiones:**
+   - Versión del sistema elevada a **`v2.7.0-Enterprise`**.
+   - Sincronización dinámica automática entre `window.APP_VERSION` en `js/config.js` y el badge del encabezado `#appVersionHeader`.
+
+---
+
+## 6. 🚀 Despliegue y Sincronización Total
 - **Local:** `http://localhost:5500/`
 - **Producción:** `https://fotos-cobertores-pro.web.app` / `https://fotos-cobertores-pro.firebaseapp.com`
-- **Integridad:** Código sincronizado al 100%, validado sintácticamente y con cero errores de consola.
+- **Integridad:** Código modular sincronizado al 100%, validado sintácticamente y con cero errores de consola.
+- **Autoría:** Desarrollado por **Paco Iglesias**.
+
  

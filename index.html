@@ -77,7 +77,7 @@
           <div class="flex items-center gap-1.5">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v2.4.1</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v2.7.0-Enterprise</span>
           </div>
           <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap flex items-center gap-1 mt-0.5">
             <span>Desarrollado por</span>
@@ -1082,7 +1082,7 @@
             <p class="text-[9px] text-slate-400 text-center mt-2 font-mono">Planilla calibrada a escala 1:1 con guías de corte</p>
           </div>
 
-          <div class="mt-auto w-full pt-2 border-t border-slate-200 text-center">
+          <div id="footerCalibrationRuler" class="mt-auto w-full pt-2 border-t border-slate-200 text-center transition-all">
             <div class="flex justify-between items-end px-2 text-[8px] text-slate-400 font-mono">
               <span>0cm</span><span>1cm</span><span>2cm</span><span>3cm</span><span>4cm</span><span>5cm</span>
             </div>
@@ -1091,6 +1091,55 @@
             </div>
             <p class="text-[8px] text-slate-400 mt-0.5">Regla de calibración de 5 cm incluida en el PDF final</p>
           </div>
+        </div>
+      </div>
+
+      <!-- Nombre o Titular del Documento (Personalización de Archivo y Encabezado) -->
+      <div class="p-3 bg-slate-50 dark:bg-slate-850/80 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 transition-colors">
+        <label for="inputDocumentTitle" class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+          <span class="flex items-center gap-1.5">
+            <span>🏷️</span> <span>Nombre del Documento o Titular (Opcional):</span>
+          </span>
+          <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">Para expedientes o trámites</span>
+        </label>
+        <div class="flex items-center gap-2">
+          <input type="text" id="inputDocumentTitle" placeholder="Ej: DNI - Carlos Gómez / Pasaporte - María / Licencia Chofer"
+            class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium" />
+          <button type="button" id="btnClearDocTitle" class="px-2.5 py-2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-colors" title="Borrar nombre">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Opciones de Trámite Oficial y Limpieza de Hoja -->
+      <div class="p-3 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-xl border border-indigo-200/70 dark:border-indigo-900/50 space-y-2.5 transition-colors">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>⚖️</span> <span>Configuración para Trámites Oficiales y Limpieza de Página:</span>
+          </span>
+          <span class="text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/60 px-2 py-0.5 rounded-full">
+            100% Control
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <!-- Toggle Regla e Instrucciones al pie -->
+          <label class="flex items-start gap-2 p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer hover:border-indigo-300 transition-colors">
+            <input type="checkbox" id="chkIncludeRulerFooter" checked class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer" />
+            <div class="min-w-0">
+              <span class="font-semibold text-slate-800 dark:text-slate-200 block">📐 Regla de 5 cm e Instrucciones</span>
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight mt-0.5">Desmárcalo para trámites oficiales donde te piden la hoja 100% limpia sin anotaciones al pie.</span>
+            </div>
+          </label>
+
+          <!-- Toggle Etiquetas de Dimensiones y Título -->
+          <label class="flex items-start gap-2 p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer hover:border-indigo-300 transition-colors">
+            <input type="checkbox" id="chkIncludeDocLabels" checked class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer" />
+            <div class="min-w-0">
+              <span class="font-semibold text-slate-800 dark:text-slate-200 block">🏷️ Imprimir Nombre y Medidas</span>
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight mt-0.5">Muestra el nombre o medida física sobre cada cara del documento.</span>
+            </div>
+          </label>
         </div>
       </div>
 

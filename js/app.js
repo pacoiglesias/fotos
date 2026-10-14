@@ -584,7 +584,10 @@ function savePreferences() {
       customWidth: state.customWidth,
       customHeight: state.customHeight,
       customUnit: state.customUnit,
-      mixTwoPhotos: state.mixTwoPhotos
+      mixTwoPhotos: state.mixTwoPhotos,
+      includeRulerFooter: state.includeRulerFooter !== false,
+      includeDocLabels: state.includeDocLabels !== false,
+      documentCustomTitle: state.documentCustomTitle || ''
     };
     localStorage.setItem(window.PREFS_KEY, JSON.stringify(prefs));
   } catch (e) {}
@@ -618,6 +621,23 @@ function loadPreferences() {
       state.mixTwoPhotos = p.mixTwoPhotos;
       const chk = $('chkMixTwoPhotos');
       if (chk) chk.checked = p.mixTwoPhotos;
+    }
+    if (p.includeRulerFooter !== undefined) {
+      state.includeRulerFooter = p.includeRulerFooter;
+      const chk = $('chkIncludeRulerFooter');
+      if (chk) chk.checked = p.includeRulerFooter;
+      const ruler = $('footerCalibrationRuler');
+      if (ruler) ruler.classList.toggle('hidden', !p.includeRulerFooter);
+    }
+    if (p.includeDocLabels !== undefined) {
+      state.includeDocLabels = p.includeDocLabels;
+      const chk = $('chkIncludeDocLabels');
+      if (chk) chk.checked = p.includeDocLabels;
+    }
+    if (p.documentCustomTitle !== undefined) {
+      state.documentCustomTitle = p.documentCustomTitle;
+      const inp = $('inputDocumentTitle');
+      if (inp) inp.value = p.documentCustomTitle;
     }
     if (p.format && FORMAT_SPECS[p.format]) state.format = p.format;
     if (p.activeCategory) switchCategory(p.activeCategory);
@@ -988,6 +1008,47 @@ function bindEvents() {
     on($('hudBtnSettings'), 'click', openSettingsModal);
   }
 
+  // Nombre / Titular del Documento
+  if ($('inputDocumentTitle')) {
+    on($('inputDocumentTitle'), 'input', function(e) {
+      state.documentCustomTitle = (e.target.value || '').trim();
+      savePreferences();
+    });
+  }
+  if ($('btnClearDocTitle')) {
+    on($('btnClearDocTitle'), 'click', function() {
+      if ($('inputDocumentTitle')) $('inputDocumentTitle').value = '';
+      state.documentCustomTitle = '';
+      savePreferences();
+      showToast('Título del documento restablecido.', 'info');
+    });
+  }
+
+  // Opciones Oficiales de Impresión (Regla e Instrucciones Opcionales)
+  if ($('chkIncludeRulerFooter')) {
+    on($('chkIncludeRulerFooter'), 'change', function(e) {
+      state.includeRulerFooter = e.target.checked;
+      const ruler = $('footerCalibrationRuler');
+      if (ruler) {
+        ruler.classList.toggle('hidden', !state.includeRulerFooter);
+      }
+      savePreferences();
+      if (!state.includeRulerFooter) {
+        showToast('Regla e instrucciones desactivadas: Hoja 100% limpia para trámites oficiales.', 'success');
+      } else {
+        showToast('Regla de 5 cm e instrucciones activadas en el pie de página.', 'info');
+      }
+    });
+  }
+
+  if ($('chkIncludeDocLabels')) {
+    on($('chkIncludeDocLabels'), 'change', function(e) {
+      state.includeDocLabels = e.target.checked;
+      savePreferences();
+      showToast(state.includeDocLabels ? 'Rótulos superiores activados.' : 'Rótulos desactivados para máxima pulcritud.', 'info');
+    });
+  }
+
   // Live camera actions
   on($('btnSwitchCam'), 'click', switchCameraFacing);
   on($('btnCapture'), 'click', captureLivePhoto);
@@ -1022,6 +1083,8 @@ function bindEvents() {
    INIT
    ============================================================ */
 function init() {
+  const vEl = $('appVersionHeader');
+  if (vEl && window.APP_VERSION) vEl.textContent = window.APP_VERSION;
   bindEvents();
   if (typeof checkAuthSession === 'function') checkAuthSession();
   loadPreferences();
