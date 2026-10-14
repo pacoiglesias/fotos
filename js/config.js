@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.0.0-Titanium';
+window.APP_VERSION = 'v3.1.0-Enterprise';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -23,6 +23,7 @@ window.state = {
   includeRulerFooter: true, // true (con regla de 5cm e instrucciones) o false (página 100% limpia para trámites oficiales)
   includeDocLabels: true, // true (con títulos y mm sobre cada cara) o false
   documentCustomTitle: '', // Nombre o titular personalizado (ej: "DNI de Juan Pérez")
+  duplicateCard: false, // true (2 juegos de copias en 1 hoja: Frente+Vuelta x2)
   format: 'card',
   photoCopies: 4,
   customWidth: 8.5,
@@ -35,10 +36,10 @@ window.state = {
   passportPageOrientation: 'landscape', // 'landscape' (125 x 88 mm) o 'portrait' (88 x 125 mm)
   documentPageCount: 2, // 1, 2, 3 o 4 páginas/caras
   images: {
-    front: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, fitMode:'cover', showMmGrid:false, filter:'color', panX:0, panY:0, showOaciGuide:false },
-    back:  { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, fitMode:'cover', showMmGrid:false, filter:'color', panX:0, panY:0, showOaciGuide:false },
-    page3: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, fitMode:'cover', showMmGrid:false, filter:'color', panX:0, panY:0, showOaciGuide:false },
-    page4: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, fitMode:'cover', showMmGrid:false, filter:'color', panX:0, panY:0, showOaciGuide:false }
+    front: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, fitMode:'cover', showMmGrid:false, filter:'color', panX:0, panY:0, showOaciGuide:false, brightness:0, contrast:0 },
+    back:  { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, fitMode:'cover', showMmGrid:false, filter:'color', panX:0, panY:0, showOaciGuide:false, brightness:0, contrast:0 },
+    page3: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, fitMode:'cover', showMmGrid:false, filter:'color', panX:0, panY:0, showOaciGuide:false, brightness:0, contrast:0 },
+    page4: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, fitMode:'cover', showMmGrid:false, filter:'color', panX:0, panY:0, showOaciGuide:false, brightness:0, contrast:0 }
   },
   mixTwoPhotos: false
 };
@@ -67,6 +68,7 @@ window.FORMAT_SPECS = {
   photo_passport:  { category:'photos', name:'Foto Pasaporte / Cartilla (OACI/ICAO - 3.5 × 4.5 cm)', shortName:'Foto Pasaporte (3.5×4.5cm)', fileName:'foto_pasaporte_oaci', widthMm:35.0, heightMm:45.0 },
   photo_visa_usa:  { category:'photos', name:'Foto Visa EE.UU. (2×2 pulgadas / 5.1 × 5.1 cm)', shortName:'Foto Visa USA (5.1×5.1cm)', fileName:'foto_visa_usa', widthMm:50.8, heightMm:50.8 },
   photo_titulo:    { category:'photos', name:'Foto Título / Diploma (México - 6.0 × 9.0 cm)', shortName:'Foto Título (6×9cm)', fileName:'foto_titulo_diploma', widthMm:60.0, heightMm:90.0 },
+  photo_ovalo_titulo: { category:'photos', name:'Foto Óvalo Título / Diploma (México - 6.0 × 9.0 cm)', shortName:'Óvalo Título (6×9cm)', fileName:'foto_ovalo_titulo_diploma', widthMm:60.0, heightMm:90.0, isOval:true },
   photo_credencial:{ category:'photos', name:'Foto Tamaño Credencial (3.5 × 5.0 cm)', shortName:'Foto Credencial (3.5×5cm)', fileName:'foto_credencial', widthMm:35.0, heightMm:50.0 },
   custom:          { category:'custom', name:'Medida Personalizada', shortName:'Personalizada', fileName:'documento_personalizado', widthMm:85.0, heightMm:55.0 }
 };

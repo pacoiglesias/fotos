@@ -15,8 +15,8 @@ function getSlotIdSuffix(side) {
 }
 
 function getSlotFriendlyName(side) {
-  if (side === 'front') return 'Anverso / Pág. 1';
-  if (side === 'back') return 'Reverso / Pág. 2';
+  if (side === 'front') return '1. Frente (Delantera con Foto)';
+  if (side === 'back') return '2. Reverso (Atrás / Vuelta)';
   if (side === 'page3') return 'Página 3 / Visa 1';
   if (side === 'page4') return 'Página 4 / Visa 2';
   return 'Página';
@@ -465,7 +465,9 @@ function clearSlot(side) {
     filter: 'color',
     panX: 0,
     panY: 0,
-    showOaciGuide: false
+    showOaciGuide: false,
+    brightness: 0,
+    contrast: 0
   };
 
   const suffix = getSlotIdSuffix(side);
@@ -622,12 +624,31 @@ function renderProcessedImage(side) {
     const offsetX = (panX / 100) * outW;
     const offsetY = (panY / 100) * outH;
 
+    const b = imgData.brightness || 0;
+    const c = imgData.contrast || 0;
+
     ctx.save();
+    if (b !== 0 || c !== 0) {
+      ctx.filter = 'brightness(' + (100 + b) + '%) contrast(' + (100 + c) + '%)';
+    }
     ctx.translate(outW / 2 + offsetX, outH / 2 + offsetY);
     ctx.rotate((rotation * Math.PI) / 180);
     ctx.scale(finalScale, finalScale);
     ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
     ctx.restore();
+
+    // Soporte para Foto Óvalo Título / Diploma (SEP / Universidad 6.0 × 9.0 cm)
+    if (spec.isOval) {
+      ctx.save();
+      // Guía punteada oficial de corte elíptico
+      ctx.setLineDash([14, 10]);
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = Math.max(2, Math.round(outW * 0.005));
+      ctx.beginPath();
+      ctx.ellipse(outW / 2, outH / 2, outW / 2 - 6, outH / 2 - 6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // Filtros de Escáner y Blanco y Negro
     if (filter === 'bw' || filter === 'scanner') {
@@ -711,6 +732,36 @@ function resetPan(side) {
   state.images[side].panY = 0;
   renderProcessedImage(side);
   showToast('Posición centrada al origen.', 'info');
+}
+
+/* ============================================================
+   CORRECTOR RÁPIDO DE ILUMINACIÓN Y CONTRASTE (+15% / -15%)
+   ============================================================ */
+function adjustSlotLight(side, type, delta) {
+  const imgData = state.images[side];
+  if (!imgData || !imgData.originalSrc) {
+    showToast('Carga primero una foto para ajustar la luz y sombra.', 'warning');
+    return;
+  }
+  if (type === 'brightness') {
+    imgData.brightness = Math.max(-60, Math.min(60, (imgData.brightness || 0) + delta));
+    const sign = imgData.brightness > 0 ? '+' : '';
+    showToast('☀️ Brillo ajustado a ' + sign + imgData.brightness + '%', 'info');
+  } else if (type === 'contrast') {
+    imgData.contrast = Math.max(-60, Math.min(60, (imgData.contrast || 0) + delta));
+    const sign = imgData.contrast > 0 ? '+' : '';
+    showToast('🔆 Contraste ajustado a ' + sign + imgData.contrast + '%', 'info');
+  }
+  renderProcessedImage(side);
+}
+
+function resetSlotLight(side) {
+  const imgData = state.images[side];
+  if (!imgData) return;
+  imgData.brightness = 0;
+  imgData.contrast = 0;
+  renderProcessedImage(side);
+  showToast('🔄 Iluminación restablecida a valores originales.', 'info');
 }
 
 function toggleOaciGuide(side) {

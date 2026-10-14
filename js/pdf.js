@@ -139,6 +139,12 @@ function generatePdfDoc() {
       const useBack = (state.mixTwoPhotos && state.images.back.processedDataUrl && i >= Math.floor(copies / 2));
       const curImg = useBack ? state.images.back.processedDataUrl : state.images.front.processedDataUrl;
       doc.addImage(curImg, 'JPEG', photoX, photoY, targetW, targetH, undefined, 'FAST');
+      if (spec.isOval) {
+        doc.setDrawColor(110, 110, 110);
+        doc.setLineWidth(0.28);
+        doc.setLineDashPattern([2, 1.5], 0);
+        doc.ellipse(photoX + targetW / 2, photoY + targetH / 2, targetW / 2 - 0.2, targetH / 2 - 0.2, 'S');
+      }
       drawCornerCutMarks(doc, photoX, photoY, targetW, targetH);
 
       currentPagePhotos++;
@@ -158,9 +164,9 @@ function generatePdfDoc() {
         } else if (state.format === 'passport') {
           label = (idx === 0) ? 'PÁG. 1 (DATOS BIOGRÁFICOS / FOTO)' : (idx === 1 ? 'PÁG. 2 (VISA / FIRMA / SELLO)' : ('PÁGINA ' + (idx + 1) + ' (VISA O SELLO)'));
         } else if (state.format === 'card') {
-          label = (idx === 0) ? 'ANVERSO (FRENTE CON FOTO)' : (idx === 1 ? 'REVERSO (VUELTA / CÓDIGO)' : ('DOCUMENTO 2 (PÁG. ' + (idx - 1) + ')'));
+          label = (idx === 0) ? 'FRENTE (DELANTERA CON FOTO)' : (idx === 1 ? 'REVERSO (ATRÁS / VUELTA)' : ('DOCUMENTO 2 (PÁG. ' + (idx - 1) + ')'));
         } else {
-          label = (idx === 0) ? 'ANVERSO (FRENTE)' : (idx === 1 ? 'REVERSO (VUELTA)' : ('PÁGINA ' + (idx + 1)));
+          label = (idx === 0) ? 'FRENTE (DELANTERA)' : (idx === 1 ? 'REVERSO (ATRÁS / VUELTA)' : ('PÁGINA ' + (idx + 1)));
         }
 
         activeItems.push({
@@ -176,9 +182,58 @@ function generatePdfDoc() {
       return null;
     }
 
-    if (activeItems.length === 1 && state.printMode !== 'single') {
+    if (activeItems.length === 1 && state.printMode !== 'single' && !state.duplicateCard) {
       const ok = confirm('Has seleccionado imprimir múltiples caras o páginas, pero solo has cargado 1 foto.\n\n¿Deseas generar el PDF incluyendo solo esta página?');
       if (!ok) return null;
+    }
+
+    // Modo Duplicado: 2 Juegos de Copias en la misma Hoja (INE / DNI x2 en 2 Columnas)
+    if (state.duplicateCard && (targetW * 2 + 12) <= pageW) {
+      const gapX = 14;
+      const totalWidth2Col = targetW * 2 + gapX;
+      const startXCol1 = (pageW - totalWidth2Col) / 2;
+      const startXCol2 = startXCol1 + targetW + gapX;
+      const topMargin = 20;
+
+      // Encabezado de la planilla duplicada
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(70, 70, 70);
+      doc.text('COPIA DOBLE OFICIAL (2 JUEGOS EN 1 HOJA A TAMAÑO REAL 1:1)', pageW / 2, topMargin - 8, { align: 'center' });
+
+      const columns = [
+        { title: 'JUEGO 1', startX: startXCol1 },
+        { title: 'JUEGO 2', startX: startXCol2 }
+      ];
+
+      columns.forEach(function(col) {
+        activeItems.forEach(function(item, itemIdx) {
+          const itemY = topMargin + itemIdx * (targetH + 14);
+
+          // Borde punteado
+          doc.setDrawColor(190, 190, 190);
+          doc.setLineWidth(0.25);
+          doc.setLineDashPattern([1.5, 1.5], 0);
+          doc.rect(col.startX - 0.5, itemY - 0.5, targetW + 1, targetH + 1);
+
+          // Imagen 1:1
+          doc.addImage(item.dataUrl, 'JPEG', col.startX, itemY, targetW, targetH, undefined, 'FAST');
+          drawCornerCutMarks(doc, col.startX, itemY, targetW, targetH);
+
+          // Rótulo
+          if (state.includeDocLabels !== false) {
+            doc.setFont('Helvetica', 'bold');
+            doc.setFontSize(7);
+            doc.setTextColor(90, 90, 90);
+            const customName = (state.documentCustomTitle || '').trim();
+            const prefix = customName ? (customName + ' • ' + col.title + ': ') : (col.title + ' • ');
+            doc.text(prefix + item.label + ' (' + targetW + ' × ' + targetH + ' mm)', col.startX, itemY - 2.5);
+          }
+        });
+      });
+
+      drawCalibrationFooter(doc, pageW, spec, pageH);
+      return doc;
     }
 
     const isSeparateSheets = (state.printMode === 'both_separate' || state.sheetLayout === 'separate_sheets');

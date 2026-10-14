@@ -35,8 +35,8 @@ function switchCategory(cat) {
     if (step1Subtitle) step1Subtitle.textContent = 'Configuración de hoja';
     if (step1DocsMode) step1DocsMode.classList.remove('hidden');
     if (step1PhotosMode) step1PhotosMode.classList.add('hidden');
-    if (slot1Title) slot1Title.textContent = 'Anverso (Frente)';
-    if (slot2Title) slot2Title.textContent = 'Reverso (Atrás / Vuelta)';
+    if (slot1Title) slot1Title.textContent = '1. Frente (Delantera con Foto)';
+    if (slot2Title) slot2Title.textContent = '2. Reverso (Atrás / Vuelta)';
     if (cardBackContainer) cardBackContainer.classList.toggle('hidden', state.printMode !== 'both');
     if (!FORMAT_SPECS[state.format] || FORMAT_SPECS[state.format].category !== 'docs') selectFormat('card');
   } else if (cat === 'photos') {
@@ -237,9 +237,9 @@ function updateSlotLabels() {
     if (slot3) slot3.textContent = 'Página 3 (Visa o Sello Adicional)';
     if (slot4) slot4.textContent = 'Página 4 (Visa o Sello Adicional)';
   } else if (fmt === 'card') {
-    if (slot1) slot1.textContent = 'Anverso (Frente con Foto)';
-    if (slot2) slot2.textContent = 'Reverso (Atrás / Huella / Código)';
-    if (slot3) slot3.textContent = 'Documento 2: Anverso';
+    if (slot1) slot1.textContent = '1. Frente (Delantera con Foto)';
+    if (slot2) slot2.textContent = '2. Reverso (Atrás / Vuelta)';
+    if (slot3) slot3.textContent = 'Documento 2: Frente';
     if (slot4) slot4.textContent = 'Documento 2: Reverso';
   } else {
     if (slot1) slot1.textContent = 'Página 1 (Frente)';
@@ -773,7 +773,8 @@ function savePreferences() {
       mixTwoPhotos: state.mixTwoPhotos,
       includeRulerFooter: state.includeRulerFooter !== false,
       includeDocLabels: state.includeDocLabels !== false,
-      documentCustomTitle: state.documentCustomTitle || ''
+      documentCustomTitle: state.documentCustomTitle || '',
+      duplicateCard: !!state.duplicateCard
     };
     localStorage.setItem(window.PREFS_KEY, JSON.stringify(prefs));
   } catch (e) {}
@@ -827,6 +828,16 @@ function loadPreferences() {
       state.includeDocLabels = p.includeDocLabels;
       const chk = $('chkIncludeDocLabels');
       if (chk) chk.checked = p.includeDocLabels;
+    }
+    if (p.duplicateCard !== undefined) {
+      state.duplicateCard = !!p.duplicateCard;
+      const chk = $('chkDuplicateCard');
+      if (chk) chk.checked = state.duplicateCard;
+      const b = $('badgeDuplicateStatus');
+      if (b) {
+        b.textContent = state.duplicateCard ? '2 Juegos' : '1 Juego';
+        b.className = state.duplicateCard ? 'text-[9.5px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded shrink-0' : 'text-[9.5px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded shrink-0';
+      }
     }
     if (p.documentCustomTitle !== undefined) {
       state.documentCustomTitle = p.documentCustomTitle;
@@ -1299,6 +1310,25 @@ function bindEvents() {
     });
   }
 
+  // Checklist: Modo Duplicado (2 Juegos de Copias en la Misma Hoja)
+  if ($('chkDuplicateCard')) {
+    on($('chkDuplicateCard'), 'change', function(e) {
+      state.duplicateCard = e.target.checked;
+      const b = $('badgeDuplicateStatus');
+      if (b) {
+        b.textContent = state.duplicateCard ? '2 Juegos' : '1 Juego';
+        b.className = state.duplicateCard 
+          ? 'text-[9.5px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded shrink-0' 
+          : 'text-[9.5px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded shrink-0';
+      }
+      savePreferences();
+      updatePreviewAnnotations();
+      showToast(state.duplicateCard 
+        ? '👥 2 Juegos de copias activados: Frente y Reverso duplicados en 2 columnas en la misma hoja.' 
+        : 'Modo 1 juego estándar.', 'info');
+    });
+  }
+
   // Selector de Tamaño de Hoja / Papel (A4, Carta, Oficio México, Legal)
   $$('.paper-size-btn').forEach(function(btn) {
     on(btn, 'click', function() {
@@ -1350,6 +1380,21 @@ function bindEvents() {
       const side = btn.getAttribute('data-grid');
       if (typeof toggleMmGrid === 'function') {
         toggleMmGrid(side);
+      }
+    });
+  });
+
+  // Botones de Corrección Rápida de Luz (+15%, -15%, Contraste, Reset)
+  $$('.light-btn').forEach(function(btn) {
+    on(btn, 'click', function() {
+      const parts = btn.getAttribute('data-light').split(':');
+      const side = parts[0];
+      const type = parts[1];
+      const delta = parseInt(parts[2], 10) || 0;
+      if (type === 'reset') {
+        if (typeof resetSlotLight === 'function') resetSlotLight(side);
+      } else {
+        if (typeof adjustSlotLight === 'function') adjustSlotLight(side, type, delta);
       }
     });
   });
@@ -1418,12 +1463,52 @@ function bindEvents() {
 }
 
 /* ============================================================
-   INIT
+   INIT & PWA OFFLINE-FIRST CAPABILITY
    ============================================================ */
+let deferredInstallPrompt = null;
+
+function setupPwaSupport() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('sw.js').then(function(reg) {
+        console.log('[RealScan] Service Worker registrado exitosamente:', reg.scope);
+      }).catch(function(err) {
+        console.warn('[RealScan] Registro de Service Worker omitido:', err);
+      });
+    });
+  }
+
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    const btn = $('btnInstallPwa');
+    if (btn) {
+      btn.classList.remove('hidden');
+      btn.onclick = async function() {
+        if (!deferredInstallPrompt) return;
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice && choice.outcome === 'accepted') {
+          showToast('¡Gracias por instalar RealScan! Ahora disponible 100% offline.', 'success');
+        }
+        deferredInstallPrompt = null;
+        btn.classList.add('hidden');
+      };
+    }
+  });
+
+  window.addEventListener('appinstalled', function() {
+    showToast('¡RealScan instalado como aplicación de escritorio/móvil!', 'success');
+    const btn = $('btnInstallPwa');
+    if (btn) btn.classList.add('hidden');
+  });
+}
+
 function init() {
   const vEl = $('appVersionHeader');
   if (vEl && window.APP_VERSION) vEl.textContent = window.APP_VERSION;
   bindEvents();
+  setupPwaSupport();
   if (typeof checkAuthSession === 'function') checkAuthSession();
   loadPreferences();
   updatePhotoGridStats();

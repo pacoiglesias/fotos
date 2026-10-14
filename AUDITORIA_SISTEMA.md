@@ -118,48 +118,7 @@ Se agregaron 4 botones dedicados con etiquetas claras y descriptivas:
    - **Botón `⚡ Rellenar 1:1`:** Añadido en la barra de herramientas de cada ranura para forzar el ajuste perfecto y eliminar márgenes en cualquier momento con un solo toque.
 
 2. **Botón "🗑️ Borrar / Eliminar" en Cada Ranura:**
-   - **Solicitud del usuario:** Posibilidad de eliminar fotos o PDFs subidos por error sin necesidad de reiniciar la aplicación.
-   - **Ubicación:**
-     - Botón `🗑️ Borrar` visible en la cabecera de cada tarjeta (junto al distintivo de estado).
-     - Botón `🗑️ Eliminar` dentro de la fila de herramientas de edición de cada ranura.
-   - **Comportamiento:** Limpia la memoria del slot (`state.images[side]`), vacía el selector de archivos nativo, oculta las herramientas, restablece el estado a *"Sin foto"* y limpia la vista previa en la hoja A4.
-
-3. **Control Estricto de Versiones:**
-   - Versión del sistema elevada a **`v2.8.0-Enterprise`**.
-
-## 7. 🚀 Versión v2.9.1-Enterprise: Ampliación Inteligente de DNI Pequeño, Reactividad en Vivo y Dashboard de Escaneos
-1. **Ampliación y Ajuste Automático/Manual de DNI o Fotos Pequeñas:**
-   - **Problema planteado:** Al subir una foto o PDF donde el DNI fue tomado de lejos o aparece pequeño, la impresión estándar salía con menor tamaño que el documento físico real.
-   - **Solución implementada:**
-     - **Botón `⚡ Ampliar 1:1`**: Aplica recorte automático inteligente si hay bordes blancos o contrastados. Si ya está recortado o no hay bordes definidos, amplía el documento un +25% de forma progresiva hasta llenar con exactitud el marco físico de 85.60 × 53.98 mm a 300 DPI.
-     - **Presets Rápidos de Zoom (`+25%`, `+50%`)**: Botones táctiles inmediatos en la barra de cada ranura para escalar fotos reducidas sin perder nitidez.
-     - **Encuadre por Arrastre (Drag-to-Pan)**: Al hacer zoom, el usuario puede arrastrar directamente sobre la imagen para encuadrar la credencial o cara del pasaporte a la perfección.
-
-2. **Reactividad Inmediata en la Vista Previa de la Hoja A4:**
-   - Al marcar o desmarcar *"📐 Regla de 5 cm e Instrucciones"* o *"🏷️ Imprimir Nombre y Medidas"*, la hoja A4 se actualiza en tiempo real de forma instantánea.
-   - Si se activa *"🏛️ Trámite Oficial (Hoja Limpia)"*, todos los encabezados, rótulos de mm y reglas desaparecen inmediatamente de la hoja en pantalla, del PDF y de la impresión física.
-
-3. **Checklist Visual Unificado en el Paso 4:**
-   - Reemplazo de controles dispersos por una caja de checklist visual con insignias de estado en vivo (*"Visible"* / *"Oculto"*).
-   - Presets de 1 solo clic:
-     - `🏛️ Hoja 100% Limpia (Trámite Oficial)`: Desmarca todo automáticamente para evitar rechazos en juzgados, bancos o embajadas.
-     - `📐 Estándar Completo (Con Regla)`: Activa regla de calibración y rótulos de tamaño milimétrico.
-
-4. **Dashboard Visible de Documentos Guardados en la Página Principal:**
-   - Se integró la sección `#sectionSavedScansDashboard` directamente en la interfaz principal.
-   - Muestra tarjetas interactivas con miniatura, cantidad de caras, fecha de creación y estado de caducidad.
-   - Permite con 1 solo toque: `🔄 Cargar al Lienzo`, `📄 Exportar PDF 1:1`, `🖨️ Imprimir Directo` y `🗑️ Eliminar`.
-
-5. **Control de Versiones:**
-   - Versión del sistema elevada a **`v2.9.1-Enterprise`** en `js/config.js`, `index.html` y documentación.
-
----
-
-## 8. 🚀 Versión v3.0.0-Titanium: Escala Bidireccional (De Más a Menos), Inspector Proactivo e Interfaz de Alto Nivel
-1. **Ajuste Bidireccional de Escala (De Más a Menor Tamaño / Reducción sin Cortes):**
-   - **Problema planteado:** Cuando una foto, escaneo o documento PDF es muy grande o fue tomado muy de cerca, se recortaban las esquinas o textos periféricos si solo se aplicaba relleno forzado (cover).
-   - **Solución implementada:**
-     - **Modo `📐 Encajar Todo` (`fit`) vs `🔲 Llenar 1:1` (`cover`)**:
+nar 1:1` (`cover`)**:
        - `📐 Encajar Todo`: Reduce la imagen en su totalidad (`Math.min`) para que quepa al 100% dentro del marco físico del documento sin recortar ni una sola esquina.
        - `🔲 Llenar 1:1`: Ajusta proporcionalmente para cubrir todo el marco (`Math.max`).
      - **Control Deslizante Continuo de Zoom (`zoom-slider`)**:
@@ -210,4 +169,100 @@ Se agregaron 4 botones dedicados con etiquetas claras y descriptivas:
 - **Local:** `http://localhost:5500/`
 - **Producción:** `https://fotos-cobertores-pro.web.app` / `https://fotos-cobertores-pro.firebaseapp.com`
 - **Integridad:** Código modular sincronizado al 100%, validado sintácticamente y con cero errores de consola.
-- **Autoría:** Desarrollado por **Paco Iglesias**.
+- **Autoría:** Desarrollado por **Paco Iglesias**.   - **Solicitud del usuario:** Posibilidad de eliminar fotos o PDFs subidos por error sin necesidad de reiniciar la aplicación.
+   - **Ubicación:**
+     - Botón `🗑️ Borrar` visible en la cabecera de cada tarjeta (junto al distintivo de estado).
+     - Botón `🗑️ Eliminar` dentro de la fila de herramientas de edición de cada ranura.
+   - **Comportamiento:** Limpia la memoria del slot (`state.images[side]`), vacía el selector de archivos nativo, oculta las herramientas, restablece el estado a *"Sin foto"* y limpia la vista previa en la hoja A4.
+
+3. **Control Estricto de Versiones:**
+   - Versión del sistema elevada a **`v2.8.0-Enterprise`**.
+
+## 7. 🚀 Versión v2.9.1-Enterprise: Ampliación Inteligente de DNI Pequeño, Reactividad en Vivo y Dashboard de Escaneos
+1. **Ampliación y Ajuste Automático/Manual de DNI o Fotos Pequeñas:**
+   - **Problema planteado:** Al subir una foto o PDF donde el DNI fue tomado de lejos o aparece pequeño, la impresión estándar salía con menor tamaño que el documento físico real.
+   - **Solución implementada:**
+     - **Botón `⚡ Ampliar 1:1`**: Aplica recorte automático inteligente si hay bordes blancos o contrastados. Si ya está recortado o no hay bordes definidos, amplía el documento un +25% de forma progresiva hasta llenar con exactitud el marco físico de 85.60 × 53.98 mm a 300 DPI.
+     - **Presets Rápidos de Zoom (`+25%`, `+50%`)**: Botones táctiles inmediatos en la barra de cada ranura para escalar fotos reducidas sin perder nitidez.
+     - **Encuadre por Arrastre (Drag-to-Pan)**: Al hacer zoom, el usuario puede arrastrar directamente sobre la imagen para encuadrar la credencial o cara del pasaporte a la perfección.
+
+2. **Reactividad Inmediata en la Vista Previa de la Hoja A4:**
+   - Al marcar o desmarcar *"📐 Regla de 5 cm e Instrucciones"* o *"🏷️ Imprimir Nombre y Medidas"*, la hoja A4 se actualiza en tiempo real de forma instantánea.
+   - Si se activa *"🏛️ Trámite Oficial (Hoja Limpia)"*, todos los encabezados, rótulos de mm y reglas desaparecen inmediatamente de la hoja en pantalla, del PDF y de la impresión física.
+
+3. **Checklist Visual Unificado en el Paso 4:**
+   - Reemplazo de controles dispersos por una caja de checklist visual con insignias de estado en vivo (*"Visible"* / *"Oculto"*).
+   - Presets de 1 solo clic:
+     - `🏛️ Hoja 100% Limpia (Trámite Oficial)`: Desmarca todo automáticamente para evitar rechazos en juzgados, bancos o embajadas.
+     - `📐 Estándar Completo (Con Regla)`: Activa regla de calibración y rótulos de tamaño milimétrico.
+
+4. **Dashboard Visible de Documentos Guardados en la Página Principal:**
+   - Se integró la sección `#sectionSavedScansDashboard` directamente en la interfaz principal.
+   - Muestra tarjetas interactivas con miniatura, cantidad de caras, fecha de creación y estado de caducidad.
+   - Permite con 1 solo toque: `🔄 Cargar al Lienzo`, `📄 Exportar PDF 1:1`, `🖨️ Imprimir Directo` y `🗑️ Eliminar`.
+
+5. **Control de Versiones:**
+   - Versión del sistema elevada a **`v2.9.1-Enterprise`** en `js/config.js`, `index.html` y documentación.
+
+---
+
+## 8. 🚀 Versión v3.0.0-Titanium: Escala Bidireccional (De Más a Menos), Inspector Proactivo y Soporte Multi-Papel
+1. **Ajuste Bidireccional de Escala (De Más a Menor Tamaño / Reducción sin Cortes):**
+   - **Problema planteado:** Cuando una foto, escaneo o documento PDF es muy grande o fue tomado muy de cerca, se recortaban las esquinas o textos periféricos si solo se aplicaba relleno forzado (cover).
+   - **Solución implementada:**
+     - **Modo `📐 Encajar Todo` (`fit`):** Reduce la imagen manteniendo proporciones completas para que quepa dentro de la ranura sin amputar ningún texto ni firma.
+     - **Modo `🔲 Llenar 1:1` (`cover`):** Rellena la ranura calibrada a 300 DPI.
+     - **Slider de Escala Continuo (20% a 350%):** Con botones de salto rápido `-25%`, `100%`, `+25%`, `+50%`.
+     - **Zoom con Rueda del Ratón:** Rueda del mouse sobre cualquier ranura para zoom fino en vivo.
+2. **Soporte Multi-Papel Físico Calibrado:**
+   - Selección táctil e instantánea entre:
+     - `A4 Estándar (210 × 297 mm)`: ISO 216 Internacional.
+     - `Carta / Letter (215.9 × 279.4 mm)`: Estándar México y Norteamérica.
+     - `Oficio México (215.9 × 340.0 mm)`: Formato oficial para notarías, juzgados y trámites SEP.
+     - `Oficio Legal USA (215.9 × 355.6 mm)`: Formato Legal 8.5 × 14 pulgadas.
+   - Cálculo automático de márgenes y centrado vertical y horizontal para cada tipo de papel.
+
+---
+
+## 9. 🏆 Versión v3.1.0-Enterprise: Auditoría Integral y 5 Etapas de Mejoras Mayores
+Desarrollado y calibrado por **Paco Iglesias** — 13 Octubre 2026.
+
+### ✅ Etapa 1: Claridad Visual y Encabezados Transparentes
+- **Problema:** Términos como "Anverso" y "Reverso" generaban dudas en usuarios que no sabían cuál cara iba primero.
+- **Solución implementada:**
+  - `1. Frente (Delantera con Foto)`: Cara frontal del documento donde aparece la fotografía y datos personales.
+  - `2. Reverso (Atrás / Vuelta)`: Cara posterior donde está el código de barras, huella, firma o banda magnética.
+  - Rótulos en PDF, vistas previas vivas y placeholders alineados unívocamente.
+
+### ✅ Etapa 2: Formato Oficial Óvalo Título / Diploma (6.0 × 9.0 cm)
+- **Problema:** En trámites de titulación profesional en México (UNAM, IPN, UAM, SEP, BUAP), los títulos exigen formato de óvalo / diploma.
+- **Solución implementada:**
+  - Incorporación de `photo_ovalo_titulo` con dimensiones de 6.0 × 9.0 cm.
+  - Trazado de elipse de corte oficial punteada calibrada a 300 DPI tanto en el renderizador en pantalla como en el motor vectorial jsPDF.
+
+### ✅ Etapa 3: Corrector Rápido de Luz y Sombra (Brillo y Contraste)
+- **Problema:** Fotos tomadas con celular o escáneres defectuosos suelen quedar sobreexpuestas o subexpuestas (oscuras).
+- **Solución implementada:**
+  - Controles integrados en cada ranura:
+    - `☀️ Aclarar (+15%)`: Incrementa la luminosidad para fotos oscuras.
+    - `🌙 Oscurecer (-15%)`: Reduce el exceso de luz o fotos lavadas.
+    - `🔆 Contraste (+15%)`: Realza la nitidez de firmas, sellos y letras pequeñas.
+    - `🔄 Reset`: Restablece iluminación a valores originales.
+  - Renderizado por hardware mediante filtros acelerados por GPU.
+
+### ✅ Etapa 4: Modo Duplicado de Documento (2 Juegos de Copias en 1 Hoja: INE/DNI x2)
+- **Problema:** Muchos trámites bancarios, de crédito o gubernamentales solicitan "2 copias de la credencial por ambos lados en una sola hoja".
+- **Solución implementada:**
+  - Checkbox interactivo en Paso 4: `👥 2 Juegos de Copias en la Misma Hoja (INE / DNI x2)`.
+  - Disposición inteligente en 2 columnas:
+    - Columna 1: Frente (Juego 1) + Reverso (Juego 1).
+    - Columna 2: Frente (Juego 2) + Reverso (Juego 2).
+  - Ambos juegos permanecen a tamaño físico real 1:1 estricto (85.6 × 53.98 mm) sin escalamiento ni distorsión.
+
+### ✅ Etapa 5: PWA Completa & Funcionamiento Offline-First
+- **Problema:** En notarías, oficinas públicas o sótanos no siempre hay conexión a internet disponible.
+- **Solución implementada:**
+  - Creación de `manifest.json` oficial con visualización `standalone` y colores corporativos.
+  - Service Worker `sw.js` con estrategia Cache-First con Network Fallback.
+  - Pre-caché de activos locales y librerías CDN (Tailwind, jsPDF, PDF.js, Google Fonts, JSZip).
+  - Botón `#btnInstallPwa` para instalación nativa con 1 solo toque en Chrome, Edge, Safari y Android.
