@@ -31,6 +31,22 @@ function downloadPdfBlob(doc, fileName) {
  * Manejador principal de Exportar / Compartir PDF
  */
 async function handleExportPDF(tryShare) {
+  // Verificación de Pre-Vuelo Estricta (M-31)
+  if (typeof runPreflightChecks === 'function') {
+    const preflight = runPreflightChecks();
+    if (!preflight.valid) {
+      const errorMsg = preflight.issues.filter(x => x.type === 'error').map(x => x.message).join('\n');
+      if (typeof showToast === 'function') showToast(errorMsg, 'error');
+      alert(errorMsg);
+      return;
+    }
+    const warnings = preflight.issues.filter(x => x.type === 'warning');
+    if (warnings.length > 0) {
+      const warnMsg = warnings.map(x => x.message).join('\n') + '\n\n¿Deseas continuar con la exportación?';
+      if (!confirm(warnMsg)) return;
+    }
+  }
+
   const doc = generatePdfDoc();
   if (!doc) return;
   const spec = getActiveSpec();
@@ -73,6 +89,22 @@ async function handleExportPDF(tryShare) {
  * Genera el PDF con las medidas físicas 1:1 y dispara la ventana de impresión
  */
 function handlePrintDirect() {
+  // Verificación de Pre-Vuelo Estricta (M-31)
+  if (typeof runPreflightChecks === 'function') {
+    const preflight = runPreflightChecks();
+    if (!preflight.valid) {
+      const errorMsg = preflight.issues.filter(x => x.type === 'error').map(x => x.message).join('\n');
+      if (typeof showToast === 'function') showToast(errorMsg, 'error');
+      alert(errorMsg);
+      return;
+    }
+    const warnings = preflight.issues.filter(x => x.type === 'warning');
+    if (warnings.length > 0) {
+      const warnMsg = warnings.map(x => x.message).join('\n') + '\n\n¿Deseas continuar con la impresión?';
+      if (!confirm(warnMsg)) return;
+    }
+  }
+
   const doc = generatePdfDoc();
   if (!doc) return;
 

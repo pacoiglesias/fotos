@@ -170,13 +170,29 @@ Todos los hallazgos de la auditoría inicial fueron comprobados experimentalment
 
 ---
 
-## 🎯 8. Matriz de Verificación para Etapa 5: Recuperación y Productividad (En Progreso)
+## 🎯 8. Matriz de Verificación para Etapa 5: Recuperación y Productividad (Completada con Éxito)
 
-- [ ] **M-27:** Autoguardado silencioso de borrador activo (`draft_session`) y recuperación automática al recargar la pestaña.
-- [ ] **M-28:** Botón explícito de «Nuevo Trabajo / Limpiar Todo» con diálogo de confirmación seguro.
-- [ ] **M-29:** Presets de usuario personalizados guardables en almacenamiento local (ej. "Mi Notaría - INE Carta Duplicada").
-- [ ] **M-30:** Búsqueda en tiempo real y filtrado dinámico en el historial de escaneos.
-- [ ] **M-31:** Panel de Pre-Vuelo estricto con validaciones geométricas: aviso de baja resolución (<150 DPI) y desborde de papel con corrección en 1 clic.
+- [x] **M-27:** Autoguardado silencioso de borrador activo (`saveActiveDraft` con debounce) y banner interactivo de recuperación tras recarga o cierre accidental (`#bannerActiveDraftRecovery`).
+- [x] **M-28:** Botón explícito de «Nuevo Trabajo / Limpiar Todo» (`#btnNewProject` en cabecera y `#hudBtnNewProject` en HUD) con diálogo de confirmación seguro y reseteo integral.
+- [x] **M-29:** Presets de usuario personalizados guardables en almacenamiento local (`saveUserPreset`, `applyUserPreset`, `deleteUserPreset`, modal `#userPresetsModal`).
+- [x] **M-30:** Búsqueda en tiempo real y filtrado dinámico en el historial de escaneos (`#inputSearchHistory` y `renderHistoryUI(query)`).
+- [x] **M-31:** Validaciones de Pre-Vuelo estrictas (`runPreflightChecks`): detección de fotos faltantes, alerta de baja resolución (<150 DPI físico) y bloqueo preventivo de desborde de papel antes de imprimir o exportar.
+
+*Resultados de la suite de pruebas sintéticas (`test_etapa5.js`):*
+- Test 1 (Borrador Activo): Guardado debounce; recuperación completa de imágenes y configuraciones; borrado seguro verificado.
+- Test 2 (Nuevo Trabajo): Confirmación y reseteo completo de las 4 ranuras y borrador activo verificado.
+- Test 3 (Presets de Usuario): Creación, almacenamiento, aplicación instantánea y eliminación de configuraciones personalizadas.
+- Test 4 (Búsqueda Historial): Filtrado insensible a mayúsculas/minúsculas por nombre, fecha e ID verificado.
+- Test 5 (Preflight Checks): Detección de ausencia de fotos, alerta preventiva de <150 DPI físico, error de documento excediendo el papel y validación de documentos correctos.
+
+---
+
+## 🎯 9. Próxima Etapa: Etapa 6 — Optimización, PWA Offline y Accesibilidad (M-32 a M-36)
+- [ ] **M-32:** PWA Service Worker con estrategia Cache-First exhaustiva (incluyendo auth.js, storage.js, crop-warp.js).
+- [ ] **M-33:** Optimización de renderizado mediante Web Worker / OffscreenCanvas para exportaciones pesadas.
+- [ ] **M-34:** Accesibilidad WCAG 2.1 AA (contrastes, etiquetas ARIA, navegación por teclado completa).
+- [ ] **M-35:** Compresión y optimización de assets estáticos.
+- [ ] **M-36:** Telemetría offline local y monitor de salud sin llamadas a servidores externos.
 
 
 

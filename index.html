@@ -120,6 +120,26 @@
 
         <button
           type="button"
+          id="btnNewProject"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[11px] font-bold text-slate-800 dark:text-slate-100 transition-colors shadow-xs"
+          title="Comenzar un Nuevo Trabajo (Limpiar lienzo)"
+        >
+          <span class="text-xs">✨</span>
+          <span class="hidden sm:inline">Nuevo</span>
+        </button>
+
+        <button
+          type="button"
+          id="btnOpenPresets"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50/80 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-[11px] font-semibold text-amber-800 dark:text-amber-200 transition-colors shadow-xs"
+          title="Mis Configuraciones Predefinidas Favoritas"
+        >
+          <span class="text-xs">⭐</span>
+          <span class="hidden sm:inline">Presets</span>
+        </button>
+
+        <button
+          type="button"
           id="btnOpenHistory"
           class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-indigo-300 dark:border-indigo-700 bg-indigo-50/80 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-[11px] font-semibold text-indigo-800 dark:text-indigo-200 transition-colors shadow-xs"
           title="Historial de Escaneos Guardados y Auto-Expiración"
@@ -176,6 +196,28 @@
 
   <main class="w-full max-w-full overflow-x-hidden px-3 sm:px-4 lg:px-6 pt-3 pb-8">
     <div class="max-w-[1560px] mx-auto space-y-4">
+
+      <!-- ============================================================
+           BANNER DE RECUPERACIÓN DE BORRADOR ACTIVO (M-27)
+           ============================================================ -->
+      <aside id="bannerActiveDraftRecovery" class="hidden bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-purple-500/10 border border-amber-300/80 dark:border-amber-700/80 rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all" aria-live="polite">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span class="text-2xl shrink-0 p-1 bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 rounded-xl">💾</span>
+          <div class="min-w-0">
+            <p class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">Se encontró un borrador previo no guardado</p>
+            <p id="labelDraftInfo" class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 truncate">Tienes fotos y ajustes de tu sesión anterior listos para continuar.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+          <button type="button" id="btnDiscardActiveDraft" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+            Descartar
+          </button>
+          <button type="button" id="btnRestoreActiveDraft" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-sm flex items-center gap-1">
+            <span>🔄</span>
+            <span>Restaurar Trabajo</span>
+          </button>
+        </div>
+      </aside>
 
       <!-- ============================================================
            BARRA DE ACCESO RÁPIDO POR INTENCIÓN (M-18)
@@ -2180,6 +2222,16 @@
         </div>
       </div>
 
+      <!-- Buscador y Filtro Dinámico de Escaneos (M-30) -->
+      <div class="relative shrink-0">
+        <input
+          type="text"
+          id="inputSearchHistory"
+          placeholder="🔍 Buscar por nombre o fecha (ej. INE, Licencia, 2026)..."
+          class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
+        />
+      </div>
+
       <!-- Contenedor scrolleable de items -->
       <div class="flex-1 overflow-y-auto pr-1 space-y-2.5 min-h-[180px]">
         <div id="historyEmptyState" class="text-center py-12 px-4 space-y-2">
@@ -2224,6 +2276,65 @@
   </div>
 
   <!-- ============================================================
+       MODAL DE PRESETS PERSONALIZADOS DE USUARIO (M-29)
+       ============================================================ -->
+  <div id="userPresetsModal" role="dialog" aria-modal="true" aria-labelledby="userPresetsModalTitle" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      
+      <!-- Header del modal -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center text-lg">
+            ⭐
+          </div>
+          <div>
+            <h3 id="userPresetsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Mis Configuraciones Predefinidas</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Guarda combinaciones de formato, papel y opciones favoritas</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="userPresetsModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <!-- Guardar configuración actual como preset -->
+      <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-2 shrink-0">
+        <label for="inputNewPresetName" class="text-xs font-bold text-slate-700 dark:text-slate-300">Guardar estado actual como Preset:</label>
+        <div class="flex items-center gap-2">
+          <input
+            type="text"
+            id="inputNewPresetName"
+            placeholder="Ej. Mi Carnet con Marcas de Corte"
+            class="flex-1 px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          />
+          <button
+            type="button"
+            id="btnSaveCurrentAsPreset"
+            class="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition-colors shadow-sm"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+
+      <!-- Lista de presets guardados -->
+      <div class="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[140px]">
+        <div id="userPresetsEmptyState" class="text-center py-8 px-4 space-y-1">
+          <span class="text-3xl block">📑</span>
+          <p class="font-bold text-xs text-slate-700 dark:text-slate-300">No hay configuraciones guardadas</p>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">Personaliza tus medidas o activa opciones y presiona "Guardar" arriba.</p>
+        </div>
+        <div id="userPresetsListContainer" class="space-y-2"></div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        <button type="button" data-close-modal="userPresetsModal" class="w-full py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
        BARRA FLOTANTE HUD ERGONÓMICA (Acceso Rápido y Calibración 1:1)
        ============================================================ -->
   <aside id="floatingHudBar" class="hud-bar flex items-center gap-1.5 sm:gap-2 shadow-2xl" aria-label="Acciones rápidas">
@@ -2233,6 +2344,11 @@
       <span class="text-slate-500">•</span>
       <span class="text-slate-300">A4 300 DPI</span>
     </div>
+
+    <button type="button" id="hudBtnNewProject" class="px-2.5 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-all flex items-center gap-1 border border-slate-700" title="Nuevo Trabajo (Limpiar lienzo)">
+      <span>✨</span>
+      <span class="hidden sm:inline">Nuevo</span>
+    </button>
 
     <button type="button" id="hudBtnAutoEnhance" class="px-3 py-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs transition-all flex items-center gap-1 shadow-md hover:scale-105 active:scale-95" title="Auto-Ajuste Mágico 1:1 (Luz, Nitidez y Encuadre)">
       <span>✨</span>

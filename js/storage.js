@@ -480,18 +480,41 @@ async function renderSavedScansDashboard() {
 }
 window.renderSavedScansDashboard = renderSavedScansDashboard;
 
-/* Renderizar la lista dentro del Modal de Historial */
-async function renderHistoryUI() {
+/* Renderizar la lista dentro del Modal de Historial con Búsqueda (M-30) */
+async function renderHistoryUI(filterQuery) {
   const container = $('historyItemsContainer');
   const emptyState = $('historyEmptyState');
   if (!container) return;
 
   container.innerHTML = '';
-  const scans = await getAllScansFromStorage();
+  const fetchScans = (typeof window !== 'undefined' && window.getAllScansFromStorage) ? window.getAllScansFromStorage : getAllScansFromStorage;
+  let scans = await fetchScans();
 
   if (scans.length === 0) {
     if (emptyState) emptyState.classList.remove('hidden');
     container.classList.add('hidden');
+    return;
+  }
+
+  const query = (typeof filterQuery === 'string' ? filterQuery : ($('inputSearchHistory') ? $('inputSearchHistory').value : '')).trim().toLowerCase();
+  if (query) {
+    scans = scans.filter(function(s) {
+      const titleMatch = (s.title || '').toLowerCase().includes(query);
+      const dateMatch = (s.createdFormatted || '').toLowerCase().includes(query);
+      const idMatch = (s.id || '').toLowerCase().includes(query);
+      return titleMatch || dateMatch || idMatch;
+    });
+  }
+
+  if (scans.length === 0) {
+    if (emptyState) emptyState.classList.add('hidden');
+    container.classList.remove('hidden');
+    container.innerHTML = `
+      <div class="text-center py-8 px-4 text-slate-500 dark:text-slate-400">
+        <span class="text-2xl block mb-1">🔍</span>
+        <p class="text-xs font-semibold">No se encontraron escaneos que coincidan con "${escapeHtml(query)}"</p>
+      </div>
+    `;
     return;
   }
 
@@ -809,7 +832,351 @@ async function importScansFromJson(file) {
   }
 }
 
+/* ============================================================
+   AUTOGUARDADO SILENCIOSO Y RECUPERACIÓN DE BORRADOR ACTIVO (M-27)
+   ============================================================ */
+const DRAFT_STORAGE_KEY = 'realscan_draft_session_v2';
+let draftDebounceTimer = null;
+
+async function saveActiveDraft() {
+  clearTimeout(draftDebounceTimer);
+  draftDebounceTimer = setTimeout(async function() {
+    try {
+      if (typeof state === 'undefined') return;
+      const activeSlots = ['front', 'back', 'page3', 'page4'];
+      let hasAnyImage = false;
+      const draftImages = {};
+
+      activeSlots.forEach(function(slotKey) {
+        const imgData = state.images[slotKey];
+        if (imgData && (imgData.originalSrc || imgData.rawOriginalSrc)) {
+          hasAnyImage = true;
+          draftImages[slotKey] = {
+            rawOriginalSrc: imgData.rawOriginalSrc || imgData.originalSrc,
+            originalSrc: imgData.originalSrc,
+            processedDataUrl: imgData.processedDataUrl,
+            naturalWidth: imgData.naturalWidth,
+            naturalHeight: imgData.naturalHeight,
+            rotation: imgData.rotation,
+            zoom: imgData.zoom,
+            fitMode: imgData.fitMode,
+            filter: imgData.filter,
+            brightness: imgData.brightness,
+            contrast: imgData.contrast,
+            panX: imgData.panX,
+            panY: imgData.panY,
+            showMmGrid: imgData.showMmGrid,
+            showOaciGuide: imgData.showOaciGuide
+          };
+        }
+      });
+
+      if (!hasAnyImage) {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        return;
+      }
+
+      const draftState = {
+        updatedAt: Date.now(),
+        activeCategory: state.activeCategory,
+        format: state.format,
+        paperSize: state.paperSize,
+        printMode: state.printMode,
+        sheetLayout: state.sheetLayout,
+        documentPageCount: state.documentPageCount,
+        documentCustomTitle: state.documentCustomTitle,
+        duplicateCard: state.duplicateCard,
+        includeRulerFooter: state.includeRulerFooter,
+        includeDocLabels: state.includeDocLabels,
+        includeCutMarks: state.includeCutMarks,
+        customWidth: state.customWidth,
+        customHeight: state.customHeight,
+        customUnit: state.customUnit,
+        photoCopies: state.photoCopies,
+        images: draftImages
+      };
+
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftState));
+    } catch(err) {
+      // Ignorar cuota excedida
+    }
+  }, 750);
+}
+
+function getActiveDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.updatedAt && (Date.now() - parsed.updatedAt < 48 * 3600 * 1000)) {
+      return parsed;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function clearActiveDraft() {
+  clearTimeout(draftDebounceTimer);
+  try {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+  } catch(e) {}
+}
+
+async function restoreActiveDraft() {
+  const draft = getActiveDraft();
+  if (!draft || !draft.images) return false;
+
+  state.activeCategory = draft.activeCategory || 'docs';
+  state.format = draft.format || 'card';
+  state.paperSize = draft.paperSize || 'a4';
+  state.printMode = draft.printMode || 'both';
+  state.sheetLayout = draft.sheetLayout || 'same_page';
+  state.documentPageCount = draft.documentPageCount || 2;
+  state.documentCustomTitle = draft.documentCustomTitle || '';
+  state.duplicateCard = !!draft.duplicateCard;
+  state.includeRulerFooter = draft.includeRulerFooter !== false;
+  state.includeDocLabels = draft.includeDocLabels !== false;
+  state.includeCutMarks = draft.includeCutMarks !== false;
+  state.customWidth = draft.customWidth || 8.5;
+  state.customHeight = draft.customHeight || 5.5;
+  state.customUnit = draft.customUnit || 'cm';
+  state.photoCopies = draft.photoCopies || 4;
+
+  ['front', 'back', 'page3', 'page4'].forEach(function(side) {
+    if (draft.images[side]) {
+      Object.assign(state.images[side], draft.images[side]);
+      if (typeof updateSidePreview === 'function') updateSidePreview(side);
+    }
+  });
+
+  if (typeof updateUI === 'function') updateUI();
+  if (typeof updatePreviewAnnotations === 'function') updatePreviewAnnotations();
+  return true;
+}
+
+/* ============================================================
+   PRESETS PERSONALIZADOS DE USUARIO (M-29)
+   ============================================================ */
+const PRESETS_STORAGE_KEY = 'realscan_user_presets_v1';
+
+function getUserPresets() {
+  try {
+    const raw = localStorage.getItem(PRESETS_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return [];
+}
+
+function saveUserPreset(presetName) {
+  const name = (presetName || '').trim();
+  if (!name) {
+    if (typeof showToast === 'function') showToast('Ingresa un nombre para tu configuración predefinida.', 'warning');
+    return null;
+  }
+  const presets = getUserPresets();
+  const id = 'preset_' + Date.now();
+  const spec = (typeof getActiveSpec === 'function') ? getActiveSpec() : {};
+  const newPreset = {
+    id: id,
+    name: name,
+    createdAt: Date.now(),
+    category: state.activeCategory,
+    format: state.format,
+    formatName: spec.name || 'Personalizado',
+    paperSize: state.paperSize,
+    printMode: state.printMode,
+    duplicateCard: state.duplicateCard,
+    includeRulerFooter: state.includeRulerFooter,
+    includeDocLabels: state.includeDocLabels,
+    includeCutMarks: state.includeCutMarks,
+    customWidth: state.customWidth,
+    customHeight: state.customHeight,
+    customUnit: state.customUnit
+  };
+  presets.push(newPreset);
+  try {
+    localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(presets));
+  } catch(e) {}
+  if (typeof showToast === 'function') showToast('⭐ Preset "' + name + '" guardado exitosamente.', 'success');
+  return newPreset;
+}
+
+function applyUserPreset(presetId) {
+  const presets = getUserPresets();
+  const p = presets.find(x => x.id === presetId);
+  if (!p) return false;
+
+  if (p.category && typeof switchCategory === 'function') switchCategory(p.category);
+  if (p.format && typeof selectFormat === 'function') selectFormat(p.format);
+  if (p.paperSize && typeof setPaperSize === 'function') setPaperSize(p.paperSize);
+  if (p.printMode && typeof setPrintMode === 'function') setPrintMode(p.printMode);
+  if (typeof p.duplicateCard === 'boolean') state.duplicateCard = p.duplicateCard;
+  if (typeof p.includeRulerFooter === 'boolean') state.includeRulerFooter = p.includeRulerFooter;
+  if (typeof p.includeDocLabels === 'boolean') state.includeDocLabels = p.includeDocLabels;
+  if (typeof p.includeCutMarks === 'boolean') state.includeCutMarks = p.includeCutMarks;
+  if (p.customWidth) state.customWidth = p.customWidth;
+  if (p.customHeight) state.customHeight = p.customHeight;
+  if (p.customUnit) state.customUnit = p.customUnit;
+
+  if (typeof updateUI === 'function') updateUI();
+  if (typeof updatePreviewAnnotations === 'function') updatePreviewAnnotations();
+  if (typeof showToast === 'function') showToast('⭐ Configuración "' + p.name + '" aplicada.', 'success');
+  return true;
+}
+
+function deleteUserPreset(presetId) {
+  let presets = getUserPresets();
+  presets = presets.filter(x => x.id !== presetId);
+  try {
+    localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(presets));
+  } catch(e) {}
+  if (typeof showToast === 'function') showToast('Preset eliminado.', 'info');
+}
+
+function renderUserPresetsUI() {
+  const container = $('userPresetsListContainer');
+  const emptyState = $('userPresetsEmptyState');
+  if (!container) return;
+
+  container.innerHTML = '';
+  const presets = getUserPresets();
+
+  if (presets.length === 0) {
+    if (emptyState) emptyState.classList.remove('hidden');
+    container.classList.add('hidden');
+    return;
+  }
+
+  if (emptyState) emptyState.classList.add('hidden');
+  container.classList.remove('hidden');
+
+  presets.forEach(function(p) {
+    const card = document.createElement('div');
+    card.className = 'p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center justify-between gap-3';
+    const safeName = escapeHtml(p.name);
+    const safeFormat = escapeHtml(p.formatName || p.format || 'Personalizado');
+    const safePaper = escapeHtml((p.paperSize || 'a4').toUpperCase());
+    card.innerHTML = `
+      <div class="min-w-0">
+        <p class="font-bold text-xs text-slate-900 dark:text-white truncate">${safeName}</p>
+        <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">${safeFormat} • Papel ${safePaper}</p>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button type="button" class="btn-apply-preset px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/70 dark:hover:bg-amber-900/80 text-amber-700 dark:text-amber-300 font-bold text-xs transition-colors" data-id="${escapeHtml(p.id)}">
+          Aplicar
+        </button>
+        <button type="button" class="btn-delete-preset p-1 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-red-50 dark:hover:bg-red-950/60 text-slate-400 hover:text-red-600 text-xs transition-colors" data-id="${escapeHtml(p.id)}" title="Eliminar preset">
+          🗑️
+        </button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  container.querySelectorAll('.btn-apply-preset').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      applyUserPreset(btn.getAttribute('data-id'));
+      if (typeof closeModal === 'function') closeModal('userPresetsModal');
+    });
+  });
+
+  container.querySelectorAll('.btn-delete-preset').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      deleteUserPreset(btn.getAttribute('data-id'));
+      renderUserPresetsUI();
+    });
+  });
+}
+window.renderUserPresetsUI = renderUserPresetsUI;
+
+/* ============================================================
+   NUEVO TRABAJO / RESET CON CONFIRMACIÓN (M-28)
+   ============================================================ */
+function resetWorkspaceToNewProject() {
+  if (confirm('¿Comenzar un Nuevo Trabajo? Se limpiarán las fotos actuales del lienzo. Asegúrate de haber guardado o impreso tu documento si lo necesitas.')) {
+    clearActiveDraft();
+    ['front', 'back', 'page3', 'page4'].forEach(function(side) {
+      if (typeof clearSlot === 'function') clearSlot(side);
+    });
+    state.documentCustomTitle = '';
+    const inputTitle = $('inputDocumentTitle');
+    if (inputTitle) inputTitle.value = '';
+    if (typeof updatePreviewAnnotations === 'function') updatePreviewAnnotations();
+    if (typeof updateUI === 'function') updateUI();
+    if (typeof showToast === 'function') showToast('✨ Lienzo limpio. ¡Listo para comenzar un nuevo trabajo!', 'success');
+  }
+}
+
+/* ============================================================
+   VALIDACIONES DE PRE-VUELO ESTRICTAS (M-31)
+   ============================================================ */
+function runPreflightChecks() {
+  const issues = [];
+  const activeSlots = ['front', 'back', 'page3', 'page4'].slice(0, state.documentPageCount || 2);
+  let loadedCount = 0;
+
+  activeSlots.forEach(function(side) {
+    const imgData = state.images[side];
+    if (imgData && imgData.originalSrc) {
+      loadedCount++;
+      const spec = (typeof getActiveSpec === 'function') ? getActiveSpec() : { widthMm: 85.6, heightMm: 54 };
+      const minDpiPixels = Math.round((Math.min(spec.widthMm, spec.heightMm) / 25.4) * 150);
+      const minImgDim = Math.min(imgData.naturalWidth || 0, imgData.naturalHeight || 0);
+      if (minImgDim > 0 && minImgDim < minDpiPixels) {
+        issues.push({
+          type: 'warning',
+          slot: side,
+          message: '⚠️ ' + getSlotFriendlyName(side) + ': Resolución baja (' + minImgDim + ' px). La impresión física podría verse pixelada.'
+        });
+      }
+    }
+  });
+
+  if (loadedCount === 0) {
+    issues.push({
+      type: 'error',
+      message: '❌ No hay ninguna foto cargada en el documento para imprimir o exportar.'
+    });
+  }
+
+  const paper = (typeof getActivePaperSpec === 'function') ? getActivePaperSpec() : { widthMm: 210, heightMm: 297 };
+  const spec = (typeof getActiveSpec === 'function') ? getActiveSpec() : { widthMm: 85.6, heightMm: 54 };
+  if (spec.widthMm > paper.widthMm || spec.heightMm > paper.heightMm) {
+    issues.push({
+      type: 'error',
+      message: '❌ El tamaño del documento (' + spec.widthMm + ' × ' + spec.heightMm + ' mm) supera el papel (' + paper.widthMm + ' × ' + paper.heightMm + ' mm).'
+    });
+  }
+
+  return {
+    valid: issues.filter(x => x.type === 'error').length === 0,
+    issues: issues
+  };
+}
+
 // Inicialización de limpieza al cargar
-document.addEventListener('DOMContentLoaded', function() {
-  purgeExpiredScans();
-});
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', function() {
+    purgeExpiredScans();
+  });
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    saveScanToStorage,
+    getAllScansFromStorage,
+    deleteScanFromStorage,
+    clearAllScansFromStorage,
+    saveActiveDraft,
+    getActiveDraft,
+    clearActiveDraft,
+    restoreActiveDraft,
+    getUserPresets,
+    saveUserPreset,
+    applyUserPreset,
+    deleteUserPreset,
+    renderUserPresetsUI,
+    resetWorkspaceToNewProject,
+    runPreflightChecks
+  };
+}

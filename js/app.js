@@ -1811,6 +1811,64 @@ function bindEvents() {
     }
   });
 
+  // Nuevo Trabajo (M-28)
+  if ($('btnNewProject')) {
+    on($('btnNewProject'), 'click', resetWorkspaceToNewProject);
+  }
+  if ($('hudBtnNewProject')) {
+    on($('hudBtnNewProject'), 'click', resetWorkspaceToNewProject);
+  }
+
+  // Presets de Usuario (M-29)
+  if ($('btnOpenPresets')) {
+    on($('btnOpenPresets'), 'click', function() {
+      openModal('userPresetsModal');
+      if (typeof renderUserPresetsUI === 'function') renderUserPresetsUI();
+    });
+  }
+  if ($('btnSaveCurrentAsPreset')) {
+    on($('btnSaveCurrentAsPreset'), 'click', function() {
+      const input = $('inputNewPresetName');
+      const name = input ? input.value : '';
+      if (typeof saveUserPreset === 'function') {
+        const res = saveUserPreset(name);
+        if (res && input) input.value = '';
+        if (typeof renderUserPresetsUI === 'function') renderUserPresetsUI();
+      }
+    });
+  }
+
+  // Búsqueda en Historial (M-30)
+  if ($('inputSearchHistory')) {
+    on($('inputSearchHistory'), 'input', function(e) {
+      if (typeof renderHistoryUI === 'function') {
+        renderHistoryUI(e.target.value);
+      }
+    });
+  }
+
+  // Restauración y Descarte de Borrador Activo (M-27)
+  if ($('btnRestoreActiveDraft')) {
+    on($('btnRestoreActiveDraft'), 'click', async function() {
+      if (typeof restoreActiveDraft === 'function') {
+        const ok = await restoreActiveDraft();
+        if (ok) {
+          const banner = $('bannerActiveDraftRecovery');
+          if (banner) banner.classList.add('hidden');
+          showToast('✅ Borrador restaurado exitosamente.', 'success');
+        }
+      }
+    });
+  }
+  if ($('btnDiscardActiveDraft')) {
+    on($('btnDiscardActiveDraft'), 'click', function() {
+      if (typeof clearActiveDraft === 'function') clearActiveDraft();
+      const banner = $('bannerActiveDraftRecovery');
+      if (banner) banner.classList.add('hidden');
+      showToast('Borrador descartado.', 'info');
+    });
+  }
+
   // Floating HUD Quick Actions
   if ($('hudBtnAutoEnhance')) {
     on($('hudBtnAutoEnhance'), 'click', function() {
@@ -2142,6 +2200,17 @@ function init() {
   updatePassportOptionsUI();
   updateUI();
   if (typeof renderSavedScansDashboard === 'function') renderSavedScansDashboard();
+
+  // Detección de Borrador Activo (M-27)
+  try {
+    if (typeof getActiveDraft === 'function') {
+      const draft = getActiveDraft();
+      if (draft && draft.images && Object.values(draft.images).some(x => x && x.originalSrc)) {
+        const banner = $('bannerActiveDraftRecovery');
+        if (banner) banner.classList.remove('hidden');
+      }
+    }
+  } catch(e) {}
 }
 
 if (document.readyState === 'loading') {

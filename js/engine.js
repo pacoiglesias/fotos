@@ -843,6 +843,7 @@ function updateSidePreview(side) {
 
     if (typeof updateUI === 'function') updateUI();
   }
+  if (typeof saveActiveDraft === 'function') saveActiveDraft();
 }
 
 /* ============================================================
