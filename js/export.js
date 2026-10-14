@@ -120,20 +120,21 @@ function downloadA4Image() {
     return;
   }
 
-  showToast('Generando imagen A4 a 300 DPI...', 'info');
+  const paper = (typeof getActivePaperSpec === 'function') ? getActivePaperSpec() : { widthMm: 210, heightMm: 297, name: 'A4', shortName: 'A4' };
+  showToast('Generando imagen ' + paper.shortName + ' a 300 DPI...', 'info');
 
-  // A4 a 300 DPI: 2480 x 3508 píxeles exactos (210 × 297 mm)
+  // Papel físico a 300 DPI calibrados
   const pxPerMm = 300 / 25.4;
-  const a4W = Math.round(210 * pxPerMm);
-  const a4H = Math.round(297 * pxPerMm);
+  const sheetW = Math.round(paper.widthMm * pxPerMm);
+  const sheetH = Math.round(paper.heightMm * pxPerMm);
 
   const canvas = document.createElement('canvas');
-  canvas.width = a4W;
-  canvas.height = a4H;
+  canvas.width = sheetW;
+  canvas.height = sheetH;
   const ctx = canvas.getContext('2d');
 
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, a4W, a4H);
+  ctx.fillRect(0, 0, sheetW, sheetH);
 
   const spec = getActiveSpec();
 
@@ -141,8 +142,8 @@ function downloadA4Image() {
   if (state.includeRulerFooter !== false) {
     const rulerLengthMm = 50;
     const rulerLengthPx = rulerLengthMm * pxPerMm;
-    const rulerStartX = (a4W - rulerLengthPx) / 2;
-    const rulerY = 262 * pxPerMm;
+    const rulerStartX = (sheetW - rulerLengthPx) / 2;
+    const rulerY = (paper.heightMm - 35) * pxPerMm;
 
     ctx.strokeStyle = '#444444';
     ctx.lineWidth = 3.5;
@@ -173,10 +174,10 @@ function downloadA4Image() {
 
     ctx.font = 'bold 26px Helvetica, Arial, sans-serif';
     ctx.fillStyle = '#222222';
-    ctx.fillText('INSTRUCCIONES: IMPRIMIR AL 100% (TAMAÑO REAL) — LA REGLA DEBE MEDIR 5 CM', a4W / 2, rulerY + 95);
+    ctx.fillText('INSTRUCCIONES: IMPRIMIR AL 100% (TAMAÑO REAL) — LA REGLA DEBE MEDIR 5 CM', sheetW / 2, rulerY + 95);
     ctx.font = '20px Helvetica, Arial, sans-serif';
     ctx.fillStyle = '#666666';
-    ctx.fillText('RealScan por Paco Iglesias | Formato: ' + spec.name + ' (300 DPI)', a4W / 2, rulerY + 130);
+    ctx.fillText('RealScan por Paco Iglesias | Formato: ' + spec.name + ' • Hoja: ' + paper.name + ' (300 DPI)', sheetW / 2, rulerY + 130);
   }
 
   function drawImageWithMarks(imgObj, xMm, yMm, wMm, hMm) {
@@ -220,7 +221,7 @@ function downloadA4Image() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'RealScan_' + spec.fileName + '_A4_300DPI.jpg';
+      a.download = 'RealScan_' + spec.fileName + '_' + paper.shortName.replace(/\s+/g, '_') + '_300DPI.jpg';
       document.body.appendChild(a);
       a.click();
       setTimeout(function() {
@@ -228,9 +229,9 @@ function downloadA4Image() {
         URL.revokeObjectURL(url);
       }, 2000);
       if (typeof logActivity === 'function') {
-        logActivity('Descarga Imagen A4 (300 DPI)', (state.activeCategory === 'photos' ? state.photoCopies + ' fotos' : spec.name));
+        logActivity('Descarga Imagen ' + paper.shortName + ' (300 DPI)', (state.activeCategory === 'photos' ? state.photoCopies + ' fotos' : spec.name));
       }
-      showToast('¡Imagen A4 a 300 DPI descargada con éxito!', 'success');
+      showToast('¡Imagen ' + paper.shortName + ' a 300 DPI descargada con éxito!', 'success');
     }, 'image/jpeg', 0.95);
   }
 
@@ -242,17 +243,17 @@ function downloadA4Image() {
       const cols = info.cols;
       const gap = info.gap;
       const totalGridW = cols * spec.widthMm + (cols - 1) * gap;
-      const startXMm = (210 - totalGridW) / 2;
+      const startXMm = (paper.widthMm - totalGridW) / 2;
       const startYMm = 22;
 
       ctx.fillStyle = '#333333';
       ctx.font = 'bold 30px Helvetica, Arial, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('PLANILLA DE FOTOS: ' + spec.name.toUpperCase() + ' (' + copies + ' FOTOS)', a4W / 2, (startYMm - 9) * pxPerMm);
+      ctx.fillText('PLANILLA DE FOTOS: ' + spec.name.toUpperCase() + ' (' + copies + ' FOTOS)', sheetW / 2, (startYMm - 9) * pxPerMm);
 
       ctx.font = '22px Helvetica, Arial, sans-serif';
       ctx.fillStyle = '#777777';
-      ctx.fillText('Medida física: ' + spec.widthMm + ' × ' + spec.heightMm + ' mm | Escala 1:1 real a 300 DPI', a4W / 2, (startYMm - 4.5) * pxPerMm);
+      ctx.fillText('Medida física: ' + spec.widthMm + ' × ' + spec.heightMm + ' mm | Escala 1:1 real en papel ' + paper.name, sheetW / 2, (startYMm - 4.5) * pxPerMm);
 
       const backImg = (state.mixTwoPhotos && state.images.back.processedDataUrl) ? new Image() : null;
       const halfCopies = Math.floor(copies / 2);
@@ -265,7 +266,7 @@ function downloadA4Image() {
           const r = Math.floor(i / cols);
           const pxMm = startXMm + c * (spec.widthMm + gap);
           const pyMm = startYMm + r * (spec.heightMm + gap);
-          if (pyMm + spec.heightMm <= 256) {
+          if (pyMm + spec.heightMm <= (paper.heightMm - 41)) {
             drawImageWithMarks(curImg, pxMm, pyMm, spec.widthMm, spec.heightMm);
           }
         }
@@ -282,7 +283,7 @@ function downloadA4Image() {
       // Documentos
       const targetW = spec.widthMm;
       const targetH = spec.heightMm;
-      const posX = (210 - targetW) / 2;
+      const posX = (paper.widthMm - targetW) / 2;
       const topMarginFront = (targetH > 100) ? 18 : 25;
 
       drawImageWithMarks(frontImg, posX, topMarginFront, targetW, targetH);
@@ -291,7 +292,7 @@ function downloadA4Image() {
         const backImg = new Image();
         backImg.onload = function() {
           const topMarginBack = (targetH > 100) ? (topMarginFront + targetH + 14) : (topMarginFront + targetH + 15);
-          if (topMarginBack + targetH <= 256) {
+          if (topMarginBack + targetH <= (paper.heightMm - 41)) {
             drawImageWithMarks(backImg, posX, topMarginBack, targetW, targetH);
           }
           triggerDownload();

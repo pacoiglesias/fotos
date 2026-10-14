@@ -677,6 +677,81 @@ function updateUI() {
   }
 
   updatePreviewAnnotations();
+  updatePreFlightBar();
+}
+
+function setPaperSize(paperId, silent) {
+  if (!window.PAPER_SPECS || !window.PAPER_SPECS[paperId]) paperId = 'a4';
+  state.paperSize = paperId;
+  const paper = window.PAPER_SPECS[paperId];
+
+  // Actualizar botones de selección
+  $$('.paper-size-btn').forEach(function(b) {
+    b.classList.toggle('is-active', b.getAttribute('data-paper') === paperId);
+  });
+
+  // Actualizar etiqueta descriptiva
+  const descEl = $('labelActivePaperDesc');
+  if (descEl) descEl.textContent = paper.name;
+
+  // Actualizar proporción física de la hoja interactiva en pantalla
+  const sheetEl = document.querySelector('.a4-sheet');
+  if (sheetEl) {
+    sheetEl.style.aspectRatio = `${paper.widthMm} / ${paper.heightMm}`;
+  }
+
+  // Actualizar etiquetas en Paso 4
+  const badgeTag = $('previewSheetBadgeTag');
+  if (badgeTag) badgeTag.textContent = 'Hoja ' + paper.shortName + ' final';
+
+  const mainTitle = $('previewMainTitle');
+  if (mainTitle) mainTitle.textContent = 'Vista previa en 1 hoja ' + paper.shortName;
+
+  updatePreFlightBar();
+  savePreferences();
+
+  if (!silent) {
+    showToast('📑 Tamaño de papel: ' + paper.name + '. Escala 1:1 física calibrada.', 'success');
+  }
+}
+
+function updatePreFlightBar() {
+  const docsEl = $('preFlightDocsStatus');
+  const scaleEl = $('preFlightScaleStatus');
+  const sheetEl = $('preFlightSheetStatus');
+  if (!docsEl || !scaleEl || !sheetEl) return;
+
+  const spec = getActiveSpec();
+  const pCount = (state.activeCategory === 'photos') ? 1 : (state.documentPageCount || 2);
+  let loaded = 0;
+  if (state.images.front && state.images.front.processedDataUrl) loaded++;
+  if (pCount >= 2 && state.images.back && state.images.back.processedDataUrl) loaded++;
+  if (pCount >= 3 && state.images.page3 && state.images.page3.processedDataUrl) loaded++;
+  if (pCount >= 4 && state.images.page4 && state.images.page4.processedDataUrl) loaded++;
+
+  if (loaded >= pCount) {
+    docsEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span class="font-bold text-emerald-700 dark:text-emerald-300">${loaded}/${pCount} caras listas</span>`;
+  } else if (loaded > 0) {
+    docsEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span><span class="font-bold text-amber-700 dark:text-amber-300">${loaded}/${pCount} caras cargadas</span>`;
+  } else {
+    docsEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span><span class="text-slate-500 dark:text-slate-400">0/${pCount} cargadas</span>`;
+  }
+
+  scaleEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-500"></span><span class="font-bold text-indigo-700 dark:text-indigo-300">1:1 Real (300 DPI)</span>`;
+
+  if (!state.includeRulerFooter && !state.includeDocLabels) {
+    sheetEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="font-bold text-emerald-700 dark:text-emerald-300">🏛️ Trámite Oficial (Limpia)</span>`;
+  } else if (!state.includeRulerFooter) {
+    sheetEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-500"></span><span class="font-bold text-indigo-700 dark:text-indigo-300">📄 Sin Regla al Pie</span>`;
+  } else {
+    sheetEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-500"></span><span class="font-bold text-indigo-700 dark:text-indigo-300">📐 Estándar con Regla</span>`;
+  }
+
+  const paperEl = $('preFlightPaperLabel');
+  if (paperEl && typeof getActivePaperSpec === 'function') {
+    const paper = getActivePaperSpec();
+    paperEl.textContent = `${paper.icon} ${paper.shortName} (${Math.round(paper.widthMm)}×${Math.round(paper.heightMm)})`;
+  }
 }
 
 /* ============================================================
@@ -687,6 +762,7 @@ function savePreferences() {
     const prefs = {
       theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
       activeCategory: state.activeCategory,
+      paperSize: state.paperSize || 'a4',
       format: state.format,
       printMode: state.printMode,
       documentPageCount: state.documentPageCount || 2,
@@ -706,13 +782,21 @@ function savePreferences() {
 function loadPreferences() {
   try {
     const raw = localStorage.getItem(window.PREFS_KEY);
-    if (!raw) return;
+    if (!raw) {
+      if (typeof setPaperSize === 'function') setPaperSize('a4', true);
+      return;
+    }
     const p = JSON.parse(raw);
     if (p.theme) {
       const isDark = p.theme === 'dark';
       document.documentElement.classList.toggle('dark', isDark);
       const meta = $('metaThemeColor');
       if (meta) meta.setAttribute('content', isDark ? '#0f172a' : '#4f46e5');
+    }
+    if (p.paperSize && typeof setPaperSize === 'function') {
+      setPaperSize(p.paperSize, true);
+    } else if (typeof setPaperSize === 'function') {
+      setPaperSize('a4', true);
     }
     if (p.customWidth) state.customWidth = p.customWidth;
     if (p.customHeight) state.customHeight = p.customHeight;
@@ -1215,16 +1299,74 @@ function bindEvents() {
     });
   }
 
-  // Botones de Ampliación Rápida (+25%, +50%)
+  // Selector de Tamaño de Hoja / Papel (A4, Carta, Oficio México, Legal)
+  $$('.paper-size-btn').forEach(function(btn) {
+    on(btn, 'click', function() {
+      const pid = btn.getAttribute('data-paper');
+      if (pid && typeof setPaperSize === 'function') {
+        setPaperSize(pid);
+      }
+    });
+  });
+
+  // Botones de Ampliación / Reducción Rápida (-25%, 100%, +25%, +50%)
   $$('.scale-preset-btn').forEach(function(b) {
     on(b, 'click', function() {
       const parts = b.getAttribute('data-scale-preset').split(':');
       const side = parts[0];
-      const targetZoom = parseFloat(parts[1]) || 1.25;
+      const targetZoom = parseFloat(parts[1]) || 1.0;
       if (typeof setZoomScale === 'function') {
         setZoomScale(side, targetZoom);
       }
     });
+  });
+
+  // Control deslizante continuo de escala (Zoom Slider)
+  $$('.zoom-slider').forEach(function(slider) {
+    const side = slider.getAttribute('data-slider-side');
+    on(slider, 'input', function(e) {
+      const z = parseFloat(e.target.value) / 100;
+      if (typeof setZoomScale === 'function') {
+        setZoomScale(side, z);
+      }
+    });
+  });
+
+  // Botones de Modo de Ajuste: Encajar Todo ('fit') vs Llenar Ranura 1:1 ('cover')
+  $$('.fit-mode-btn').forEach(function(btn) {
+    on(btn, 'click', function() {
+      const parts = btn.getAttribute('data-fit-mode').split(':');
+      const side = parts[0];
+      const mode = parts[1];
+      if (typeof setFitMode === 'function') {
+        setFitMode(side, mode);
+      }
+    });
+  });
+
+  // Botón Regla Milimétrica Física Superpuesta (1:1 Grid)
+  $$('.grid-btn').forEach(function(btn) {
+    on(btn, 'click', function() {
+      const side = btn.getAttribute('data-grid');
+      if (typeof toggleMmGrid === 'function') {
+        toggleMmGrid(side);
+      }
+    });
+  });
+
+  // Zoom proactivo con la rueda del ratón (Mouse Wheel Zoom) sobre cada lienzo
+  ['canvasDocFront', 'canvasDocBack', 'canvasDocPage3', 'canvasDocPage4'].forEach(function(cId) {
+    const canvas = $(cId);
+    if (!canvas) return;
+    const side = (cId === 'canvasDocFront') ? 'front' : ((cId === 'canvasDocBack') ? 'back' : ((cId === 'canvasDocPage3') ? 'page3' : 'page4'));
+    canvas.addEventListener('wheel', function(e) {
+      if (!state.images[side] || !state.images[side].originalSrc) return;
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.05 : -0.05;
+      if (typeof adjustZoom === 'function') {
+        adjustZoom(side, delta);
+      }
+    }, { passive: false });
   });
 
   // Acciones del Dashboard de Escaneos Guardados

@@ -14,9 +14,10 @@ function drawCornerCutMarks(doc, x, y, w, h) {
   doc.line(x+w+off-tick, y+h, x+w+off, y+h); doc.line(x+w, y+h+off-tick, x+w, y+h+off);
 }
 
-function drawCalibrationFooter(doc, pageW, spec) {
+function drawCalibrationFooter(doc, pageW, spec, pageH) {
   if (state.includeRulerFooter === false) return; // Si el usuario lo desactiva, la hoja queda 100% limpia para trámites oficiales
-  const rulerY = 262;
+  const totalH = pageH || 297;
+  const rulerY = Math.round(totalH - 35);
   const rulerLengthMm = 50;
   const rulerStartX = (pageW - rulerLengthMm) / 2;
 
@@ -42,6 +43,7 @@ function drawCalibrationFooter(doc, pageW, spec) {
     doc.text(i + 'cm', markX - (i === 0 ? 0.6 : 1.8), rulerY + 5.8);
   }
 
+  const paper = (typeof getActivePaperSpec === 'function') ? getActivePaperSpec() : { name: 'A4' };
   doc.setFontSize(8);
   doc.setFont('Helvetica', 'bold');
   doc.setTextColor(30,30,30);
@@ -50,9 +52,9 @@ function drawCalibrationFooter(doc, pageW, spec) {
   doc.setFont('Helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(80,80,80);
-  doc.text('1. En la ventana de tu impresora, selecciona ESCALA: 100% o TAMAÑO REAL (NO "Ajustar a la página").', pageW / 2, rulerY + 14.5, { align: 'center' });
+  doc.text('1. En tu impresora, selecciona Papel ' + paper.shortName + ' y ESCALA: 100% o TAMAÑO REAL (NO "Ajustar").', pageW / 2, rulerY + 14.5, { align: 'center' });
   doc.text('2. Mide la regla superior con una regla física: debe medir exactamente 5 centímetros.', pageW / 2, rulerY + 18, { align: 'center' });
-  doc.text('RealScan — Desarrollado por Paco Iglesias | Formato: ' + spec.name, pageW / 2, rulerY + 21.5, { align: 'center' });
+  doc.text('RealScan — Desarrollado por Paco Iglesias | ' + spec.name + ' • Hoja ' + paper.name, pageW / 2, rulerY + 21.5, { align: 'center' });
 }
 
 function generatePdfDoc() {
@@ -66,8 +68,9 @@ function generatePdfDoc() {
     if (!ok) return null;
   }
 
+  const paper = (typeof getActivePaperSpec === 'function') ? getActivePaperSpec() : { widthMm: 210, heightMm: 297, jsPdfFormat: 'a4' };
   const jsPDFCtor = window.jspdf.jsPDF;
-  const doc = new jsPDFCtor({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+  const doc = new jsPDFCtor({ orientation: 'portrait', unit: 'mm', format: paper.jsPdfFormat, compress: true });
 
   try {
     doc.setProperties({
@@ -80,7 +83,8 @@ function generatePdfDoc() {
   const spec = getActiveSpec();
   const targetW = spec.widthMm;
   const targetH = spec.heightMm;
-  const pageW = 210;
+  const pageW = paper.widthMm;
+  const pageH = paper.heightMm;
 
   if (state.activeCategory === 'photos') {
     const copies = state.photoCopies;
@@ -115,7 +119,7 @@ function generatePdfDoc() {
 
     for (let i = 0; i < copies; i++) {
       if (currentPagePhotos >= maxPerPage) {
-        drawCalibrationFooter(doc, pageW, spec);
+        drawCalibrationFooter(doc, pageW, spec, pageH);
         doc.addPage();
         currentPagePhotos = 0;
         const curPageIdx = Math.floor(i / maxPerPage);
@@ -180,7 +184,8 @@ function generatePdfDoc() {
     const isSeparateSheets = (state.printMode === 'both_separate' || state.sheetLayout === 'separate_sheets');
     const posX = (pageW - targetW) / 2;
     const topMargin = (targetH > 100) ? 18 : 22;
-    const fitsTwo = !isSeparateSheets && ((topMargin + targetH * 2 + 14) < 255);
+    const maxAvailableH = (state.includeRulerFooter !== false) ? (pageH - 42) : (pageH - 24);
+    const fitsTwo = !isSeparateSheets && ((topMargin + targetH * 2 + 14) <= maxAvailableH);
     const itemsPerSheet = fitsTwo ? 2 : 1;
 
     let itemsOnCurrentSheet = 0;
@@ -189,7 +194,7 @@ function generatePdfDoc() {
 
     for (let i = 0; i < activeItems.length; i++) {
       if (itemsOnCurrentSheet >= itemsPerSheet) {
-        drawCalibrationFooter(doc, pageW, spec);
+        drawCalibrationFooter(doc, pageW, spec, pageH);
         doc.addPage();
         itemsOnCurrentSheet = 0;
         currentSheetIndex++;
@@ -199,9 +204,9 @@ function generatePdfDoc() {
       let itemY = topMargin;
       if (itemsPerSheet === 2 && itemsOnCurrentSheet === 1) {
         itemY = topMargin + targetH + 14;
-      } else if (itemsPerSheet === 1 && targetH <= 180) {
-        // Centrar verticalmente en la zona útil de la hoja (antes de la regla en 262mm)
-        itemY = Math.max(16, Math.round((255 - targetH) / 2));
+      } else if (itemsPerSheet === 1 && targetH <= (maxAvailableH - 20)) {
+        // Centrar verticalmente en la zona útil de la hoja (antes de la regla de calibración)
+        itemY = Math.max(16, Math.round((maxAvailableH - targetH) / 2));
       }
 
       // Borde punteado de corte
@@ -229,6 +234,6 @@ function generatePdfDoc() {
     }
   }
 
-  drawCalibrationFooter(doc, pageW, spec);
+  drawCalibrationFooter(doc, pageW, spec, pageH);
   return doc;
 }

@@ -77,7 +77,7 @@
           <div class="flex items-center gap-1.5">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v2.9.1-Enterprise</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.0.0-Titanium</span>
           </div>
           <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap flex items-center gap-1 mt-0.5">
             <span>Desarrollado por</span>
@@ -703,51 +703,69 @@
           </button>
         </div>
 
-        <div id="toolsFront" class="hidden space-y-2 pt-1 border-t border-indigo-100 dark:border-indigo-900/60 mt-2">
-          <!-- Fila 1: Estado, Auto-Fit 1:1, Recorte, OACI, Eliminar, Zoom, Rotar -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                Listo
-              </span>
-              <button type="button" data-autofit="front" class="autofit-btn px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Rellenar automáticamente la ranura al tamaño real 1:1 exacto sin márgenes blancos">⚡ Ampliar 1:1</button>
-              <button type="button" id="btnToggleCropFront" data-crop="front" class="hidden px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/70 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 transition-colors" title="Alternar entre imagen recortada automáticamente y original">✂️ Recorte Auto</button>
-              <button type="button" data-guide="front" class="guide-btn px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 transition-colors" title="Activar/desactivar silueta de guía facial oficial OACI">👤 Guía OACI</button>
-              <button type="button" data-delete="front" class="delete-slot-btn px-2 py-0.5 rounded-md border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[10px] font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/80 transition-colors" title="Eliminar foto cargada">🗑️ Eliminar</button>
+        <!-- Banner Proactivo Inteligente de Ranura 1 -->
+        <div id="inspectorBannerFront" class="hidden p-2 rounded-xl bg-indigo-50/90 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-[11px] flex items-center justify-between gap-2 shadow-xs transition-all mt-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base">💡</span>
+            <div class="min-w-0">
+              <p id="inspectorTextFront" class="font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">Resolución 300 DPI detectada</p>
+              <p id="inspectorSubtextFront" class="text-[9.5px] text-slate-500 dark:text-slate-400 font-mono">3024 × 4032 px • Alta definición</p>
             </div>
+          </div>
+          <div id="inspectorActionsFront" class="flex items-center gap-1 shrink-0"></div>
+        </div>
+
+        <div id="toolsFront" class="hidden space-y-2 pt-1 border-t border-indigo-100 dark:border-indigo-900/60 mt-2">
+          <!-- Fila 1: Ajuste de Más a Menos (Fit/Cover), Auto 1:1, Slider de Zoom con % y Presets -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-800 text-xs">
             <div class="flex items-center gap-1 flex-wrap">
-              <button type="button" data-zoom="front:-0.15" class="zoom-btn px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 active:scale-95 transition-colors" title="Alejar / Reducir zoom">-</button>
-              <span id="zoomLabelFront" class="text-[10px] font-mono text-slate-500 dark:text-slate-400 w-7 text-center">1.0x</span>
-              <button type="button" data-zoom="front:0.15" class="zoom-btn px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 active:scale-95 transition-colors" title="Acercar / Recortar márgenes">+</button>
-              <button type="button" data-scale-preset="front:1.25" class="scale-preset-btn px-1.5 py-1 rounded-md text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar documento un 25%">+25%</button>
-              <button type="button" data-scale-preset="front:1.50" class="scale-preset-btn px-1.5 py-1 rounded-md text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar documento un 50%">+50%</button>
-              <button type="button" data-rotate="front" class="rotate-btn inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 active:scale-95 transition-colors">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                <span>Rotar 90°</span>
-              </button>
+              <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span>
+              <button type="button" id="btnFitModeFront" data-fit-mode="front:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa dentro del marco sin cortar nada (ideal para imágenes grandes)">📐 Encajar Todo</button>
+              <button type="button" id="btnCoverModeFront" data-fit-mode="front:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Rellenar el marco completo 1:1">🔲 Llenar 1:1</button>
+              <button type="button" data-autofit="front" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Ajuste automático 1:1">⚡ Auto 1:1</button>
+              <button type="button" id="btnToggleCropFront" data-crop="front" class="hidden px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 transition-colors">✂️ Recorte</button>
+            </div>
+
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <!-- Slider de Escala de más a menos y de menos a más -->
+              <div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <span class="text-[10px] text-slate-400 font-bold" title="Reducir / Ampliar escala">🔍</span>
+                <button type="button" data-zoom="front:-0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 px-1" title="Reducir imagen">-</button>
+                <input type="range" id="zoomSliderFront" data-slot="front" min="20" max="350" step="5" value="100" class="zoom-slider w-20 sm:w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer" title="Desliza para ajustar escala de más a menor o de menor a más">
+                <button type="button" data-zoom="front:0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 px-1" title="Ampliar imagen">+</button>
+                <span id="zoomPercentFront" class="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 w-9 text-right">100%</span>
+              </div>
+              <button type="button" data-scale-preset="front:0.75" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Reducir al 75% del tamaño">-25%</button>
+              <button type="button" data-scale-preset="front:1.00" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Restablecer tamaño normal 100%">100%</button>
+              <button type="button" data-scale-preset="front:1.25" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar al 125%">+25%</button>
+              <button type="button" data-scale-preset="front:1.50" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar al 150%">+50%</button>
             </div>
           </div>
 
-          <!-- Fila 2: Filtros fotográficos y Centrado Nudge -->
-          <div class="flex flex-wrap items-center justify-between gap-2 p-2 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-indigo-100 dark:border-indigo-900/40 text-xs">
-            <div class="flex items-center gap-1">
-              <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Filtro:</span>
-              <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md border border-slate-200 dark:border-slate-700 text-[10px]" role="group">
-                <button type="button" data-filter="front:color" class="filter-btn is-active px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">🎨 Color</button>
-                <button type="button" data-filter="front:bw" class="filter-btn px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200" title="Foto B/N oficial para certificados y títulos">⚫ B/N Oficial</button>
-                <button type="button" data-filter="front:scanner" class="filter-btn px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200" title="Filtro fotocopia nítida / texto oscuro">📄 Escáner</button>
+          <!-- Fila 2: Herramientas Visuales (Filtros, Giro, Regla mm, Guía OACI, Centrado y Borrar) -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-indigo-100 dark:border-indigo-900/40 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-rotate="front" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Girar 90 grados">
+                <span>🔄</span><span>Rotar</span>
+              </button>
+              <button type="button" id="btnToggleMmGridFront" data-grid="front" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Superponer cuadrícula milimétrica en pantalla para verificar medidas">📏 Regla mm</button>
+              <button type="button" data-guide="front" class="guide-btn px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 transition-colors" title="Guía facial OACI para pasaporte">👤 OACI</button>
+              <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md border border-slate-200 dark:border-slate-700 text-[9.5px]">
+                <button type="button" data-filter="front:color" class="filter-btn is-active px-1.5 py-0.5 rounded font-medium">🎨 Color</button>
+                <button type="button" data-filter="front:bw" class="filter-btn px-1.5 py-0.5 rounded font-medium">⚫ B/N</button>
+                <button type="button" data-filter="front:scanner" class="filter-btn px-1.5 py-0.5 rounded font-medium">📄 Escáner</button>
               </div>
             </div>
 
-            <!-- Nudge / Centrado -->
+            <!-- Nudge / Centrado y Borrar -->
             <div class="flex items-center gap-1">
-              <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Centrar:</span>
-              <button type="button" data-pan="front:0:-5" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-xs flex items-center justify-center active:scale-95" title="Mover arriba">↑</button>
-              <button type="button" data-pan="front:0:5" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-xs flex items-center justify-center active:scale-95" title="Mover abajo">↓</button>
-              <button type="button" data-pan="front:-5:0" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-xs flex items-center justify-center active:scale-95" title="Mover izquierda">←</button>
-              <button type="button" data-pan="front:5:0" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-xs flex items-center justify-center active:scale-95" title="Mover derecha">→</button>
-              <button type="button" data-pan-reset="front" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[10px] font-medium text-slate-700 dark:text-slate-200" title="Restablecer posición inicial">🎯 Reset</button>
+              <span class="text-[9.5px] font-semibold text-slate-400">Centrar:</span>
+              <button type="button" data-pan="front:0:-5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Arriba">↑</button>
+              <button type="button" data-pan="front:0:5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Abajo">↓</button>
+              <button type="button" data-pan="front:-5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Izquierda">←</button>
+              <button type="button" data-pan="front:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Derecha">→</button>
+              <button type="button" data-pan-reset="front" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[9.5px] font-medium" title="Restablecer posición inicial">🎯 Reset</button>
+              <button type="button" data-delete="front" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/80 transition-colors ml-1" title="Eliminar foto">🗑️</button>
             </div>
           </div>
         </div>
@@ -782,59 +800,77 @@
             <span>Subir Archivo</span>
           </button>
 
-          <button type="button" data-paste="back" class="paste-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-200 font-medium text-xs active:scale-95 transition-all" title="Copia la imagen de tu escáner y haz clic aquí">
-            <svg class="w-4 h-4 text-amber-700 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <button type="button" data-paste="back" class="paste-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-200 font-medium text-xs active:scale-95 transition-all" title="Copia la imagen y pégala aquí">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
             </svg>
             <span>📋 Pegar</span>
           </button>
         </div>
 
-        <div id="toolsBack" class="hidden space-y-2 pt-1 border-t border-amber-200 dark:border-amber-900/60 mt-2">
-          <!-- Fila 1: Estado, Auto-Fit 1:1, Recorte, OACI, Eliminar, Zoom, Rotar -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                Listo
-              </span>
-              <button type="button" data-autofit="back" class="autofit-btn px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Rellenar automáticamente la ranura al tamaño real 1:1 exacto sin márgenes blancos">⚡ Ampliar 1:1</button>
-              <button type="button" id="btnToggleCropBack" data-crop="back" class="hidden px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/70 text-[10px] font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/80 transition-colors" title="Alternar entre imagen recortada automáticamente y original">✂️ Recorte Auto</button>
-              <button type="button" data-guide="back" class="guide-btn px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/70 text-[10px] font-semibold text-amber-800 dark:text-amber-300 transition-colors" title="Activar/desactivar silueta de guía facial oficial OACI">👤 Guía OACI</button>
-              <button type="button" data-delete="back" class="delete-slot-btn px-2 py-0.5 rounded-md border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[10px] font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/80 transition-colors" title="Eliminar foto cargada">🗑️ Eliminar</button>
+        <!-- Banner Proactivo Inteligente de Ranura 2 -->
+        <div id="inspectorBannerBack" class="hidden p-2 rounded-xl bg-amber-50/90 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-[11px] flex items-center justify-between gap-2 shadow-xs transition-all mt-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base">💡</span>
+            <div class="min-w-0">
+              <p id="inspectorTextBack" class="font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">Resolución 300 DPI detectada</p>
+              <p id="inspectorSubtextBack" class="text-[9.5px] text-slate-500 dark:text-slate-400 font-mono">3024 × 4032 px • Alta definición</p>
             </div>
+          </div>
+          <div id="inspectorActionsBack" class="flex items-center gap-1 shrink-0"></div>
+        </div>
+
+        <div id="toolsBack" class="hidden space-y-2 pt-1 border-t border-amber-200 dark:border-amber-900/60 mt-2">
+          <!-- Fila 1: Ajuste de Más a Menos (Fit/Cover), Auto 1:1, Slider de Zoom con % y Presets -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-800 text-xs">
             <div class="flex items-center gap-1 flex-wrap">
-              <button type="button" data-zoom="back:-0.15" class="zoom-btn px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 active:scale-95 transition-colors" title="Alejar / Reducir zoom">-</button>
-              <span id="zoomLabelBack" class="text-[10px] font-mono text-slate-500 dark:text-slate-400 w-7 text-center">1.0x</span>
-              <button type="button" data-zoom="back:0.15" class="zoom-btn px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 active:scale-95 transition-colors" title="Acercar / Recortar márgenes">+</button>
-              <button type="button" data-scale-preset="back:1.25" class="scale-preset-btn px-1.5 py-1 rounded-md text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar documento un 25%">+25%</button>
-              <button type="button" data-scale-preset="back:1.50" class="scale-preset-btn px-1.5 py-1 rounded-md text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar documento un 50%">+50%</button>
-              <button type="button" data-rotate="back" class="rotate-btn inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 active:scale-95 transition-colors">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                <span>Rotar 90°</span>
-              </button>
+              <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span>
+              <button type="button" id="btnFitModeBack" data-fit-mode="back:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa dentro del marco sin cortar nada (ideal para imágenes grandes)">📐 Encajar Todo</button>
+              <button type="button" id="btnCoverModeBack" data-fit-mode="back:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Rellenar el marco completo 1:1">🔲 Llenar 1:1</button>
+              <button type="button" data-autofit="back" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Ajuste automático 1:1">⚡ Auto 1:1</button>
+              <button type="button" id="btnToggleCropBack" data-crop="back" class="hidden px-2 py-0.5 rounded text-[10px] font-bold border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/80 transition-colors">✂️ Recorte</button>
+            </div>
+
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <!-- Slider de Escala -->
+              <div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <span class="text-[10px] text-slate-400 font-bold" title="Reducir / Ampliar escala">🔍</span>
+                <button type="button" data-zoom="back:-0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 px-1" title="Reducir imagen">-</button>
+                <input type="range" id="zoomSliderBack" data-slot="back" min="20" max="350" step="5" value="100" class="zoom-slider w-20 sm:w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer" title="Desliza para ajustar escala de más a menor o de menor a más">
+                <button type="button" data-zoom="back:0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 px-1" title="Ampliar imagen">+</button>
+                <span id="zoomPercentBack" class="text-[10px] font-mono font-bold text-amber-700 dark:text-amber-400 w-9 text-right">100%</span>
+              </div>
+              <button type="button" data-scale-preset="back:0.75" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Reducir al 75% del tamaño">-25%</button>
+              <button type="button" data-scale-preset="back:1.00" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Restablecer tamaño normal 100%">100%</button>
+              <button type="button" data-scale-preset="back:1.25" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar al 125%">+25%</button>
+              <button type="button" data-scale-preset="back:1.50" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar al 150%">+50%</button>
             </div>
           </div>
 
-          <!-- Fila 2: Filtros fotográficos y Centrado Nudge -->
-          <div class="flex flex-wrap items-center justify-between gap-2 p-2 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-amber-200 dark:border-amber-900/40 text-xs">
-            <div class="flex items-center gap-1">
-              <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Filtro:</span>
-              <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md border border-slate-200 dark:border-slate-700 text-[10px]" role="group">
-                <button type="button" data-filter="back:color" class="filter-btn is-active px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">🎨 Color</button>
-                <button type="button" data-filter="back:bw" class="filter-btn px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200" title="Foto B/N oficial para certificados y títulos">⚫ B/N Oficial</button>
-                <button type="button" data-filter="back:scanner" class="filter-btn px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200" title="Filtro fotocopia nítida / texto oscuro">📄 Escáner</button>
+          <!-- Fila 2: Herramientas Visuales (Filtros, Giro, Regla mm, Guía OACI, Centrado y Borrar) -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-amber-200 dark:border-amber-900/40 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-rotate="back" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Girar 90 grados">
+                <span>🔄</span><span>Rotar</span>
+              </button>
+              <button type="button" id="btnToggleMmGridBack" data-grid="back" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Superponer cuadrícula milimétrica en pantalla para verificar medidas">📏 Regla mm</button>
+              <button type="button" data-guide="back" class="guide-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/70 text-[10px] font-semibold text-amber-800 dark:text-amber-300 transition-colors" title="Guía facial OACI para pasaporte">👤 OACI</button>
+              <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md border border-slate-200 dark:border-slate-700 text-[9.5px]">
+                <button type="button" data-filter="back:color" class="filter-btn is-active px-1.5 py-0.5 rounded font-medium">🎨 Color</button>
+                <button type="button" data-filter="back:bw" class="filter-btn px-1.5 py-0.5 rounded font-medium">⚫ B/N</button>
+                <button type="button" data-filter="back:scanner" class="filter-btn px-1.5 py-0.5 rounded font-medium">📄 Escáner</button>
               </div>
             </div>
 
-            <!-- Nudge / Centrado -->
+            <!-- Nudge / Centrado y Borrar -->
             <div class="flex items-center gap-1">
-              <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Centrar:</span>
-              <button type="button" data-pan="back:0:-5" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-xs flex items-center justify-center active:scale-95" title="Mover arriba">↑</button>
-              <button type="button" data-pan="back:0:5" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-xs flex items-center justify-center active:scale-95" title="Mover abajo">↓</button>
-              <button type="button" data-pan="back:-5:0" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-xs flex items-center justify-center active:scale-95" title="Mover izquierda">←</button>
-              <button type="button" data-pan="back:5:0" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-xs flex items-center justify-center active:scale-95" title="Mover derecha">→</button>
-              <button type="button" data-pan-reset="back" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[10px] font-medium text-slate-700 dark:text-slate-200" title="Restablecer posición inicial">🎯 Reset</button>
+              <span class="text-[9.5px] font-semibold text-slate-400">Centrar:</span>
+              <button type="button" data-pan="back:0:-5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Arriba">↑</button>
+              <button type="button" data-pan="back:0:5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Abajo">↓</button>
+              <button type="button" data-pan="back:-5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Izquierda">←</button>
+              <button type="button" data-pan="back:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Derecha">→</button>
+              <button type="button" data-pan-reset="back" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[9.5px] font-medium" title="Restablecer posición inicial">🎯 Reset</button>
+              <button type="button" data-delete="back" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/80 transition-colors ml-1" title="Eliminar foto">🗑️</button>
             </div>
           </div>
         </div>
@@ -869,40 +905,65 @@
           </button>
         </div>
 
-        <div id="toolsPage3" class="hidden space-y-2 pt-1 border-t border-purple-200 dark:border-purple-900/60 mt-2">
-          <div class="flex flex-wrap items-center justify-between gap-1.5">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">✓ Listo</span>
-              <button type="button" data-autofit="page3" class="autofit-btn px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors" title="Rellenar automáticamente al tamaño 1:1">⚡ Ampliar 1:1</button>
-              <button type="button" id="btnToggleCropPage3" data-crop="page3" class="hidden px-2 py-0.5 rounded-md border border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/70 text-[10px] font-semibold text-purple-800 dark:text-purple-300 hover:bg-purple-100 transition-colors">✂️ Recorte Auto</button>
-              <button type="button" data-guide="page3" class="guide-btn px-2 py-0.5 rounded-md border border-purple-300 dark:border-purple-800 bg-white dark:bg-slate-800 hover:bg-purple-50 text-[10px] font-semibold text-purple-800 dark:text-purple-300 transition-colors">👤 Guía OACI</button>
-              <button type="button" data-delete="page3" class="delete-slot-btn px-2 py-0.5 rounded-md border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[10px] font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition-colors" title="Eliminar foto">🗑️ Eliminar</button>
-            </div>
-            <div class="flex items-center gap-1 flex-wrap">
-              <button type="button" data-zoom="page3:-0.15" class="zoom-btn px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold">-</button>
-              <span id="zoomLabelPage3" class="text-[10px] font-mono text-slate-500 dark:text-slate-400 w-7 text-center">1.0x</span>
-              <button type="button" data-zoom="page3:0.15" class="zoom-btn px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold">+</button>
-              <button type="button" data-scale-preset="page3:1.25" class="scale-preset-btn px-1.5 py-1 rounded-md text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar documento un 25%">+25%</button>
-              <button type="button" data-scale-preset="page3:1.50" class="scale-preset-btn px-1.5 py-1 rounded-md text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar documento un 50%">+50%</button>
-              <button type="button" data-rotate="page3" class="rotate-btn inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium"><span>Rotar 90°</span></button>
+        <!-- Banner Proactivo Inteligente de Ranura 3 -->
+        <div id="inspectorBannerPage3" class="hidden p-2 rounded-xl bg-purple-50/90 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-[11px] flex items-center justify-between gap-2 shadow-xs transition-all mt-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base">💡</span>
+            <div class="min-w-0">
+              <p id="inspectorTextPage3" class="font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">Resolución 300 DPI detectada</p>
+              <p id="inspectorSubtextPage3" class="text-[9.5px] text-slate-500 dark:text-slate-400 font-mono">3024 × 4032 px • Alta definición</p>
             </div>
           </div>
-          <div class="flex flex-wrap items-center justify-between gap-2 p-2 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-purple-200 dark:border-purple-900/40 text-xs">
-            <div class="flex items-center gap-1">
-              <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Filtro:</span>
-              <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md text-[10px]" role="group">
-                <button type="button" data-filter="page3:color" class="filter-btn is-active px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">🎨 Color</button>
-                <button type="button" data-filter="page3:bw" class="filter-btn px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">⚫ B/N</button>
-                <button type="button" data-filter="page3:scanner" class="filter-btn px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">📄 Escáner</button>
+          <div id="inspectorActionsPage3" class="flex items-center gap-1 shrink-0"></div>
+        </div>
+
+        <div id="toolsPage3" class="hidden space-y-2 pt-1 border-t border-purple-200 dark:border-purple-900/60 mt-2">
+          <!-- Fila 1: Ajuste de Más a Menos (Fit/Cover), Auto 1:1, Slider de Zoom con % y Presets -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-800 text-xs">
+            <div class="flex items-center gap-1 flex-wrap">
+              <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span>
+              <button type="button" id="btnFitModePage3" data-fit-mode="page3:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa sin cortar nada">📐 Encajar Todo</button>
+              <button type="button" id="btnCoverModePage3" data-fit-mode="page3:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Rellenar el marco completo 1:1">🔲 Llenar 1:1</button>
+              <button type="button" data-autofit="page3" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">⚡ Auto 1:1</button>
+              <button type="button" id="btnToggleCropPage3" data-crop="page3" class="hidden px-2 py-0.5 rounded text-[10px] font-bold border border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 hover:bg-purple-100 transition-colors">✂️ Recorte</button>
+            </div>
+
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <!-- Slider de Escala -->
+              <div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <span class="text-[10px] text-slate-400 font-bold">🔍</span>
+                <button type="button" data-zoom="page3:-0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 px-1">-</button>
+                <input type="range" id="zoomSliderPage3" data-slot="page3" min="20" max="350" step="5" value="100" class="zoom-slider w-20 sm:w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                <button type="button" data-zoom="page3:0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 px-1">+</button>
+                <span id="zoomPercentPage3" class="text-[10px] font-mono font-bold text-purple-700 dark:text-purple-400 w-9 text-right">100%</span>
+              </div>
+              <button type="button" data-scale-preset="page3:0.75" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">-25%</button>
+              <button type="button" data-scale-preset="page3:1.00" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">100%</button>
+              <button type="button" data-scale-preset="page3:1.25" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">+25%</button>
+              <button type="button" data-scale-preset="page3:1.50" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">+50%</button>
+            </div>
+          </div>
+
+          <!-- Fila 2: Herramientas Visuales (Filtros, Giro, Regla mm, Guía OACI, Centrado y Borrar) -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-purple-200 dark:border-purple-900/40 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-rotate="page3" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200"><span>🔄</span><span>Rotar</span></button>
+              <button type="button" id="btnToggleMmGridPage3" data-grid="page3" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200">📏 Regla mm</button>
+              <button type="button" data-guide="page3" class="guide-btn px-2 py-0.5 rounded border border-purple-300 dark:border-purple-800 bg-white dark:bg-slate-800 hover:bg-purple-50 text-[10px] font-semibold text-purple-800 dark:text-purple-300">👤 OACI</button>
+              <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md text-[9.5px]">
+                <button type="button" data-filter="page3:color" class="filter-btn is-active px-1.5 py-0.5 rounded font-medium">🎨 Color</button>
+                <button type="button" data-filter="page3:bw" class="filter-btn px-1.5 py-0.5 rounded font-medium">⚫ B/N</button>
+                <button type="button" data-filter="page3:scanner" class="filter-btn px-1.5 py-0.5 rounded font-medium">📄 Escáner</button>
               </div>
             </div>
             <div class="flex items-center gap-1">
-              <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Centrar:</span>
-              <button type="button" data-pan="page3:0:-5" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">↑</button>
-              <button type="button" data-pan="page3:0:5" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">↓</button>
-              <button type="button" data-pan="page3:-5:0" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">←</button>
-              <button type="button" data-pan="page3:5:0" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">→</button>
-              <button type="button" data-pan-reset="page3" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">🎯 Reset</button>
+              <span class="text-[9.5px] font-semibold text-slate-400">Centrar:</span>
+              <button type="button" data-pan="page3:0:-5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">↑</button>
+              <button type="button" data-pan="page3:0:5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">↓</button>
+              <button type="button" data-pan="page3:-5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">←</button>
+              <button type="button" data-pan="page3:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">→</button>
+              <button type="button" data-pan-reset="page3" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[9.5px]">🎯 Reset</button>
+              <button type="button" data-delete="page3" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 ml-1">🗑️</button>
             </div>
           </div>
         </div>
@@ -937,40 +998,65 @@
           </button>
         </div>
 
-        <div id="toolsPage4" class="hidden space-y-2 pt-1 border-t border-teal-200 dark:border-teal-900/60 mt-2">
-          <div class="flex flex-wrap items-center justify-between gap-1.5">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">✓ Listo</span>
-              <button type="button" data-autofit="page4" class="autofit-btn px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors" title="Rellenar automáticamente al tamaño 1:1">⚡ Ampliar 1:1</button>
-              <button type="button" id="btnToggleCropPage4" data-crop="page4" class="hidden px-2 py-0.5 rounded-md border border-teal-300 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/70 text-[10px] font-semibold text-teal-800 dark:text-teal-300 hover:bg-teal-100 transition-colors">✂️ Recorte Auto</button>
-              <button type="button" data-guide="page4" class="guide-btn px-2 py-0.5 rounded-md border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-800 hover:bg-teal-50 text-[10px] font-semibold text-teal-800 dark:text-teal-300 transition-colors">👤 Guía OACI</button>
-              <button type="button" data-delete="page4" class="delete-slot-btn px-2 py-0.5 rounded-md border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[10px] font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition-colors" title="Eliminar foto">🗑️ Eliminar</button>
-            </div>
-            <div class="flex items-center gap-1 flex-wrap">
-              <button type="button" data-zoom="page4:-0.15" class="zoom-btn px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold">-</button>
-              <span id="zoomLabelPage4" class="text-[10px] font-mono text-slate-500 dark:text-slate-400 w-7 text-center">1.0x</span>
-              <button type="button" data-zoom="page4:0.15" class="zoom-btn px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold">+</button>
-              <button type="button" data-scale-preset="page4:1.25" class="scale-preset-btn px-1.5 py-1 rounded-md text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar documento un 25%">+25%</button>
-              <button type="button" data-scale-preset="page4:1.50" class="scale-preset-btn px-1.5 py-1 rounded-md text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar documento un 50%">+50%</button>
-              <button type="button" data-rotate="page4" class="rotate-btn inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium"><span>Rotar 90°</span></button>
+        <!-- Banner Proactivo Inteligente de Ranura 4 -->
+        <div id="inspectorBannerPage4" class="hidden p-2 rounded-xl bg-teal-50/90 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-[11px] flex items-center justify-between gap-2 shadow-xs transition-all mt-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base">💡</span>
+            <div class="min-w-0">
+              <p id="inspectorTextPage4" class="font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">Resolución 300 DPI detectada</p>
+              <p id="inspectorSubtextPage4" class="text-[9.5px] text-slate-500 dark:text-slate-400 font-mono">3024 × 4032 px • Alta definición</p>
             </div>
           </div>
-          <div class="flex flex-wrap items-center justify-between gap-2 p-2 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-teal-200 dark:border-teal-900/40 text-xs">
-            <div class="flex items-center gap-1">
-              <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Filtro:</span>
-              <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md text-[10px]" role="group">
-                <button type="button" data-filter="page4:color" class="filter-btn is-active px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">🎨 Color</button>
-                <button type="button" data-filter="page4:bw" class="filter-btn px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">⚫ B/N</button>
-                <button type="button" data-filter="page4:scanner" class="filter-btn px-2 py-0.5 rounded font-medium text-slate-700 dark:text-slate-200">📄 Escáner</button>
+          <div id="inspectorActionsPage4" class="flex items-center gap-1 shrink-0"></div>
+        </div>
+
+        <div id="toolsPage4" class="hidden space-y-2 pt-1 border-t border-teal-200 dark:border-teal-900/60 mt-2">
+          <!-- Fila 1: Ajuste de Más a Menos (Fit/Cover), Auto 1:1, Slider de Zoom con % y Presets -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-800 text-xs">
+            <div class="flex items-center gap-1 flex-wrap">
+              <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span>
+              <button type="button" id="btnFitModePage4" data-fit-mode="page4:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa sin cortar nada">📐 Encajar Todo</button>
+              <button type="button" id="btnCoverModePage4" data-fit-mode="page4:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Rellenar el marco completo 1:1">🔲 Llenar 1:1</button>
+              <button type="button" data-autofit="page4" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">⚡ Auto 1:1</button>
+              <button type="button" id="btnToggleCropPage4" data-crop="page4" class="hidden px-2 py-0.5 rounded text-[10px] font-bold border border-teal-300 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/70 text-teal-800 dark:text-teal-300 hover:bg-teal-100 transition-colors">✂️ Recorte</button>
+            </div>
+
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <!-- Slider de Escala -->
+              <div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <span class="text-[10px] text-slate-400 font-bold">🔍</span>
+                <button type="button" data-zoom="page4:-0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 px-1">-</button>
+                <input type="range" id="zoomSliderPage4" data-slot="page4" min="20" max="350" step="5" value="100" class="zoom-slider w-20 sm:w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                <button type="button" data-zoom="page4:0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 px-1">+</button>
+                <span id="zoomPercentPage4" class="text-[10px] font-mono font-bold text-teal-700 dark:text-teal-400 w-9 text-right">100%</span>
+              </div>
+              <button type="button" data-scale-preset="page4:0.75" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">-25%</button>
+              <button type="button" data-scale-preset="page4:1.00" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">100%</button>
+              <button type="button" data-scale-preset="page4:1.25" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">+25%</button>
+              <button type="button" data-scale-preset="page4:1.50" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">+50%</button>
+            </div>
+          </div>
+
+          <!-- Fila 2: Herramientas Visuales (Filtros, Giro, Regla mm, Guía OACI, Centrado y Borrar) -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-teal-200 dark:border-teal-900/40 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-rotate="page4" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200"><span>🔄</span><span>Rotar</span></button>
+              <button type="button" id="btnToggleMmGridPage4" data-grid="page4" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200">📏 Regla mm</button>
+              <button type="button" data-guide="page4" class="guide-btn px-2 py-0.5 rounded border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-800 hover:bg-teal-50 text-[10px] font-semibold text-teal-800 dark:text-teal-300">👤 OACI</button>
+              <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md text-[9.5px]">
+                <button type="button" data-filter="page4:color" class="filter-btn is-active px-1.5 py-0.5 rounded font-medium">🎨 Color</button>
+                <button type="button" data-filter="page4:bw" class="filter-btn px-1.5 py-0.5 rounded font-medium">⚫ B/N</button>
+                <button type="button" data-filter="page4:scanner" class="filter-btn px-1.5 py-0.5 rounded font-medium">📄 Escáner</button>
               </div>
             </div>
             <div class="flex items-center gap-1">
-              <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Centrar:</span>
-              <button type="button" data-pan="page4:0:-5" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">↑</button>
-              <button type="button" data-pan="page4:0:5" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">↓</button>
-              <button type="button" data-pan="page4:-5:0" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">←</button>
-              <button type="button" data-pan="page4:5:0" class="pan-btn w-6 h-6 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">→</button>
-              <button type="button" data-pan-reset="page4" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">🎯 Reset</button>
+              <span class="text-[9.5px] font-semibold text-slate-400">Centrar:</span>
+              <button type="button" data-pan="page4:0:-5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">↑</button>
+              <button type="button" data-pan="page4:0:5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">↓</button>
+              <button type="button" data-pan="page4:-5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">←</button>
+              <button type="button" data-pan="page4:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">→</button>
+              <button type="button" data-pan-reset="page4" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[9.5px]">🎯 Reset</button>
+              <button type="button" data-delete="page4" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 ml-1">🗑️</button>
             </div>
           </div>
         </div>
@@ -1003,12 +1089,40 @@
     <section class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
       <div class="flex items-center justify-between">
         <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Paso 4</span>
-        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Hoja A4 final</span>
+        <span id="previewSheetBadgeTag" class="text-xs text-slate-400 dark:text-slate-500 font-medium">Hoja A4 final</span>
+      </div>
+
+      <!-- Selector de Tamaño de Papel / Hoja (A4, Carta, Oficio México, Legal) -->
+      <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <span>📑 Tamaño de Hoja / Papel de tu Impresora:</span>
+          </label>
+          <span id="labelActivePaperDesc" class="text-[10.5px] font-mono text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded">A4 Estándar (210 × 297 mm)</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <button type="button" data-paper="a4" class="paper-size-btn is-active p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between" title="Estándar internacional ISO 216">
+            <span class="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white"><span>📄</span><span>A4 Estándar</span></span>
+            <span class="text-[9.5px] opacity-75 mt-1 font-mono">210 × 297 mm</span>
+          </button>
+          <button type="button" data-paper="letter" class="paper-size-btn p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between" title="Estándar en México y Norteamérica">
+            <span class="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white"><span>📄</span><span>Carta (Letter)</span></span>
+            <span class="text-[9.5px] opacity-75 mt-1 font-mono">215.9 × 279.4 mm</span>
+          </button>
+          <button type="button" data-paper="oficio" class="paper-size-btn p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between" title="Estándar para contratos, trámites, juzgados y notarías en México">
+            <span class="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white"><span>📜</span><span>Oficio México</span></span>
+            <span class="text-[9.5px] opacity-75 mt-1 font-mono">215.9 × 340.0 mm</span>
+          </button>
+          <button type="button" data-paper="legal" class="paper-size-btn p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between" title="Formato Legal extendido estadounidense (8.5 × 14 in)">
+            <span class="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white"><span>📜</span><span>Oficio Legal USA</span></span>
+            <span class="text-[9.5px] opacity-75 mt-1 font-mono">215.9 × 355.6 mm</span>
+          </button>
+        </div>
       </div>
 
       <div class="flex items-center justify-between gap-2">
         <div class="min-w-0">
-          <h2 class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">Vista previa en 1 hoja A4</h2>
+          <h2 id="previewMainTitle" class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">Vista previa en 1 hoja</h2>
           <p class="text-xs text-slate-500 dark:text-slate-400" id="previewSubtext">Anverso y Reverso alineados a escala 1:1 real</p>
         </div>
         <span id="previewDimensionsTag" class="text-[11px] font-mono font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-700 whitespace-nowrap">85.6 × 54.0 mm</span>
@@ -1226,6 +1340,32 @@
         </p>
       </div>
 
+      <!-- Asistente Proactivo de Pre-Verificación de Impresión (Pre-Flight Bar) -->
+      <div id="preFlightCheckBar" class="p-3 rounded-xl border border-indigo-200 dark:border-indigo-800/80 bg-white dark:bg-slate-900 shadow-xs flex flex-wrap items-center justify-between gap-2 text-xs transition-colors">
+        <div class="flex items-center gap-1.5">
+          <span class="text-sm">🛡️</span>
+          <span class="font-bold text-slate-800 dark:text-slate-200">Verificación de Impresión:</span>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap text-[11px]">
+          <div id="preFlightDocsStatus" class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md text-slate-700 dark:text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+            <span>0/2 caras cargadas</span>
+          </div>
+          <div id="preFlightScaleStatus" class="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md text-indigo-700 dark:text-indigo-300 font-semibold">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            <span>1:1 Real (300 DPI)</span>
+          </div>
+          <div id="preFlightSheetStatus" class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md text-slate-700 dark:text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            <span>📐 Estándar con Regla</span>
+          </div>
+          <div id="preFlightPaperStatus" class="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md text-blue-700 dark:text-blue-300 font-semibold">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span id="preFlightPaperLabel">📄 A4 (210×297)</span>
+          </div>
+        </div>
+      </div>
+
       <div class="space-y-2.5 pt-1">
         <button type="button" id="btnPrintDirect" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
           <svg class="w-5 h-5 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1302,7 +1442,7 @@
     <footer class="text-center text-xs text-slate-500 space-y-2.5 py-6 border-t border-slate-200 dark:border-slate-800 mt-8">
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v2.9.1-Enterprise</span>
+        <span class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.0.0-Titanium</span>
         <span class="text-slate-300 dark:text-slate-600">•</span>
         <span class="font-medium">Desarrollado por <strong class="font-bold text-slate-900 dark:text-white">Paco Iglesias</strong></span>
       </div>

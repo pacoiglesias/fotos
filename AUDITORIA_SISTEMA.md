@@ -155,7 +155,58 @@ Se agregaron 4 botones dedicados con etiquetas claras y descriptivas:
 
 ---
 
-## 8. 🚀 Despliegue y Sincronización Total
+## 8. 🚀 Versión v3.0.0-Titanium: Escala Bidireccional (De Más a Menos), Inspector Proactivo e Interfaz de Alto Nivel
+1. **Ajuste Bidireccional de Escala (De Más a Menor Tamaño / Reducción sin Cortes):**
+   - **Problema planteado:** Cuando una foto, escaneo o documento PDF es muy grande o fue tomado muy de cerca, se recortaban las esquinas o textos periféricos si solo se aplicaba relleno forzado (cover).
+   - **Solución implementada:**
+     - **Modo `📐 Encajar Todo` (`fit`) vs `🔲 Llenar 1:1` (`cover`)**:
+       - `📐 Encajar Todo`: Reduce la imagen en su totalidad (`Math.min`) para que quepa al 100% dentro del marco físico del documento sin recortar ni una sola esquina.
+       - `🔲 Llenar 1:1`: Ajusta proporcionalmente para cubrir todo el marco (`Math.max`).
+     - **Control Deslizante Continuo de Zoom (`zoom-slider`)**:
+       - Rango extendido de **`20%` a `350%`** con indicador porcentual en vivo (`100%`) para un control milimétrico suave.
+     - **Botón Rápido `-25%` (Reducción)** y **`100%` (Escala Original)**:
+       - Permite encoger fotos sobredimensionadas en 1 toque.
+     - **Zoom Proactivo con la Rueda del Ratón (Mouse Wheel Zoom)**:
+       - Desplazar la rueda sobre cualquier ranura reduce o amplía la imagen de manera fluida y táctil.
+
+2. **Inspector Proactivo Inteligente (`inspectSlotImage`):**
+   - Al cargar cualquier imagen o PDF en una ranura, el sistema inspecciona automáticamente:
+     - **Resolución física**: Evalúa si alcanza los 300 DPI recomendados (`✅ 300 DPI Óptimo` vs `⚠️ Resolución Estándar`).
+     - **Orientación cruzada**: Si se carga una foto vertical en un espacio horizontal (o viceversa), muestra una sugerencia interactiva con el botón `🔄 Girar 90°` en 1 clic.
+     - **Sobredimensión**: Si la foto supera los 2000 px, sugiere automáticamente el botón `📐 Encajar Todo` para prevenir recortes accidentales.
+
+3. **Regla Milimétrica Superpuesta en Pantalla (1:1 Virtual mm Grid):**
+   - Cada ranura cuenta con el botón `📏 Regla mm` que proyecta una cuadrícula milimétrica semitransparente (líneas cada 5 mm y 10 mm calibradas a 300 DPI) para auditar visualmente bordes, márgenes y firmas antes de imprimir.
+
+4. **Barra de Verificación Previa a la Impresión (Pre-Flight Check Bar):**
+   - Ubicada directamente sobre el botón principal de impresión en el Paso 4.
+   - Diagnostica en tiempo real:
+     - Documentos cargados (cuántas caras listas).
+     - Estado de calibración 1:1 (300 DPI físico).
+     - Acabado de la hoja (Trámite oficial limpio vs Hoja estándar con regla de 5 cm).
+
+5. **Soporte Multi-Formato de Papel Físico (A4, Carta, Oficio México y Legal USA):**
+   - **Pregunta y necesidad del usuario:** *"¿Lo tienes contemplado? ¿O una tamaño oficio?"*
+   - **Solución implementada:**
+     - Integración de catálogo `window.PAPER_SPECS` con:
+       - **`A4`** (210.0 × 297.0 mm) — Estándar internacional ISO 216.
+       - **`Carta (Letter)`** (215.9 × 279.4 mm) — Estándar en México y Norteamérica.
+       - **`Oficio México`** (215.9 × 340.0 mm) — Imprescindible para trámites legales, juzgados, notarías y dependencias mexicanas.
+       - **`Oficio Legal USA`** (215.9 × 355.6 mm) — Formato extendido de 8.5 × 14 pulgadas.
+     - **Selector Visual de Papel en Paso 4**: Botones táctiles interactivos con medidas y proporciones exactas.
+     - **Proporción Dinámica en Pantalla**: El lienzo de la hoja (`.a4-sheet`) adapta su relación de aspecto en vivo (`aspectRatio: widthMm / heightMm`), viéndose más largo en Oficio y más ancho en Carta.
+     - **Calibración y Centrado 1:1 en PDF y Descarga**: La regla de calibración de 5 cm se ubica inteligentemente al pie de cada formato (`pageH - 35 mm`) para que nunca se corte ni se desplace fuera del margen útil.
+     - **Insignia en Pre-Flight Bar**: Muestra el tamaño de papel activo con su icono (`📄 A4`, `📜 Oficio Mex`, etc.).
+
+6. **Evolución Estética y Visual:**
+   - Sliders estilizados con acento índigo y efecto resplandor (glow).
+   - Botoneras ergonómicas con estados activos claramente diferenciados (`.is-active`).
+   - Sistema de banners proactivos con consejos contextuales no invasivos.
+   - Versión oficial actualizada a **`v3.0.0-Titanium`** en toda la plataforma.
+
+---
+
+## 9. 🚀 Despliegue y Sincronización Total
 - **Local:** `http://localhost:5500/`
 - **Producción:** `https://fotos-cobertores-pro.web.app` / `https://fotos-cobertores-pro.firebaseapp.com`
 - **Integridad:** Código modular sincronizado al 100%, validado sintácticamente y con cero errores de consola.

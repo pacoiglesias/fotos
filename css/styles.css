@@ -221,3 +221,72 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 /* Modal lock */
 body.modal-open { overflow: hidden; }
 
+/* Botones de Modo Ajuste (Fit / Cover) */
+.fit-mode-btn {
+  transition: all 0.15s ease;
+}
+.fit-mode-btn.is-active {
+  background-color: #4f46e5 !important;
+  color: #ffffff !important;
+  border-color: #4338ca !important;
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.35);
+}
+.dark .fit-mode-btn.is-active {
+  background-color: #6366f1 !important;
+  color: #ffffff !important;
+  border-color: #4f46e5 !important;
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.45);
+}
+
+/* Slider de Zoom de Alta Precisión */
+.zoom-slider {
+  accent-color: #4f46e5;
+  transition: opacity 0.15s ease;
+}
+.dark .zoom-slider {
+  accent-color: #818cf8;
+}
+.zoom-slider:hover {
+  filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.5));
+}
+
+/* Botón Regla Milimétrica */
+.grid-btn.is-active {
+  background-color: #e0e7ff !important;
+  color: #4338ca !important;
+  border-color: #818cf8 !important;
+}
+.dark .grid-btn.is-active {
+  background-color: rgba(49, 46, 129, 0.7) !important;
+  color: #c7d2fe !important;
+  border-color: #6366f1 !important;
+}
+
+/* Botones de Selección de Papel (A4, Carta, Oficio, Legal) */
+.paper-size-btn {
+  background-color: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dark .paper-size-btn {
+  background-color: rgba(30, 41, 59, 0.7);
+  border-color: #334155;
+  color: #cbd5e1;
+}
+.paper-size-btn:hover {
+  border-color: #6366f1;
+  transform: translateY(-1px);
+}
+.paper-size-btn.is-active {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(99, 102, 241, 0.08)) !important;
+  border-color: #4f46e5 !important;
+  color: #4338ca !important;
+  box-shadow: 0 0 0 1.5px #4f46e5, 0 3px 6px rgba(79, 70, 229, 0.15);
+}
+.dark .paper-size-btn.is-active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(129, 140, 248, 0.12)) !important;
+  border-color: #818cf8 !important;
+  color: #e0e7ff !important;
+  box-shadow: 0 0 0 1.5px #818cf8, 0 4px 10px rgba(99, 102, 241, 0.25);
+}

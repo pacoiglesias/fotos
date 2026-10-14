@@ -299,13 +299,12 @@ function autoFitSlotToCard(side) {
   if (imgData.croppedSrc && !imgData.isCropApplied) {
     imgData.isCropApplied = true;
     imgData.originalSrc = imgData.croppedSrc;
+    imgData.fitMode = 'cover';
     const btn = $('btnToggleCrop' + getSlotIdSuffix(side));
     if (btn) btn.textContent = '✂️ Recorte Auto';
-    imgData.zoom = 1.0;
+    setZoomScale(side, 1.0);
     imgData.panX = 0;
     imgData.panY = 0;
-    const label = $('zoomLabel' + getSlotIdSuffix(side));
-    if (label) label.textContent = '1.0x';
     renderProcessedImage(side);
     showToast('¡Ajuste 1:1 aplicado! Documento ampliado para rellenar la ranura exacta.', 'success');
   } else if (!imgData.croppedSrc && imgData.rawOriginalSrc) {
@@ -318,17 +317,17 @@ function autoFitSlotToCard(side) {
         imgData.originalSrc = cropped;
         imgData.naturalWidth = tempImg.naturalWidth;
         imgData.naturalHeight = tempImg.naturalHeight;
-        imgData.zoom = 1.0;
+        imgData.fitMode = 'cover';
+        setZoomScale(side, 1.0);
       } else {
         // Si la foto no tiene bordes detectables pero el DNI es pequeño, ampliarlo un paso (+25%)
-        imgData.zoom = parseFloat(((imgData.zoom || 1.0) + 0.25).toFixed(2));
+        let nextZ = parseFloat(((imgData.zoom || 1.0) + 0.25).toFixed(2));
+        setZoomScale(side, nextZ);
       }
       imgData.panX = 0;
       imgData.panY = 0;
-      const label = $('zoomLabel' + getSlotIdSuffix(side));
-      if (label) label.textContent = (imgData.zoom || 1.0) + 'x';
       renderProcessedImage(side);
-      showToast('⚡ ¡DNI ampliado (' + imgData.zoom + 'x) para llenar el tamaño real 1:1! Arrastra sobre la vista previa para centrarlo.', 'success');
+      showToast('⚡ ¡DNI ajustado (' + (imgData.zoom || 1.0) + 'x) a tamaño real 1:1! Arrastra sobre la vista previa para centrarlo.', 'success');
     };
     tempImg.src = imgData.rawOriginalSrc;
     return;
@@ -342,10 +341,7 @@ function autoFitSlotToCard(side) {
       currentZ = parseFloat((currentZ + 0.25).toFixed(2));
       showToast('🔍 DNI ampliado a ' + currentZ + 'x para llenar la ranura real (85.6 × 54.0 mm).', 'success');
     }
-    imgData.zoom = currentZ;
-    const label = $('zoomLabel' + getSlotIdSuffix(side));
-    if (label) label.textContent = currentZ + 'x';
-    renderProcessedImage(side);
+    setZoomScale(side, currentZ);
   }
 }
 
@@ -355,11 +351,102 @@ function setZoomScale(side, targetZoom) {
     showToast('Carga primero una foto para ajustar su tamaño.', 'warning');
     return;
   }
-  imgData.zoom = parseFloat(targetZoom.toFixed(2));
-  const label = $('zoomLabel' + getSlotIdSuffix(side));
-  if (label) label.textContent = imgData.zoom + 'x';
+  const z = parseFloat(Math.max(0.20, Math.min(3.50, targetZoom)).toFixed(2));
+  imgData.zoom = z;
+  const suffix = getSlotIdSuffix(side);
+
+  const label = $('zoomLabel' + suffix);
+  if (label) label.textContent = z + 'x';
+
+  const slider = $('zoomSlider' + suffix);
+  if (slider) slider.value = Math.round(z * 100);
+
+  const percentLabel = $('zoomPercent' + suffix);
+  if (percentLabel) percentLabel.textContent = Math.round(z * 100) + '%';
+
   renderProcessedImage(side);
-  showToast('🔍 Ampliación fijada a ' + imgData.zoom + 'x en ' + getSlotFriendlyName(side) + '. Arrastra la foto para encuadrarla.', 'info');
+}
+
+function setFitMode(side, mode) {
+  const imgData = state.images[side];
+  if (!imgData || !imgData.originalSrc) {
+    showToast('Carga primero una foto para cambiar el modo de ajuste.', 'warning');
+    return;
+  }
+  imgData.fitMode = mode;
+  const suffix = getSlotIdSuffix(side);
+
+  const btnFit = $('btnFitMode' + suffix);
+  const btnCover = $('btnCoverMode' + suffix);
+  if (btnFit && btnCover) {
+    btnFit.classList.toggle('is-active', mode === 'fit');
+    btnCover.classList.toggle('is-active', mode === 'cover');
+  }
+  renderProcessedImage(side);
+  if (mode === 'fit') {
+    showToast('📐 Ajuste Completo (Fit): Documento entero reducido para caber completo sin cortes.', 'success');
+  } else {
+    showToast('🔲 Relleno 1:1 (Cover): La imagen cubre el marco completo de la ranura.', 'info');
+  }
+}
+
+function toggleMmGrid(side) {
+  const imgData = state.images[side];
+  if (!imgData || !imgData.originalSrc) return;
+  imgData.showMmGrid = !imgData.showMmGrid;
+  const suffix = getSlotIdSuffix(side);
+  const btn = $('btnToggleMmGrid' + suffix);
+  if (btn) {
+    btn.classList.toggle('bg-indigo-100', imgData.showMmGrid);
+    btn.classList.toggle('dark:bg-indigo-900', imgData.showMmGrid);
+    btn.classList.toggle('text-indigo-700', imgData.showMmGrid);
+    btn.classList.toggle('dark:text-indigo-300', imgData.showMmGrid);
+  }
+  renderProcessedImage(side);
+  showToast(imgData.showMmGrid ? '📏 Regla milimétrica superpuesta activada.' : 'Regla superpuesta desactivada.', 'info');
+}
+
+function inspectSlotImage(side, img) {
+  const suffix = getSlotIdSuffix(side);
+  const banner = $('inspectorBanner' + suffix);
+  if (!banner) return;
+
+  const w = img.naturalWidth || 0;
+  const h = img.naturalHeight || 0;
+  if (w === 0 || h === 0) return;
+
+  const isPortraitImg = h > w;
+  const spec = getActiveSpec();
+  const isPortraitSpec = spec.heightMm > spec.widthMm;
+
+  const textEl = $('inspectorText' + suffix);
+  const subtextEl = $('inspectorSubtext' + suffix);
+  const actionsEl = $('inspectorActions' + suffix);
+
+  let advice = '';
+  let sub = `${w} × ${h} px • ${w >= 1200 ? '✅ 300 DPI Óptimo' : '⚠️ Resolución Estándar'}`;
+  let actionHtml = '';
+
+  if (isPortraitImg !== isPortraitSpec) {
+    advice = '💡 Foto vertical detectada en ranura horizontal:';
+    actionHtml = `<button type="button" class="btn-inspect-rotate px-2 py-0.5 rounded bg-indigo-600 text-white font-bold text-[10px] hover:bg-indigo-700 transition-colors shadow-sm" data-side="${side}">🔄 Girar 90°</button>`;
+  } else if (w > 2000 || h > 2000) {
+    advice = '💡 Foto amplia de alta resolución:';
+    actionHtml = `<button type="button" class="btn-inspect-fit px-2 py-0.5 rounded bg-slate-800 dark:bg-slate-700 text-white font-bold text-[10px] hover:bg-slate-900 transition-colors shadow-sm" data-side="${side}">📐 Encajar Todo</button>`;
+  } else {
+    advice = '✅ Documento listo con escala 1:1 verificada';
+  }
+
+  if (textEl) textEl.textContent = advice;
+  if (subtextEl) subtextEl.textContent = sub;
+  if (actionsEl) {
+    actionsEl.innerHTML = actionHtml;
+    const rotateBtn = actionsEl.querySelector('.btn-inspect-rotate');
+    if (rotateBtn) rotateBtn.addEventListener('click', () => rotateImage(side));
+    const fitBtn = actionsEl.querySelector('.btn-inspect-fit');
+    if (fitBtn) fitBtn.addEventListener('click', () => setFitMode(side, 'fit'));
+  }
+  banner.classList.remove('hidden');
 }
 
 function clearSlot(side) {
@@ -373,6 +460,8 @@ function clearSlot(side) {
     naturalHeight: 0,
     rotation: 0,
     zoom: 1.0,
+    fitMode: 'cover',
+    showMmGrid: false,
     filter: 'color',
     panX: 0,
     panY: 0,
@@ -386,8 +475,17 @@ function clearSlot(side) {
   const zoomLabel = $('zoomLabel' + suffix);
   if (zoomLabel) zoomLabel.textContent = '1.0x';
 
+  const slider = $('zoomSlider' + suffix);
+  if (slider) slider.value = 100;
+
+  const percentLabel = $('zoomPercent' + suffix);
+  if (percentLabel) percentLabel.textContent = '100%';
+
   const cropBtn = $('btnToggleCrop' + suffix);
   if (cropBtn) cropBtn.classList.add('hidden');
+
+  const banner = $('inspectorBanner' + suffix);
+  if (banner) banner.classList.add('hidden');
 
   updateSidePreview(side);
   showToast('Foto eliminada de ' + getSlotFriendlyName(side) + '. Ranura lista para nueva captura o archivo.', 'info');
@@ -401,8 +499,15 @@ function processRawDataUrl(rawSrc, side) {
   img.onload = function() {
     state.images[side].rawOriginalSrc = rawSrc;
     state.images[side].zoom = 1.0;
-    const label = $('zoomLabel' + getSlotIdSuffix(side));
+    state.images[side].fitMode = 'cover';
+    state.images[side].showMmGrid = false;
+    const suffix = getSlotIdSuffix(side);
+    const label = $('zoomLabel' + suffix);
     if (label) label.textContent = '1.0x';
+    const slider = $('zoomSlider' + suffix);
+    if (slider) slider.value = 100;
+    const percentLabel = $('zoomPercent' + suffix);
+    if (percentLabel) percentLabel.textContent = '100%';
 
     // Auto-adaptar orientación de Pasaporte según la proporción de la imagen capturada/subida
     const imgAspect = img.naturalWidth / img.naturalHeight;
@@ -425,7 +530,7 @@ function processRawDataUrl(rawSrc, side) {
     }
 
     const croppedData = detectAndCropCard(img);
-    const toggleBtn = $('btnToggleCrop' + getSlotIdSuffix(side));
+    const toggleBtn = $('btnToggleCrop' + suffix);
 
     if (croppedData) {
       state.images[side].croppedSrc = croppedData;
@@ -441,6 +546,7 @@ function processRawDataUrl(rawSrc, side) {
         const specIsPortrait = spec.heightMm > spec.widthMm;
         const imgIsPortrait = ci.naturalHeight > ci.naturalWidth;
         state.images[side].rotation = (specIsPortrait === imgIsPortrait) ? 0 : 90;
+        inspectSlotImage(side, ci);
         renderProcessedImage(side);
         showToast('✂️ ¡Bordes blancos eliminados automáticamente! Escala 1:1 real.', 'success');
       };
@@ -457,6 +563,7 @@ function processRawDataUrl(rawSrc, side) {
     const specIsPortrait = spec.heightMm > spec.widthMm;
     const imgIsPortrait = img.naturalHeight > img.naturalWidth;
     state.images[side].rotation = (specIsPortrait === imgIsPortrait) ? 0 : 90;
+    inspectSlotImage(side, img);
     renderProcessedImage(side);
   };
   img.src = rawSrc;
@@ -471,11 +578,8 @@ function rotateImage(side) {
 function adjustZoom(side, delta) {
   if (!state.images[side].originalSrc) return;
   let z = state.images[side].zoom || 1.0;
-  z = Math.max(0.5, Math.min(3.5, z + delta));
-  state.images[side].zoom = parseFloat(z.toFixed(2));
-  const label = $('zoomLabel' + getSlotIdSuffix(side));
-  if (label) label.textContent = state.images[side].zoom + 'x';
-  renderProcessedImage(side);
+  z = Math.max(0.20, Math.min(3.50, z + delta));
+  setZoomScale(side, z);
 }
 
 /* ============================================================
@@ -491,6 +595,7 @@ function renderProcessedImage(side) {
     const panX = imgData.panX || 0;
     const panY = imgData.panY || 0;
     const filter = imgData.filter || 'color';
+    const fitMode = imgData.fitMode || 'cover';
     const spec = getActiveSpec();
 
     let outW = Math.round(spec.widthMm / 25.4 * window.TARGET_DPI);
@@ -507,7 +612,12 @@ function renderProcessedImage(side) {
 
     const rotW = (rotation === 90 || rotation === 270) ? img.naturalHeight : img.naturalWidth;
     const rotH = (rotation === 90 || rotation === 270) ? img.naturalWidth : img.naturalHeight;
-    const scaleCover = Math.max(outW / rotW, outH / rotH) * zoom;
+
+    // Soporte de ajuste: 'fit' (contener completo de más a menos) o 'cover' (rellenar marco)
+    const baseScale = (fitMode === 'fit') 
+      ? Math.min(outW / rotW, outH / rotH) 
+      : Math.max(outW / rotW, outH / rotH);
+    const finalScale = baseScale * zoom;
 
     const offsetX = (panX / 100) * outW;
     const offsetY = (panY / 100) * outH;
@@ -515,7 +625,7 @@ function renderProcessedImage(side) {
     ctx.save();
     ctx.translate(outW / 2 + offsetX, outH / 2 + offsetY);
     ctx.rotate((rotation * Math.PI) / 180);
-    ctx.scale(scaleCover, scaleCover);
+    ctx.scale(finalScale, finalScale);
     ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
     ctx.restore();
 
@@ -541,6 +651,36 @@ function renderProcessedImage(side) {
           }
         }
         ctx.putImageData(imgPixels, 0, 0);
+      } catch(e) {}
+    }
+
+    // Regla Milimétrica Superpuesta Opcional (Virtual mm Grid)
+    if (imgData.showMmGrid) {
+      try {
+        ctx.save();
+        const mmPx = window.TARGET_DPI / 25.4;
+        ctx.strokeStyle = 'rgba(79, 70, 229, 0.22)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 0; x <= outW; x += mmPx * 5) {
+          ctx.moveTo(x, 0); ctx.lineTo(x, outH);
+        }
+        for (let y = 0; y <= outH; y += mmPx * 5) {
+          ctx.moveTo(0, y); ctx.lineTo(outW, y);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(79, 70, 229, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let x = 0; x <= outW; x += mmPx * 10) {
+          ctx.moveTo(x, 0); ctx.lineTo(x, outH);
+        }
+        for (let y = 0; y <= outH; y += mmPx * 10) {
+          ctx.moveTo(0, y); ctx.lineTo(outW, y);
+        }
+        ctx.stroke();
+        ctx.restore();
       } catch(e) {}
     }
 

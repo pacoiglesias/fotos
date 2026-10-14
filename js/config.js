@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v2.9.1-Enterprise';
+window.APP_VERSION = 'v3.0.0-Titanium';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -17,8 +17,9 @@ window.MAX_OUT_PX = 4000;
 // Estado Global de la Aplicación
 window.state = {
   activeCategory: 'docs',
+  paperSize: 'a4', // 'a4', 'letter', 'oficio' (México 215.9x340mm), 'legal' (215.9x355.6mm)
   printMode: 'both', // 'both' (2 caras en 1 hoja), 'both_separate' (2 caras en hojas separadas), 'single' (1 cara) o 'multi' (3-4 páginas)
-  sheetLayout: 'same_page', // 'same_page' (juntas en 1 hoja A4) o 'separate_pages' (1 por hoja)
+  sheetLayout: 'same_page', // 'same_page' (juntas en 1 hoja) o 'separate_pages' (1 por hoja)
   includeRulerFooter: true, // true (con regla de 5cm e instrucciones) o false (página 100% limpia para trámites oficiales)
   includeDocLabels: true, // true (con títulos y mm sobre cada cara) o false
   documentCustomTitle: '', // Nombre o titular personalizado (ej: "DNI de Juan Pérez")
@@ -34,13 +35,25 @@ window.state = {
   passportPageOrientation: 'landscape', // 'landscape' (125 x 88 mm) o 'portrait' (88 x 125 mm)
   documentPageCount: 2, // 1, 2, 3 o 4 páginas/caras
   images: {
-    front: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false },
-    back:  { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false },
-    page3: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false },
-    page4: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, filter:'color', panX:0, panY:0, showOaciGuide:false }
+    front: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, fitMode:'cover', showMmGrid:false, filter:'color', panX:0, panY:0, showOaciGuide:false },
+    back:  { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, fitMode:'cover', showMmGrid:false, filter:'color', panX:0, panY:0, showOaciGuide:false },
+    page3: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, fitMode:'cover', showMmGrid:false, filter:'color', panX:0, panY:0, showOaciGuide:false },
+    page4: { rawOriginalSrc:null, croppedSrc:null, isCropApplied:true, originalSrc:null, processedDataUrl:null, naturalWidth:0, naturalHeight:0, rotation:0, zoom:1.0, fitMode:'cover', showMmGrid:false, filter:'color', panX:0, panY:0, showOaciGuide:false }
   },
   mixTwoPhotos: false
 };
+
+// Catálogo de Tamaños de Hoja / Papel Físico Calibrados a 300 DPI
+window.PAPER_SPECS = {
+  a4:     { id:'a4',     name:'A4 Estándar (210 × 297 mm)',       shortName:'A4',         widthMm:210.0, heightMm:297.0, jsPdfFormat:'a4',            icon:'📄', desc:'Estándar Internacional ISO 216' },
+  letter: { id:'letter', name:'Carta / Letter (215.9 × 279.4 mm)', shortName:'Carta',      widthMm:215.9, heightMm:279.4, jsPdfFormat:'letter',        icon:'📄', desc:'Estándar México y Norteamérica' },
+  oficio: { id:'oficio', name:'Oficio México (215.9 × 340 mm)',    shortName:'Oficio Mex', widthMm:215.9, heightMm:340.0, jsPdfFormat:[215.9, 340.0],  icon:'📜', desc:'Trámites Legales, Notarías y Juzgados Mex' },
+  legal:  { id:'legal',  name:'Oficio Legal USA (215.9 × 355.6 mm)',shortName:'Legal USA',  widthMm:215.9, heightMm:355.6, jsPdfFormat:'legal',         icon:'📜', desc:'Formato Legal Extendido (8.5 × 14 in)' }
+};
+
+function getActivePaperSpec() {
+  return window.PAPER_SPECS[state.paperSize] || window.PAPER_SPECS.a4;
+}
 
 // Catálogo de Formatos Oficiales Calibrados
 window.FORMAT_SPECS = {
