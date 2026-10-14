@@ -1,29 +1,32 @@
 @echo off
+setlocal EnableDelayedExpansion
 chcp 65001 >nul
-title RealScan Pro - Despliegue Automático a Firebase
+title RealScan Pro - Despliegue Rápido a Firebase
 color 0B
-cls
 
+:: Asegurar que el directorio activo sea siempre la carpeta del script
+cd /d "%~dp0"
+
+cls
 echo ======================================================================
-echo           🚀 REALSCAN PRO - DESPLIEGUE AUTOMÁTICO A FIREBASE
+echo           🚀 REALSCAN PRO - DESPLIEGUE RÁPIDO A FIREBASE
 echo                    Desarrollado por Paco Iglesias
 echo ======================================================================
 echo.
-echo  Sitio objetivo : fotos-cobertores-pro.web.app
-echo  Dominio final  : fotos.cobertores.com
-echo  Proyecto GCP   : fotos-cobertores-pro
+echo  Directorio activo : %CD%
+echo  Sitio objetivo    : fotos-cobertores-pro.web.app
+echo  Dominio final     : fotos.cobertores.com
+echo  Proyecto GCP      : fotos-cobertores-pro
 echo.
 echo ----------------------------------------------------------------------
-echo  [1/2] Verificando herramientas de Firebase CLI...
+echo  [1/2] Verificando Firebase CLI...
 echo ----------------------------------------------------------------------
 
 where firebase >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] No se encontró Firebase CLI en tu sistema.
     echo Puedes instalarlo ejecutando: npm install -g firebase-tools
-    echo O iniciando sesión con: npx firebase-tools login
-    pause
-    exit /b 1
+    goto :fin
 )
 
 echo [OK] Firebase CLI detectado correctamente.
@@ -32,22 +35,23 @@ echo ----------------------------------------------------------------------
 echo  [2/2] Subiendo archivos a Firebase Hosting (fotos-cobertores-pro)...
 echo ----------------------------------------------------------------------
 
-call firebase deploy --only hosting
+cmd /c "firebase deploy --only hosting"
 
 if %errorlevel% neq 0 (
     echo.
-    echo [AVISO] Es posible que tu sesión haya expirado o necesites autenticarte.
-    echo Iniciando sesión en Firebase con tu navegador...
+    echo ----------------------------------------------------------------------
+    echo  ⚠️ La sesión expiró o se requiere autenticación.
+    echo  Iniciando re-autenticación en tu navegador...
+    echo ----------------------------------------------------------------------
     echo.
-    call firebase login --reauth
+    cmd /c "firebase login --reauth"
     echo.
-    echo Reintentando despliegue...
-    call firebase deploy --only hosting
+    echo  Reintentando el despliegue...
+    cmd /c "firebase deploy --only hosting"
     if %errorlevel% neq 0 (
         echo.
-        echo [ERROR] No se pudo completar el despliegue. Revisa los permisos de tu cuenta.
-        pause
-        exit /b 1
+        echo [ERROR] No se pudo completar la subida. Revisa tu conexión y permisos.
+        goto :fin
     )
 )
 
@@ -67,6 +71,11 @@ echo  2. Haz clic en "Agregar dominio personalizado".
 echo  3. Escribe: fotos.cobertores.com
 echo  4. Agrega el registro CNAME que te indique Firebase en tu panel de DNS.
 echo.
+
+:fin
+echo.
 echo ======================================================================
 echo Presiona cualquier tecla para cerrar esta ventana...
+echo ======================================================================
 pause >nul
+exit /b 0

@@ -1,99 +1,89 @@
 @echo off
+setlocal EnableDelayedExpansion
 chcp 65001 >nul
-title RealScan Pro - Autenticación y Despliegue Firebase
+title RealScan Pro - Autenticación y Despliegue en Firebase
 color 0A
-cls
 
+:: Asegurar que el directorio activo sea siempre la carpeta del script
+cd /d "%~dp0"
+
+cls
 echo ======================================================================
 echo       🔐 REALSCAN PRO - AUTENTICACIÓN Y DESPLIEGUE EN VIVO
 echo                  Desarrollado por Paco Iglesias
 echo ======================================================================
 echo.
+echo  Directorio activo : %CD%
 echo  Proyecto Firebase : fotos-cobertores-pro
 echo  URL de Producción : https://fotos-cobertores-pro.web.app
 echo.
-echo ----------------------------------------------------------------------
-echo  [PASO 1/4] Verificando Firebase CLI...
-echo ----------------------------------------------------------------------
-
+echo ======================================================================
+echo  [PASO 1/3] Verificando herramientas...
+echo ======================================================================
 where firebase >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR] No se encontró 'firebase' en el sistema.
-    echo Instalando herramientas o ejecuta: npm install -g firebase-tools
+    echo [ERROR] No se encontró 'firebase' en tu sistema PATH.
+    echo Asegúrate de tener Node.js instalado y ejecuta: npm install -g firebase-tools
     echo.
-    pause
-    exit /b 1
+    goto :fin
 )
-echo [OK] Firebase CLI detectado.
+echo [OK] Firebase CLI detectado correctamente.
 echo.
 
-echo ----------------------------------------------------------------------
-echo  [PASO 2/4] Autenticando con tu cuenta de Google (Re-auth)...
-echo ----------------------------------------------------------------------
-echo  Se abrirá una ventana en tu navegador web.
-echo  Por favor inicia sesión con tu cuenta de Google propietaria del proyecto.
+echo ======================================================================
+echo  [PASO 2/3] Autenticación con tu cuenta de Google
+echo ======================================================================
+echo  A continuación se abrirá tu navegador predeterminado para que elijas
+echo  tu cuenta de Google con acceso al proyecto 'fotos-cobertores-pro'.
 echo.
-call firebase login --reauth
+echo  Presiona cualquier tecla para abrir el navegador...
+pause >nul
+
+echo.
+echo  Abriendo navegador para inicio de sesión seguro...
+cmd /c "firebase login --reauth"
+
+echo.
+echo ======================================================================
+echo  [PASO 3/3] Seleccionando proyecto y subiendo a Firebase Hosting...
+echo ======================================================================
+echo.
+cmd /c "firebase use fotos-cobertores-pro"
+echo.
+echo  Desplegando versión v3.2.0-Enterprise...
+cmd /c "firebase deploy --only hosting"
 
 if %errorlevel% neq 0 (
     echo.
-    echo [ADVERTENCIA] Si la ventana no abrió, intentando login estándar...
-    call firebase login
-)
-
-echo.
-echo ----------------------------------------------------------------------
-echo  [PASO 3/4] Verificando proyectos y seleccionando fotos-cobertores-pro...
-echo ----------------------------------------------------------------------
-call firebase use fotos-cobertores-pro
-
-echo.
-echo ----------------------------------------------------------------------
-echo  [PASO 4/4] Desplegando versión v3.2.0-Enterprise a Firebase Hosting...
-echo ----------------------------------------------------------------------
-echo  Subiendo archivos estáticos y calibraciones 1:1...
-echo.
-
-call firebase deploy --only hosting
-
-if %errorlevel% neq 0 (
+    echo ----------------------------------------------------------------------
+    echo  ❌ EL DESPLIEGUE NO SE PUDO COMPLETAR
+    echo ----------------------------------------------------------------------
+    echo  Revisa que tu cuenta de Google tenga permisos de Propietario o Editor
+    echo  en el proyecto 'fotos-cobertores-pro'.
     echo.
-    echo ======================================================================
-    echo  ❌ ERROR EN EL DESPLIEGUE
-    echo ======================================================================
-    echo  Revisa que la cuenta seleccionada en el navegador tenga permisos
-    echo  sobre el proyecto 'fotos-cobertores-pro'.
-    echo.
-    pause
-    exit /b 1
+    goto :fin
 )
 
 echo.
 echo ======================================================================
-echo      🎉 ¡AUTENTICACIÓN Y DESPLIEGUE v3.2.0 COMPLETADOS CON ÉXITO!
+echo      🎉 ¡DESPLIEGUE v3.2.0-Enterprise COMPLETADO CON ÉXITO!
 echo ======================================================================
 echo.
-echo  Sitio en Vivo:
+echo  Tu aplicación está 100% en vivo en:
 echo  👉 https://fotos-cobertores-pro.web.app
 echo  👉 https://fotos-cobertores-pro.firebaseapp.com
 echo.
-echo ----------------------------------------------------------------------
-echo  ¿Deseas abrir la aplicación en tu navegador ahora mismo?
-echo ----------------------------------------------------------------------
-echo  [1] Sí, abrir RealScan Pro en producción (fotos-cobertores-pro.web.app)
-echo  [2] Abrir Consola de Firebase
-echo  [3] Salir
-echo.
-set /p opt="Selecciona una opción (1, 2 o 3) y presiona Enter: "
-
-if "%opt%"=="1" (
+echo  ¿Deseas abrir la web en tu navegador?
+echo  Presiona [1] para Sí, o cualquier otra tecla para salir.
+set /p opt="Opción: "
+if "!opt!"=="1" (
     start https://fotos-cobertores-pro.web.app
 )
-if "%opt%"=="2" (
-    start https://console.firebase.google.com/project/fotos-cobertores-pro/overview
-)
 
+:fin
 echo.
-echo ¡Listo! Gracias por usar RealScan Pro.
-timeout /t 3 >nul
+echo ======================================================================
+echo  Ventana finalizada. Presiona cualquier tecla para cerrar...
+echo ======================================================================
+pause >nul
 exit /b 0

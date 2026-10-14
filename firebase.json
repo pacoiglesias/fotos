@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "fotos-cobertores-pro",
     "public": ".",
     "ignore": [
       "firebase.json",
