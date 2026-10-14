@@ -50,10 +50,30 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
+  // Si incluye nocache, saltar caché completamente para pruebas inmediatas
+  if (req.url.includes('nocache')) {
+    event.respondWith(fetch(req));
+    return;
+  }
+
+  // Para navegación HTML principal: Red primero con fallback a caché
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req).then((networkResp) => {
+        if (networkResp && networkResp.status === 200) {
+          const respToCache = networkResp.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, respToCache));
+        }
+        return networkResp;
+      }).catch(() => caches.match('./index.html') || caches.match('./'))
+    );
+    return;
+  }
+
+  // Para el resto de activos estáticos: Caché primero con actualización en fondo
   event.respondWith(
     caches.match(req).then((cachedResp) => {
       if (cachedResp) {
-        // En background actualizar caché si hay red (stale-while-revalidate)
         fetch(req).then((networkResp) => {
           if (networkResp && networkResp.status === 200) {
             caches.open(CACHE_NAME).then((cache) => cache.put(req, networkResp));
@@ -63,7 +83,7 @@ self.addEventListener('fetch', (event) => {
       }
 
       return fetch(req).then((networkResp) => {
-        if (!networkResp || networkResp.status !== 200 || networkResp.type !== 'basic' && networkResp.type !== 'cors') {
+        if (!networkResp || networkResp.status !== 200) {
           return networkResp;
         }
         const respToCache = networkResp.clone();
@@ -71,10 +91,6 @@ self.addEventListener('fetch', (event) => {
           cache.put(req, respToCache);
         });
         return networkResp;
-      }).catch(() => {
-        if (req.headers.get('accept') && req.headers.get('accept').includes('text/html')) {
-          return caches.match('./index.html');
-        }
       });
     })
   );

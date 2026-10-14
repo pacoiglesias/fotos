@@ -36,9 +36,19 @@ call firebase deploy --only hosting
 
 if %errorlevel% neq 0 (
     echo.
-    echo [ERROR] Hubo un problema al subir a Firebase. Revisa tu conexión.
-    pause
-    exit /b 1
+    echo [AVISO] Es posible que tu sesión haya expirado o necesites autenticarte.
+    echo Iniciando sesión en Firebase con tu navegador...
+    echo.
+    call firebase login --reauth
+    echo.
+    echo Reintentando despliegue...
+    call firebase deploy --only hosting
+    if %errorlevel% neq 0 (
+        echo.
+        echo [ERROR] No se pudo completar el despliegue. Revisa los permisos de tu cuenta.
+        pause
+        exit /b 1
+    )
 )
 
 echo.
