@@ -98,6 +98,12 @@
     }
   }
 
+  function clearAllHistory() {
+    Object.keys(slotHistories).forEach(function(side) {
+      clearHistory(side);
+    });
+  }
+
   /* ============================================================
      2. RECORTE RECTANGULAR PRECISO (CROP)
      ============================================================ */
@@ -373,6 +379,7 @@
     canUndo,
     canRedo,
     clearHistory,
+    clearAllHistory,
     cropImageRegion,
     getPerspectiveTransform,
     invert3x3,

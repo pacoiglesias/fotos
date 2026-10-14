@@ -44,6 +44,79 @@ function getDB() {
   });
 }
 
+/* ============================================================
+   OPERACIÓN CENTRALIZADA: LIMPIEZA Y REINICIO DE TRABAJO (M-28/C02)
+   Limpia ranuras, historial de edición, recortes huérfanos, orientaciones y cancela asincronía.
+   ============================================================ */
+function prepareWorkspaceForJobSwitch(options) {
+  options = options || {};
+  if (typeof state !== 'undefined') {
+    state._jobRevision = (state._jobRevision || 0) + 1;
+    state._processingPending = 0;
+  }
+
+  // 1. Limpieza rigurosa de todas las ranuras de imagen
+  ['front', 'back', 'page3', 'page4'].forEach(function(side) {
+    if (typeof state !== 'undefined' && state.images && state.images[side]) {
+      const imgData = state.images[side];
+      imgData.rawOriginalSrc = null;
+      imgData.croppedSrc = null;
+      imgData.isCropApplied = false;
+      imgData.cropData = null;
+      imgData.warpQuad = null;
+      imgData.originalSrc = null;
+      imgData.processedDataUrl = null;
+      imgData.filter = 'color';
+      imgData.rotation = 0;
+      imgData.zoom = 1.0;
+      imgData.fitMode = 'cover';
+      imgData.brightness = 0;
+      imgData.contrast = 0;
+      imgData.panX = 0;
+      imgData.panY = 0;
+      imgData.naturalWidth = 0;
+      imgData.naturalHeight = 0;
+      imgData.showMmGrid = false;
+      imgData.showOaciGuide = false;
+    }
+    if (typeof clearSlot === 'function') {
+      clearSlot(side);
+    } else if (typeof updateSidePreview === 'function') {
+      updateSidePreview(side);
+    }
+  });
+
+  // 2. Limpiar todo el historial Undo/Redo del editor
+  const editor = (typeof RealScanEditor !== 'undefined') ? RealScanEditor : ((typeof window !== 'undefined' && window.RealScanEditor) ? window.RealScanEditor : null);
+  if (editor && typeof editor.clearAllHistory === 'function') {
+    editor.clearAllHistory();
+  }
+  if (editor && typeof editor.closeEditor === 'function') {
+    editor.closeEditor();
+  }
+
+  // 3. Limpiar borrador si se pide explícitamente
+  if (options.clearDraft && typeof clearActiveDraft === 'function') {
+    clearActiveDraft();
+  }
+
+  // 4. Limpiar título personalizado si no se conserva
+  if (typeof state !== 'undefined' && !options.keepTitle) {
+    state.documentCustomTitle = '';
+    const inputTitle = (typeof $ === 'function') ? $('inputDocumentTitle') : null;
+    if (inputTitle) inputTitle.value = '';
+  }
+
+  // 5. Restablecer banderas transitorias de trabajo
+  if (typeof state !== 'undefined') {
+    state.mixTwoPhotos = false;
+    state.duplicateCard = false;
+  }
+}
+if (typeof window !== 'undefined') {
+  window.prepareWorkspaceForJobSwitch = prepareWorkspaceForJobSwitch;
+}
+
 /* Guardar escaneo en la base de datos local (Esquema RealScanProject v2) */
 async function saveScanToStorage(customTitle, retentionDays) {
   try {
@@ -51,7 +124,12 @@ async function saveScanToStorage(customTitle, retentionDays) {
     const spec = (typeof getActiveSpec === 'function') ? getActiveSpec() : { shortName: 'Documento', name: 'Documento Oficial' };
 
     // Recolectar páginas activas con imagen
-    const activeSlots = ['front', 'back', 'page3', 'page4'].slice(0, state.documentPageCount || 2);
+    // Si es categoría fotos y mixTwoPhotos está activo o back tiene imagen cargada, asegurar slotLimit >= 2
+    let slotLimit = state.documentPageCount || 2;
+    if (state.activeCategory === 'photos' && (state.mixTwoPhotos || (state.images.back && (state.images.back.originalSrc || state.images.back.rawOriginalSrc)))) {
+      slotLimit = Math.max(slotLimit, 2);
+    }
+    const activeSlots = ['front', 'back', 'page3', 'page4'].slice(0, slotLimit);
     const pages = [];
     let thumb = null;
 
@@ -71,6 +149,10 @@ async function saveScanToStorage(customTitle, retentionDays) {
           label: pageLabel,
           rawOriginalSrc: imgData.rawOriginalSrc || imgData.originalSrc || currentData,
           originalSrc: imgData.originalSrc || imgData.rawOriginalSrc || currentData,
+          croppedSrc: imgData.croppedSrc || null,
+          isCropApplied: !!imgData.isCropApplied,
+          cropData: imgData.cropData || null,
+          warpQuad: imgData.warpQuad || null,
           dataUrl: currentData,
           filter: imgData.filter || 'color',
           rotation: imgData.rotation || 0,
@@ -94,13 +176,17 @@ async function saveScanToStorage(customTitle, retentionDays) {
     const days = (typeof retentionDays === 'number') ? retentionDays : 3;
     const now = Date.now();
     const expiresAt = days > 0 ? (now + days * 24 * 60 * 60 * 1000) : 0;
+    const projectTitle = (customTitle || '').trim() || (spec.shortName + ' (' + pages.length + ' ' + (pages.length === 1 ? 'cara' : 'caras/págs') + ')');
+    const printedSheetTitle = (state.documentCustomTitle || '').trim();
 
     const record = {
       schemaVersion: SCHEMA_VERSION,
       id: 'scan_' + now,
       createdAt: now,
       createdFormatted: new Date(now).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }),
-      title: (customTitle || '').trim() || (spec.shortName + ' (' + pages.length + ' ' + (pages.length === 1 ? 'cara' : 'caras/págs') + ')'),
+      title: projectTitle,
+      projectTitle: projectTitle,
+      printedSheetTitle: printedSheetTitle,
       category: state.activeCategory || 'docs',
       format: state.format || 'card',
       formatName: spec.name || 'Documento Oficial',
@@ -238,25 +324,8 @@ async function restoreScanToApp(id) {
       return;
     }
 
-    // 1. Limpieza rigurosa del estado previo de trabajo
-    ['front', 'back', 'page3', 'page4'].forEach(function(slot) {
-      if (state.images[slot]) {
-        state.images[slot].rawOriginalSrc = null;
-        state.images[slot].originalSrc = null;
-        state.images[slot].processedDataUrl = null;
-        state.images[slot].filter = 'color';
-        state.images[slot].rotation = 0;
-        state.images[slot].zoom = 1.0;
-        state.images[slot].fitMode = 'cover';
-        state.images[slot].brightness = 0;
-        state.images[slot].contrast = 0;
-        state.images[slot].panX = 0;
-        state.images[slot].panY = 0;
-        state.images[slot].naturalWidth = 0;
-        state.images[slot].naturalHeight = 0;
-        if (typeof updateSidePreview === 'function') updateSidePreview(slot);
-      }
-    });
+    // 1. Limpieza rigurosa y centralizada del espacio de trabajo
+    prepareWorkspaceForJobSwitch({ clearDraft: false, keepTitle: true });
 
     // 2. Restauración de configuración integral del proyecto
     if (scan.paperSize) {
@@ -285,7 +354,24 @@ async function restoreScanToApp(id) {
     if (scan.customUnit) state.customUnit = scan.customUnit;
     if (scan.photoCopies) state.photoCopies = scan.photoCopies;
     if (scan.mixTwoPhotos !== undefined) state.mixTwoPhotos = scan.mixTwoPhotos;
-    if (scan.title && scan.title !== scan.formatName) state.documentCustomTitle = scan.title;
+
+    if (scan.passportOpenOrientation) {
+      state.passportOpenOrientation = scan.passportOpenOrientation;
+      if (typeof setPassportOpenOrientation === 'function') setPassportOpenOrientation(scan.passportOpenOrientation);
+    }
+    if (scan.passportPageOrientation) {
+      state.passportPageOrientation = scan.passportPageOrientation;
+      if (typeof setPassportPageOrientation === 'function') setPassportPageOrientation(scan.passportPageOrientation);
+    }
+    if (typeof updatePassportOptionsUI === 'function') updatePassportOptionsUI();
+
+    if (scan.printedSheetTitle !== undefined) {
+      state.documentCustomTitle = scan.printedSheetTitle;
+    } else if (scan.title && scan.title !== scan.formatName && scan.title !== scan.shortName) {
+      state.documentCustomTitle = scan.title;
+    }
+    const inputTitle = (typeof $ === 'function') ? $('inputDocumentTitle') : null;
+    if (inputTitle) inputTitle.value = state.documentCustomTitle || '';
 
     // Configurar cantidad de páginas
     const numPages = Math.min(4, Math.max(1, scan.documentPageCount || (scan.pages ? scan.pages.length : 1)));
@@ -295,7 +381,7 @@ async function restoreScanToApp(id) {
       state.documentPageCount = numPages;
     }
 
-    // 3. Restaurar imágenes: prevenir degradación acumulativa de filtros
+    // 3. Restaurar imágenes: prevenir degradación acumulativa de filtros y preservar recortes
     const isV2 = (scan.schemaVersion >= 2);
     if (Array.isArray(scan.pages)) {
       scan.pages.forEach(function(p) {
@@ -304,6 +390,10 @@ async function restoreScanToApp(id) {
           if (isV2 && p.rawOriginalSrc) {
             // Proyecto v2: original puro preservado
             state.images[slot].rawOriginalSrc = p.rawOriginalSrc;
+            state.images[slot].croppedSrc = p.croppedSrc || null;
+            state.images[slot].isCropApplied = !!p.isCropApplied;
+            state.images[slot].cropData = p.cropData || null;
+            state.images[slot].warpQuad = p.warpQuad || null;
             state.images[slot].originalSrc = p.originalSrc || p.rawOriginalSrc;
             state.images[slot].processedDataUrl = p.dataUrl || p.originalSrc;
             state.images[slot].filter = p.filter || 'color';
@@ -318,8 +408,11 @@ async function restoreScanToApp(id) {
             state.images[slot].naturalHeight = p.naturalHeight || 0;
           } else {
             // Migración v1: el bitmap procesado guardado se convierte en el nuevo original neutro
-            // Se resetean filtros para no reaplicarlos en cascada destructiva
             state.images[slot].rawOriginalSrc = p.dataUrl;
+            state.images[slot].croppedSrc = null;
+            state.images[slot].isCropApplied = false;
+            state.images[slot].cropData = null;
+            state.images[slot].warpQuad = null;
             state.images[slot].originalSrc = p.dataUrl;
             state.images[slot].processedDataUrl = p.dataUrl;
             state.images[slot].filter = 'color';
@@ -336,7 +429,7 @@ async function restoreScanToApp(id) {
       });
     }
 
-    closeModal('historyModal');
+    if (typeof closeModal === 'function') closeModal('historyModal');
     if (typeof updatePreviewAnnotations === 'function') updatePreviewAnnotations();
     if (typeof updateUI === 'function') updateUI();
     if (typeof savePreferences === 'function') savePreferences();
@@ -880,6 +973,10 @@ async function saveActiveDraft() {
           draftImages[slotKey] = {
             rawOriginalSrc: imgData.rawOriginalSrc || imgData.originalSrc,
             originalSrc: imgData.originalSrc,
+            croppedSrc: imgData.croppedSrc || null,
+            isCropApplied: !!imgData.isCropApplied,
+            cropData: imgData.cropData || null,
+            warpQuad: imgData.warpQuad || null,
             processedDataUrl: imgData.processedDataUrl,
             naturalWidth: imgData.naturalWidth,
             naturalHeight: imgData.naturalHeight,
@@ -911,6 +1008,7 @@ async function saveActiveDraft() {
         sheetLayout: state.sheetLayout,
         documentPageCount: state.documentPageCount,
         documentCustomTitle: state.documentCustomTitle,
+        printedSheetTitle: (state.documentCustomTitle || '').trim(),
         duplicateCard: state.duplicateCard,
         includeRulerFooter: state.includeRulerFooter,
         includeDocLabels: state.includeDocLabels,
@@ -919,12 +1017,21 @@ async function saveActiveDraft() {
         customHeight: state.customHeight,
         customUnit: state.customUnit,
         photoCopies: state.photoCopies,
+        mixTwoPhotos: !!state.mixTwoPhotos,
+        passportOpenOrientation: state.passportOpenOrientation || 'portrait',
+        passportPageOrientation: state.passportPageOrientation || 'landscape',
         images: draftImages
       };
 
       localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftState));
+      state._draftQuotaError = false;
+      state._lastDraftSavedAt = Date.now();
     } catch(err) {
-      // Ignorar cuota excedida
+      if (typeof state !== 'undefined') state._draftQuotaError = true;
+      console.warn('RealScan: Error al persistir borrador en localStorage:', err);
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Espacio local insuficiente para autoguardar borrador.', 'warning');
+      }
     }
   }, 750);
 }
@@ -952,13 +1059,19 @@ async function restoreActiveDraft() {
   const draft = getActiveDraft();
   if (!draft || !draft.images) return false;
 
+  // 1. Limpieza rigurosa previa: un borrador de 1 cara NO debe conservar el reverso del trabajo anterior
+  prepareWorkspaceForJobSwitch({ clearDraft: false, keepTitle: true });
+
   state.activeCategory = draft.activeCategory || 'docs';
   state.format = draft.format || 'card';
   state.paperSize = draft.paperSize || 'a4';
   state.printMode = draft.printMode || 'both';
   state.sheetLayout = draft.sheetLayout || 'same_page';
   state.documentPageCount = draft.documentPageCount || 2;
-  state.documentCustomTitle = draft.documentCustomTitle || '';
+  state.documentCustomTitle = draft.printedSheetTitle !== undefined ? draft.printedSheetTitle : (draft.documentCustomTitle || '');
+  const inputTitle = (typeof $ === 'function') ? $('inputDocumentTitle') : null;
+  if (inputTitle) inputTitle.value = state.documentCustomTitle || '';
+
   state.duplicateCard = !!draft.duplicateCard;
   state.includeRulerFooter = draft.includeRulerFooter !== false;
   state.includeDocLabels = draft.includeDocLabels !== false;
@@ -967,6 +1080,17 @@ async function restoreActiveDraft() {
   state.customHeight = draft.customHeight || 5.5;
   state.customUnit = draft.customUnit || 'cm';
   state.photoCopies = draft.photoCopies || 4;
+  state.mixTwoPhotos = !!draft.mixTwoPhotos;
+
+  if (draft.passportOpenOrientation) {
+    state.passportOpenOrientation = draft.passportOpenOrientation;
+    if (typeof setPassportOpenOrientation === 'function') setPassportOpenOrientation(draft.passportOpenOrientation);
+  }
+  if (draft.passportPageOrientation) {
+    state.passportPageOrientation = draft.passportPageOrientation;
+    if (typeof setPassportPageOrientation === 'function') setPassportPageOrientation(draft.passportPageOrientation);
+  }
+  if (typeof updatePassportOptionsUI === 'function') updatePassportOptionsUI();
 
   ['front', 'back', 'page3', 'page4'].forEach(function(side) {
     if (draft.images[side]) {
@@ -1011,13 +1135,19 @@ function saveUserPreset(presetName) {
     formatName: spec.name || 'Personalizado',
     paperSize: state.paperSize,
     printMode: state.printMode,
+    sheetLayout: state.sheetLayout,
+    documentPageCount: state.documentPageCount || 2,
     duplicateCard: state.duplicateCard,
     includeRulerFooter: state.includeRulerFooter,
     includeDocLabels: state.includeDocLabels,
     includeCutMarks: state.includeCutMarks,
     customWidth: state.customWidth,
     customHeight: state.customHeight,
-    customUnit: state.customUnit
+    customUnit: state.customUnit,
+    photoCopies: state.photoCopies || 4,
+    mixTwoPhotos: !!state.mixTwoPhotos,
+    passportOpenOrientation: state.passportOpenOrientation || 'portrait',
+    passportPageOrientation: state.passportPageOrientation || 'landscape'
   };
   presets.push(newPreset);
   try {
@@ -1032,10 +1162,24 @@ function applyUserPreset(presetId) {
   const p = presets.find(x => x.id === presetId);
   if (!p) return false;
 
-  if (p.category && typeof switchCategory === 'function') switchCategory(p.category);
-  if (p.format && typeof selectFormat === 'function') selectFormat(p.format);
-  if (p.paperSize && typeof setPaperSize === 'function') setPaperSize(p.paperSize);
-  if (p.printMode && typeof setPrintMode === 'function') setPrintMode(p.printMode);
+  if (p.category) {
+    state.activeCategory = p.category;
+    if (typeof switchCategory === 'function') switchCategory(p.category);
+  }
+  if (p.format) {
+    state.format = p.format;
+    if (typeof selectFormat === 'function') selectFormat(p.format);
+  }
+  if (p.paperSize) {
+    state.paperSize = p.paperSize;
+    if (typeof setPaperSize === 'function') setPaperSize(p.paperSize);
+  }
+  if (p.printMode) {
+    state.printMode = p.printMode;
+    if (typeof setPrintMode === 'function') setPrintMode(p.printMode);
+  }
+  if (p.sheetLayout) state.sheetLayout = p.sheetLayout;
+  if (p.documentPageCount && typeof setDocumentPages === 'function') setDocumentPages(p.documentPageCount);
   if (typeof p.duplicateCard === 'boolean') state.duplicateCard = p.duplicateCard;
   if (typeof p.includeRulerFooter === 'boolean') state.includeRulerFooter = p.includeRulerFooter;
   if (typeof p.includeDocLabels === 'boolean') state.includeDocLabels = p.includeDocLabels;
@@ -1043,6 +1187,18 @@ function applyUserPreset(presetId) {
   if (p.customWidth) state.customWidth = p.customWidth;
   if (p.customHeight) state.customHeight = p.customHeight;
   if (p.customUnit) state.customUnit = p.customUnit;
+  if (p.photoCopies) state.photoCopies = p.photoCopies;
+  if (p.mixTwoPhotos !== undefined) state.mixTwoPhotos = !!p.mixTwoPhotos;
+
+  if (p.passportOpenOrientation) {
+    state.passportOpenOrientation = p.passportOpenOrientation;
+    if (typeof setPassportOpenOrientation === 'function') setPassportOpenOrientation(p.passportOpenOrientation);
+  }
+  if (p.passportPageOrientation) {
+    state.passportPageOrientation = p.passportPageOrientation;
+    if (typeof setPassportPageOrientation === 'function') setPassportPageOrientation(p.passportPageOrientation);
+  }
+  if (typeof updatePassportOptionsUI === 'function') updatePassportOptionsUI();
 
   if (typeof updateUI === 'function') updateUI();
   if (typeof updatePreviewAnnotations === 'function') updatePreviewAnnotations();
@@ -1120,13 +1276,7 @@ window.renderUserPresetsUI = renderUserPresetsUI;
    ============================================================ */
 function resetWorkspaceToNewProject() {
   if (confirm('¿Comenzar un Nuevo Trabajo? Se limpiarán las fotos actuales del lienzo. Asegúrate de haber guardado o impreso tu documento si lo necesitas.')) {
-    clearActiveDraft();
-    ['front', 'back', 'page3', 'page4'].forEach(function(side) {
-      if (typeof clearSlot === 'function') clearSlot(side);
-    });
-    state.documentCustomTitle = '';
-    const inputTitle = $('inputDocumentTitle');
-    if (inputTitle) inputTitle.value = '';
+    prepareWorkspaceForJobSwitch({ clearDraft: true, keepTitle: false });
     if (typeof updatePreviewAnnotations === 'function') updatePreviewAnnotations();
     if (typeof updateUI === 'function') updateUI();
     if (typeof showToast === 'function') showToast('✨ Lienzo limpio. ¡Listo para comenzar un nuevo trabajo!', 'success');
@@ -1280,6 +1430,7 @@ if (typeof module !== 'undefined' && module.exports) {
     applyUserPreset,
     deleteUserPreset,
     renderUserPresetsUI,
+    prepareWorkspaceForJobSwitch,
     resetWorkspaceToNewProject,
     runPreflightChecks
   };

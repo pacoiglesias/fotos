@@ -345,6 +345,24 @@ function autoFitSlotToCard(side) {
   }
 }
 
+let _lastContinuousSnapshotTime = 0;
+let _lastContinuousSlot = null;
+let _lastContinuousType = null;
+
+function recordContinuousSnapshot(side, imgData, type) {
+  const now = Date.now();
+  if (_lastContinuousSlot !== side || _lastContinuousType !== type || (now - _lastContinuousSnapshotTime > 500)) {
+    if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+      RealScanEditor.recordSnapshot(side, imgData);
+    } else if (typeof window !== 'undefined' && window.RealScanEditor && window.RealScanEditor.recordSnapshot) {
+      window.RealScanEditor.recordSnapshot(side, imgData);
+    }
+  }
+  _lastContinuousSnapshotTime = now;
+  _lastContinuousSlot = side;
+  _lastContinuousType = type;
+}
+
 function setZoomScale(side, targetZoom) {
   const imgData = state.images[side];
   if (!imgData || !imgData.originalSrc) {
@@ -352,7 +370,10 @@ function setZoomScale(side, targetZoom) {
     return;
   }
   const z = parseFloat(Math.max(0.20, Math.min(3.50, targetZoom)).toFixed(2));
-  imgData.zoom = z;
+  if (imgData.zoom !== z) {
+    recordContinuousSnapshot(side, imgData, 'zoom');
+    imgData.zoom = z;
+  }
   const suffix = getSlotIdSuffix(side);
 
   const label = $('zoomLabel' + suffix);
@@ -372,6 +393,11 @@ function setFitMode(side, mode) {
   if (!imgData || !imgData.originalSrc) {
     showToast('Carga primero una foto para cambiar el modo de ajuste.', 'warning');
     return;
+  }
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+    RealScanEditor.recordSnapshot(side, imgData);
+  } else if (typeof window !== 'undefined' && window.RealScanEditor && window.RealScanEditor.recordSnapshot) {
+    window.RealScanEditor.recordSnapshot(side, imgData);
   }
   imgData.fitMode = mode;
   const suffix = getSlotIdSuffix(side);
@@ -453,7 +479,9 @@ function clearSlot(side) {
   state.images[side] = {
     rawOriginalSrc: null,
     croppedSrc: null,
-    isCropApplied: true,
+    isCropApplied: false,
+    cropData: null,
+    warpQuad: null,
     originalSrc: null,
     processedDataUrl: null,
     naturalWidth: 0,
@@ -489,6 +517,12 @@ function clearSlot(side) {
   const banner = $('inspectorBanner' + suffix);
   if (banner) banner.classList.add('hidden');
 
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.clearHistory) {
+    RealScanEditor.clearHistory(side);
+  } else if (typeof window !== 'undefined' && window.RealScanEditor && window.RealScanEditor.clearHistory) {
+    window.RealScanEditor.clearHistory(side);
+  }
+
   updateSidePreview(side);
   showToast('Foto eliminada de ' + getSlotFriendlyName(side) + '. Ranura lista para nueva captura o archivo.', 'info');
 }
@@ -497,8 +531,14 @@ function clearSlot(side) {
    PROCESAMIENTO DE IMAGEN Y ROTACIÓN INTELIGENTE
    ============================================================ */
 function processRawDataUrl(rawSrc, side) {
+  const startRevision = state._jobRevision || 0;
+  state._processingPending = (state._processingPending || 0) + 1;
   const img = new Image();
   img.onload = function() {
+    if (startRevision !== (state._jobRevision || 0)) {
+      state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
+      return;
+    }
     state.images[side].rawOriginalSrc = rawSrc;
     state.images[side].zoom = 1.0;
     state.images[side].fitMode = 'cover';
@@ -542,6 +582,10 @@ function processRawDataUrl(rawSrc, side) {
 
       const ci = new Image();
       ci.onload = function() {
+        if (startRevision !== (state._jobRevision || 0)) {
+          state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
+          return;
+        }
         state.images[side].naturalWidth = ci.naturalWidth;
         state.images[side].naturalHeight = ci.naturalHeight;
         const spec = getActiveSpec();
@@ -549,8 +593,12 @@ function processRawDataUrl(rawSrc, side) {
         const imgIsPortrait = ci.naturalHeight > ci.naturalWidth;
         state.images[side].rotation = (specIsPortrait === imgIsPortrait) ? 0 : 90;
         inspectSlotImage(side, ci);
+        state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
         renderProcessedImage(side);
         showToast('✂️ ¡Bordes blancos eliminados automáticamente! Escala 1:1 real.', 'success');
+      };
+      ci.onerror = function() {
+        state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
       };
       ci.src = croppedData;
       return;
@@ -566,7 +614,11 @@ function processRawDataUrl(rawSrc, side) {
     const imgIsPortrait = img.naturalHeight > img.naturalWidth;
     state.images[side].rotation = (specIsPortrait === imgIsPortrait) ? 0 : 90;
     inspectSlotImage(side, img);
+    state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
     renderProcessedImage(side);
+  };
+  img.onerror = function() {
+    state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
   };
   img.src = rawSrc;
 }
@@ -593,8 +645,14 @@ function adjustZoom(side, delta) {
 function renderProcessedImage(side) {
   const imgData = state.images[side];
   if (!imgData.originalSrc) return;
+  const startRevision = state._jobRevision || 0;
+  state._processingPending = (state._processingPending || 0) + 1;
   const img = new Image();
   img.onload = function() {
+    if (startRevision !== (state._jobRevision || 0)) {
+      state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
+      return;
+    }
     const rotation = imgData.rotation || 0;
     const zoom = imgData.zoom || 1.0;
     const panX = imgData.panX || 0;
@@ -715,7 +773,11 @@ function renderProcessedImage(side) {
     }
 
     imgData.processedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
     updateSidePreview(side);
+  };
+  img.onerror = function() {
+    state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
   };
   img.src = imgData.originalSrc;
 }
@@ -733,6 +795,7 @@ function setFilter(side, filter) {
 
 function adjustPan(side, dx, dy) {
   if (!state.images[side].originalSrc) return;
+  recordContinuousSnapshot(side, state.images[side], 'pan');
   state.images[side].panX = Math.max(-50, Math.min(50, (state.images[side].panX || 0) + dx));
   state.images[side].panY = Math.max(-50, Math.min(50, (state.images[side].panY || 0) + dy));
   renderProcessedImage(side);
@@ -740,6 +803,11 @@ function adjustPan(side, dx, dy) {
 
 function resetPan(side) {
   if (!state.images[side].originalSrc) return;
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+    RealScanEditor.recordSnapshot(side, state.images[side]);
+  } else if (typeof window !== 'undefined' && window.RealScanEditor && window.RealScanEditor.recordSnapshot) {
+    window.RealScanEditor.recordSnapshot(side, state.images[side]);
+  }
   state.images[side].panX = 0;
   state.images[side].panY = 0;
   renderProcessedImage(side);
@@ -755,9 +823,7 @@ function adjustSlotLight(side, type, delta) {
     showToast('Carga primero una foto para ajustar la luz y sombra.', 'warning');
     return;
   }
-  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
-    RealScanEditor.recordSnapshot(side, imgData);
-  }
+  recordContinuousSnapshot(side, imgData, type);
   if (type === 'brightness') {
     imgData.brightness = Math.max(-60, Math.min(60, (imgData.brightness || 0) + delta));
     const sign = imgData.brightness > 0 ? '+' : '';
@@ -773,6 +839,11 @@ function adjustSlotLight(side, type, delta) {
 function resetSlotLight(side) {
   const imgData = state.images[side];
   if (!imgData) return;
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+    RealScanEditor.recordSnapshot(side, imgData);
+  } else if (typeof window !== 'undefined' && window.RealScanEditor && window.RealScanEditor.recordSnapshot) {
+    window.RealScanEditor.recordSnapshot(side, imgData);
+  }
   imgData.brightness = 0;
   imgData.contrast = 0;
   renderProcessedImage(side);
@@ -930,3 +1001,24 @@ function autoEnhanceActiveSlots() {
   }
 }
 
+function waitForProcessingComplete(timeoutMs) {
+  timeoutMs = timeoutMs || 2500;
+  return new Promise(function(resolve) {
+    const start = Date.now();
+    function check() {
+      if (!state._processingPending || state._processingPending <= 0 || (Date.now() - start > timeoutMs)) {
+        state._processingPending = 0;
+        return resolve();
+      }
+      setTimeout(check, 30);
+    }
+    check();
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.waitForProcessingComplete = waitForProcessingComplete;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports.waitForProcessingComplete = waitForProcessingComplete;
+}

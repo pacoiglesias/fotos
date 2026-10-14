@@ -31,6 +31,9 @@ function downloadPdfBlob(doc, fileName) {
  * Manejador principal de Exportar / Compartir PDF
  */
 async function handleExportPDF(tryShare) {
+  if (typeof waitForProcessingComplete === 'function') {
+    await waitForProcessingComplete();
+  }
   // Verificación de Pre-Vuelo Estricta (M-31)
   if (typeof runPreflightChecks === 'function') {
     const preflight = runPreflightChecks();
@@ -97,7 +100,10 @@ async function handleExportPDF(tryShare) {
  * Imprimir Directo (1 Clic):
  * Genera el PDF con las medidas físicas 1:1 y dispara la ventana de impresión
  */
-function handlePrintDirect() {
+async function handlePrintDirect() {
+  if (typeof waitForProcessingComplete === 'function') {
+    await waitForProcessingComplete();
+  }
   // Verificación de Pre-Vuelo Estricta (M-31)
   if (typeof runPreflightChecks === 'function') {
     const preflight = runPreflightChecks();
@@ -301,6 +307,9 @@ function renderPageToCanvas(page, layout, loadedImages) {
  * Descarga de Imagen(es) a 300 DPI Constantes con soporte para todas las páginas
  */
 async function downloadA4Image() {
+  if (typeof waitForProcessingComplete === 'function') {
+    await waitForProcessingComplete();
+  }
   // Verificación de Pre-Vuelo Estricta antes de generar imagen(es)
   if (typeof runPreflightChecks === 'function') {
     const preflight = runPreflightChecks();
