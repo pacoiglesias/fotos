@@ -812,6 +812,7 @@ async function exportAllScansAsJson() {
       return;
     }
 
+    await validateBackupRecords(scans);
     const payload = {
       app: 'RealScan Pro',
       version: window.APP_VERSION,
@@ -825,6 +826,7 @@ async function exportAllScansAsJson() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
+    if (blob.size > BACKUP_MAX_BYTES) { URL.revokeObjectURL(url); throw new Error('El historial supera 50 MB. Exporta los trabajos individualmente desde el historial.'); }
     a.download = 'RealScan_Respaldo_Historial_' + new Date().toISOString().slice(0, 10) + '.json';
     document.body.appendChild(a);
     a.click();
@@ -836,7 +838,8 @@ async function exportAllScansAsJson() {
     if (typeof logActivity === 'function') {
       logActivity('Respaldo de Historial', 'Exportación JSON de ' + scans.length + ' escaneos');
     }
-    showToast('¡Respaldo JSON descargado con éxito!', 'success');
+    showToast('Descarga del respaldo solicitada. Verifica el archivo y guárdalo en otra unidad.', 'success');
+    return { count: scans.length, bytes: blob.size };
   } catch (err) {
     showToast('Error exportando respaldo JSON: ' + err.message, 'warning');
   }
@@ -867,10 +870,12 @@ async function importScansFromJson(file) {
       return;
     }
 
+    if (!Array.isArray(data) && data.count !== undefined && data.count !== items.length) throw new Error('El número de trabajos no coincide con el respaldo.');
+    await validateBackupRecords(items);
     const db = await getDB();
     const existingScans = await getAllScansFromStorage();
     const existingIds = new Set(existingScans.map(function(s) { return s.id; }));
-    let imported = 0;
+    const records = [];
 
     for (let i = 0; i < items.length; i++) {
       const s = items[i];
@@ -881,7 +886,7 @@ async function importScansFromJson(file) {
 
       // Validar que las páginas contengan datos de imagen válidos
       const validPages = s.pages.filter(function(p) {
-        return p && typeof p === 'object' && typeof p.dataUrl === 'string' && (p.dataUrl.startsWith('data:image/') || p.dataUrl.startsWith('blob:'));
+        return p && typeof p === 'object' && typeof p.dataUrl === 'string' && isPortableBackupImage(p.dataUrl);
       });
       if (validPages.length === 0) continue;
 
@@ -952,14 +957,20 @@ async function importScansFromJson(file) {
         })
       };
 
-      await new Promise(function(resolve, reject) {
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        const store = tx.objectStore(STORE_NAME);
-        const req = store.put(sanitizedRecord);
-        req.onsuccess = function() { imported++; resolve(true); };
-        req.onerror = function(e) { reject(e.target.error); };
-      });
+      records.push(sanitizedRecord);
     }
+    // A failed restore must not leave a partial set of customer projects.
+    await new Promise(function(resolve, reject) {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.oncomplete = resolve;
+      tx.onabort = function() { reject(tx.error || new Error('Restauración cancelada; no se guardó ningún trabajo.')); };
+      tx.onerror = function() {};
+      try {
+        const store = tx.objectStore(STORE_NAME);
+        records.forEach(function(record) { store.add(record); });
+      } catch (err) { tx.abort(); reject(err); }
+    });
+    const imported = records.length;
 
     updateHistoryBadge();
     renderHistoryUI();
@@ -967,7 +978,8 @@ async function importScansFromJson(file) {
     if (typeof logActivity === 'function') {
       logActivity('Importación de Respaldo', 'Importados ' + imported + ' escaneos validados desde JSON');
     }
-    showToast('¡Se importaron ' + imported + ' escaneos válidos al historial correctamente!', 'success');
+    showToast('Se restauraron ' + imported + ' trabajos completos. Los existentes se conservaron.', 'success');
+    return { imported: imported };
   } catch (err) {
     showToast('Error procesando archivo de respaldo: ' + err.message, 'warning');
   }

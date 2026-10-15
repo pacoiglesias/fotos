@@ -4,6 +4,7 @@ const fs = require("fs"),
 for (const file of [
   "package.json",
   "firebase.json",
+  "firebase.secondary.json",
   "database.rules.json",
   "manifest.json",
 ])

@@ -66,3 +66,23 @@ La edición y exportación local funcionan sin conexión después de instalarse 
 ## Validación
 
 Consulta [VALIDACION_MEJORAS.md](VALIDACION_MEJORAS.md) y [audit/REPARACION_3_4.md](audit/REPARACION_3_4.md). La aprobación de pruebas de software no sustituye las pruebas físicas con teléfono, cámara e impresora del negocio.
+
+## Cierre diario y recuperación
+
+El panel «Cierre diario y prueba de impresión» permite descargar el historial, verificar todas las imágenes del archivo sin importar nada y generar una hoja de prueba independiente del trabajo actual. Elige A4, Carta, Oficio México o Legal USA; la referencia incluye regla de 50 mm, tarjeta de 85.60 × 53.98 mm y foto de 35 × 45 mm. La impresora debe configurarse al 100 % y las medidas comprobarse físicamente.
+
+El respaldo JSON admite hasta 50 MB tanto al exportar como al importar. Se rechazan imágenes dañadas, direcciones blob no portables y páginas duplicadas. La importación es una única transacción: un error cancela todos los trabajos de esa importación y conserva los existentes. El verificador no escribe en el historial. Guarda primero el trabajo activo; los borradores, las preferencias, las credenciales y las sesiones QR no se incluyen. El navegador no puede confirmar que hayas conservado la descarga en otra unidad.
+
+## Publicación coordinada
+
+Ejecuta npm run publish desde la raíz con los cambios confirmados en Git. Verifica, construye y publica ambos sitios; luego exige que las cuatro direcciones de Firebase respondan con el mismo commit y huella de contenido. Todos los accesos de despliegue .bat y .ps1 usan este flujo. Si falla uno de los sitios, el proceso devuelve error y debe repetirse para completar la actualización; no existe una transacción de publicación entre proyectos.
+
+- Proyecto fotos-cobertores-pro, sitio fotos-cobertores-pro: https://fotos-cobertores-pro.web.app y https://fotos-cobertores-pro.firebaseapp.com.
+- Proyecto cobertores-web, únicamente sitio fotos-cobertores: https://fotos-cobertores.web.app y https://fotos-cobertores.firebaseapp.com. Su configuración está en firebase.secondary.json; no se modifica el sitio principal cobertores-web.
+- fotos.cobertores.com ya está asociado al segundo sitio. Queda pendiente que su propietario configure el DNS en Hostinger y Firebase valide su certificado; no se declara operativo antes de esa validación.
+
+Los historiales y preferencias pertenecen al origen del navegador: cambiar de dominio no traslada automáticamente los trabajos. Exporta e importa el respaldo si necesitas moverlos. Las transferencias QR de ambos sitios utilizan el mismo backend Firebase y la URL del origen que crea la sesión.
+
+## Configuración pública de Firebase
+
+La clave de js/firebase-config.js identifica la aplicación web y debe ser pública para funcionar en el navegador. No es una clave administrativa ni una cuenta de servicio. Se restringió en Google Cloud a identitytoolkit.googleapis.com y securetoken.googleapis.com, las dos API que necesita este cliente. Los documentos están protegidos por autenticación, enlaces aleatorios temporales y reglas del servidor; ocultar la configuración no sustituye estos controles. Referencia: https://firebase.google.com/docs/projects/api-keys. No introduzcas credenciales administrativas ni tokens privados en el repositorio.

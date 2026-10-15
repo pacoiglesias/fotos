@@ -297,6 +297,86 @@ let browser;
     "Project, preset, draft and imported backup preserve 3A/5B and crops",
     persistent,
   );
+  const backupEvent = page.waitForEvent('download');
+  await page.locator('#dailyBackup').click();
+  const backupDownload = await backupEvent;
+  const backupPath = path.join(out, 'daily-backup.json');
+  await backupDownload.saveAs(backupPath);
+  const savedBackup = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
+  const beforeVerify = await page.evaluate(async () => (await getAllScansFromStorage()).length);
+  await page.locator('#dailyBackupFile').setInputFiles(backupPath);
+  await page.waitForFunction(() => document.getElementById('dailyCareStatus').textContent.includes('Respaldo verificado:'));
+  assert.equal(await page.evaluate(async () => (await getAllScansFromStorage()).length), beforeVerify);
+  const restoreContext = await browser.newContext({serviceWorkers: 'block'});
+  const restorePage = await restoreContext.newPage();
+  await restorePage.goto(base);
+  await restorePage.waitForFunction(() => typeof inspectBackupFile === 'function' && typeof updateUI === 'function');
+  const restoredBackup = await restorePage.evaluate(async (backup) => {
+    const file = new File([JSON.stringify(backup)], 'backup.json');
+    const inspected = await inspectBackupFile(file);
+    const result = await importScansFromJson(file);
+    const records = await getAllScansFromStorage();
+    const count = records.length;
+    const valid = JSON.parse(JSON.stringify(records[0])); valid.id = 'valid-before-corrupt';
+    const corrupt = JSON.parse(JSON.stringify(valid)); corrupt.id = 'corrupt'; corrupt.pages[0].dataUrl = 'data:image/jpeg;base64,YmFk';
+    await importScansFromJson(new File([JSON.stringify([valid, corrupt])], 'corrupt.json'));
+    if ((await getAllScansFromStorage()).length !== count) throw Error('Corrupt restore wrote partial data');
+    const blobRecord = JSON.parse(JSON.stringify(valid)); blobRecord.pages[0].originalSrc = 'blob:https://example.org/nonportable';
+    let blobRejected = false;
+    try { await validateBackupRecords([blobRecord]); } catch (_) { blobRejected = true; }
+    const add = IDBObjectStore.prototype.add;
+    let calls = 0;
+    IDBObjectStore.prototype.add = function(record) {
+      if (++calls === 2) { this.transaction.abort(); throw new DOMException('Synthetic quota failure', 'QuotaExceededError'); }
+      return add.call(this, record);
+    };
+    try {
+      const second = JSON.parse(JSON.stringify(valid)); second.id = 'second-rollback';
+      await importScansFromJson(new File([JSON.stringify([valid, second])], 'rollback.json'));
+    } finally { IDBObjectStore.prototype.add = add; }
+    if ((await getAllScansFromStorage()).length !== count) throw Error('Failed transaction was not rolled back');
+    let oversizeRejected = false;
+    try { await inspectBackupFile({size: BACKUP_MAX_BYTES + 1}); } catch (_) { oversizeRejected = true; }
+    return { inspected, imported: result.imported, count, blobRejected, oversizeRejected, rollbackCalls: calls };
+  }, savedBackup);
+  assert.equal(restoredBackup.count, savedBackup.count);
+  assert.equal(restoredBackup.imported, savedBackup.count);
+  assert(restoredBackup.blobRejected && restoredBackup.oversizeRejected);
+  assert.equal(restoredBackup.rollbackCalls, 2);
+  await restoreContext.close();
+  record('Downloaded backup verifies without mutation, restores on a fresh browser, rejects corruption and rolls back failed writes', restoredBackup);
+  const calibration = await page.evaluate(async () => {
+    const originalPaper = state.paperSize, originalScale = state.outputScalePercent;
+    const results = [];
+    for (const paper of ['a4', 'letter', 'oficio', 'legal']) {
+      state.paperSize = paper;
+      state.outputScalePercent = 50;
+      const doc = createCalibrationDocument();
+      const bytes = doc.output('arraybuffer');
+      const parsed = await pdfjsLib.getDocument({data: new Uint8Array(bytes)}).promise;
+      const pdfPage = await parsed.getPage(1);
+      const text = (await pdfPage.getTextContent()).items.map(x => x.str).join(' ');
+      const raw = doc.internal.pages[1].join('\n');
+      const rects = Array.from(raw.matchAll(/(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+re/g), m => [Math.abs(Number(m[3])) * 25.4 / 72, Math.abs(Number(m[4])) * 25.4 / 72]);
+      results.push({paper, width: pdfPage.view[2] * 25.4 / 72, height: pdfPage.view[3] * 25.4 / 72, rects, labels: text.includes('85.60 x 53.98') && text.includes('35 x 45')});
+
+    }
+    state.paperSize = originalPaper;
+    state.outputScalePercent = originalScale;
+    return results;
+  });
+  for (const result of calibration) {
+    assert(result.labels);
+    assert(result.rects.some(([w,h]) => Math.abs(w-85.6)<0.001 && Math.abs(h-53.98)<0.001));
+    assert(result.rects.some(([w,h]) => Math.abs(w-35)<0.001 && Math.abs(h-45)<0.001));
+    if(result.paper === 'oficio') assert(Math.abs(result.height-340)<0.001);
+  }
+  const calibrationEvent = page.waitForEvent('download');
+  await page.locator('#dailyCalibration').click();
+  const calibrationDownload = await calibrationEvent;
+  await calibrationDownload.saveAs(path.join(out, 'calibration.pdf'));
+  assert(fs.readFileSync(path.join(out,'calibration.pdf')).subarray(0,4).toString() === '%PDF');
+  record('Calibration PDF has actual card and photo dimensions on all four paper sizes, independent of project scale', calibration);
   const clean = await page.evaluate(async () => {
     switchCategory("docs");
     selectFormat("card");

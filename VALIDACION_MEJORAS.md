@@ -36,3 +36,7 @@ Activa `REALSCAN_TEST_RELAY=1` para incluir Firebase real. Ejecuta `npm run test
 - Comprobar manualmente encuadre, fondo, parecido y requisitos del trámite. No se garantiza aceptación oficial.
 
 No se certifica ausencia universal de defectos, compatibilidad con todo dispositivo ni conformidad WCAG completa a partir de estas pruebas.
+
+## Cierre operativo posterior
+
+Panel diario con respaldo y verificación sin escritura; importación atómica con prueba de reversión; hoja PDF con regla y tarjeta/foto en cuatro papeles. Se añadieron pruebas de descarga real, restauración en navegador limpio, corrupción y fallos de almacenamiento. Flujo de publicación conjunto para los sitios fotos-cobertores-pro y fotos-cobertores, con comparación de versión y commit en sus cuatro URL Firebase. Clave pública limitada a dos API y alerta GitHub revisada y resuelta. Consulta audit/CIERRE_OPERATIVO_2026-10-14.md. El propietario realizará la medición impresa y configurará Hostinger posteriormente.
