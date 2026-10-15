@@ -13,11 +13,19 @@ function firebase(args) {
   firebase(['deploy','--only','hosting','--project','fotos-cobertores-pro']);
   firebase(['deploy','--only','hosting','--project','cobertores-web','--config','firebase.secondary.json']);
   for (const host of ['fotos-cobertores-pro.web.app','fotos-cobertores-pro.firebaseapp.com','fotos-cobertores.web.app','fotos-cobertores.firebaseapp.com']) {
-    const response = await fetch('https://' + host + '/version.json', {cache:'no-store'});
-    assert(response.ok(), host + ': version no disponible');
-    const actual = await response.json();
-    assert.equal(actual.version, expected.version, host + ': contenido diferente');
-    assert.equal(actual.sourceCommit, expected.sourceCommit, host + ': commit diferente');
+    let actual, lastError;
+    for (let attempt=0; attempt<3; attempt++) {
+      try {
+        const response = await fetch('https://' + host + '/version.json', {cache:'no-store', signal:AbortSignal.timeout(15000)});
+        assert(response.ok(), host + ': version no disponible');
+        actual = await response.json();
+        assert.equal(actual.version, expected.version, host + ': contenido diferente');
+        assert.equal(actual.sourceCommit, expected.sourceCommit, host + ': commit diferente');
+        lastError = null;
+        break;
+      } catch(error) { lastError = error; if (attempt<2) await new Promise(resolve=>setTimeout(resolve,1500)); }
+    }
+    if (lastError) throw new Error(host + ': ' + lastError.message);
     console.log('VERIFICADO https://' + host + ' ' + actual.version + ' ' + actual.sourceCommit);
   }
 })().catch(e => { console.error('Publicacion incompleta: ' + e.message + '. Comprueba los dos sitios antes de darla por terminada.'); process.exitCode=1; });

@@ -62,7 +62,7 @@ const server = http.createServer((req, res) => {
   phase = "new";
   await page.reload();
   await page.waitForFunction(
-    () => typeof updateUI === "function" && window.APP_VERSION === "v3.4.0",
+    () => typeof updateUI === "function" && window.APP_VERSION === "v3.4.1",
     {},
     { timeout: 45000 },
   );

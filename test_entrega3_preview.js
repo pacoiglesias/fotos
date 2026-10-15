@@ -123,7 +123,7 @@ function runTest() {
   }
 
   // --- PRUEBA 1: Versión Unificada del Sistema ---
-  assert(sandbox.window.APP_VERSION === 'v3.4.0', 'APP_VERSION global es v3.4.0');
+  assert(sandbox.window.APP_VERSION === 'v' + JSON.parse(fs.readFileSync('package.json','utf8')).version, 'APP_VERSION coincide con la versión del paquete');
 
   // --- PRUEBA 2: Duplicado en 2 columnas genera 4 placements en la hoja ---
   const stateDup = JSON.parse(JSON.stringify(sandbox.window.state));

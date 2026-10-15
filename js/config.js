@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.4.0';
+window.APP_VERSION = 'v3.4.1';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -328,6 +328,13 @@ function on(el, ev, fn, opts) { if (el) el.addEventListener(ev, fn, opts || fals
 function showToast(message, type) {
   type = type || 'info';
   const toast = $('statusToast');
+  const activeModal = typeof getTopModal === 'function' ? getTopModal() : null;
+  if (activeModal) {
+    let feedback = activeModal.querySelector('[data-modal-feedback]');
+    if (!feedback) { feedback = document.createElement('p'); feedback.setAttribute('data-modal-feedback', ''); feedback.setAttribute('role', 'status'); feedback.setAttribute('aria-live', 'polite'); feedback.className = 'text-xs p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 shrink-0'; activeModal.firstElementChild?.appendChild(feedback); }
+    feedback.textContent = message;
+  }
+  if (type === 'error' || type === 'warning') window.RealScanDiagnostics?.record('ui.feedback', type === 'error' ? 'error' : 'warning', { modal: activeModal?.id });
   
   // Feedback sonoro accesible diferenciado (Web Audio API)
   if (typeof window !== 'undefined' && window.RealScanAudio) {
@@ -369,88 +376,115 @@ function getModalFocusableElements(container) {
 
 function setBackgroundInert(isInert, activeModal) {
   if (typeof document === 'undefined') return;
-  const bodyChildren = Array.from(document.body.children);
-  bodyChildren.forEach(child => {
-    if (child === activeModal || child.contains(activeModal)) return;
+  const children = Array.from(document.body.children);
+  // Restore the baseline first, including the dialog which becomes active next.
+  children.forEach(function(child) {
+    const previous = child.getAttribute('data-prev-inert');
+    if (previous === null) return;
+    if (previous === '0') child.removeAttribute('inert');
+    else child.setAttribute('inert', '');
+    const aria = child.getAttribute('data-prev-aria-hidden');
+    if (aria === 'none') child.removeAttribute('aria-hidden');
+    else if (aria !== null) child.setAttribute('aria-hidden', aria);
+    child.removeAttribute('data-prev-inert');
+    child.removeAttribute('data-prev-aria-hidden');
+  });
+  if (!isInert || !activeModal) return;
+  children.forEach(function(child) {
     if (child.tagName === 'SCRIPT' || child.tagName === 'STYLE') return;
-    if (isInert) {
-      if (!child.hasAttribute('data-prev-inert')) {
-        child.setAttribute('data-prev-inert', child.hasAttribute('inert') ? '1' : '0');
-        child.setAttribute('data-prev-aria-hidden', child.getAttribute('aria-hidden') || 'none');
-      }
+    child.setAttribute('data-prev-inert', child.hasAttribute('inert') ? '1' : '0');
+    child.setAttribute('data-prev-aria-hidden', child.getAttribute('aria-hidden') === null ? 'none' : child.getAttribute('aria-hidden'));
+    if (child === activeModal || child.contains(activeModal)) {
+      child.removeAttribute('inert');
+      child.removeAttribute('aria-hidden');
+    } else {
       child.setAttribute('inert', '');
       child.setAttribute('aria-hidden', 'true');
-    } else {
-      const prevInert = child.getAttribute('data-prev-inert');
-      const prevAria = child.getAttribute('data-prev-aria-hidden');
-      if (prevInert === '0') child.removeAttribute('inert');
-      if (prevAria === 'none') child.removeAttribute('aria-hidden');
-      else if (prevAria) child.setAttribute('aria-hidden', prevAria);
-      child.removeAttribute('data-prev-inert');
-      child.removeAttribute('data-prev-aria-hidden');
     }
   });
 }
 
-function openModal(id) {
-  const m = $(id);
-  if (!m) return;
-  const currentActive = document.activeElement;
-  modalFocusStack.push({ id, triggerEl: currentActive });
-  
-  m.classList.remove('hidden');
-  document.body.classList.add('modal-open');
-  setBackgroundInert(true, m);
-
-  if (!m.getAttribute('role')) m.setAttribute('role', 'dialog');
-  m.setAttribute('aria-modal', 'true');
-
-  const focusables = getModalFocusableElements(m);
-  if (focusables.length > 0) {
-    focusables[0].focus();
-  } else {
-    m.setAttribute('tabindex', '-1');
-    m.focus();
+function getTopModal() {
+  for (let i = modalFocusStack.length - 1; i >= 0; i--) {
+    const modal = $(modalFocusStack[i].id);
+    if (modal && !modal.classList.contains('hidden') && modal.isConnected !== false) return modal;
   }
+  return null;
+}
+
+function syncModalState() {
+  modalFocusStack = modalFocusStack.filter(function(entry) {
+    const modal = $(entry.id);
+    return modal && !modal.classList.contains('hidden') && modal.isConnected !== false;
+  });
+  const active = getTopModal();
+  setBackgroundInert(!!active, active);
+  modalFocusStack.forEach(function(entry, index) {
+    const modal = $(entry.id);
+    if (modal.style) modal.style.zIndex = String(100 + index);
+    modal.setAttribute('aria-modal', modal === active ? 'true' : 'false');
+  });
+  const login = $('loginOverlay');
+  if (active || (login && !login.classList.contains('hidden'))) document.body.classList.add('modal-open');
+  else document.body.classList.remove('modal-open');
+  return active;
+}
+
+function focusModal(modal) {
+  const controls = getModalFocusableElements(modal);
+  if (controls.length) controls[0].focus();
+  else { modal.setAttribute('tabindex', '-1'); modal.focus(); }
+}
+
+function openModal(id) {
+  const modal = $(id);
+  if (!modal) return;
+  const previous = modalFocusStack.find(function(entry) { return entry.id === id; });
+  // Reopening or renewing a dialog is idempotent: one entry per dialog.
+  modalFocusStack = modalFocusStack.filter(function(entry) { return entry.id !== id; });
+  modalFocusStack.push(previous || { id: id, triggerEl: document.activeElement, zIndex: modal.style ? modal.style.zIndex : '' });
+  modal.classList.remove('hidden');
+  if (!modal.getAttribute('role')) modal.setAttribute('role', 'dialog');
+  syncModalState();
+  focusModal(modal);
+  window.RealScanDiagnostics?.record('modal.open', 'info', { modal: id, depth: modalFocusStack.length });
 }
 
 function closeModal(id) {
-  const m = $(id);
-  if (!m) return;
-  m.classList.add('hidden');
-  m.removeAttribute('aria-modal');
-
-  let triggerEl = null;
-  const idx = modalFocusStack.findIndex(entry => entry.id === id);
-  if (idx !== -1) {
-    triggerEl = modalFocusStack[idx].triggerEl;
-    modalFocusStack.splice(idx, 1);
+  const modal = $(id);
+  if (!modal) return;
+  const entries = modalFocusStack.filter(function(entry) { return entry.id === id; });
+  modalFocusStack = modalFocusStack.filter(function(entry) { return entry.id !== id; });
+  modal.classList.add('hidden');
+  modal.removeAttribute('aria-modal');
+  if (modal.style && entries.length) modal.style.zIndex = entries[0].zIndex || '';
+  const active = syncModalState();
+  const trigger = entries[0]?.triggerEl;
+  if (active) {
+    if (trigger && active.contains(trigger)) trigger.focus();
+    else focusModal(active);
+  } else if (trigger && trigger.isConnected !== false && typeof trigger.focus === 'function') {
+    try { trigger.focus(); } catch (_) {}
   }
-
-  if (modalFocusStack.length === 0) {
-    document.body.classList.remove('modal-open');
-    setBackgroundInert(false);
-  } else {
-    const topEntry = modalFocusStack[modalFocusStack.length - 1];
-    const topModal = $(topEntry.id);
-    if (topModal) setBackgroundInert(true, topModal);
-  }
-
-  if (triggerEl && typeof triggerEl.focus === 'function') {
-    try { triggerEl.focus(); } catch (e) {}
-  }
+  window.RealScanDiagnostics?.record('modal.close', 'info', { modal: id, depth: modalFocusStack.length });
+  if (typeof CustomEvent !== 'undefined') document.dispatchEvent(new CustomEvent('realscan:modal-closed', { detail: { id: id } }));
 }
 
-function anyModalOpen() {
-  return !!document.querySelector('[role="dialog"]:not(.hidden), .modal:not(.hidden)');
+function closeAllModals() {
+  if (typeof closeLiveCamera === 'function' && window.state?.cameraStream) closeLiveCamera();
+  const ids = Array.from(document.querySelectorAll('[role="dialog"]')).map(function(modal) { return modal.id; });
+  ids.forEach(closeModal);
+  modalFocusStack = [];
+  syncModalState();
 }
+
+function anyModalOpen() { return !!getTopModal(); }
 
 if (typeof document !== 'undefined') {
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && anyModalOpen()) {
       e.preventDefault();
-      const openModals = Array.from(document.querySelectorAll('[role="dialog"]:not(.hidden), .modal:not(.hidden)'));
-      const activeModal = openModals[openModals.length - 1];
+      const activeModal = getTopModal();
       if (activeModal) {
         if (activeModal.id === 'liveCameraModal' && typeof closeLiveCamera === 'function') {
           closeLiveCamera();
@@ -462,9 +496,8 @@ if (typeof document !== 'undefined') {
     }
 
     if (e.key === 'Tab') {
-      const openModals = Array.from(document.querySelectorAll('[role="dialog"]:not(.hidden), .modal:not(.hidden)'));
-      if (openModals.length === 0) return;
-      const activeModal = openModals[openModals.length - 1];
+      const activeModal = getTopModal();
+      if (!activeModal) return;
       const focusables = getModalFocusableElements(activeModal);
       if (focusables.length === 0) {
         e.preventDefault();

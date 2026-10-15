@@ -377,6 +377,7 @@ function checkAuthSession() {
     overlay.classList.add('hidden');
     document.body.classList.remove('modal-open');
   } else {
+    if (typeof closeAllModals === 'function') closeAllModals();
     overlay.classList.remove('hidden');
     document.body.classList.add('modal-open');
     const userInput = $('loginUserInput');
@@ -515,7 +516,7 @@ function switchSettingsTab(tabKey) {
       if (k === tabKey) btns[k].classList.add('is-active'); else btns[k].classList.remove('is-active');
     }
   });
-  if (tabKey === 'log') renderAuditLogs();
+  if (tabKey === 'log') { renderAuditLogs(); window.RealScanDiagnostics?.render(); }
   if (tabKey === 'creds') renderUsersList();
   if (tabKey === 'storage' && typeof updateStorageTelemetryUI === 'function') updateStorageTelemetryUI();
   if (tabKey === 'audio') {

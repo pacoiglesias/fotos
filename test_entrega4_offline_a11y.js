@@ -273,7 +273,7 @@ const appCode = fs.readFileSync(path.join(__dirname, 'js/app.js'), 'utf-8');
 const indexCode = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');
 
 assert(
-  configCode.includes("APP_VERSION = 'v3.4.0'") && appCode.includes('window.APP_VERSION ||'),
+  configCode.includes("APP_VERSION = 'v" + JSON.parse(fs.readFileSync('package.json','utf8')).version + "'") && appCode.includes('window.APP_VERSION ||'),
   'La aplicación consume la versión canónica de configuración'
 );
 assert(

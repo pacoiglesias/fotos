@@ -86,3 +86,15 @@ Los historiales y preferencias pertenecen al origen del navegador: cambiar de do
 ## Configuración pública de Firebase
 
 La clave de js/firebase-config.js identifica la aplicación web y debe ser pública para funcionar en el navegador. No es una clave administrativa ni una cuenta de servicio. Se restringió en Google Cloud a identitytoolkit.googleapis.com y securetoken.googleapis.com, las dos API que necesita este cliente. Los documentos están protegidos por autenticación, enlaces aleatorios temporales y reglas del servidor; ocultar la configuración no sustituye estos controles. Referencia: https://firebase.google.com/docs/projects/api-keys. No introduzcas credenciales administrativas ni tokens privados en el repositorio.
+
+## Reparación de navegación 3.4.1
+
+Se corrigió el bloqueo que aparecía al renovar el QR y cerrar recepción: una ventana repetida en la pila de foco dejaba el fondo inactivo. Las aperturas ahora son únicas, se restaura la interactividad al cerrar y el foco de ventanas superpuestas sigue el orden real. La conexión de recepción muestra progreso, admite cerrar mientras espera, evita solicitudes duplicadas y conserva la sesión y su bandeja al reabrir; Renovar QR crea otra sesión. Cuenta/admin abre ajustes e Instalar App ofrece ayuda cuando no hay una solicitud nativa disponible.
+
+En Cuenta y ajustes → Auditoría → Diagnóstico de funcionamiento puedes descargar un JSON técnico. El diagnóstico conserva como máximo 200 eventos durante 14 días en ese navegador. Incluye códigos de error admitidos, archivo de programa y línea cuando están disponibles; nunca incorpora textos libres de excepciones, fotos, nombres de documentos, contraseñas ni enlaces QR. Si el almacenamiento no está disponible, funciona temporalmente en memoria. No se envía automáticamente a ningún servicio. La bitácora de actividad anterior sigue siendo independiente del diagnóstico técnico.
+
+Para cerrar ventanas y recuperar controles sin recargar ni borrar el trabajo: Esc para la ventana activa; Alt + Mayús + R para todas las ventanas. También está disponible el botón Recuperar controles en Auditoría. Estos controles no ocultan ni eluden la pantalla de acceso.
+
+La verificación incluye ahora npm run test:navigation: acceso por formulario, renovaciones, cierre, ventanas PDF superpuestas, conexiones lentas y fallidas, instalación aceptada/cancelada/fallida, diagnóstico y privacidad, límites de almacenamiento y recuperación respetando el acceso.
+
+Para comprobar la entrega completa contra Firebase: npm run test:delivery. Genera QR desde los controles, los decodifica y descarga frente, reverso y hoja en un navegador independiente, probando JPG, PNG y PDF y revocación. Sólo usa archivos sintéticos. Se incluye al ejecutar verify con REALSCAN_TEST_RELAY=1. REALSCAN_SMOKE_URL permite repetirla sobre el sitio publicado.

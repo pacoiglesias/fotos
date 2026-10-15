@@ -76,7 +76,7 @@
           <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.4.0</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.4.1</span>
           </div>
           <p class="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1 mt-0.5">
             <span class="hidden sm:inline">Desarrollado por</span>
@@ -118,10 +118,10 @@
           <span class="hidden sm:inline">Instalar App</span>
         </button>
 
-        <div id="userBadge" class="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+        <button type="button" aria-label="Cuenta y ajustes" title="Abrir cuenta y ajustes" id="userBadge" class="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
           <span>👤</span>
           <span id="currentUserLabel">admin</span>
-        </div>
+        </button>
 
         <button
           type="button"
@@ -1912,7 +1912,7 @@
     <footer class="text-center text-xs text-slate-500 space-y-2.5 py-6 border-t border-slate-200 dark:border-slate-800 mt-8">
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.4.0</span>
+        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.4.1</span>
         <span class="text-slate-300 dark:text-slate-600">•</span>
         <span class="font-medium">Desarrollado por <strong class="font-bold text-slate-900 dark:text-white">Paco Iglesias</strong></span>
       </div>
@@ -2007,35 +2007,17 @@
           <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
           </div>
-          <h3 id="iphoneHelpTitle" class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">¿Cómo usar RealScan en tu iPhone?</h3>
+          <h3 id="iphoneHelpTitle" class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">Instalar y abrir RealScan</h3>
         </div>
         <button type="button" data-close-modal="iphoneHelpModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold" aria-label="Cerrar">&times;</button>
       </div>
 
       <div class="text-xs text-slate-600 dark:text-slate-300 space-y-3 leading-relaxed">
-        <p>Puedes abrir RealScan en <strong>Safari en iPhone</strong>. Comprueba la captura, la carga y la descarga con tu dispositivo antes de atender clientes. Tienes dos maneras muy sencillas de abrirlo:</p>
-
-        <div class="p-3 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 space-y-1.5">
-          <p class="font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5"><span>Opción 1 (Recomendada):</span> Enviártelo por WhatsApp o Mail</p>
-          <ol class="list-decimal list-inside space-y-1 text-slate-700 dark:text-slate-300">
-            <li>Envía este archivo <code class="bg-white dark:bg-slate-800 px-1 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 font-mono text-[10px]">index.html</code> a tu propio WhatsApp o correo.</li>
-            <li>En tu iPhone, toca el archivo y dale <strong>"Abrir en Safari"</strong> o guárdalo en la app <strong>Archivos</strong>.</li>
-          </ol>
-        </div>
-
-        <div class="p-3 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 space-y-1.5">
-          <p class="font-bold text-emerald-950 dark:text-emerald-200 flex items-center gap-1.5"><span>Opción 2:</span> Convertirlo en App en tu pantalla de inicio</p>
-          <ol class="list-decimal list-inside space-y-1 text-slate-700 dark:text-slate-300">
-            <li>Toca el botón <strong>Compartir</strong> de Safari (⬆️ abajo).</li>
-            <li>Baja y selecciona <strong>"Agregar a pantalla de inicio"</strong>.</li>
-            <li>¡Listo! Te quedará un icono como una App instalada de la App Store.</li>
-          </ol>
-        </div>
-
-        <div class="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200/80 dark:border-amber-900/60 space-y-1">
-          <p class="font-bold text-amber-900 dark:text-amber-200">Impresión inalámbrica con AirPrint:</p>
-          <p class="text-amber-800 dark:text-amber-300">Al pulsar "Compartir / Guardar", el iPhone abre su menú nativo: puedes enviarlo directo por WhatsApp o tocar <strong>"Imprimir" (AirPrint)</strong> sin salir de la app.</p>
-        </div>
+        <p>Abre la dirección web de RealScan en el navegador. Usa siempre el mismo dominio para conservar el acceso a tus trabajos guardados en este equipo.</p>
+        <p><strong>Computadora y Android:</strong> pulsa «Instalar App». Si el navegador permite instalarla, aparecerá su ventana de instalación. También puedes buscar la opción de instalación en el menú del navegador.</p>
+        <p><strong>iPhone y iPad:</strong> abre la web en Safari, pulsa Compartir y busca «Agregar a pantalla de inicio».</p>
+        <p>Si ya está instalada o tu navegador no ofrece instalación, puedes seguir usando la web. No necesitas enviar ni abrir el archivo index.html.</p>
+        <p>La edición puede usarse sin conexión una vez preparados sus recursos. Recibir y entregar por QR requiere internet. Comprueba la captura, descarga e impresión con tu dispositivo.</p>
       </div>
 
       <button type="button" data-close-modal="iphoneHelpModal" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs transition-colors">Entendido</button>
@@ -2134,7 +2116,7 @@
             ⚙️
           </div>
           <div>
-            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v2.4.0</span></h3>
+            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.4.1</span></h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400">Control de acceso y bitácora de auditoría</p>
           </div>
         </div>
@@ -2256,6 +2238,18 @@
           <div id="auditLogList" class="space-y-1.5 max-h-[320px] overflow-y-auto pr-1">
             <!-- Items del log generados dinámicamente -->
           </div>
+          <section class="space-y-2 border-t border-slate-200 dark:border-slate-700 pt-3" aria-labelledby="diagnosticsTitle">
+            <h4 id="diagnosticsTitle" class="font-bold text-slate-900 dark:text-white">Diagnóstico de funcionamiento</h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300">Registra errores y navegación de esta instalación. No incluye fotos, documentos, contraseñas ni enlaces QR. Conserva hasta 200 eventos durante 14 días, sólo en este navegador.</p>
+            <p id="diagnosticsSummary" class="text-xs" role="status" aria-live="polite"></p>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" id="btnExportDiagnostics" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold">Descargar diagnóstico</button>
+              <button type="button" id="btnClearDiagnostics" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-xs">Borrar diagnóstico</button>
+              <button type="button" id="btnRecoverControls" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-xs">Recuperar controles</button>
+            </div>
+            <p class="text-xs text-slate-500">Si una ventana no responde: pulsa Esc. También puedes usar Alt + Mayús + R para cerrar las ventanas y recuperar los controles sin recargar ni borrar el trabajo.</p>
+            <div id="diagnosticsEvents" class="text-xs space-y-1 max-h-36 overflow-auto"></div>
+          </section>
         </div>
 
         <!-- Tab 3: Dominio & Nube -->
@@ -2499,44 +2493,6 @@
   <!-- ============================================================
        MODAL DE CORRECCIÓN DE PERSPECTIVA (4 ESQUINAS) (M-22)
        ============================================================ -->
-  <div id="perspectiveWarpModal" role="dialog" aria-modal="true" aria-labelledby="warpModalTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
-    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-3xl p-4 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
-        <div class="flex items-center gap-2">
-          <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-lg">📐</div>
-          <div>
-            <h3 id="warpModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Enderezar Perspectiva</h3>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400">Arrastra los 4 círculos a las esquinas reales de tu credencial o documento</p>
-          </div>
-        </div>
-        <button type="button" data-close-modal="perspectiveWarpModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
-      </div>
-
-      <div class="flex-1 bg-slate-950/90 rounded-2xl p-2 flex items-center justify-center overflow-auto min-h-[300px]">
-        <canvas id="canvasWarpInteractive" class="max-w-full max-h-[60vh] rounded-lg shadow-lg"></canvas>
-      </div>
-
-      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
-        <div class="flex items-center gap-1.5 flex-wrap">
-          <button type="button" id="btnWarpResetCorners" class="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors">
-            Extender a Bordes
-          </button>
-          <button type="button" id="btnWarpAutoCorners" class="px-2.5 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 font-semibold text-xs transition-colors">
-            Encuadre Tarjeta (Margen 8%)
-          </button>
-        </div>
-        <div class="flex items-center gap-2">
-          <button type="button" data-close-modal="perspectiveWarpModal" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
-            Cancelar
-          </button>
-          <button type="button" id="btnApplyWarp" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-md">
-            Aplicar Enderezado 1:1
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- ============================================================
        MODAL DE RECORTE MANUAL PRECISO (CROP & COMPARE) (M-23)
        ============================================================ -->
@@ -2602,6 +2558,7 @@
         <p class="text-xs text-slate-500 dark:text-slate-400">Haz clic en una página para asignarla o usa los botones de cara.</p>
         <button type="button" data-close-modal="pdfPageSelectorModal" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
           Cerrar
+        </button>
       </div>
     </div>
   </div>
@@ -2623,6 +2580,7 @@
       </div>
 
       <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+        <p id="receiveConnectionStatus" role="status" aria-live="polite" class="text-xs text-slate-600 dark:text-slate-300">Preparando conexión…</p>
         <!-- Código QR e Instrucciones -->
         <div class="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
           <div class="shrink-0 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
@@ -2630,7 +2588,7 @@
           </div>
           <div class="space-y-2 text-xs">
             <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold font-mono text-[11px]">Sesión Activa: <span id="labelReceiveSessionId">RS-0000</span></span>
+              <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold font-mono text-[11px]">Sesión Activa: <span id="labelReceiveSessionId">Conectando…</span></span>
               <span class="text-[10px] text-slate-400 font-mono">15 min</span>
             </div>
             <p class="text-slate-600 dark:text-slate-300">Pide al cliente que apunte la cámara de su celular al código QR para abrir el portal de carga sin instalar aplicaciones.</p>
@@ -2853,6 +2811,7 @@
   <!-- ============================================================
        SCRIPTS MODULARES (100% Offline y Producción Firebase)
        ============================================================ -->
+  <script src="js/diagnostics.js"></script>
   <script src="js/config.js"></script>
   <script src="js/audio.js"></script>
   <script src="vendor/qrcode.js"></script>

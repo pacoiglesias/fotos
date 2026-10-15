@@ -54,7 +54,7 @@ global.setPrintMode = (m) => { state.printMode = m; };
 const appCode = fs.readFileSync('js/app.js', 'utf8');
 const vm = require('vm');
 const context = {
-  document: {body: {dataset: {}}},
+  document: {body: {dataset: {}}, addEventListener: function(){}},
   window: global.window,
   state: global.state,
   $: global.$,

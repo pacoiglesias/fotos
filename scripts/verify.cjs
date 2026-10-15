@@ -5,6 +5,8 @@ try {
     "build",
     "auth-regression",
     "regression",
+    "navigation-regression",
+    ...(process.env.REALSCAN_TEST_RELAY === "1" ? ["delivery-regression"] : []),
     "upgrade-regression",
     "legacy",
   ])

@@ -607,6 +607,16 @@ let browser;
     });
     assert(denied);
     record("Revoked receive session rejected by Firebase rules");
+    const renewedReceive = await page.evaluate(() => RealScanQrSync.createReceiveSession());
+    await phone.goto(renewedReceive.url);
+    await phone.waitForFunction(() => document.getElementById('transferStatus')?.textContent.includes('Sesión activa'));
+    await phone.locator('#fileInput').setInputFiles({name:'second-session.jpg',mimeType:'image/jpeg',buffer:Buffer.from(samples.back.split(',')[1],'base64')});
+    await phone.waitForFunction(() => !document.getElementById('btnSendFiles').disabled);
+    await phone.locator('#btnSendFiles').click();
+    await phone.waitForFunction(() => !document.getElementById('successBox').classList.contains('hidden'), {}, {timeout:40000});
+    assert.equal(await page.evaluate(() => RealScanQrSync.getInboxFiles()[0]?.name), 'second-session.jpg');
+    await page.evaluate(() => RealScanQrSync.revokeReceiveSession());
+    record('A second receive QR works in the same phone tab and does not reuse the revoked session');
     await page.evaluate(async (s) => {
       await handleLoadedFile("front", s.front, "front.jpg");
     }, samples);

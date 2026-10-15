@@ -670,22 +670,53 @@ async function openPdfPageSelector(pdfDoc, targetSide, onAssigned) {
 /* ============================================================
    INTEGRACIÓN DE CÓDIGOS QR, RECEPCIÓN MÓVIL Y ENTREGA DIGITAL
    ============================================================ */
-async function openReceiveFromPhoneModal() {
-  try {
-  if (!window.RealScanQrSync) return;
-  const session = await window.RealScanQrSync.createReceiveSession();
-  const label = $('labelReceiveSessionId');
-  if (label) label.textContent = session.id;
-
+let receiveOpening = false;
+let receiveOpenRevision = 0;
+document.addEventListener('realscan:modal-closed', function(event) {
+  if (event.detail.id === 'receiveFromPhoneModal') receiveOpenRevision++;
+  if (event.detail.id === 'digitalDeliveryModal') deliveryDialogRevision++;
+});
+async function openReceiveFromPhoneModal(options) {
+  if (receiveOpening || !window.RealScanQrSync) return false;
+  receiveOpening = true;
+  const revision = ++receiveOpenRevision, job = state._jobRevision || 0;
+  const started = performance.now();
+  const buttons = ['btnOpenReceiveModal','btnRenewReceiveSession'].map($).filter(Boolean);
+  buttons.forEach(button => { button.disabled = true; });
+  const status = $('receiveConnectionStatus');
   const canvas = $('canvasReceiveQr');
-  if (canvas) {
-    window.RealScanQrSync.renderQrToCanvas(session.url, canvas, 5);
-  }
-
-  updateQrInboxUI();
+  const label = $('labelReceiveSessionId');
+  const current = RealScanQrSync.getActiveReceiveSession();
+  const reuse = !options?.renew && current && !['revoked','expired'].includes(current.status);
+  if (status) status.textContent = reuse ? 'Recuperando el QR de esta sesión…' : 'Conectando… Puedes cerrar esta ventana sin bloquear tu trabajo.';
+  if (label) label.textContent = 'Conectando…';
+  if (canvas) canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+  ['btnCopyReceiveUrl','btnTestOpenReceiveUrl'].forEach(id => { if ($(id)) $(id).disabled = true; });
   openModal('receiveFromPhoneModal');
-  return true;
-  } catch(e) { showToast(e.message || 'No se pudo abrir la recepción. Comprueba internet.', 'error'); }
+  window.RealScanDiagnostics?.record('receive.start');
+  try {
+    const session = reuse ? current : await RealScanQrSync.createReceiveSession();
+    if (revision !== receiveOpenRevision || job !== (state._jobRevision || 0)) {
+      if (!reuse) await RealScanQrSync.revokeReceiveSession();
+      window.RealScanDiagnostics?.record('receive.cancelled');
+      return false;
+    }
+    if (label) label.textContent = session.id;
+    if (canvas) RealScanQrSync.renderQrToCanvas(session.url,canvas,5);
+    if (status) status.textContent = 'Listo para recibir. Cierra esta ventana para continuar; puedes volver a abrir la misma sesión. Renovar cambia el QR.';
+    ['btnCopyReceiveUrl','btnTestOpenReceiveUrl'].forEach(id => { if ($(id)) $(id).disabled = false; });
+    updateQrInboxUI();
+    window.RealScanDiagnostics?.record('receive.ready','info',{durationMs:performance.now()-started});
+    return true;
+  } catch (error) {
+    window.RealScanDiagnostics?.record('receive.failed','error',{errorType:error.name,code:error.code});
+    if (revision === receiveOpenRevision) {
+      if (status) status.textContent = 'No se pudo conectar. Comprueba internet y pulsa Renovar QR para reintentar, o cierra para seguir trabajando.';
+      if (label) label.textContent = 'Sin conexión';
+      showToast(error.message || 'No se pudo abrir la recepción.','error');
+    }
+    return false;
+  } finally { receiveOpening = false; buttons.forEach(button => { button.disabled = false; }); }
 }
 
 function updateQrInboxUI() {
@@ -738,8 +769,10 @@ function updateQrInboxUI() {
 }
 window.updateQrInboxUI = updateQrInboxUI;
 
+let deliveryDialogRevision = 0;
 function openDigitalDeliveryModal() {
   if (!window.RealScanQrSync) return;
+  deliveryDialogRevision++;
   const policy = getActiveSpec().digital;
   const formatSelect = $('selectDeliveryFormat');
   for(const option of formatSelect.options) option.disabled = !!policy && !policy.formats.includes(option.value);
@@ -749,7 +782,14 @@ function openDigitalDeliveryModal() {
   openModal('digitalDeliveryModal');
 }
 
+let deliveryGenerating = false;
 async function handleGenerateDeliveryQr() {
+  if (deliveryGenerating) return;
+  deliveryGenerating = true;
+  const button = $('btnGenerateDeliveryQr');
+  if (button) button.disabled = true;
+  const job = state._jobRevision || 0, dialogRevision = deliveryDialogRevision;
+  window.RealScanDiagnostics?.record('delivery.start');
   try {
   if (!await waitForProcessingComplete(15000)) return;
   const format = $('selectDeliveryFormat')?.value || 'jpg';
@@ -773,6 +813,7 @@ async function handleGenerateDeliveryQr() {
     if(missing.length && !confirm('Faltan caras para la hoja PDF. ¿Entregar solo las disponibles dejando vacíos los espacios faltantes?')) return;
     try {
       const doc = await generatePdfDoc(true);
+      if (!doc) throw new Error('No se pudo generar la hoja solicitada.');
       if (doc) {
         const pdfDataUri = doc.output('datauristring');
         files.push({
@@ -783,7 +824,7 @@ async function handleGenerateDeliveryQr() {
         });
       }
     } catch(e) {
-      console.warn('Error al empaquetar PDF para entrega:', e);
+      throw new Error('No se pudo preparar la hoja PDF. Reintenta o desmarca esa opción para entregar sólo las imágenes.');
     }
   }
 
@@ -793,7 +834,10 @@ async function handleGenerateDeliveryQr() {
   }
 
 
+  if (job !== (state._jobRevision || 0) || dialogRevision !== deliveryDialogRevision || $('digitalDeliveryModal').classList.contains('hidden')) { window.RealScanDiagnostics?.record('delivery.cancelled'); return; }
   const session = await window.RealScanQrSync.createDeliverySession(files, { format: format, maxPx: maxPx });
+  if (job !== (state._jobRevision || 0) || dialogRevision !== deliveryDialogRevision || $('digitalDeliveryModal').classList.contains('hidden')) { await RealScanQrSync.revokeDeliverySession(); window.RealScanDiagnostics?.record('delivery.cancelled'); return; }
+  window.RealScanDiagnostics?.record('delivery.ready');
   const canvas = $('canvasDeliveryQr');
   if (canvas) {
     window.RealScanQrSync.renderQrToCanvas(session.url, canvas, 5);
@@ -803,7 +847,8 @@ async function handleGenerateDeliveryQr() {
   if (resultBox) resultBox.classList.remove('hidden');
 
   showToast('Entrega disponible durante 15 minutos mientras este puesto siga abierto.', 'success');
-  } catch(e) { showToast(e.message || 'No se pudo preparar la entrega.', 'error'); }
+  } catch(e) { window.RealScanDiagnostics?.record('delivery.failed','error',{errorType:e.name,code:e.code}); showToast(e.message || 'No se pudo preparar la entrega.', 'error'); }
+  finally { deliveryGenerating = false; if (button) button.disabled = false; }
 }
 
 function openFormatRequirementsModal() {
@@ -2820,6 +2865,7 @@ function bindEvents() {
   on($('btnToggleLoginPass'), 'click', toggleLoginPasswordVisibility);
   on($('btnLogout'), 'click', handleLogout);
   on($('btnOpenSettings'), 'click', openSettingsModal);
+  on($('userBadge'), 'click', openSettingsModal);
 
   // Pestañas de Ajustes
   on($('tabBtnCreds'), 'click', function(){ switchSettingsTab('creds'); });
@@ -2883,8 +2929,7 @@ function bindEvents() {
   });
 
   on($('btnRenewReceiveSession'), 'click', function() {
-    openReceiveFromPhoneModal();
-
+    openReceiveFromPhoneModal({renew:true});
   });
 
   on($('btnClearQrInbox'), 'click', async function() {
@@ -2996,42 +3041,42 @@ function setupPwaSupport() {
       navigator.serviceWorker.register('sw.js').then(function(reg) {
         console.log('[RealScan] Service Worker registrado exitosamente:', reg.scope);
       }).catch(function(err) {
-        console.warn('[RealScan] Registro de Service Worker omitido:', err);
+        window.RealScanDiagnostics?.record('pwa.worker_failed','warning',{errorType:err.name,code:err.code});
       });
     });
   }
 
-  window.addEventListener('beforeinstallprompt', function(e) {
-    e.preventDefault();
-    deferredInstallPrompt = e;
-    const btn = $('btnInstallPwa');
-    if (btn) {
-      btn.classList.remove('hidden');
-      btn.onclick = async function() {
-        if (!deferredInstallPrompt) return;
-        deferredInstallPrompt.prompt();
-        const choice = await deferredInstallPrompt.userChoice;
-        if (choice && choice.outcome === 'accepted') {
-          showToast('¡Gracias por instalar RealScan! Ahora disponible 100% offline.', 'success');
-        }
-        deferredInstallPrompt = null;
-        btn.classList.add('hidden');
-      };
-    }
-  });
-
-  window.addEventListener('appinstalled', function() {
-    showToast('¡RealScan instalado como aplicación de escritorio/móvil!', 'success');
-    const btn = $('btnInstallPwa');
-    if (btn) btn.classList.add('hidden');
+  const button = $('btnInstallPwa');
+  if (button) button.onclick = async function() {
+    window.RealScanDiagnostics?.record('pwa.request');
+    const prompt = deferredInstallPrompt;
+    if (!prompt) { window.RealScanDiagnostics?.record('pwa.fallback'); openModal('iphoneHelpModal'); return; }
+    deferredInstallPrompt = null;
+    button.disabled = true;
+    try {
+      await prompt.prompt();
+      const choice = await prompt.userChoice;
+      window.RealScanDiagnostics?.record(choice?.outcome === 'accepted' ? 'pwa.accepted' : 'pwa.dismissed');
+      showToast(choice?.outcome === 'accepted' ? 'Instalación aceptada por el navegador.' : 'Instalación cancelada. Puedes seguir usando la web.','info');
+    } catch(error) {
+      window.RealScanDiagnostics?.record('pwa.failed','error',{errorType:error.name,code:error.code});
+      openModal('iphoneHelpModal');
+      showToast('El navegador no pudo abrir la instalación. Consulta estas opciones.','warning');
+    } finally { button.disabled = false; }
+  };
+  window.addEventListener('beforeinstallprompt',function(event) { event.preventDefault(); deferredInstallPrompt = event; });
+  window.addEventListener('appinstalled',function() {
+    deferredInstallPrompt = null;
+    window.RealScanDiagnostics?.record('pwa.installed');
+    showToast('RealScan se instaló como aplicación.','success');
   });
 }
 
-const APP_VERSION = window.APP_VERSION || 'v3.4.0';
+const APP_VERSION = window.APP_VERSION || 'v3.4.1';
 window.APP_VERSION = APP_VERSION;
 
 function syncAppVersion() {
-  const version = window.APP_VERSION || 'v3.3.0-Enterprise';
+  const version = window.APP_VERSION || 'v3.4.1';
   ['appVersionHeader', 'appVersionFooter', 'labelSwVersion', 'labelActiveVersionSettings'].forEach(function(id) {
     const el = $(id);
     if (el) {
@@ -3067,6 +3112,7 @@ function init() {
       }
     }
   } catch(e) {}
+  window.RealScanDiagnostics?.record('app.ready');
 }
 
 if (document.readyState === 'loading') {
@@ -3075,7 +3121,4 @@ if (document.readyState === 'loading') {
   init();
 }
 
-// Red de seguridad: log de errores no capturados
-window.addEventListener('error', function(ev) {
-  console.warn('[RealScan] Error capturado:', ev.message);
-});
+// Technical errors are captured by diagnostics.js without customer content.

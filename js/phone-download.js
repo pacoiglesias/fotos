@@ -9,6 +9,7 @@
   }
   function fail() {
     clear();
+    document.getElementById("labelDeliveryId").textContent = "Entrega no disponible";
     const p = document.createElement("p");
     p.textContent =
       "La entrega no está disponible o ha caducado. Solicita un QR nuevo al operador.";
