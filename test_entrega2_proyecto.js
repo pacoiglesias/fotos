@@ -26,6 +26,7 @@ function createSandbox() {
       this.onerror = null;
     },
     document: {
+      getElementById: () => null,
       createElement: (tag) => ({
         tagName: tag.toUpperCase(),
         classList: { add: () => {}, remove: () => {}, toggle: () => {} },

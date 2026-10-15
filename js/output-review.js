@@ -10,6 +10,7 @@
     const pairs = [["Tama\xF1o de cada pieza", (spec.widthMm * scale).toFixed(2) + " \xD7 " + (spec.heightMm * scale).toFixed(2) + " mm"], ["Papel y hojas", layout.paper.shortName + " \xB7 " + layout.pages.length + " hoja(s)"], ["Contenido", layout.summary || spec.shortName], ["Destino", delivery ? "Descarga privada por QR" : "Impresora \xB7 PDF a escala real"]];
     if (delivery) {
       const format = $("selectDeliveryFormat").value.toUpperCase(), max = $("selectDeliveryMaxPx").value;
+      pairs.push(["Peso máximo por archivo", Number($("selectDeliveryMaxBytes")?.value)?(Number($("selectDeliveryMaxBytes").value)/1000000)+" MB":"Sin límite adicional"]);
       pairs.push(["Archivos individuales", format + " \xB7 " + (max === "original" ? "Resoluci\xF3n original" : max + " px m\xE1ximo")], ["Hoja completa", $("checkDeliverPdfSheet").checked ? "Incluida como PDF" : "No incluida"]);
     }
     for (const [label, value] of pairs) {
@@ -76,6 +77,6 @@
     openModal("outputReviewModal");
   };
   document.addEventListener("DOMContentLoaded", () => {
-    for (const id of ["checkDeliverPdfSheet", "checkDeliverFrontJpg", "checkDeliverBackJpg", "selectDeliveryFormat", "selectDeliveryMaxPx"]) $(id)?.addEventListener("change", window.updateDeliveryReview);
+    for (const id of ["checkDeliverPdfSheet", "checkDeliverFrontJpg", "checkDeliverBackJpg", "selectDeliveryFormat", "selectDeliveryMaxPx", "selectDeliveryMaxBytes"]) $(id)?.addEventListener("change", window.updateDeliveryReview);
   });
 })();

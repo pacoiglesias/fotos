@@ -131,7 +131,7 @@ async function runTests() {
     vm.createContext(sb);
     vm.runInContext(code, sb);
 
-    sb.saveActiveDraft();
+    await sb.saveActiveDraft();
     const draft = sb.getActiveDraft();
     assert(draft !== null, 'El borrador guardado no debe ser null');
     assert.strictEqual(draft.format, 'card');

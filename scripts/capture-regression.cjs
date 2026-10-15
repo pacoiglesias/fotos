@@ -89,6 +89,7 @@ function cameraFixture() {
   await page.locator(".scan-dialog [data-act=capture]").waitFor();
   await page.waitForFunction(() => !document.querySelector(".scan-dialog [data-act=capture]").disabled);
   assert(await page.evaluate(() => __constraints.some((c) => c.advanced[0].focusMode === "continuous")));
+  await page.selectOption(".scan-format select", "card");
   await page.locator(".scan-dialog [data-act=torch]").click();
   assert(await page.evaluate(() => __constraints.some((c) => c.advanced[0].torch === true)));
   await page.locator(".scan-dialog [data-act=capture]").click();
@@ -98,6 +99,7 @@ function cameraFixture() {
   await page.keyboard.press("ArrowRight");
   await page.screenshot({ path: path.join(out, "desktop-corners.png") });
   await page.locator(".scan-dialog [data-act=accept]").click();
+  await page.locator(".scan-dialog [data-act=confirm]").click();
   await page.locator(".scan-dialog").waitFor({ state: "detached" });
   await page.waitForFunction(() => !!state.images.front.processedDataUrl);
   const dimensions = await page.evaluate(() => ({ w: state.images.front.naturalWidth, h: state.images.front.naturalHeight }));
@@ -164,12 +166,13 @@ function cameraFixture() {
   await phone.goto("http://127.0.0.1:5521/phone-upload.html");
   await phone.locator("#btnSmartScan").click();
   await phone.waitForFunction(() => !document.querySelector(".scan-dialog [data-act=capture]").disabled);
-  await phone.selectOption(".scan-dialog select", "a4");
+  await phone.selectOption(".scan-format select", "a4");
   await phone.locator(".scan-dialog [data-act=capture]").click();
   await phone.locator(".scan-corner").first().waitFor();
   await phone.screenshot({ path: path.join(out, "phone-corners.png") });
   assert(await phone.evaluate(() => document.querySelector(".scan-dialog").getBoundingClientRect().right <= innerWidth));
   await phone.locator(".scan-dialog [data-act=accept]").click();
+  await phone.locator(".scan-dialog [data-act=confirm]").click();
   await phone.waitForFunction(() => document.getElementById("filesCount").textContent === "1" && !document.getElementById("btnSendFiles").disabled);
   assert.equal(await phone.evaluate(() => __sent), 0);
   assert.equal(await phone.locator("#thumbnailsList img").count(), 1);

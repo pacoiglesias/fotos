@@ -21,6 +21,7 @@ function copy(src, dst) {
     "index.html",
     "phone-upload.html",
     "phone-download.html",
+    "phone-local.html",
     "manifest.json",
   ])
     copy(path.join(root, file), path.join(dist, file));
@@ -39,6 +40,12 @@ function copy(src, dst) {
   }
   const vendor = path.join(dist, "vendor");
   fs.mkdirSync(vendor, { recursive: true });
+  copy(path.join(root,'node_modules/jsqr/dist/jsQR.js'),path.join(vendor,'jsqr.js'));
+  for(const file of ['tesseract.min.js','worker.min.js'])copy(path.join(root,'node_modules/tesseract.js/dist',file),path.join(vendor,'ocr',file));
+  for(const file of fs.readdirSync(path.join(root,'node_modules/tesseract.js-core')).filter(f=>/^tesseract-core.*\.(js|wasm)$/.test(f)))copy(path.join(root,'node_modules/tesseract.js-core',file),path.join(vendor,'ocr/core',file));
+  for(const language of ['spa','eng'])copy(path.join(root,'node_modules/@tesseract.js-data',language,'4.0.0_best_int',language+'.traineddata.gz'),path.join(vendor,'ocr/lang',language+'.traineddata.gz'));
+  for(const name of ['tesseract.js','tesseract.js-core'])if(fs.existsSync(path.join(root,'node_modules',name,'LICENSE')))copy(path.join(root,'node_modules',name,'LICENSE'),path.join(vendor,'licenses',name+'-LICENSE'));
+
   copy(require.resolve("qrcode-generator"), path.join(vendor, "qrcode.js"));
   copy(
     path.join(root, "node_modules/jspdf/dist/jspdf.umd.min.js"),
@@ -112,7 +119,7 @@ function copy(src, dst) {
   const sw = fs
     .readFileSync(path.join(root, "sw.js"), "utf8")
     .replace("__BUILD_VERSION__", version)
-    .replace("__CORE_ASSETS__", JSON.stringify(files.map((f) => "./" + f)));
+    .replace("__CORE_ASSETS__", JSON.stringify(files.filter(f=>!f.startsWith("vendor/ocr/")).map((f) => "./" + f)));
   const sourceCommit = cp
     .execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })
     .trim();

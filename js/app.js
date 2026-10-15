@@ -98,6 +98,18 @@ let warpImage = null;
 let warpDragIndex = -1;
 
 function openPerspectiveWarpModal(side) {
+  const slot=state.images[side], source=slot?.rawOriginalSrc||slot?.originalSrc;
+  if(source&&window.RealScanCapture){
+    const job=state._jobRevision||0;
+    RealScanCapture.open({sourceDataUrl:source,photoMode:state.activeCategory==='photos',onError:e=>showToast(e.message,'error'),onAccept:async result=>{
+      if(job!==(state._jobRevision||0)||state.images[side]!==slot)return;
+      RealScanEditor.recordSnapshot(side,slot);
+      const image=new Image();image.src=result;await image.decode();
+      if(job!==(state._jobRevision||0)||state.images[side]!==slot)return;
+      Object.assign(slot,{croppedSrc:result,originalSrc:result,isCropApplied:true,rotation:0,zoom:1,panX:0,panY:0,fitMode:'fit',naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight});
+      renderProcessedImage(side);saveActiveDraft();showToast('Ajuste aplicado conservando el original.','success');
+    }});return;
+  }
   const imgData = state.images[side];
   const src = imgData ? (imgData.rawOriginalSrc || imgData.originalSrc) : null;
   if (!src) {
@@ -720,6 +732,7 @@ async function openReceiveFromPhoneModal(options) {
 }
 
 function updateQrInboxUI() {
+  if(window.RealScanReceiveUI)return RealScanReceiveUI.render();
   if (!window.RealScanQrSync) return;
   const files = window.RealScanQrSync.getInboxFiles();
   const listEl = $('qrInboxList');
@@ -727,6 +740,8 @@ function updateQrInboxUI() {
   if (countEl) countEl.textContent = files.length;
   if (!listEl) return;
 
+  const byteLimit=typeof getDeliveryByteLimit==='function'?getDeliveryByteLimit():0;
+  if(byteLimit && files.some(file=>file.size>byteLimit))throw Error('Un archivo supera el peso elegido. Cambia el límite o desmarca la hoja PDF para entregar las imágenes comprimidas.');
   if (files.length === 0) {
     listEl.innerHTML = '<p class="text-xs text-center text-slate-400 py-6">Esperando que el cliente envíe archivos...</p>';
     return;
@@ -2849,6 +2864,9 @@ function bindEvents() {
     });
   }
 
+  on($("btnOpenOcr"), "click", () => RealScanOcr.open());
+  on($("btnOpenDuplex"), "click", () => RealScanDuplex.open());
+  on($("btnOpenLocalTransfer"), "click", () => RealScanLocalTransfer.open());
   // Live camera actions
   on($('btnSwitchCam'), 'click', switchCameraFacing);
   on($('btnCapture'), 'click', captureLivePhoto);
@@ -2936,6 +2954,7 @@ function bindEvents() {
   on($('btnClearQrInbox'), 'click', async function() {
     try {
     if (window.RealScanQrSync) {
+      if(!confirm('¿Vaciar los archivos recibidos? Las caras ya asignadas se conservan.'))return;
       await window.RealScanQrSync.clearInbox();
       showToast('Bandeja de archivos vaciada.', 'info');
     }
@@ -3073,11 +3092,11 @@ function setupPwaSupport() {
   });
 }
 
-const APP_VERSION = window.APP_VERSION || 'v3.5.0';
+const APP_VERSION = window.APP_VERSION || 'v3.6.0';
 window.APP_VERSION = APP_VERSION;
 
 function syncAppVersion() {
-  const version = window.APP_VERSION || 'v3.5.0';
+  const version = window.APP_VERSION || 'v3.6.0';
   ['appVersionHeader', 'appVersionFooter', 'labelSwVersion', 'labelActiveVersionSettings'].forEach(function(id) {
     const el = $(id);
     if (el) {
@@ -3103,16 +3122,9 @@ function init() {
   updateUI();
   if (typeof renderSavedScansDashboard === 'function') renderSavedScansDashboard();
 
-  // Detección de Borrador Activo (M-27)
-  try {
-    if (typeof getActiveDraft === 'function') {
-      const draft = getActiveDraft();
-      if (draft && draft.images && Object.values(draft.images).some(x => x && x.originalSrc)) {
-        const banner = $('bannerActiveDraftRecovery');
-        if (banner) banner.classList.remove('hidden');
-      }
-    }
-  } catch(e) {}
+  if (typeof loadActiveDraft === 'function') loadActiveDraft().then(draft => {
+    if (draft?.images && Object.values(draft.images).some(x=>x?.originalSrc) && !Object.values(state.images).some(x=>x?.originalSrc)) $('bannerActiveDraftRecovery')?.classList.remove('hidden');
+  });
   window.RealScanDiagnostics?.record('app.ready');
 }
 

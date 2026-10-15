@@ -87,6 +87,14 @@ Los historiales y preferencias pertenecen al origen del navegador: cambiar de do
 
 La clave de js/firebase-config.js identifica la aplicación web y debe ser pública para funcionar en el navegador. No es una clave administrativa ni una cuenta de servicio. Se restringió en Google Cloud a identitytoolkit.googleapis.com y securetoken.googleapis.com, las dos API que necesita este cliente. Los documentos están protegidos por autenticación, enlaces aleatorios temporales y reglas del servidor; ocultar la configuración no sustituye estos controles. Referencia: https://firebase.google.com/docs/projects/api-keys. No introduzcas credenciales administrativas ni tokens privados en el repositorio.
 
+## Operación profesional y recuperación 3.6.0
+
+Se corrigen el límite de localStorage del borrador y el ajuste que podía forzar la proporción de una fotografía. Se amplían la cámara y galería con captura automática opcional, vista previa confirmada, giro, filtros y restauración. La bandeja QR permite revisar, editar, descargar originales y asignar páginas sin otro recorte automático.
+
+La entrega incorpora límite de peso y enlace preparado para WhatsApp. Desde la zona de impresión se abren **OCR local** y **Asistente doble cara**. En recepción aparece **Sin internet: recibir por Wi-Fi local**, con emparejamiento WebRTC de dos QR. El modo local requiere páginas preparadas en ambos navegadores y una red sin aislamiento de clientes.
+
+Prueba dedicada: `npm run test:practical`. [Registro completo de mejoras, correcciones, pruebas y límites](audit/MEJORAS_Y_CORRECCIONES_3_6_0.md).
+
 ## Captura asistida y revisión visual 3.5.0
 
 En el teléfono, pulsa **Encuadrar y escanear documento**. Usa un fondo que contraste, deja visibles los cuatro bordes y toma la foto. Revisa la propuesta y mueve las esquinas antes de **Enderezar y usar**; también puedes repetir o conservar la foto completa. La captura se envía sólo al pulsar **Enviar archivos al mostrador**. La cámara del mostrador utiliza el mismo asistente; los perfiles de fotografías conservan la imagen completa.

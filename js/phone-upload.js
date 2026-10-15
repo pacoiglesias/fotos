@@ -16,7 +16,8 @@
     $("selectedFilesContainer").classList.toggle("hidden", !queue.length);
     $("filesCount").textContent = queue.length;
     $("btnSendFiles").disabled = !sessionReady || sending || preparing || !queue.length;
-    $("btnSmartScan").disabled = !sessionReady || sending || preparing;
+    $("btnSmartScan").disabled = !sessionReady || sending || preparing || queue.length>=8;
+    $("btnSmartScan").textContent=queue.length?"Escanear otra página ("+queue.length+"/8)":"Encuadrar y escanear documento";
     $("fileInput").disabled = $("cameraInput").disabled = !sessionReady || sending || preparing;
     $("thumbnailsList").replaceChildren();
     queue.forEach((f, index) => {
@@ -39,7 +40,14 @@
         thumb.style.cssText = 'width:56px;height:52px;object-fit:contain;border-radius:8px;background:#e2e8f0;flex-shrink:0';
         row.append(thumb);
       }
-      row.append(name, b);
+      name.style.cssText='min-width:0;overflow-wrap:anywhere';row.style.flexWrap='wrap';
+      if(f.type.startsWith('image/')){
+        const edit=document.createElement('button');edit.type='button';edit.textContent='Revisar / girar';edit.disabled=sending||preparing;
+        edit.onclick=()=>RealScanCapture.open({sourceDataUrl:f.originalDataUrl||f.dataUrl,onAccept:async result=>{if(sending||preparing||!queue.includes(f))return;preparing=true;render();try{const blob=await(await fetch(result)).blob();const replacement=await prepare(new File([blob],f.name,{type:'image/jpeg'}));replacement.originalDataUrl=f.originalDataUrl||f.dataUrl;queue[index]=replacement;render();}catch(e){report(e.message,true);}finally{preparing=false;render();}}});row.append(edit);
+        if(f.originalDataUrl){const restore=document.createElement('button');restore.type='button';restore.textContent='Original';restore.disabled=sending||preparing;restore.onclick=async()=>{if(sending||preparing)return;preparing=true;render();try{const original=f.originalDataUrl;const blob=await(await fetch(original)).blob();queue[index]=await prepare(new File([blob],f.name,{type:'image/jpeg'}));}catch(e){report(e.message,true);}finally{preparing=false;render();}};row.append(restore);}
+      }
+      for(const [label,step] of [['↑',-1],['↓',1]]){const move=document.createElement('button');move.type='button';move.textContent=label;move.setAttribute('aria-label',step<0?'Mover antes':'Mover después');move.disabled=sending||preparing||index+step<0||index+step>=queue.length;move.onclick=()=>{[queue[index],queue[index+step]]=[queue[index+step],queue[index]];render();};row.append(move);}
+      row.append(name,b);
       $("thumbnailsList").append(row);
     });
   }

@@ -8,5 +8,5 @@ self.addEventListener('fetch',event=>{
  if(request.mode==='navigate'){
   event.respondWith((async()=>{const cache=await caches.open(CACHE_NAME);try{const response=await fetch(request);if(response.ok){await cache.put(url.pathname,response.clone());if(url.pathname==='/'||url.pathname==='/index.html'){await cache.put('/index.html',response.clone());await cache.put('/',response.clone());}}return response;}catch(e){const match=await cache.match(url.pathname)||((url.pathname==='/'||url.pathname==='/index.html')?await cache.match('/index.html'):null);return match||new Response('Esta página necesita conexión. Vuelve al inicio para trabajar sin internet.',{status:503,headers:{'Content-Type':'text/plain;charset=utf-8'}});}})());return;
  }
- event.respondWith((async()=>{const cached=await caches.match(request);if(cached)return cached;return fetch(request);})());
+ event.respondWith((async()=>{const cached=await caches.match(request);if(cached)return cached;const response=await fetch(request);if(response.ok&&url.pathname.includes("/vendor/ocr/")){const cache=await caches.open(CACHE_NAME);await cache.put(request,response.clone());}return response;})());
 });

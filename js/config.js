@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.5.0';
+window.APP_VERSION = 'v3.6.0';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -451,6 +451,8 @@ function openModal(id) {
 }
 
 function closeModal(id) {
+  if(id==="localOcrModal")window.RealScanOcr?.cancel();
+  if(id==="localTransferModal")window.RealScanLocalTransfer?.stopCamera();
   const modal = $(id);
   if (!modal) return;
   const entries = modalFocusStack.filter(function(entry) { return entry.id === id; });
@@ -472,6 +474,7 @@ function closeModal(id) {
 
 function closeAllModals() {
   window.RealScanCapture?.close();
+  window.RealScanLocalTransfer?.stopCamera();window.RealScanOcr?.cancel();
   if (typeof closeLiveCamera === 'function' && window.state?.cameraStream) closeLiveCamera();
   const ids = Array.from(document.querySelectorAll('[role="dialog"]')).map(function(modal) { return modal.id; });
   ids.forEach(closeModal);

@@ -77,7 +77,7 @@
           <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.5.0</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.6.0</span>
           </div>
           <p class="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1 mt-0.5">
             <span class="hidden sm:inline">Desarrollado por</span>
@@ -1807,6 +1807,7 @@
       </div>
 
       <div class="space-y-2.5 pt-1">
+        <div class="flex gap-2 flex-wrap mb-3"><button type="button" id="btnOpenOcr" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold">Extraer texto · OCR local</button><button type="button" id="btnOpenDuplex" class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-xs font-semibold">Asistente doble cara</button></div>
         <button type="button" id="btnPrintDirect" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
           <svg class="w-5 h-5 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
@@ -1887,7 +1888,8 @@
       </div>
     </section>
 
-    <section id="dailyCare" aria-labelledby="dailyCareTitle" class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 space-y-3 mt-4">
+    <p id="draftStorageStatus" role="status" class="text-xs text-slate-600 dark:text-slate-300 px-4 py-2">Comprobando borrador local…</p>
+  <section id="dailyCare" aria-labelledby="dailyCareTitle" class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 space-y-3 mt-4">
       <h2 id="dailyCareTitle" class="text-base font-bold text-slate-900 dark:text-white">Cierre diario y prueba de impresión</h2>
       <p class="text-xs text-slate-600 dark:text-slate-300">Guarda primero el trabajo actual en el historial. El respaldo incluye los trabajos guardados; el borrador, los ajustes y los enlaces QR no son un respaldo permanente.</p>
       <div class="flex flex-wrap gap-2">
@@ -1913,7 +1915,7 @@
     <footer class="text-center text-xs text-slate-500 space-y-2.5 py-6 border-t border-slate-200 dark:border-slate-800 mt-8">
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.5.0</span>
+        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.6.0</span>
         <span class="text-slate-300 dark:text-slate-600">•</span>
         <span class="font-medium">Desarrollado por <strong class="font-bold text-slate-900 dark:text-white">Paco Iglesias</strong></span>
       </div>
@@ -2117,7 +2119,7 @@
             ⚙️
           </div>
           <div>
-            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.5.0</span></h3>
+            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.6.0</span></h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400">Control de acceso y bitácora de auditoría</p>
           </div>
         </div>
@@ -2582,6 +2584,7 @@
 
       <div class="flex-1 overflow-y-auto space-y-4 pr-1">
         <p id="receiveConnectionStatus" role="status" aria-live="polite" class="text-xs text-slate-600 dark:text-slate-300">Preparando conexión…</p>
+        <p id="receiveDraftStatus" role="status" class="text-xs text-slate-600 dark:text-slate-300">Los originales recibidos permanecen en la bandeja mientras este trabajo está abierto.</p>
         <!-- Código QR e Instrucciones -->
         <div class="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
           <div class="shrink-0 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
@@ -2590,7 +2593,7 @@
           <div class="space-y-2 text-xs">
             <div class="flex items-center gap-2">
               <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold font-mono text-[11px]">Sesión Activa: <span id="labelReceiveSessionId">Conectando…</span></span>
-              <span class="text-[10px] text-slate-400 font-mono">15 min</span>
+              <span id="receiveSessionRemaining" class="text-[10px] text-slate-400 font-mono">15 min</span>
             </div>
             <p class="text-slate-600 dark:text-slate-300">Pide al cliente que apunte la cámara de su celular al código QR para abrir el portal de carga sin instalar aplicaciones.</p>
             <div class="flex flex-wrap items-center gap-2 pt-1">
@@ -2607,6 +2610,7 @@
           </div>
         </div>
 
+        <button type="button" id="btnOpenLocalTransfer" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold">Sin internet: recibir por Wi-Fi local</button>
         <!-- Bandeja de Archivos Recibidos -->
         <div class="space-y-2">
           <div class="flex items-center justify-between">
@@ -2615,7 +2619,7 @@
             </h4>
             <button type="button" id="btnClearQrInbox" class="text-xs text-red-500 hover:underline">Vaciar bandeja</button>
           </div>
-          <div id="qrInboxList" class="space-y-2 max-h-48 overflow-y-auto p-1">
+          <div id="qrInboxList" class="space-y-2 max-h-96 overflow-y-auto p-1">
             <p class="text-xs text-center text-slate-400 py-6">Esperando que el cliente envíe archivos...</p>
           </div>
         </div>
@@ -2694,6 +2698,7 @@
           <span>⚡</span><span>Generar Código QR de Descarga</span>
         </button>
 
+        <label class="block text-xs font-semibold">Peso máximo de cada archivo (según el portal del trámite)<select id="selectDeliveryMaxBytes" class="block w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"><option value="0">Sin límite adicional</option><option value="2000000">Menos de 2 MB</option><option value="1000000">Menos de 1 MB</option><option value="500000">Menos de 500 KB</option><option value="250000">Menos de 250 KB</option></select></label><p class="text-xs text-slate-500">Se conserva el original. Si un PDF de hoja completa supera el límite, se avisará para cambiar la selección. Comprueba los requisitos del trámite.</p>
         <!-- Contenedor del QR de Entrega -->
         <div id="deliveryQrResultBox" class="hidden flex flex-col items-center gap-3 p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-center">
           <div class="bg-white p-2 rounded-2xl shadow-sm border border-emerald-200">
@@ -2704,6 +2709,7 @@
             <button type="button" id="btnCopyDeliveryUrl" class="px-3 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 font-semibold text-xs hover:bg-emerald-50">
               📋 Copiar Enlace
             </button>
+            <button type="button" id="btnShareDeliveryWhatsapp" class="px-3 py-2 rounded-xl bg-emerald-700 text-white font-semibold text-xs">Compartir por WhatsApp</button>
             <button type="button" id="btnRevokeDeliverySession" class="px-3 py-1.5 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 font-semibold text-xs hover:bg-red-100">
               🔒 Revocar Enlace
             </button>
@@ -2821,6 +2827,7 @@
   <script src="js/firebase-transfer.js"></script>
   <script src="js/qr-sync.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/draft-store.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/crop-warp.js"></script>
   <script src="js/scan-assist.js"></script>
@@ -2828,8 +2835,15 @@
   <script src="js/layout-engine.js"></script>
   <script src="js/pdf.js"></script>
   <script src="js/export.js"></script>
+  <script src="js/delivery-options.js"></script>
+  <script src="js/local-ocr.js"></script>
+  <script src="js/duplex-assistant.js"></script>
+  <script src="vendor/jsqr.js"></script>
+  <script src="js/local-transfer.js"></script>
+  <script src="js/local-transfer-ui.js"></script>
   <script src="js/operations.js"></script>
   <script src="js/output-review.js"></script>
+  <script src="js/receive-workflow.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

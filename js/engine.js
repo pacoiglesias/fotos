@@ -77,13 +77,13 @@ async function loadBlobIntoSide(blob, side) {
 }
 
 // Función global para inyectar archivos cargados (usada por sincronización QR)
-window.handleLoadedFile = async function(side, dataUrl, name, onAssigned) {
+window.handleLoadedFile = async function(side, dataUrl, name, onAssigned, options = {}) {
   if (!state.images[side] || typeof dataUrl !== 'string') throw Error('Destino o archivo no válido.');
   const blob = await (await fetch(dataUrl)).blob();
   if (blob.type === 'application/pdf') return handlePdfFile(new File([blob],name||'documento.pdf',{type:blob.type}),side,onAssigned);
   if (!blob.type.startsWith('image/')) throw Error('El archivo no es una imagen o PDF.');
   const probe = new Image();probe.src=dataUrl;await probe.decode();
-  processRawDataUrl(dataUrl,side);
+  processRawDataUrl(dataUrl,side,!!options.preserveFrame);
   if (!await waitForProcessingComplete(15000)) throw Error('La imagen no terminó de procesarse.');
   onAssigned?.(side);
   return {loaded:true};
@@ -608,7 +608,7 @@ function processRawDataUrl(rawSrc, side, preserveFrame = false) {
     const spec = getActiveSpec();
     const specIsPortrait = spec.heightMm > spec.widthMm;
     const imgIsPortrait = img.naturalHeight > img.naturalWidth;
-    state.images[side].rotation = (specIsPortrait === imgIsPortrait) ? 0 : 90;
+    state.images[side].rotation = preserveFrame ? 0 : ((specIsPortrait === imgIsPortrait) ? 0 : 90);
     inspectSlotImage(side, img);
     settle();
     renderProcessedImage(side);

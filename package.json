@@ -1,6 +1,6 @@
 {
   "name": "realscan",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "private": true,
   "scripts": {
     "build": "node scripts/build.cjs",
@@ -13,16 +13,20 @@
     "publish": "node scripts/publish.cjs",
     "test:navigation": "node scripts/navigation-regression.cjs",
     "test:delivery": "node scripts/delivery-regression.cjs",
-    "test:capture": "node scripts/capture-regression.cjs"
+    "test:capture": "node scripts/capture-regression.cjs",
+    "test:practical": "node scripts/practical-regression.cjs"
   },
   "dependencies": {
     "@firebase/app": "0.16.3",
     "@firebase/auth": "1.13.7",
     "@firebase/database": "1.1.5",
+    "@tesseract.js-data/eng": "1.0.0",
+    "@tesseract.js-data/spa": "1.0.0",
     "jspdf": "4.2.1",
     "jszip": "3.10.2",
     "pdfjs-dist": "6.4.299",
-    "qrcode-generator": "2.0.4"
+    "qrcode-generator": "2.0.4",
+    "tesseract.js": "7.0.0"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.3.0",

@@ -7,6 +7,7 @@ try {
     "regression",
     "navigation-regression",
     "capture-regression",
+    "practical-regression",
     ...(process.env.REALSCAN_TEST_RELAY === "1" ? ["delivery-regression"] : []),
     "upgrade-regression",
     "legacy",

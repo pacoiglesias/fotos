@@ -54,15 +54,20 @@
       if (!["front", "back", "page3", "page4"].includes(side)) return false;
       const file = inbox.find((x) => x.id === id);
       if (!file) return false;
+      if(file.assigning)return false;
+      if(global.state?.images?.[side]?.originalSrc && !confirm('Esta cara ya tiene una imagen. ¿Quieres sustituirla?'))return false;
+      if(['page3','page4'].includes(side)&&typeof setDocumentPages==='function')setDocumentPages(Math.max(global.state?.documentPageCount||2,side==='page4'?4:3));
+      file.assigning=true;notify();
       try {
         const result = await global.handleLoadedFile(
           side,
-          file.dataUrl,
+          file.editedDataUrl || file.dataUrl,
           file.name,
           (actualSide) => {
             file.assignedTo = actualSide;
             notify();
           },
+          {preserveFrame:true},
         );
         if (result?.pendingSelection)
           global.showToast?.(
@@ -74,8 +79,16 @@
       } catch (e) {
         global.showToast?.(e.message, "error");
         return false;
-      }
+      } finally {file.assigning=false;notify();}
     },
+    editReceivedFile(id) {
+      const file=inbox.find(f=>f.id===id);if(!file||file.type==='application/pdf')return;
+      const revision=global.state?._jobRevision||0;
+      global.RealScanCapture.open({sourceDataUrl:file.dataUrl,photoMode:global.state?.activeCategory==='photos',onAccept:result=>{if((global.state?._jobRevision||0)!==revision||!inbox.includes(file))return;file.editedDataUrl=result;file.assignedTo=null;notify();}});
+    },
+    restoreReceivedFile(id) {const file=inbox.find(f=>f.id===id);if(file){file.editedDataUrl=null;file.assignedTo=null;notify();}},
+    removeReceivedFile(id) {if(!confirm('¿Quitar este archivo de la bandeja? Las caras ya asignadas se conservan.'))return;inbox=inbox.filter(f=>f.id!==id);notify();},
+    downloadOriginal(id) {const file=inbox.find(f=>f.id===id);if(!file)return;const a=document.createElement('a');a.href=file.dataUrl;a.download=file.name;document.body.append(a);a.click();a.remove();},
     async createDeliverySession(files, config) {
       delivery = await global.RealScanRelay.create("delivery", files);
       delivery.files = files;

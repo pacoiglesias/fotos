@@ -81,7 +81,7 @@
       }
     }
     const quad = best?.map((p2) => ({ x: p2.x / w, y: p2.y / h })) || null;
-    let message = brightness < 55 ? "A\xF1ade luz sin reflejos." : brightness > 235 ? "Evita la luz directa y los reflejos." : sharpness < 35 ? "Mant\xE9n el tel\xE9fono quieto y deja que enfoque." : quad ? "Bordes encontrados. Revisa las cuatro esquinas al capturar." : "Deja un margen y usa un fondo que contraste con la p\xE1gina.";
+    let message = brightness < 55 ? "Añade luz sin reflejos." : brightness > 235 ? "Evita la luz directa y los reflejos." : sharpness < 35 ? "Mantén el teléfono quieto y deja que enfoque." : quad ? "Bordes encontrados. Revisa las cuatro esquinas al capturar." : "Deja un margen y usa un fondo que contraste con la página.";
     return { quad, brightness, sharpness, message };
   }
   let current = null;
@@ -94,23 +94,37 @@
     const dialog = document.createElement("dialog");
     dialog.className = "scan-dialog";
     dialog.setAttribute("aria-label", "Captura y encuadre de documento");
-    dialog.innerHTML = `<div class="scan-head"><div><strong>Captura asistida</strong><small>Encuadra, revisa y confirma</small></div><button type="button" data-act="close" aria-label="Cerrar c\xE1mara">\xD7</button></div>
+    dialog.innerHTML = `<div class="scan-head"><div><strong>Captura asistida</strong><small>Encuadra, revisa y confirma</small></div><button type="button" data-act="close" aria-label="Cerrar cámara">×</button></div>
       <label class="scan-format">Forma del documento <select aria-label="Forma del documento"><option value="auto">Automática / Otro documento</option><option value="card">Tarjeta (INE / licencia)</option><option value="a4">Hoja A4</option><option value="letter">Hoja Carta</option></select></label>
-      <div class="scan-stage"><video autoplay playsinline muted></video><canvas class="scan-still" hidden></canvas><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon/></svg><div class="scan-corners" hidden></div></div>
-      <p class="scan-status" role="status" aria-live="polite">Preparando la c\xE1mara\u2026</p><p class="scan-help">Apoya el documento plano, deja sus cuatro bordes visibles y evita sombras. Las medidas reales se eligen en el mostrador.</p>
-      <div class="scan-actions"><button type="button" data-act="capture">Tomar foto</button><button type="button" data-act="switch">Girar c\xE1mara</button><button type="button" data-act="torch" hidden>Linterna</button><button type="button" data-act="native">C\xE1mara del tel\xE9fono</button>
+      <label class="scan-filter">Aspecto <select aria-label="Aspecto de la imagen"><option value="color">Color original</option><option value="gray">Escala de grises</option><option value="document">Documento contrastado</option></select></label>
+      <div class="scan-stage"><video autoplay playsinline muted></video><canvas class="scan-still" hidden></canvas><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="scan-shade" fill-rule="evenodd"/><polygon/></svg><div class="scan-corners" hidden></div></div>
+      <p class="scan-status" role="status" aria-live="polite">Preparando la cámara…</p><p class="scan-help">Apoya el documento plano, deja sus cuatro bordes visibles y evita sombras. Las medidas reales se eligen en el mostrador.</p>
+      <label class="scan-auto"><input type="checkbox"> Capturar al mantener el documento estable</label>
+      <div class="scan-actions"><button type="button" data-act="capture">Tomar foto</button><button type="button" data-act="switch">Girar cámara</button><button type="button" data-act="torch" hidden>Linterna</button><button type="button" data-act="native">Cámara del teléfono</button>
+      <button type="button" data-act="left" hidden>Girar izquierda</button><button type="button" data-act="right" hidden>Girar derecha</button><button type="button" data-act="reset" hidden>Restaurar original</button><button type="button" data-act="confirm" hidden>Usar esta imagen</button><button type="button" data-act="edit" hidden>Volver a ajustar</button>
       <button type="button" data-act="retry" hidden>Repetir</button><button type="button" data-act="original" hidden>Usar completa</button><button type="button" data-act="accept" hidden>Enderezar y usar</button></div>`;
     document.body.append(dialog);
     const $ = (s) => dialog.querySelector(s), video = $("video"), canvas = $("canvas"), svg = $("svg"), poly = $("polygon"), handles = $(".scan-corners"), status = $(".scan-status"), stage = $(".scan-stage");
-    const format = $('select');
+    const format = $(".scan-format select"), filter = $(".scan-filter select");
     if (Number.isFinite(options.targetRatio) && options.targetRatio > 0) {
-      const option = document.createElement('option'); option.value = 'target';
-      option.textContent = 'Formato elegido en el mostrador'; format.prepend(option); format.value = 'target';
+      const option = document.createElement("option");
+      option.value = "target";
+      option.textContent = "Formato elegido en el mostrador";
+      format.prepend(option);
     }
     if (options.photoMode) {
-      $('.scan-format').hidden = true;
-      $('.scan-help').textContent = 'Busca luz uniforme, mantén el teléfono quieto y revisa la nitidez. El recorte del retrato se ajusta después en el mostrador.';
+      $(".scan-format").hidden = true;
+      $(".scan-filter").hidden = true;
+      $(".scan-help").textContent = "Busca luz uniforme, mantén el teléfono quieto y revisa la nitidez. El recorte del retrato se ajusta después en el mostrador.";
     }
+    let stableFrames = 0, lastQuad = null;
+    const autoCapture = $(".scan-auto input");
+    if (options.sourceDataUrl) $(".scan-auto").hidden = true;
+    let originalData = options.sourceDataUrl || null, pendingResult = null, savedQuad = null;
+    const filters = { color: "none", gray: "grayscale(1)", document: "grayscale(1) contrast(1.25) brightness(1.08)" };
+    filter.onchange = () => {
+      canvas.style.filter = filters[filter.value] || "none";
+    };
     let stream = null, timer = null, revision = 0, disposed = false, captured = null, quad = null, facing = "environment", busy = false, torch = false;
     const btn = (a) => $(`[data-act="${a}"]`);
     function stop() {
@@ -148,19 +162,24 @@
       }
     });
     function paint() {
-      const ratio = {card:85.6/53.98,a4:210/297,letter:215.9/279.4,target:options.targetRatio}[format.value];
+      const ratio = { card: 85.6 / 53.98, a4: 210 / 297, letter: 215.9 / 279.4, target: options.targetRatio }[format.value];
       const aspect = (video.videoWidth || canvas.width || 4) / (video.videoHeight || canvas.height || 3);
-      let w = .8, h = ratio ? .8 * aspect / ratio : .7;
-      if (h > .8) { w *= .8 / h; h = .8; }
-      const x = (1-w)/2, y = (1-h)/2;
-      poly.setAttribute("points", (quad || [{x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h}]).map((p) => `${p.x * 100},${p.y * 100}`).join(" "));
+      let w = 0.8, h = ratio ? 0.8 * aspect / ratio : 0.7;
+      if (h > 0.8) {
+        w *= 0.8 / h;
+        h = 0.8;
+      }
+      const x = (1 - w) / 2, y = (1 - h) / 2;
+      poly.setAttribute("points", (quad || [{ x, y }, { x: x + w, y }, { x: x + w, y: y + h }, { x, y: y + h }]).map((p) => `${p.x * 100},${p.y * 100}`).join(" "));
       svg.classList.toggle("scan-found", !!quad);
+      const points = quad || [{ x, y }, { x: x + w, y }, { x: x + w, y: y + h }, { x, y: y + h }];
+      $(".scan-shade").setAttribute("d", "M0 0H100V100H0Z M" + points.map((p) => p.x * 100 + " " + p.y * 100).join("L") + "Z");
       handles.querySelectorAll("button").forEach((b, i) => {
         b.style.left = quad[i].x * 100 + "%";
         b.style.top = quad[i].y * 100 + "%";
       });
     }
-    format.addEventListener('change', paint);
+    format.addEventListener("change", paint);
     function live() {
       if (disposed || captured) return;
       try {
@@ -168,7 +187,15 @@
         if (a) {
           quad = options.photoMode ? null : a.quad;
           status.textContent = a.message;
+          const stable = quad && lastQuad && quad.every((p, i) => Math.hypot(p.x - lastQuad[i].x, p.y - lastQuad[i].y) < 0.015) && a.brightness > 60 && a.brightness < 235 && a.sharpness >= 35;
+          stableFrames = stable ? stableFrames + 1 : 0;
+          lastQuad = quad?.map((p) => ({ ...p }));
           paint();
+          if (autoCapture.checked && !options.photoMode && stableFrames >= 3) {
+            status.textContent = "Documento estable. Capturando…";
+            take();
+            return;
+          }
         }
       } catch {
         status.textContent = "Captura y revisa el encuadre antes de usar la foto.";
@@ -179,6 +206,9 @@
       const r = ++revision;
       stop();
       captured = null;
+      stableFrames = 0;
+      lastQuad = null;
+      $(".scan-auto").hidden = !!options.sourceDataUrl || !!options.photoMode;
       busy = false;
       torch = false;
       btn("torch").textContent = "Linterna";
@@ -188,7 +218,7 @@
       for (const a of ["capture", "switch", "native"]) btn(a).hidden = false;
       for (const a of ["retry", "accept", "original", "torch"]) btn(a).hidden = true;
       btn("capture").disabled = true;
-      status.textContent = "Preparando la c\xE1mara\u2026";
+      status.textContent = "Preparando la cámara…";
       try {
         if (!navigator.mediaDevices?.getUserMedia) throw Error("unsupported");
         const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing }, width: { ideal: 2560 }, height: { ideal: 1920 } }, audio: false });
@@ -202,7 +232,10 @@
         if (disposed || r !== revision) return;
         const track = s.getVideoTracks()[0];
         let caps = {};
-        try { caps = track.getCapabilities?.() || {}; } catch { /* Optional camera controls must not prevent capture. */ }
+        try {
+          caps = track.getCapabilities?.() || {};
+        } catch {
+        }
         if (caps.focusMode?.includes("continuous")) await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {
         });
         if (disposed || r !== revision) return;
@@ -215,11 +248,11 @@
         if (disposed || r !== revision) return;
         stop();
         root.RealScanDiagnostics?.record("camera.failed", "warning");
-        status.textContent = "No se pudo abrir la c\xE1mara. Permite el acceso o usa \xABC\xE1mara del tel\xE9fono\xBB.";
+        status.textContent = "No se pudo abrir la cámara. Permite el acceso o usa «Cámara del teléfono».";
       }
     }
-    async function take() {
-      if (busy || !video.videoWidth) return;
+    async function take(supplied = null) {
+      if (busy || !supplied && !video.videoWidth) return;
       busy = true;
       btn("capture").disabled = true;
       clearTimeout(timer);
@@ -227,7 +260,7 @@
       try {
         let photo = null;
         const track = stream?.getVideoTracks()[0];
-        if (root.ImageCapture && track) try {
+        if (!supplied && root.ImageCapture && track) try {
           const blob = await new ImageCapture(track).takePhoto();
           photo = await createImageBitmap(blob);
         } catch {
@@ -236,12 +269,19 @@
           photo?.close();
           return;
         }
-        const source = photo || video, sw = source.width || video.videoWidth, sh = source.height || video.videoHeight, scale = Math.min(1, 3e3 / Math.max(sw, sh));
+        const source = supplied || photo || video, sw = source.naturalWidth || source.width || video.videoWidth, sh = source.naturalHeight || source.height || video.videoHeight, scale = Math.min(1, 3e3 / Math.max(sw, sh));
         canvas.width = Math.round(sw * scale);
         canvas.height = Math.round(sh * scale);
         canvas.getContext("2d").drawImage(source, 0, 0, canvas.width, canvas.height);
         photo?.close();
+        $(".scan-auto").hidden = true;
         captured = canvas.toDataURL("image/jpeg", 0.96);
+        if (!originalData) originalData = captured;
+        pendingResult = null;
+        svg.hidden = false;
+        filter.closest("label").hidden = !!options.photoMode;
+        for (const action of ["left", "right", "reset"]) btn(action).hidden = false;
+        for (const action of ["confirm", "edit"]) btn(action).hidden = true;
         stop();
         video.hidden = true;
         canvas.hidden = false;
@@ -249,9 +289,10 @@
         const a = analyze(canvas);
         quad = options.photoMode ? null : a?.quad;
         if (!quad) quad = [{ x: 0.04, y: 0.04 }, { x: 0.96, y: 0.04 }, { x: 0.96, y: 0.96 }, { x: 0.04, y: 0.96 }];
-        status.textContent = options.photoMode ? "Revisa la nitidez. La fotograf\xEDa se conserva completa." : (a?.quad ? "Bordes propuestos." : "No se detectaron bordes con suficiente confianza.") + " Ajusta las cuatro esquinas o usa la foto completa. " + (a?.sharpness < 35 ? "Puede faltar nitidez; considera repetir." : "");
+        status.textContent = options.photoMode ? "Revisa la nitidez. La fotografía se conserva completa." : (a?.quad ? "Bordes propuestos." : "No se detectaron bordes con suficiente confianza.") + " Ajusta las cuatro esquinas o usa la foto completa. " + (a?.sharpness < 35 ? "Puede faltar nitidez; considera repetir." : "");
         for (const a2 of ["capture", "switch", "native", "torch"]) btn(a2).hidden = true;
         for (const a2 of ["retry", "original"]) btn(a2).hidden = false;
+        btn("retry").hidden = !!options.sourceDataUrl;
         btn("accept").hidden = !!options.photoMode;
         handles.replaceChildren();
         handles.hidden = !!options.photoMode;
@@ -285,7 +326,7 @@
         });
         paint();
       } catch {
-        status.textContent = "No se pudo tomar la foto. Reintenta o usa la c\xE1mara del tel\xE9fono.";
+        status.textContent = "No se pudo tomar la foto. Reintenta o usa la cámara del teléfono.";
         btn("capture").disabled = false;
         live();
       } finally {
@@ -307,24 +348,49 @@
           if (disposed) return;
           const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
           let w = Math.max(distance(q[0], q[1]), distance(q[3], q[2])), h = Math.max(distance(q[0], q[3]), distance(q[1], q[2]));
-          let ratio = {card:85.6/53.98,a4:210/297,letter:215.9/279.4,target:options.targetRatio}[format.value];
+          let ratio = { card: 85.6 / 53.98, a4: 210 / 297, letter: 215.9 / 279.4, target: options.targetRatio }[format.value];
           if (ratio) {
-            if ((w > h) !== (ratio > 1)) ratio = 1 / ratio;
-            // Keep the chosen paper/card proportion; never infer physical centimetres from pixels.
-            if (w / h > ratio) h = w / ratio; else w = h * ratio;
+            if (w > h !== ratio > 1) ratio = 1 / ratio;
+            if (w / h > ratio) h = w / ratio;
+            else w = h * ratio;
           }
           const limit = Math.min(1, 2400 / Math.max(w, h));
           result = root.RealScanEditor.warpPerspective(image, q, Math.max(1, Math.round(w * limit)), Math.max(1, Math.round(h * limit)));
           if (!result) throw Error("No se pudo enderezar. Ajusta las esquinas o usa la foto completa.");
         }
-        if (disposed) return;
-        root.RealScanDiagnostics?.record(crop ? "camera.corrected" : "camera.full_frame");
-        finish();
-        try {
-          await options.onAccept?.(result);
-        } catch (error) {
-          options.onError?.(error);
+        if (filter.value !== "color" && !options.photoMode) {
+          const image = new Image();
+          image.src = result;
+          await image.decode();
+          if (disposed) return;
+          const output = document.createElement("canvas");
+          output.width = image.naturalWidth;
+          output.height = image.naturalHeight;
+          const ctx = output.getContext("2d");
+          ctx.filter = filters[filter.value] || "none";
+          ctx.drawImage(image, 0, 0);
+          result = output.toDataURL("image/jpeg", 0.96);
         }
+        if (disposed) return;
+        pendingResult = result;
+        savedQuad = quad.map((p) => ({ ...p }));
+        const preview = new Image();
+        preview.src = result;
+        await preview.decode();
+        if (disposed) return;
+        canvas.width = preview.naturalWidth;
+        canvas.height = preview.naturalHeight;
+        canvas.style.filter = "none";
+        canvas.getContext("2d").drawImage(preview, 0, 0);
+        stage.style.width = Math.min(dialog.clientWidth - 24, innerHeight * 0.53 * canvas.width / canvas.height) + "px";
+        handles.hidden = true;
+        svg.hidden = true;
+        $(".scan-filter").hidden = true;
+        $(".scan-format").hidden = true;
+        for (const action of ["left", "right", "reset", "retry", "original", "accept"]) btn(action).hidden = true;
+        btn("confirm").hidden = btn("edit").hidden = false;
+        status.textContent = "Vista previa del resultado. Comprueba que el contenido y sus proporciones sean correctos antes de usarlo.";
+        return;
       } catch (e) {
         if (!disposed) status.textContent = e.message;
       } finally {
@@ -333,8 +399,62 @@
       }
     }
     btn("close").onclick = finish;
-    btn("capture").onclick = take;
-    btn("retry").onclick = start;
+    btn("capture").onclick = () => take();
+    async function loadImage(data) {
+      const image = new Image();
+      image.src = data;
+      await image.decode();
+      if (!disposed) await take(image);
+    }
+    btn("confirm").onclick = async () => {
+      if (!pendingResult || disposed) return;
+      const result = pendingResult;
+      root.RealScanDiagnostics?.record("camera.corrected");
+      finish();
+      try {
+        await options.onAccept?.(result);
+      } catch (e) {
+        options.onError?.(e);
+      }
+    };
+    btn("edit").onclick = async () => {
+      const points = savedQuad;
+      $(".scan-format").hidden = !!options.photoMode;
+      await loadImage(captured);
+      if (points) {
+        quad = points;
+        paint();
+      }
+      canvas.style.filter = filters[filter.value] || "none";
+    };
+    btn("reset").onclick = async () => {
+      filter.value = "color";
+      canvas.style.filter = "none";
+      await loadImage(originalData);
+    };
+    async function rotate(direction) {
+      if (busy || !captured) return;
+      const image = new Image();
+      image.src = captured;
+      await image.decode();
+      if (disposed) return;
+      const output = document.createElement("canvas");
+      output.width = image.naturalHeight;
+      output.height = image.naturalWidth;
+      const ctx = output.getContext("2d");
+      ctx.translate(output.width / 2, output.height / 2);
+      ctx.rotate(direction * Math.PI / 2);
+      ctx.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);
+      await take(output);
+    }
+    btn("left").onclick = () => rotate(-1);
+    btn("right").onclick = () => rotate(1);
+    btn("retry").onclick = () => {
+      originalData = null;
+      canvas.style.filter = "none";
+      filter.value = "color";
+      start();
+    };
     btn("accept").onclick = () => accept(true);
     btn("original").onclick = () => accept(false);
     btn("switch").onclick = () => {
@@ -357,7 +477,12 @@
       }
     };
     dialog.showModal();
-    start();
+    if (options.sourceDataUrl) {
+      btn("capture").hidden = btn("switch").hidden = btn("native").hidden = true;
+      loadImage(options.sourceDataUrl).catch(() => {
+        status.textContent = "No se pudo abrir la imagen. Cierra y selecciona otra.";
+      });
+    } else start();
     return controller;
   }
   document.addEventListener("visibilitychange", () => {

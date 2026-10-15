@@ -50,6 +50,7 @@ function getDB() {
    ============================================================ */
 function prepareWorkspaceForJobSwitch(options) {
   options = options || {};
+  window.RealScanP2P?.close();window.RealScanOcr?.cancel(true);
   if (typeof state !== 'undefined') {
     if (window.RealScanQrSync) {window.RealScanQrSync.revokeReceiveSession().catch(console.warn);window.RealScanQrSync.revokeDeliverySession().catch(console.warn);window.RealScanQrSync.clearInbox().catch(console.warn);}
     state.outputScalePercent = 100;
@@ -989,13 +990,9 @@ async function importScansFromJson(file) {
    AUTOGUARDADO SILENCIOSO Y RECUPERACIÓN DE BORRADOR ACTIVO (M-27)
    ============================================================ */
 const DRAFT_STORAGE_KEY = 'realscan_draft_session_v2';
-let draftDebounceTimer = null;
-
-async function saveActiveDraft() {
-  clearTimeout(draftDebounceTimer);
-  draftDebounceTimer = setTimeout(async function() {
-    try {
-      if (typeof state === 'undefined') return;
+let draftDebounceTimer = null, activeDraftCache = null, draftEpoch = 0, draftWriteQueue = Promise.resolve(), draftWarned = false;
+function snapshotActiveDraft() {
+      if (typeof state === 'undefined') return null;
       const activeSlots = ['front', 'back', 'page3', 'page4'];
       let hasAnyImage = false;
       const draftImages = {};
@@ -1029,11 +1026,10 @@ async function saveActiveDraft() {
       });
 
       if (!hasAnyImage) {
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
-        return;
+        return null;
       }
 
-      const draftState = {
+      return {
         updatedAt: Date.now(),
         activeCategory: state.activeCategory,
         format: state.format,
@@ -1060,40 +1056,56 @@ async function saveActiveDraft() {
         images: draftImages
       };
 
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftState));
-      state._draftQuotaError = false;
-      state._lastDraftSavedAt = Date.now();
-    } catch(err) {
-      if (typeof state !== 'undefined') state._draftQuotaError = true;
-      console.warn('RealScan: Error al persistir borrador en localStorage:', err);
-      if (typeof showToast === 'function') {
-        showToast('⚠️ Espacio local insuficiente para autoguardar borrador.', 'warning');
-      }
-    }
-  }, 750);
-}
 
+}
+function validActiveDraft(value) { return value && value.updatedAt && Date.now()-value.updatedAt < 48*3600*1000 && Date.now()>=value.updatedAt-1000; }
 function getActiveDraft() {
-  try {
-    const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed && parsed.updatedAt && (Date.now() - parsed.updatedAt < 48 * 3600 * 1000)) {
-      return parsed;
-    }
-  } catch(e) {}
-  return null;
+  if (validActiveDraft(activeDraftCache)) return activeDraftCache;
+  try { const legacy=JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY)||'null');return validActiveDraft(legacy)?legacy:null; } catch { return null; }
 }
-
-function clearActiveDraft() {
-  clearTimeout(draftDebounceTimer);
+function setDraftStatus(kind) {
+  if (typeof state === 'undefined') return;
+  state._draftStatus=kind;
+  const texts={saving:'Guardando borrador en este equipo…',saved:'Borrador guardado en este equipo.',empty:'Sin trabajo pendiente de guardar.',error:'Borrador sin guardar. Conserva esta pestaña y descarga los originales antes de cerrar.'};
+  if(typeof document!=='undefined')for(const id of ['draftStorageStatus','receiveDraftStatus']){const el=document.getElementById(id);if(el){el.textContent=texts[kind]||texts.empty;if(el.dataset)el.dataset.saveState=kind;}}
+}
+async function loadActiveDraft() {
+  const epoch=draftEpoch;
+  await draftWriteQueue.catch(()=>{});
   try {
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-  } catch(e) {}
+    const stored=await window.RealScanDraftStore?.read();
+    if(epoch!==draftEpoch)return getActiveDraft();
+    if(validActiveDraft(stored)){activeDraftCache=stored;setDraftStatus("saved");return stored;}
+    const legacy=getActiveDraft();
+    if(legacy&&window.RealScanDraftStore){await window.RealScanDraftStore.write(legacy);if(epoch!==draftEpoch)return getActiveDraft();activeDraftCache=legacy;try{localStorage.removeItem(DRAFT_STORAGE_KEY);}catch{}}
+    setDraftStatus(legacy?"saved":"empty");return legacy;
+  } catch { return getActiveDraft(); }
+}
+async function saveActiveDraft() {
+  clearTimeout(draftDebounceTimer);
+  const epoch=++draftEpoch;
+  draftDebounceTimer=setTimeout(function(){
+    const snapshot=snapshotActiveDraft();setDraftStatus(snapshot?'saving':'empty');
+    draftWriteQueue=draftWriteQueue.catch(()=>{}).then(async()=>{
+      if(epoch!==draftEpoch)return;
+      try {
+        if(window.RealScanDraftStore){if(snapshot)await window.RealScanDraftStore.write(snapshot);else await window.RealScanDraftStore.remove();}
+        else { const raw=JSON.stringify(snapshot);if(raw.length>262144)throw Error('Borrador grande requiere IndexedDB.');if(snapshot)localStorage.setItem(DRAFT_STORAGE_KEY,raw);else localStorage.removeItem(DRAFT_STORAGE_KEY); }
+        if(epoch!==draftEpoch)return;
+        activeDraftCache=snapshot;
+        if(window.RealScanDraftStore)try{localStorage.removeItem(DRAFT_STORAGE_KEY);}catch{}
+        state._draftQuotaError=false;state._lastDraftSavedAt=Date.now();draftWarned=false;setDraftStatus(snapshot?'saved':'empty');
+      }catch(error){if(epoch!==draftEpoch)return;state._draftQuotaError=true;setDraftStatus('error');window.RealScanDiagnostics?.record('draft.failed','warning',{errorType:error.name,code:error.name});if(!draftWarned){draftWarned=true;showToast('No se pudo guardar el borrador. Tu trabajo sigue abierto; descarga los originales antes de cerrar.','warning');}}
+    });
+  },750);
+}
+function clearActiveDraft() {
+  clearTimeout(draftDebounceTimer);++draftEpoch;activeDraftCache=null;try{localStorage.removeItem(DRAFT_STORAGE_KEY);}catch{}
+  draftWriteQueue=draftWriteQueue.catch(()=>{}).then(()=>window.RealScanDraftStore?.remove()).catch(()=>{setDraftStatus('error');});setDraftStatus('empty');
 }
 
 async function restoreActiveDraft() {
-  const draft = getActiveDraft();
+  const draft = await loadActiveDraft();
   if (!draft || !draft.images) return false;
 
   // 1. Limpieza rigurosa previa: un borrador de 1 cara NO debe conservar el reverso del trabajo anterior
