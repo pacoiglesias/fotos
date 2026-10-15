@@ -1,0 +1,202 @@
+.scan-dialog {
+  box-sizing: border-box;
+  width: min(96vw, 640px);
+  max-height: 94dvh;
+  padding: 0;
+  border: 1px solid #334155;
+  border-radius: 22px;
+  background: #0f172a;
+  color: #f8fafc;
+  overflow: auto;
+  font: 14px/1.5 system-ui, sans-serif;
+  box-shadow: 0 24px 80px #0008;
+}
+.scan-dialog::backdrop {
+  background: #020617d9;
+}
+.scan-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+.scan-head strong {
+  font-size: 19px;
+}
+.scan-head small {
+  display: block;
+  color: #94a3b8;
+}
+.scan-dialog button {
+  font: inherit;
+  cursor: pointer;
+  min-height: 44px;
+  border: 1px solid #475569;
+  border-radius: 12px;
+  padding: 8px 14px;
+  background: #1e293b;
+  color: #f8fafc;
+}
+.scan-dialog button:focus-visible {
+  outline: 3px solid #38bdf8;
+  outline-offset: 2px;
+}
+.scan-dialog button:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+.scan-dialog [hidden] {
+  display: none !important;
+}
+.scan-stage {
+  position: relative;
+  margin: 0 12px;
+  line-height: 0;
+  background: #020617;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.scan-stage video,
+.scan-stage canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 53dvh;
+  object-fit: contain;
+}
+.scan-stage:has(canvas:not([hidden])) {
+  width: fit-content;
+  max-width: calc(100% - 24px);
+  margin-inline: auto;
+}
+.scan-stage canvas {
+  width: auto;
+  max-width: 100%;
+  max-height: 53dvh;
+}
+.scan-stage svg,
+.scan-corners {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.scan-stage polygon {
+  fill: #38bdf80a;
+  stroke: #f8fafc;
+  stroke-width: .6;
+  stroke-dasharray: 2 1;
+  vector-effect: non-scaling-stroke;
+}
+.scan-stage .scan-found polygon {
+  stroke: #34d399;
+  stroke-width: 2;
+  stroke-dasharray: none;
+  fill: #34d39916;
+}
+.scan-corners .scan-corner {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  touch-action: none;
+  padding: 0;
+  width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  background: #2563ebd9;
+  border: 2px solid white;
+  font-weight: 700;
+  line-height: 40px;
+}
+.scan-status {
+  padding: 12px 20px 0;
+  margin: 0;
+  min-height: 3em;
+  color: #a7f3d0;
+}
+.scan-help {
+  padding: 8px 20px;
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+.scan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 20px 20px;
+}
+.scan-format { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0 20px 12px; font-size: 12px; color: #cbd5e1; }
+.scan-format select { min-height: 40px; max-width: 100%; padding: 6px 10px; color: #f8fafc; background: #1e293b; border: 1px solid #64748b; border-radius: 10px; font: inherit; }
+.scan-actions [data-act=capture],
+.scan-actions [data-act=accept] {
+  background: #4f46e5;
+  border-color: #818cf8;
+  flex: 1;
+}
+.scan-actions [data-act=original] {
+  background: #047857;
+}
+.scan-actions [data-act=native] {
+  font-size: 12px;
+}
+.output-review {
+  display: grid;
+  gap: 12px;
+}
+.output-review-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.output-review-fact {
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 10px;
+  min-width: 0;
+}
+.output-review-fact small {
+  display: block;
+  color: #64748b;
+}
+.output-review-thumbs {
+  display: flex;
+  gap: 10px;
+  overflow: auto;
+}
+.output-review-thumbs figure {
+  margin: 0;
+  min-width: 90px;
+  max-width: 130px;
+  font-size: 11px;
+}
+.output-review-thumbs img {
+  width: 100%;
+  height: 85px;
+  object-fit: contain;
+  background: #e2e8f0;
+  border-radius: 8px;
+}
+.output-review-note {
+  padding: 10px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-size: 12px;
+}
+.output-review-warning {
+  margin: 0;
+  padding: 10px;
+  border: 1px solid #f59e0b;
+  border-radius: 10px;
+  color: #78350f;
+  background: #fef3c7;
+  font-size: 12px;
+}
+.dark .output-review-fact {
+  border-color: #475569;
+}
+.dark .output-review-fact small {
+  color: #94a3b8;
+}

@@ -128,10 +128,11 @@ async function handleExportPDF(tryShare) {
  * Imprimir Directo (1 Clic):
  * Genera el PDF con las medidas físicas 1:1 y dispara la ventana de impresión
  */
-async function handlePrintDirect() {
+async function handlePrintDirect(reviewed = false) {
   if (typeof waitForProcessingComplete === 'function') {
     if (!await waitForProcessingComplete()) return;
   }
+  if (reviewed !== true && typeof showPrintReview === 'function') return showPrintReview(() => handlePrintDirect(true));
   // Verificación de Pre-Vuelo Estricta (M-31)
   if (typeof runPreflightChecks === 'function') {
     const preflight = runPreflightChecks();

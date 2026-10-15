@@ -22,65 +22,30 @@ function getSlotFriendlyName(side) {
   return 'Página';
 }
 
-function handleCameraClick(side) {
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (isMobile || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    triggerNativeUpload(side, true);
-  } else {
-    openLiveCamera(side);
-  }
-}
-
-async function openLiveCamera(side) {
+function handleCameraClick(side) { openLiveCamera(side); }
+function openLiveCamera(side) {
   state.activeCameraSide = side;
-  const titleEl = $('cameraModalTitle');
-  if (titleEl) titleEl.textContent = 'Cámara en Vivo — ' + getSlotFriendlyName(side);
-  const video = $('liveVideo');
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    triggerNativeUpload(side, true);
-    return;
-  }
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: state.facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
-      audio: false
-    });
-    state.cameraStream = stream;
-    video.srcObject = stream;
-    openModal('liveCameraModal');
-  } catch (err) {
-    showToast('Usando cámara nativa del sistema...', 'info');
-    triggerNativeUpload(side, true);
-  }
+  if (!window.RealScanCapture) { triggerNativeUpload(side, true); return; }
+  const job = state._jobRevision || 0;
+  RealScanCapture.open({
+    photoMode: state.activeCategory === 'photos',
+    targetRatio: getActiveSpec().widthMm / getActiveSpec().heightMm,
+    onNative: () => triggerNativeUpload(side, true),
+    onError: error => showToast(error.message || 'No se pudo cargar la captura.', 'error'),
+    onAccept: async dataUrl => {
+      if ((state._jobRevision || 0) !== job) return;
+      processRawDataUrl(dataUrl, side, true);
+      if (!await waitForProcessingComplete(15000)) return;
+      showToast('Foto lista. Revisa el recorte y el tamaño antes de imprimir.', 'success');
+    }
+  });
 }
-
-async function switchCameraFacing() {
-  state.facingMode = (state.facingMode === 'environment') ? 'user' : 'environment';
-  if (state.cameraStream) state.cameraStream.getTracks().forEach(function(t){ t.stop(); });
-  openLiveCamera(state.activeCameraSide);
-}
-
-function captureLivePhoto() {
-  const video = $('liveVideo');
-  if (!video.videoWidth) return;
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-  const side = state.activeCameraSide;
-  closeLiveCamera();
-  processRawDataUrl(dataUrl, side);
-  showToast('¡Foto capturada para ' + getSlotFriendlyName(side) + '!', 'success');
-}
-
+function switchCameraFacing() { openLiveCamera(state.activeCameraSide); }
+function captureLivePhoto() { /* Capture is managed by the shared assisted camera. */ }
 function closeLiveCamera() {
+  window.RealScanCapture?.close();
+  if (state.cameraStream) { state.cameraStream.getTracks().forEach(t => t.stop()); state.cameraStream = null; }
   closeModal('liveCameraModal');
-  if (state.cameraStream) {
-    state.cameraStream.getTracks().forEach(function(t){ t.stop(); });
-    state.cameraStream = null;
-  }
 }
 
 function triggerNativeUpload(side, isCamera) {
@@ -558,7 +523,7 @@ function clearSlot(side) {
 /* ============================================================
    PROCESAMIENTO DE IMAGEN Y ROTACIÓN INTELIGENTE
    ============================================================ */
-function processRawDataUrl(rawSrc, side) {
+function processRawDataUrl(rawSrc, side, preserveFrame = false) {
   const startRevision = state._jobRevision || 0;
   const slot = state.images[side];
   const loadVersion = (slot._loadVersion || 0) + 1; slot._loadVersion = loadVersion;
@@ -572,7 +537,7 @@ function processRawDataUrl(rawSrc, side) {
     }
     state.images[side].rawOriginalSrc = rawSrc;
     state.images[side].zoom = 1.0;
-    state.images[side].fitMode = 'cover';
+    state.images[side].fitMode = preserveFrame ? 'fit' : 'cover';
     state.images[side].showMmGrid = false;
     const suffix = getSlotIdSuffix(side);
     const label = $('zoomLabel' + suffix);
@@ -602,7 +567,7 @@ function processRawDataUrl(rawSrc, side) {
       }
     }
 
-    const croppedData = state.activeCategory === 'photos' ? null : detectAndCropCard(img);
+    const croppedData = preserveFrame || state.activeCategory === 'photos' ? null : detectAndCropCard(img);
     const toggleBtn = $('btnToggleCrop' + suffix);
 
     if (croppedData) {

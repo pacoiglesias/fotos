@@ -2,7 +2,7 @@
   "use strict";
   const $ = (id) => document.getElementById(id),
     queue = [];
-  let sending = false;
+  let sending = false, sessionReady = false, preparing = false;
   const status = document.createElement("p");
   status.id = "transferStatus";
   status.setAttribute("role", "status");
@@ -15,7 +15,9 @@
   function render() {
     $("selectedFilesContainer").classList.toggle("hidden", !queue.length);
     $("filesCount").textContent = queue.length;
-    $("btnSendFiles").disabled = sending || !queue.length;
+    $("btnSendFiles").disabled = !sessionReady || sending || preparing || !queue.length;
+    $("btnSmartScan").disabled = !sessionReady || sending || preparing;
+    $("fileInput").disabled = $("cameraInput").disabled = !sessionReady || sending || preparing;
     $("thumbnailsList").replaceChildren();
     queue.forEach((f, index) => {
       const row = document.createElement("div");
@@ -25,11 +27,18 @@
       const b = document.createElement("button");
       b.type = "button";
       b.textContent = "Quitar";
-      b.disabled = sending;
+      b.disabled = sending || preparing;
       b.onclick = () => {
         queue.splice(index, 1);
         render();
       };
+      if (f.type.startsWith('image/')) {
+        const thumb = document.createElement('img');
+        thumb.src = f.dataUrl; thumb.alt = 'Vista previa del archivo '+(index+1);
+        thumb.width = 56; thumb.height = 52;
+        thumb.style.cssText = 'width:56px;height:52px;object-fit:contain;border-radius:8px;background:#e2e8f0;flex-shrink:0';
+        row.append(thumb);
+      }
       row.append(name, b);
       $("thumbnailsList").append(row);
     });
@@ -81,7 +90,8 @@
     return f;
   }
   async function choose(files) {
-    if (sending) return;
+    if (sending || preparing || !sessionReady) return;
+    preparing = true; render();
     try {
       for (const f of files) {
         if (queue.length >= 8)
@@ -94,15 +104,22 @@
     } catch (e) {
       report(e.message, true);
     }
-    render();
+    preparing = false; render();
   }
+  $("btnSmartScan").onclick = () => {
+    if (!sessionReady || sending || preparing) return;
+    RealScanCapture.open({onNative: () => $("cameraInput").click(), onAccept: async dataUrl => {
+      const blob = await (await fetch(dataUrl)).blob();
+      await choose([new File([blob], "Escaneo.jpg", {type: "image/jpeg"})]);
+    }});
+  };
   for (const id of ["fileInput", "cameraInput"])
     $(id).addEventListener("change", function () {
-      choose(this.files);
+      choose(Array.from(this.files));
       this.value = "";
     });
   $("btnClearFiles").onclick = () => {
-    if (!sending) {
+    if (!sending && !preparing) {
       queue.length = 0;
       render();
     }
@@ -112,7 +129,7 @@
     render();
   };
   $("btnSendFiles").onclick = async () => {
-    if (sending || !queue.length) return;
+    if (!sessionReady || sending || preparing || !queue.length) return;
     sending = true;
     render();
     $("successBox").classList.add("hidden");
@@ -143,8 +160,10 @@
       render();
     }
   };
+  render();
   try {
     const s = await RealScanRelay.readSession("receive");
+    sessionReady = true; render();
     $("labelSessionId").textContent = "RS-" + s.token.slice(0, 8).toUpperCase();
     report("Sesión activa durante 15 minutos. Mantén abierto el mostrador.");
   } catch (e) {

@@ -779,6 +779,7 @@ function openDigitalDeliveryModal() {
   if(policy) {formatSelect.value='jpg';$('selectDeliveryMaxPx').value='600';}
   const resultBox = $('deliveryQrResultBox');
   if (resultBox) resultBox.classList.add('hidden');
+  if (typeof updateDeliveryReview === 'function') updateDeliveryReview();
   openModal('digitalDeliveryModal');
 }
 
@@ -3072,11 +3073,11 @@ function setupPwaSupport() {
   });
 }
 
-const APP_VERSION = window.APP_VERSION || 'v3.4.1';
+const APP_VERSION = window.APP_VERSION || 'v3.5.0';
 window.APP_VERSION = APP_VERSION;
 
 function syncAppVersion() {
-  const version = window.APP_VERSION || 'v3.4.1';
+  const version = window.APP_VERSION || 'v3.5.0';
   ['appVersionHeader', 'appVersionFooter', 'labelSwVersion', 'labelActiveVersionSettings'].forEach(function(id) {
     const el = $(id);
     if (el) {

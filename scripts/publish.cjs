@@ -17,7 +17,7 @@ function firebase(args) {
     for (let attempt=0; attempt<3; attempt++) {
       try {
         const response = await fetch('https://' + host + '/version.json', {cache:'no-store', signal:AbortSignal.timeout(15000)});
-        assert(response.ok(), host + ': version no disponible');
+        assert(response.ok, host + ': version no disponible');
         actual = await response.json();
         assert.equal(actual.version, expected.version, host + ': contenido diferente');
         assert.equal(actual.sourceCommit, expected.sourceCommit, host + ': commit diferente');

@@ -26,6 +26,7 @@ function copy(src, dst) {
     copy(path.join(root, file), path.join(dist, file));
   copy(path.join(root, "js"), path.join(dist, "js"));
   copy(path.join(root, "css/styles.css"), path.join(dist, "css/styles.css"));
+  copy(path.join(root, "css/scan-assist.css"), path.join(dist, "css/scan-assist.css"));
   const manifest = JSON.parse(
     fs.readFileSync(path.join(root, "manifest.json")),
   );

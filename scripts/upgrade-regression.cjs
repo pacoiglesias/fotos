@@ -62,8 +62,8 @@ const server = http.createServer((req, res) => {
   phase = "new";
   await page.reload();
   await page.waitForFunction(
-    () => typeof updateUI === "function" && window.APP_VERSION === "v3.4.1",
-    {},
+    expected => typeof updateUI === "function" && window.APP_VERSION === expected,
+    "v" + require("../package.json").version,
     { timeout: 45000 },
   );
   const keys = await page.evaluate(() => caches.keys());

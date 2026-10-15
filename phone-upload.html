@@ -2,9 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RealScan — Enviar Archivos al Mostrador</title>
   <link rel="stylesheet" href="css/tailwind.css">
+  <link rel="stylesheet" href="css/scan-assist.css">
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen p-4 flex flex-col items-center justify-center font-sans antialiased">
   <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-5">
@@ -26,7 +27,7 @@
       <div class="grid grid-cols-2 gap-3">
         <label class="cursor-pointer flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-indigo-300 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-100/50 transition-all text-center group">
           <span class="text-3xl mb-1 group-hover:scale-110 transition-transform">📷</span>
-          <span class="font-bold text-xs text-indigo-700 dark:text-indigo-300">Tomar Foto</span>
+          <span class="font-bold text-xs text-indigo-700 dark:text-indigo-300">Cámara del teléfono</span>
           <span class="text-[10px] text-slate-400">Cámara del celular</span>
           <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
         </label>
@@ -39,6 +40,8 @@
         </label>
       </div>
 
+      <button type="button" id="btnSmartScan" class="w-full py-3 px-4 rounded-2xl bg-indigo-600 text-white font-bold">Encuadrar y escanear documento</button>
+      <p class="text-xs text-slate-500">Detecta los bordes cuando hay contraste. Revisa y ajusta las esquinas antes de enviar.</p>
       <!-- Lista de Archivos Seleccionados -->
       <div id="selectedFilesContainer" class="hidden space-y-2 pt-2">
         <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
@@ -83,6 +86,8 @@
   <script src="js/phone-session.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/firebase-transfer.js"></script>
+  <script src="js/crop-warp.js"></script>
+  <script src="js/scan-assist.js"></script>
   <script src="js/phone-upload.js"></script>
 </body>
 </html>

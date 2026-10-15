@@ -6,6 +6,7 @@ try {
     "auth-regression",
     "regression",
     "navigation-regression",
+    "capture-regression",
     ...(process.env.REALSCAN_TEST_RELAY === "1" ? ["delivery-regression"] : []),
     "upgrade-regression",
     "legacy",

@@ -87,6 +87,14 @@ Los historiales y preferencias pertenecen al origen del navegador: cambiar de do
 
 La clave de js/firebase-config.js identifica la aplicación web y debe ser pública para funcionar en el navegador. No es una clave administrativa ni una cuenta de servicio. Se restringió en Google Cloud a identitytoolkit.googleapis.com y securetoken.googleapis.com, las dos API que necesita este cliente. Los documentos están protegidos por autenticación, enlaces aleatorios temporales y reglas del servidor; ocultar la configuración no sustituye estos controles. Referencia: https://firebase.google.com/docs/projects/api-keys. No introduzcas credenciales administrativas ni tokens privados en el repositorio.
 
+## Captura asistida y revisión visual 3.5.0
+
+En el teléfono, pulsa **Encuadrar y escanear documento**. Usa un fondo que contraste, deja visibles los cuatro bordes y toma la foto. Revisa la propuesta y mueve las esquinas antes de **Enderezar y usar**; también puedes repetir o conservar la foto completa. La captura se envía sólo al pulsar **Enviar archivos al mostrador**. La cámara del mostrador utiliza el mismo asistente; los perfiles de fotografías conservan la imagen completa.
+
+Antes de imprimir aparece un resumen de miniaturas, medidas, papel y contenido. La entrega digital también muestra un resumen que refleja los formatos y archivos seleccionados. Sigue siendo necesario elegir el formato físico correcto y usar escala 100 % en la impresora.
+
+Prueba dedicada: `npm run test:capture`. Alcance, resultados esperados y límites prácticos: [auditoría 3.5.0](audit/CAPTURA_ASISTIDA_3_5_0.md).
+
 ## Reparación de navegación 3.4.1
 
 Se corrigió el bloqueo que aparecía al renovar el QR y cerrar recepción: una ventana repetida en la pila de foco dejaba el fondo inactivo. Las aperturas ahora son únicas, se restaura la interactividad al cerrar y el foco de ventanas superpuestas sigue el orden real. La conexión de recepción muestra progreso, admite cerrar mientras espera, evita solicitudes duplicadas y conserva la sesión y su bandeja al reabrir; Renovar QR crea otra sesión. Cuenta/admin abre ajustes e Instalar App ofrece ayuda cuando no hay una solicitud nativa disponible.

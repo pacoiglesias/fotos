@@ -20,7 +20,7 @@ let browser, server;
   page.on("dialog", (d) => d.accept());
   await page.goto(base);
   await page.waitForFunction(() => typeof updateUI === "function" && window.pdfjsLib);
-  assert.equal(await page.evaluate(() => APP_VERSION), "v3.4.1");
+  assert.equal(await page.evaluate(() => APP_VERSION), "v" + require("../package.json").version);
   await page.locator("#loginUserInput").fill("admin");
   await page.locator("#loginPassInput").fill("1313");
   await page.locator("#btnLoginSubmit").click();
