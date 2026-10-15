@@ -114,3 +114,7 @@ Para cerrar ventanas y recuperar controles sin recargar ni borrar el trabajo: Es
 La verificación incluye ahora npm run test:navigation: acceso por formulario, renovaciones, cierre, ventanas PDF superpuestas, conexiones lentas y fallidas, instalación aceptada/cancelada/fallida, diagnóstico y privacidad, límites de almacenamiento y recuperación respetando el acceso.
 
 Para comprobar la entrega completa contra Firebase: npm run test:delivery. Genera QR desde los controles, los decodifica y descarga frente, reverso y hoja en un navegador independiente, probando JPG, PNG y PDF y revocación. Sólo usa archivos sintéticos. Se incluye al ejecutar verify con REALSCAN_TEST_RELAY=1. REALSCAN_SMOKE_URL permite repetirla sobre el sitio publicado.
+
+## Guías y ajuste proporcional 3.6.1
+
+Guías coherentes en pantalla, PDF e imagen; ajuste completo centrado sin estirar; distribución de fotos dentro de los márgenes y diagnóstico compartible con ajustes técnicos sin imágenes. Véanse [auditoría](audit/GUIAS_Y_AJUSTE_3_6_1.md) y [prompt de mantenimiento](audit/PROMPT_AUTOMEJORA_REALSCAN.md).

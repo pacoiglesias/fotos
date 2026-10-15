@@ -6,9 +6,12 @@
   const staticIds = new Set(Array.from(document.querySelectorAll('[id]')).map(element=>element.id));
   const session = global.crypto?.randomUUID?.() || String(Date.now());
   const allowedEvents = new Set(['draft.failed','camera.open','camera.close','camera.failed','camera.corrected','camera.full_frame','app.start','app.ready','ui.click','ui.feedback','modal.open','modal.close','modal.recover','receive.start','receive.ready','receive.failed','receive.cancelled','delivery.start','delivery.ready','delivery.failed','delivery.cancelled','pwa.request','pwa.accepted','pwa.dismissed','pwa.failed','pwa.fallback','pwa.installed','pwa.worker_failed','runtime.error','runtime.rejection','runtime.resource_failed','network.online','network.offline']);
+  for (const event of ['layout.guides','image.fit','output.pdf','output.raster']) allowedEvents.add(event);
   function cleanDetails(details) {
     const result = {};
     if (!details || typeof details !== 'object') return result;
+    for (const key of ['guides','ruler','labels']) if (typeof details[key] === 'boolean') result[key] = details[key];
+    if (['fit','cover'].includes(details.fitMode)) result.fitMode = details.fitMode;
     for (const key of ['depth','line','column','durationMs','count']) if (Number.isFinite(details[key])) result[key] = Math.max(0, Math.min(100000000, Math.round(details[key])));
     for (const key of ['modal','control']) {
       const value = details[key], element = typeof value === 'string' ? document.getElementById(value) : null;
@@ -43,7 +46,23 @@
   }
   function snapshot() {
     prune();
-    return {app:'RealScan',schemaVersion:1,site:location.hostname,appVersion:global.APP_VERSION || 'startup',build:build,session:session,online:navigator.onLine,persistence:persistent?'local':'memory',events:JSON.parse(JSON.stringify(events))};
+    return {app:'RealScan',schemaVersion:2,site:location.hostname,appVersion:global.APP_VERSION || 'startup',build:build,session:session,online:navigator.onLine,persistence:persistent?'local':'memory',operation:operationContext(),events:JSON.parse(JSON.stringify(events))};
+  }
+  function operationContext() {
+    try {
+      const s = global.state || {}, layout = global.RealScanLayout?.computeDocumentLayout(s);
+      const number = value => Number.isFinite(value) ? Math.max(-10000,Math.min(10000,Math.round(value*100)/100)) : null;
+      return {
+        category:['docs','photos','custom'].includes(s.activeCategory)?s.activeCategory:null,
+        paper:layout ? {widthMm:number(layout.paper.widthMm),heightMm:number(layout.paper.heightMm)} : null,
+        piece:layout ? {widthMm:number(layout.spec.widthMm),heightMm:number(layout.spec.heightMm)} : null,
+        pages:layout?.pages.length || 0,pieces:layout?.pages.reduce((n,p)=>n+p.placements.length,0) || 0,
+        guides:s.includeCutMarks!==false,ruler:s.includeRulerFooter!==false,labels:s.includeDocLabels!==false,
+        geometryErrors:layout?.errors.length || 0,geometryWarnings:layout?.warnings.length || 0,
+        slots:['front','back','page3','page4'].map(side=>{const image=s.images?.[side] || {};return {side,loaded:!!image.processedDataUrl,fitMode:['fit','cover'].includes(image.fitMode)?image.fitMode:null,rotation:number(image.rotation),zoom:number(image.zoom),panX:number(image.panX),panY:number(image.panY)};}),
+        viewport:{width:global.innerWidth,height:global.innerHeight,pixelRatio:global.devicePixelRatio}
+      };
+    } catch (_) { return null; }
   }
   const labels = {"draft.failed":"No se pudo guardar el borrador","camera.open":"Cámara abierta","camera.close":"Cámara cerrada","camera.failed":"Cámara no disponible","camera.corrected":"Encuadre confirmado","camera.full_frame":"Foto completa confirmada","app.start":"Inicio del sistema","app.ready":"Sistema preparado","ui.click":"Control seleccionado","ui.feedback":"Aviso mostrado","modal.open":"Ventana abierta","modal.close":"Ventana cerrada","modal.recover":"Controles recuperados","receive.start":"Conectando recepción","receive.ready":"Recepción preparada","receive.failed":"Falló la conexión de recepción","receive.cancelled":"Recepción cancelada","delivery.start":"Preparando entrega","delivery.ready":"Entrega preparada","delivery.failed":"Falló la entrega","delivery.cancelled":"Entrega cancelada","pwa.request":"Instalación solicitada","pwa.accepted":"Instalación aceptada","pwa.dismissed":"Instalación cancelada","pwa.failed":"Falló la instalación","pwa.fallback":"Ayuda de instalación abierta","pwa.installed":"Aplicación instalada","pwa.worker_failed":"No se pudo preparar el uso sin conexión","runtime.error":"Error de funcionamiento","runtime.rejection":"Operación sin completar","runtime.resource_failed":"No se pudo cargar un recurso","network.online":"Conexión recuperada","network.offline":"Sin conexión"};
   function render() {
@@ -51,7 +70,7 @@
     if (summary) summary.textContent = events.length + ' eventos · ' + events.filter(e => e.level === 'error').length + ' errores · ' + (navigator.onLine ? 'Con conexión' : 'Sin conexión') + (persistent ? '' : ' · Registro temporal: almacenamiento no disponible');
     if (list) {
       list.replaceChildren();
-      events.slice(-12).reverse().forEach(e => { const row = document.createElement('p'); row.textContent = new Date(e.at).toLocaleTimeString() + ' · ' + ({info:'Información',warning:'Aviso',error:'Error'}[e.level]) + ' · ' + (labels[e.event] || 'Evento del sistema'); list.appendChild(row); });
+      events.slice(-12).reverse().forEach(e => { const row = document.createElement('p'); row.textContent = new Date(e.at).toLocaleTimeString() + ' · ' + ({info:'Información',warning:'Aviso',error:'Error'}[e.level]) + ' · ' + (labels[e.event] || {'layout.guides':'Guías de corte cambiadas','image.fit':'Ajuste proporcional cambiado','output.pdf':'Hoja PDF preparada','output.raster':'Hoja de imagen preparada'}[e.event] || 'Evento del sistema'); list.appendChild(row); });
     }
   }
   function exportReport() {
@@ -62,6 +81,12 @@
     global.closeAllModals?.();
     record('modal.recover','warning');
     global.showToast?.('Ventanas cerradas y controles recuperados. Tu trabajo se conserva.','info');
+  }
+  async function shareReport() {
+    const file = new File([JSON.stringify(snapshot(),null,2)],'RealScan_Diagnostico_'+new Date().toISOString().slice(0,10)+'.json',{type:'application/json'});
+    if (!navigator.canShare?.({files:[file]})) {exportReport();global.showToast?.('Diagnóstico descargado. Puedes adjuntarlo a este chat.','info');return;}
+    try { await navigator.share({files:[file],title:'Diagnóstico RealScan'}); }
+    catch(error) {if(error.name!=='AbortError'){exportReport();global.showToast?.('Se descargó el diagnóstico para compartirlo como archivo.','info');}}
   }
   global.RealScanDiagnostics = {record,snapshot,render,exportReport,recover};
   global.addEventListener('error',function(e) {
@@ -75,6 +100,7 @@
   document.addEventListener('click',e=>{const button=e.target.closest?.('button[id]');if(button)record('ui.click','info',{control:button.id});},true);
   document.addEventListener('DOMContentLoaded',function() {
     document.getElementById('btnExportDiagnostics')?.addEventListener('click',exportReport);
+    document.getElementById('btnShareDiagnostics')?.addEventListener('click',shareReport);
     document.getElementById('btnRecoverControls')?.addEventListener('click',recover);
     document.getElementById('btnClearDiagnostics')?.addEventListener('click',()=>{if(confirm('¿Borrar sólo el diagnóstico técnico? Tus trabajos se conservan.')){events=[];persist();render();}});
     render();

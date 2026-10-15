@@ -145,7 +145,9 @@ let browser;
   assert.equal(geometry.a.widthMm, 85.6);
   assert.equal(geometry.b.widthMm, 42.8);
   assert(
-    geometry.transforms.some((t) => Math.abs(t[0] - (42.8 * 72) / 25.4) < 0.01),
+    // Uniform placement preserves the processed pixel ratio; rounded 300-DPI pixels
+    // can leave less than one pixel of white inside the exact millimetric frame.
+    geometry.transforms.some((t) => t[0] <= (42.8 * 72) / 25.4 + 0.01 && Math.abs(t[0] - (42.8 * 72) / 25.4) < (0.1 * 72) / 25.4),
   );
   fs.writeFileSync(
     path.join(out, "card-50-percent.pdf"),

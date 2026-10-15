@@ -22,7 +22,8 @@ async function createDigitalFile(side, format, maxPx) {
   if (format === 'pdf') {
     const spec = getActiveSpec();
     const doc = new window.jspdf.jsPDF({orientation:spec.widthMm>spec.heightMm?'landscape':'portrait',unit:'mm',format:[spec.widthMm,spec.heightMm]});
-    doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,spec.widthMm,spec.heightMm);
+    const box = RealScanLayout.imagePlacement({xMm:0,yMm:0,widthMm:spec.widthMm,heightMm:spec.heightMm},canvas.width,canvas.height);
+    doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',box.x,box.y,box.w,box.h);
     type='application/pdf';extension='pdf';dataUrl='data:application/pdf;base64,'+doc.output('datauristring').split(',')[1];
   } else {
     type=format==='png'?'image/png':'image/jpeg';extension=format==='png'?'png':'jpg';dataUrl=canvas.toDataURL(type,.94);
@@ -200,6 +201,7 @@ async function handlePrintDirect(reviewed = false) {
  * usando las posiciones milimétricas de RealScanLayout
  */
 function renderPageToCanvas(page, layout, loadedImages) {
+  window.RealScanDiagnostics?.record('output.raster','info',{count:page.placements.length,guides:layout.includeCutMarks});
   const paper = layout.paper;
   const pxPerMm = 300 / 25.4; // 11.811 px por mm a 300 DPI
   const sheetW = Math.round(paper.widthMm * pxPerMm);
@@ -231,48 +233,19 @@ function renderPageToCanvas(page, layout, loadedImages) {
 
     const imgObj = (loadedImages && loadedImages[item.slot]) ? loadedImages[item.slot] : null;
 
-    // A. Borde y marcas de corte
-    if (item.drawOvalGuide) {
-      ctx.save();
-      ctx.setLineDash([12, 10]);
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.ellipse(x + w / 2, y + h / 2, w / 2 - 2, h / 2 - 2, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    } else if (item.drawBorder) {
-      ctx.save();
-      ctx.setLineDash([12, 12]);
-      ctx.strokeStyle = '#b0b0b0';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
-      ctx.restore();
-    }
-
-    // B. Dibujar imagen a escala física 1:1
+    // Image first, then guides, so opaque photos cannot hide their cut outline.
     if (imgObj && imgObj.complete && imgObj.naturalWidth > 0) {
-      ctx.drawImage(imgObj, x, y, w, h);
+      const box = RealScanLayout.imagePlacement(item,imgObj.naturalWidth,imgObj.naturalHeight);
+      ctx.drawImage(imgObj,box.x*pxPerMm,box.y*pxPerMm,box.w*pxPerMm,box.h*pxPerMm);
     }
-
-    // C. Marcas de corte en esquinas
-    if (item.drawCutMarks && !item.drawOvalGuide) {
-      ctx.save();
-      ctx.strokeStyle = '#777777';
-      ctx.lineWidth = 2.2;
-      const tick = 25, off = 10;
-      ctx.beginPath();
-      ctx.moveTo(x - off, y); ctx.lineTo(x - off + tick, y);
-      ctx.moveTo(x, y - off); ctx.lineTo(x, y - off + tick);
-      ctx.moveTo(x + w + off - tick, y); ctx.lineTo(x + w + off, y);
-      ctx.moveTo(x + w, y - off); ctx.lineTo(x + w, y - off + tick);
-      ctx.moveTo(x - off, y + h); ctx.lineTo(x - off + tick, y + h);
-      ctx.moveTo(x, y + h + off - tick); ctx.lineTo(x, y + h + off);
-      ctx.moveTo(x + w + off - tick, y + h); ctx.lineTo(x + w + off, y + h);
-      ctx.moveTo(x + w, y + h + off - tick); ctx.lineTo(x + w, y + h + off);
-      ctx.stroke();
-      ctx.restore();
-    }
+    const guide = RealScanLayout.cutGuideGeometry(item);
+    ctx.save();
+    ctx.scale(pxPerMm,pxPerMm);ctx.strokeStyle='#666666';ctx.lineWidth=0.22;ctx.setLineDash([1.5,1.5]);
+    if(guide.oval){ctx.beginPath();ctx.ellipse(guide.x+guide.w/2,guide.y+guide.h/2,guide.w/2,guide.h/2,0,0,Math.PI*2);ctx.stroke();}
+    else if(guide.border)ctx.strokeRect(guide.x,guide.y,guide.w,guide.h);
+    ctx.setLineDash([]);ctx.beginPath();
+    for(const [x1,y1,x2,y2] of guide.lines){ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);}
+    ctx.stroke();ctx.restore();
 
     // D. Rótulo del documento
     if (item.label) {

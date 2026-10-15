@@ -392,8 +392,14 @@ function setFitMode(side, mode) {
   } else if (typeof window !== 'undefined' && window.RealScanEditor && window.RealScanEditor.recordSnapshot) {
     window.RealScanEditor.recordSnapshot(side, imgData);
   }
+  if (!['fit','cover'].includes(mode)) return;
   imgData.fitMode = mode;
+  imgData.zoom = 1; imgData.panX = 0; imgData.panY = 0;
+  window.RealScanDiagnostics?.record('image.fit','info',{fitMode:mode});
   const suffix = getSlotIdSuffix(side);
+  if ($('zoomLabel' + suffix)) $('zoomLabel' + suffix).textContent = '1.0x';
+  if ($('zoomSlider' + suffix)) $('zoomSlider' + suffix).value = 100;
+  if ($('zoomPercent' + suffix)) $('zoomPercent' + suffix).textContent = '100%';
 
   const btnFit = $('btnFitMode' + suffix);
   const btnCover = $('btnCoverMode' + suffix);

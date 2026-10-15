@@ -88,6 +88,7 @@ function generatePdfDoc() {
   const layout = window.RealScanLayout.computeDocumentLayout(state);
   const paper = layout.paper;
   const spec = layout.spec;
+  window.RealScanDiagnostics?.record('output.pdf',layout.errors.length ? 'error' : 'info',{count:layout.pages.length,guides:layout.includeCutMarks,ruler:layout.includeRulerFooter,labels:layout.includeDocLabels});
   const pageW = paper.widthMm;
   const pageH = paper.heightMm;
 
@@ -134,22 +135,18 @@ function generatePdfDoc() {
         : null;
 
       if (imgData) {
-        doc.addImage(imgData, 'JPEG', item.xMm, item.yMm, item.widthMm, item.heightMm, undefined, 'FAST');
+        const properties = doc.getImageProperties(imgData);
+        const box = RealScanLayout.imagePlacement(item, properties.width, properties.height);
+        doc.addImage(imgData, 'JPEG', box.x, box.y, box.w, box.h, undefined, 'FAST');
       }
 
-      // Líneas de corte y bordes
-      if (item.drawOvalGuide) {
-        drawOvalCutMarks(doc, item.xMm, item.yMm, item.widthMm, item.heightMm);
-      } else if (item.drawBorder) {
-        doc.setDrawColor(180, 180, 180);
-        doc.setLineWidth(0.22);
-        doc.setLineDashPattern([1.5, 1.5], 0);
-        doc.rect(item.xMm - 0.2, item.yMm - 0.2, item.widthMm + 0.4, item.heightMm + 0.4);
-      }
-
-      if (item.drawCutMarks && !item.drawOvalGuide) {
-        drawCornerCutMarks(doc, item.xMm, item.yMm, item.widthMm, item.heightMm);
-      }
+      const guide = RealScanLayout.cutGuideGeometry(item);
+      doc.setDrawColor(102,102,102);doc.setLineWidth(0.22);
+      doc.setLineDashPattern([1.5,1.5],0);
+      if(guide.oval)doc.ellipse(guide.x+guide.w/2,guide.y+guide.h/2,guide.w/2,guide.h/2,'S');
+      else if(guide.border)doc.rect(guide.x,guide.y,guide.w,guide.h);
+      doc.setLineDashPattern([],0);
+      for(const line of guide.lines)doc.line(...line);
 
       // Rótulo y medidas del documento
       if (item.label) {

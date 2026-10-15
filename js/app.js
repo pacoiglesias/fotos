@@ -48,12 +48,15 @@ function setStageSheetZoom(zoomLevel) {
    NAVEGACIÓN MÓVIL POR ETAPAS FLUIDAS (M-20)
    ============================================================ */
 function setMobileStep(step) {
-  document.body.dataset.mobileStep = String(step);
-  const stepNum = parseInt(step, 10) || 1;
+  const stepNum = Number(step);
+  if (![1,2,3].includes(stepNum)) return;
+  document.body.dataset.mobileStep = String(stepNum);
   $$('.mobile-step-tab').forEach(function(tab) {
     const s = parseInt(tab.getAttribute('data-mob-step'), 10);
     const active = (s === stepNum);
     tab.classList.toggle('is-active', active);
+    if (active) tab.setAttribute('aria-current','step');
+    else tab.removeAttribute('aria-current');
     tab.classList.toggle('text-slate-500', !active);
     tab.classList.toggle('dark:text-slate-400', !active);
   });
@@ -1809,7 +1812,7 @@ function updateUI() {
     const placements = activePage.placements || [];
     placements.forEach(function(p, pIdx) {
       const pBox = document.createElement('div');
-      pBox.className = 'absolute transition-all flex flex-col items-center justify-center pointer-events-auto select-none overflow-hidden';
+      pBox.className = 'absolute transition-all flex flex-col items-center justify-center pointer-events-auto select-none';
       pBox.style.left = ((p.xMm / paper.widthMm) * 100) + '%';
       pBox.style.top = ((p.yMm / paper.heightMm) * 100) + '%';
       pBox.style.width = ((p.widthMm / paper.widthMm) * 100) + '%';
@@ -1821,24 +1824,13 @@ function updateUI() {
         pBox.style.borderRadius = '2px';
       }
 
-      // Marcas de corte y contorno
-      if (state.includeCutMarks !== false) {
-        if (p.isOval) {
-          pBox.className += ' border-2 border-dashed border-amber-400 dark:border-amber-500 bg-amber-50/30';
-        } else {
-          pBox.className += ' border border-dashed border-indigo-400 dark:border-indigo-500 bg-indigo-50/20';
-        }
-      } else {
-        pBox.className += ' border border-transparent bg-slate-50/40';
-      }
-
       const imgData = state.images[p.slot];
       const imgSrc = (imgData && imgData.processedDataUrl) ? imgData.processedDataUrl : null;
 
       if (imgSrc) {
         const im = document.createElement('img');
         im.src = imgSrc;
-        im.className = 'w-full h-full object-cover';
+        im.className = 'w-full h-full object-contain';
         if (p.isOval) im.style.borderRadius = '50%';
         im.alt = p.label || ('Elemento ' + (pIdx + 1));
         pBox.appendChild(im);
@@ -1864,6 +1856,26 @@ function updateUI() {
         const labelText = p.tag ? ('FOTO ' + p.tag + '#' + p.slotNumber) : (p.label || (p.slot === 'front' ? '1. FRENTE' : '2. REVERSO'));
         ph.innerHTML = '<span class="text-[7.5px] font-bold text-indigo-700 dark:text-indigo-300 block truncate leading-tight">' + labelText + '</span><span class="text-[6.5px] font-mono text-slate-400 block">' + Math.round(p.widthMm) + '×' + Math.round(p.heightMm) + 'mm</span>';
         pBox.appendChild(ph);
+      }
+
+      const guide = RealScanLayout.cutGuideGeometry(p);
+      if (guide.border || guide.oval || guide.lines.length) {
+        const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+        svg.classList.add('cut-guide-overlay');
+        svg.setAttribute('viewBox', [p.xMm,p.yMm,p.widthMm,p.heightMm].join(' '));
+        svg.setAttribute('aria-hidden','true');
+        Object.assign(svg.style,{position:'absolute',inset:'0',width:'100%',height:'100%',overflow:'visible',pointerEvents:'none'});
+        function shape(tag,attrs,dashed) {
+          const node = document.createElementNS(ns,tag);
+          for(const [key,value] of Object.entries(attrs)) node.setAttribute(key,value);
+          node.setAttribute('fill','none');node.setAttribute('stroke','#666666');node.setAttribute('stroke-width','0.22');
+          if(dashed)node.setAttribute('stroke-dasharray','1.5 1.5');
+          svg.appendChild(node);
+        }
+        if(guide.oval)shape('ellipse',{cx:guide.x+guide.w/2,cy:guide.y+guide.h/2,rx:guide.w/2,ry:guide.h/2},true);
+        else if(guide.border)shape('rect',{x:guide.x,y:guide.y,width:guide.w,height:guide.h},true);
+        for(const [x1,y1,x2,y2] of guide.lines)shape('line',{x1,y1,x2,y2},false);
+        pBox.appendChild(svg);
       }
 
       setupDragToPan(pBox, p.slot);
@@ -2727,6 +2739,7 @@ function bindEvents() {
   if ($('chkIncludeCutMarks')) {
     on($('chkIncludeCutMarks'), 'change', function(e) {
       state.includeCutMarks = e.target.checked;
+      window.RealScanDiagnostics?.record('layout.guides','info',{guides:state.includeCutMarks});
       updatePreviewAnnotations();
       updateUI();
       savePreferences();

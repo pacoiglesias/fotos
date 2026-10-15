@@ -5,6 +5,7 @@ try {
     "build",
     "auth-regression",
     "regression",
+    "photo-layout-regression",
     "navigation-regression",
     "capture-regression",
     "practical-regression",

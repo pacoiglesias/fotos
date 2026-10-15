@@ -143,11 +143,12 @@
         else if (pageCopies <= 8) cols = Math.min(4, maxCols);
         else cols = maxCols;
 
+        cols = Math.max(cols, Math.ceil(pageCopies / maxRows));
         const rows = Math.ceil(pageCopies / cols);
         const gridW = cols * targetW + (cols - 1) * gap;
         const gridH = rows * targetH + (rows - 1) * gap;
         const startX = (paper.widthMm - gridW) / 2;
-        const startY = marginTop + Math.max(4, (availH - gridH) / 2);
+        const startY = marginTop + Math.max(0, (availH - gridH) / 2);
 
         const pageObj = {
           pageIndex: pIdx,
@@ -523,10 +524,37 @@
     };
   }
 
+  // One physical geometry for preview, PDF and raster exports. Marks stay outside the photo.
+  function cutGuideGeometry(item) {
+    const x = item.xMm, y = item.yMm, w = item.widthMm, h = item.heightMm;
+    const lines = [], gap = 0.4, tick = 1.2;
+    if (item.drawCutMarks) {
+      if (item.drawOvalGuide) {
+        lines.push([x+w/2,y-gap-tick,x+w/2,y-gap], [x+w/2,y+h+gap,x+w/2,y+h+gap+tick],
+          [x-gap-tick,y+h/2,x-gap,y+h/2], [x+w+gap,y+h/2,x+w+gap+tick,y+h/2]);
+      } else {
+        for (const cx of [x, x+w]) for (const cy of [y, y+h]) {
+          const sx = cx === x ? -1 : 1, sy = cy === y ? -1 : 1;
+          lines.push([cx+sx*gap,cy,cx+sx*(gap+tick),cy], [cx,cy+sy*gap,cx,cy+sy*(gap+tick)]);
+        }
+      }
+    }
+    return {x,y,w,h,oval:!!item.drawOvalGuide,border:!!item.drawBorder,lines};
+  }
+
+  // Processed images normally already match the frame. Imported/restored images may not.
+  function imagePlacement(item, width, height) {
+    if (!(width > 0 && height > 0)) return {x:item.xMm,y:item.yMm,w:item.widthMm,h:item.heightMm};
+    const scale = Math.min(item.widthMm/width, item.heightMm/height), w = width*scale, h = height*scale;
+    return {x:item.xMm+(item.widthMm-w)/2,y:item.yMm+(item.heightMm-h)/2,w,h};
+  }
+
   // Exportar al objeto global
   const layoutExports = {
     computeDocumentLayout: computeDocumentLayout,
-    validateDocumentGeometry: validateDocumentGeometry
+    validateDocumentGeometry: validateDocumentGeometry,
+    cutGuideGeometry: cutGuideGeometry,
+    imagePlacement: imagePlacement
   };
 
   if (typeof window !== 'undefined') {
