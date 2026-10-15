@@ -1713,6 +1713,12 @@ function prevPreviewPage() {
 }
 
 function updateUI() {
+  const editPreview = !!state._previewEditEnabled;
+  if ($('btnPreviewEdit')) {
+    $('btnPreviewEdit').setAttribute('aria-pressed',String(editPreview));
+    $('btnPreviewEdit').textContent = editPreview ? 'Terminar ajuste' : 'Ajustar encuadre';
+  }
+  if ($('previewGestureHelp')) $('previewGestureHelp').textContent = editPreview ? 'Arrastra la foto para centrarla. Pulsa Terminar ajuste para volver a desplazar la página.' : 'Encuadre bloqueado: puedes deslizar la página sin mover la foto.';
   const scale = Math.max(25, Math.min(200, Number(state.outputScalePercent) || 100));
   if ($('selectOutputScale')) $('selectOutputScale').value = String(scale);
   if ($('bannerScaleWarning')) $('bannerScaleWarning').classList.toggle('hidden', scale === 100);
@@ -1812,7 +1818,9 @@ function updateUI() {
     const placements = activePage.placements || [];
     placements.forEach(function(p, pIdx) {
       const pBox = document.createElement('div');
-      pBox.className = 'absolute transition-all flex flex-col items-center justify-center pointer-events-auto select-none';
+      pBox.className = 'photo-placement absolute flex flex-col items-center justify-center pointer-events-auto select-none';
+      pBox.dataset.previewSlot = p.slot;
+      pBox.style.touchAction = editPreview ? 'none' : 'pan-y pinch-zoom';
       pBox.style.left = ((p.xMm / paper.widthMm) * 100) + '%';
       pBox.style.top = ((p.yMm / paper.heightMm) * 100) + '%';
       pBox.style.width = ((p.widthMm / paper.widthMm) * 100) + '%';
@@ -1830,6 +1838,7 @@ function updateUI() {
       if (imgSrc) {
         const im = document.createElement('img');
         im.src = imgSrc;
+        im.draggable = false;
         im.className = 'w-full h-full object-contain';
         if (p.isOval) im.style.borderRadius = '50%';
         im.alt = p.label || ('Elemento ' + (pIdx + 1));
@@ -2087,10 +2096,21 @@ function loadPreferences() {
 function setupDragToPan(canvasTarget, side) {
   const el = (typeof canvasTarget === 'string') ? $(canvasTarget) : canvasTarget;
   if (!el) return;
-  let startX = 0, startY = 0, isDragging = false;
+  let startX = 0, startY = 0, isDragging = false, frame = null, pendingX = 0, pendingY = 0, moved = false, dragSource = null;
+  function flush() {
+    frame = null;
+    if (!pendingX && !pendingY) return;
+    const x = pendingX, y = pendingY; pendingX = pendingY = 0;
+    if(!state._previewDragging || state.images[side]?.originalSrc!==dragSource)return;
+    adjustPan(side,x,y);
+  }
   on(el, 'pointerdown', function(e) {
-    if (!state.images[side].originalSrc) return;
+    if (!state._previewEditEnabled || state._previewDragging || !state.images[side].originalSrc || e.isPrimary === false || e.button !== 0) return;
     isDragging = true;
+    moved = false;
+    state._previewDragging = true;
+    state._previewDragSide = side;
+    dragSource = state.images[side].originalSrc;
     startX = e.clientX;
     startY = e.clientY;
     try { el.setPointerCapture(e.pointerId); } catch(err) {}
@@ -2098,30 +2118,39 @@ function setupDragToPan(canvasTarget, side) {
   });
   on(el, 'pointermove', function(e) {
     if (!isDragging) return;
+    e.preventDefault();
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
     if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
       startX = e.clientX;
       startY = e.clientY;
-      if (typeof adjustPan === 'function') {
-        adjustPan(side, (dx / el.clientWidth) * 45, (dy / el.clientHeight) * 45);
-      }
+      const box = el.getBoundingClientRect();
+      if (box.width <= 0 || box.height <= 0) return;
+      moved = true; pendingX += dx/box.width*100; pendingY += dy/box.height*100;
+      if (frame === null) frame = requestAnimationFrame(flush);
     }
   });
   function endDrag(e) {
     if (!isDragging) return;
     isDragging = false;
+    if (frame !== null) cancelAnimationFrame(frame);
+    flush();
+    state._previewDragging = false;
+    state._previewDragSide = null;
     try { el.releasePointerCapture(e.pointerId); } catch(err) {}
     el.style.cursor = '';
+    if (moved && state.images[side]?.originalSrc===dragSource) renderProcessedImage(side);
   }
   on(el, 'pointerup', endDrag);
   on(el, 'pointercancel', endDrag);
+  on(el, 'lostpointercapture', endDrag);
 }
 
 /* ============================================================
    BINDING DE EVENTOS
    ============================================================ */
 function bindEvents() {
+  if ($('btnPreviewEdit')) on($('btnPreviewEdit'),'click',function(){state._previewEditEnabled=!state._previewEditEnabled;updateUI();});
   // Quick Intent Selector (M-18)
   $$('.intent-card').forEach(function(card) {
     on(card, 'click', function() {

@@ -3,6 +3,7 @@
   const $ = (id) => document.getElementById(id),
     queue = [];
   let sending = false, sessionReady = false, preparing = false;
+  let captureMode = new URLSearchParams(location.hash.slice(1)).get('mode')==='photo'?'photo':'document';
   const status = document.createElement("p");
   status.id = "transferStatus";
   status.setAttribute("role", "status");
@@ -17,7 +18,9 @@
     $("filesCount").textContent = queue.length;
     $("btnSendFiles").disabled = !sessionReady || sending || preparing || !queue.length;
     $("btnSmartScan").disabled = !sessionReady || sending || preparing || queue.length>=8;
-    $("btnSmartScan").textContent=queue.length?"Escanear otra página ("+queue.length+"/8)":"Encuadrar y escanear documento";
+    $("btnSmartScan").textContent=captureMode==='photo'?'Tomar fotografía'+(queue.length?' ('+queue.length+'/8)':''):queue.length?"Escanear otra página ("+queue.length+"/8)":"Encuadrar y escanear documento";
+    for(const [id,mode]of [['btnModeDocument','document'],['btnModePhoto','photo']]){$(id).setAttribute('aria-pressed',String(mode===captureMode));$(id).disabled=sending||preparing;}
+    $('captureModeHelp').textContent=captureMode==='photo'?'Fotografía: conserva su orientación y proporciones. El tamaño de impresión se elige en el mostrador.':'Documento: busca sus cuatro bordes, revisa el recorte y confirma antes de enviar.';
     $("fileInput").disabled = $("cameraInput").disabled = !sessionReady || sending || preparing;
     $("thumbnailsList").replaceChildren();
     queue.forEach((f, index) => {
@@ -43,7 +46,7 @@
       name.style.cssText='min-width:0;overflow-wrap:anywhere';row.style.flexWrap='wrap';
       if(f.type.startsWith('image/')){
         const edit=document.createElement('button');edit.type='button';edit.textContent='Revisar / girar';edit.disabled=sending||preparing;
-        edit.onclick=()=>RealScanCapture.open({sourceDataUrl:f.originalDataUrl||f.dataUrl,onAccept:async result=>{if(sending||preparing||!queue.includes(f))return;preparing=true;render();try{const blob=await(await fetch(result)).blob();const replacement=await prepare(new File([blob],f.name,{type:'image/jpeg'}));replacement.originalDataUrl=f.originalDataUrl||f.dataUrl;queue[index]=replacement;render();}catch(e){report(e.message,true);}finally{preparing=false;render();}}});row.append(edit);
+        edit.onclick=()=>RealScanCapture.open({sourceDataUrl:f.originalDataUrl||f.dataUrl,photoMode:(f.captureMode||captureMode)==='photo',onAccept:async result=>{if(sending||preparing||!queue.includes(f))return;preparing=true;render();try{const blob=await(await fetch(result)).blob();const replacement=await prepare(new File([blob],f.name,{type:'image/jpeg'}));replacement.captureMode=f.captureMode;replacement.originalDataUrl=f.originalDataUrl||f.dataUrl;queue[queue.indexOf(f)]=replacement;render();}catch(e){report(e.message,true);}finally{preparing=false;render();}}});row.append(edit);
         if(f.originalDataUrl){const restore=document.createElement('button');restore.type='button';restore.textContent='Original';restore.disabled=sending||preparing;restore.onclick=async()=>{if(sending||preparing)return;preparing=true;render();try{const original=f.originalDataUrl;const blob=await(await fetch(original)).blob();queue[index]=await prepare(new File([blob],f.name,{type:'image/jpeg'}));}catch(e){report(e.message,true);}finally{preparing=false;render();}};row.append(restore);}
       }
       for(const [label,step] of [['↑',-1],['↓',1]]){const move=document.createElement('button');move.type='button';move.textContent=label;move.setAttribute('aria-label',step<0?'Mover antes':'Mover después');move.disabled=sending||preparing||index+step<0||index+step>=queue.length;move.onclick=()=>{[queue[index],queue[index+step]]=[queue[index+step],queue[index]];render();};row.append(move);}
@@ -90,6 +93,7 @@
     }
     const f = {
       name: name.slice(0, 180),
+      captureMode,
       type,
       dataUrl,
       size: Math.floor((dataUrl.length - dataUrl.indexOf(",") - 1) * 0.75),
@@ -116,11 +120,12 @@
   }
   $("btnSmartScan").onclick = () => {
     if (!sessionReady || sending || preparing) return;
-    RealScanCapture.open({onNative: () => $("cameraInput").click(), onAccept: async dataUrl => {
+    RealScanCapture.open({photoMode:captureMode==='photo',onNative: () => $("cameraInput").click(), onAccept: async dataUrl => {
       const blob = await (await fetch(dataUrl)).blob();
       await choose([new File([blob], "Escaneo.jpg", {type: "image/jpeg"})]);
     }});
   };
+  for(const [id,mode]of [['btnModeDocument','document'],['btnModePhoto','photo']])$(id).onclick=()=>{if(sending||preparing)return;captureMode=mode;render();};
   for (const id of ["fileInput", "cameraInput"])
     $(id).addEventListener("change", function () {
       choose(Array.from(this.files));

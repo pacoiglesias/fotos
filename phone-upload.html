@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="application-version" content="3.7.0">
   <title>RealScan — Enviar Archivos al Mostrador</title>
   <link rel="stylesheet" href="css/tailwind.css">
   <link rel="stylesheet" href="css/scan-assist.css">
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen p-4 flex flex-col items-center justify-center font-sans antialiased">
-  <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-5">
+<body class="phone-transfer bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen p-4 flex flex-col items-center justify-center font-sans antialiased">
+  <div class="phone-transfer-card w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-5">
     
     <!-- Cabecera -->
     <div class="text-center space-y-1 pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -24,6 +25,10 @@
 
     <!-- Zona de Carga y Cámara -->
     <div class="space-y-3">
+      <div class="phone-capture-modes" role="group" aria-label="Qué vas a enviar">
+        <button type="button" id="btnModeDocument" aria-pressed="true">▤ Documento<span>Detectar bordes y enderezar</span></button>
+        <button type="button" id="btnModePhoto" aria-pressed="false">▧ Fotografía<span>Conservar forma y encuadre</span></button>
+      </div>
       <div class="grid grid-cols-2 gap-3">
         <label class="cursor-pointer flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-indigo-300 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-100/50 transition-all text-center group">
           <span class="text-3xl mb-1 group-hover:scale-110 transition-transform">📷</span>
@@ -41,7 +46,7 @@
       </div>
 
       <button type="button" id="btnSmartScan" class="w-full py-3 px-4 rounded-2xl bg-indigo-600 text-white font-bold">Encuadrar y escanear documento</button>
-      <p class="text-xs text-slate-500">Detecta los bordes cuando hay contraste. Revisa y ajusta las esquinas antes de enviar.</p>
+      <p id="captureModeHelp" class="text-xs text-slate-500">Documento: busca sus cuatro bordes, revisa el recorte y confirma antes de enviar.</p>
       <!-- Lista de Archivos Seleccionados -->
       <div id="selectedFilesContainer" class="hidden space-y-2 pt-2">
         <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
@@ -80,9 +85,11 @@
     <!-- Pie Informativo -->
     <div class="text-center pt-2 border-t border-slate-100 dark:border-slate-800">
       <p class="text-[10px] text-slate-400">🔒 Transferencia segura • Sesión de 15 minutos; el mostrador debe permanecer abierto • Desarrollado por Paco Iglesias</p>
+      <button type="button" id="btnExportDiagnostics" class="mt-3 text-xs text-slate-500 underline">Descargar diagnóstico de este móvil</button>
     </div>
   </div>
 
+  <script src="js/diagnostics.js"></script>
   <script src="js/phone-session.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/firebase-transfer.js"></script>

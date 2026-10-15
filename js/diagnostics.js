@@ -6,13 +6,13 @@
   const staticIds = new Set(Array.from(document.querySelectorAll('[id]')).map(element=>element.id));
   const session = global.crypto?.randomUUID?.() || String(Date.now());
   const allowedEvents = new Set(['draft.failed','camera.open','camera.close','camera.failed','camera.corrected','camera.full_frame','app.start','app.ready','ui.click','ui.feedback','modal.open','modal.close','modal.recover','receive.start','receive.ready','receive.failed','receive.cancelled','delivery.start','delivery.ready','delivery.failed','delivery.cancelled','pwa.request','pwa.accepted','pwa.dismissed','pwa.failed','pwa.fallback','pwa.installed','pwa.worker_failed','runtime.error','runtime.rejection','runtime.resource_failed','network.online','network.offline']);
-  for (const event of ['layout.guides','image.fit','output.pdf','output.raster']) allowedEvents.add(event);
+  for (const event of ['layout.guides','image.fit','output.pdf','output.raster','camera.focus','camera.ready','camera.quality']) allowedEvents.add(event);
   function cleanDetails(details) {
     const result = {};
     if (!details || typeof details !== 'object') return result;
-    for (const key of ['guides','ruler','labels']) if (typeof details[key] === 'boolean') result[key] = details[key];
+    for (const key of ['guides','ruler','labels','supported','applied','hasEdges']) if (typeof details[key] === 'boolean') result[key] = details[key];
     if (['fit','cover'].includes(details.fitMode)) result.fitMode = details.fitMode;
-    for (const key of ['depth','line','column','durationMs','count']) if (Number.isFinite(details[key])) result[key] = Math.max(0, Math.min(100000000, Math.round(details[key])));
+    for (const key of ['depth','line','column','durationMs','count','widthPx','heightPx','brightness','sharpness']) if (Number.isFinite(details[key])) result[key] = Math.max(0, Math.min(100000000, Math.round(details[key])));
     for (const key of ['modal','control']) {
       const value = details[key], element = typeof value === 'string' ? document.getElementById(value) : null;
       if (element && staticIds.has(value) && /^[a-zA-Z][a-zA-Z0-9_-]{0,70}$/.test(value)) result[key] = value;
@@ -46,7 +46,7 @@
   }
   function snapshot() {
     prune();
-    return {app:'RealScan',schemaVersion:2,site:location.hostname,appVersion:global.APP_VERSION || 'startup',build:build,session:session,online:navigator.onLine,persistence:persistent?'local':'memory',operation:operationContext(),events:JSON.parse(JSON.stringify(events))};
+    return {app:'RealScan',schemaVersion:2,site:location.hostname,appVersion:global.APP_VERSION || document.querySelector('meta[name="application-version"]')?.content || 'startup',build:build,session:session,online:navigator.onLine,persistence:persistent?'local':'memory',operation:operationContext(),events:JSON.parse(JSON.stringify(events))};
   }
   function operationContext() {
     try {
@@ -58,6 +58,7 @@
         piece:layout ? {widthMm:number(layout.spec.widthMm),heightMm:number(layout.spec.heightMm)} : null,
         pages:layout?.pages.length || 0,pieces:layout?.pages.reduce((n,p)=>n+p.placements.length,0) || 0,
         guides:s.includeCutMarks!==false,ruler:s.includeRulerFooter!==false,labels:s.includeDocLabels!==false,
+        previewEditing:!!s._previewEditEnabled,
         geometryErrors:layout?.errors.length || 0,geometryWarnings:layout?.warnings.length || 0,
         slots:['front','back','page3','page4'].map(side=>{const image=s.images?.[side] || {};return {side,loaded:!!image.processedDataUrl,fitMode:['fit','cover'].includes(image.fitMode)?image.fitMode:null,rotation:number(image.rotation),zoom:number(image.zoom),panX:number(image.panX),panY:number(image.panY)};}),
         viewport:{width:global.innerWidth,height:global.innerHeight,pixelRatio:global.devicePixelRatio}

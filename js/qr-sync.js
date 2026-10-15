@@ -15,6 +15,10 @@
           throw Error("El trabajo cambió. Genera otro QR.");
         return api.addReceivedFile(file);
       });
+      // A presentation hint only; the secret and all server authorization remain unchanged.
+      if(typeof receive?.url==='string'){
+        try {const url=new URL(receive.url,location.href),hint=new URLSearchParams(url.hash.slice(1));hint.set('mode',global.state?.activeCategory==='photos'?'photo':'document');url.hash=hint.toString();receive.url=url.href;}catch{}
+      }
       return receive;
     },
     getActiveReceiveSession() {

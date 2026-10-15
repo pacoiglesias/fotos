@@ -440,7 +440,9 @@ function inspectSlotImage(side, img) {
   const h = img.naturalHeight || 0;
   if (w === 0 || h === 0) return;
 
-  const isPortraitImg = h > w;
+  const rotated = (state.images[side]?.rotation || 0) % 180 !== 0;
+  const imageW = rotated ? h : w, imageH = rotated ? w : h;
+  const isPortraitImg = imageH > imageW;
   const spec = getActiveSpec();
   const isPortraitSpec = spec.heightMm > spec.widthMm;
 
@@ -449,17 +451,21 @@ function inspectSlotImage(side, img) {
   const actionsEl = $('inspectorActions' + suffix);
 
   let advice = '';
-  let sub = `${w} × ${h} px • ${w >= 1200 ? '✅ 300 DPI Óptimo' : '⚠️ Resolución Estándar'}`;
+  const estimatedDpi = Math.round(Math.min(imageW/spec.widthMm,imageH/spec.heightMm)*25.4);
+  let sub = `${w} × ${h} px · ${estimatedDpi} ppp estimados para este tamaño · Revisa la nitidez`;
   let actionHtml = '';
 
-  if (isPortraitImg !== isPortraitSpec) {
+  if (isPortraitImg !== isPortraitSpec && state.activeCategory === 'photos') {
+    advice = 'Foto y marco tienen distinta orientación. Se conserva la foto completa.';
+    actionHtml = `<button type="button" class="btn-inspect-fit px-2 py-1 rounded bg-slate-800 text-white text-xs" data-side="${side}">Encajar sin recortar</button>`;
+  } else if (isPortraitImg !== isPortraitSpec) {
     advice = '💡 Foto vertical detectada en ranura horizontal:';
     actionHtml = `<button type="button" class="btn-inspect-rotate px-2 py-0.5 rounded bg-indigo-600 text-white font-bold text-[10px] hover:bg-indigo-700 transition-colors shadow-sm" data-side="${side}">🔄 Girar 90°</button>`;
   } else if (w > 2000 || h > 2000) {
     advice = '💡 Foto amplia de alta resolución:';
     actionHtml = `<button type="button" class="btn-inspect-fit px-2 py-0.5 rounded bg-slate-800 dark:bg-slate-700 text-white font-bold text-[10px] hover:bg-slate-900 transition-colors shadow-sm" data-side="${side}">📐 Encajar Todo</button>`;
   } else {
-    advice = '✅ Documento listo con escala 1:1 verificada';
+    advice = 'Imagen cargada. Revisa el encuadre antes de imprimir.';
   }
 
   if (textEl) textEl.textContent = advice;
@@ -542,8 +548,13 @@ function processRawDataUrl(rawSrc, side, preserveFrame = false) {
       return;
     }
     state.images[side].rawOriginalSrc = rawSrc;
+    state._previewEditEnabled = false;
+    state._previewDragging = false;
+    state._previewDragSide = null;
+    state.images[side].panX = 0;
+    state.images[side].panY = 0;
     state.images[side].zoom = 1.0;
-    state.images[side].fitMode = preserveFrame ? 'fit' : 'cover';
+    state.images[side].fitMode = preserveFrame || state.activeCategory === 'photos' ? 'fit' : 'cover';
     state.images[side].showMmGrid = false;
     const suffix = getSlotIdSuffix(side);
     const label = $('zoomLabel' + suffix);
@@ -614,7 +625,7 @@ function processRawDataUrl(rawSrc, side, preserveFrame = false) {
     const spec = getActiveSpec();
     const specIsPortrait = spec.heightMm > spec.widthMm;
     const imgIsPortrait = img.naturalHeight > img.naturalWidth;
-    state.images[side].rotation = preserveFrame ? 0 : ((specIsPortrait === imgIsPortrait) ? 0 : 90);
+    state.images[side].rotation = preserveFrame || state.activeCategory === 'photos' ? 0 : ((specIsPortrait === imgIsPortrait) ? 0 : 90);
     inspectSlotImage(side, img);
     settle();
     renderProcessedImage(side);
@@ -667,8 +678,9 @@ function renderProcessedImage(side) {
 
     let outW = Math.round(spec.widthMm / 25.4 * window.TARGET_DPI);
     let outH = Math.round(spec.heightMm / 25.4 * window.TARGET_DPI);
-    if (outW > window.MAX_OUT_PX) { const r = window.MAX_OUT_PX / outW; outW = window.MAX_OUT_PX; outH = Math.round(outH * r); }
-    if (outH > window.MAX_OUT_PX) { const r = window.MAX_OUT_PX / outH; outH = window.MAX_OUT_PX; outW = Math.round(outW * r); }
+    const renderLimit = state._previewDragging && state._previewDragSide===side ? Math.min(1200,window.MAX_OUT_PX) : window.MAX_OUT_PX;
+    if (outW > renderLimit) { const r = renderLimit / outW; outW = renderLimit; outH = Math.round(outH * r); }
+    if (outH > renderLimit) { const r = renderLimit / outH; outH = renderLimit; outW = Math.round(outW * r); }
 
     const canvas = document.createElement('canvas');
     canvas.width = outW;
@@ -834,12 +846,15 @@ function updateSidePreview(side) {
   const tools = $('tools' + suffix);
   const badge = $('badgeStatus' + suffix);
   const btnDelete = $('btnDelete' + suffix);
+  for(const [prefix,mode]of [['btnFitMode','fit'],['btnCoverMode','cover']]){
+    const control=$(prefix+suffix);if(control){control.classList.toggle('is-active',imgData?.fitMode===mode);control.setAttribute('aria-pressed',String(imgData?.fitMode===mode));}
+  }
 
   if (imgData && imgData.processedDataUrl) {
     if (previewImg) {
       previewImg.src = imgData.processedDataUrl;
       previewImg.classList.remove('hidden');
-      previewImg.className = 'w-full h-full object-cover rounded-sm';
+      previewImg.className = 'w-full h-full object-contain rounded-sm';
     }
     if (placeholder) placeholder.classList.add('hidden');
     if (tools) tools.classList.remove('hidden');
@@ -858,7 +873,9 @@ function updateSidePreview(side) {
     const oaciOverlay = $('oaciGuide' + suffix);
     if (oaciOverlay) oaciOverlay.classList.toggle('hidden', !imgData.showOaciGuide);
 
-    if (typeof updateUI === 'function') updateUI();
+    if (state._previewDragging) {
+      document.querySelectorAll('[data-preview-slot="'+side+'"] > img').forEach(image=>{image.src=imgData.processedDataUrl;});
+    } else if (typeof updateUI === 'function') updateUI();
   } else {
     if (previewImg) {
       previewImg.src = '';
@@ -970,7 +987,7 @@ function waitForProcessingComplete(timeoutMs) {
   return new Promise(function(resolve) {
     const start = Date.now();
     function check() {
-      if (!state._processingPending || state._processingPending <= 0) return resolve(true);
+      if ((!state._processingPending || state._processingPending <= 0) && !state._previewDragging) return resolve(true);
       if (Date.now() - start > timeoutMs) {showToast('El procesamiento aún no termina. Espera y vuelve a intentar.', 'error');return resolve(false);}
       setTimeout(check, 30);
     }

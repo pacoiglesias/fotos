@@ -77,13 +77,17 @@ function cameraFixture() {
     blank.width = 400;
     blank.height = 300;
     blank.getContext("2d").fillRect(0, 0, 400, 300);
-    return { a, blank: RealScanCapture.analyze(blank), invalid: RealScanCapture.validQuad([{ x: 0, y: 0 }, { x: 300, y: 300 }, { x: 300, y: 0 }, { x: 0, y: 300 }], 400, 400) };
+    const low=document.createElement('canvas');low.width=400;low.height=300;const l=low.getContext('2d');l.fillStyle='#d5d5d5';l.fillRect(0,0,400,300);l.fillStyle='#e5e5e5';l.fillRect(50,40,300,220);
+    const soft=document.createElement('canvas');soft.width=1200;soft.height=900;const b=soft.getContext('2d');b.filter='blur(16px)';b.drawImage(__fixture,0,0);
+    return { a, low:RealScanCapture.analyze(low),soft:RealScanCapture.analyze(soft),blank: RealScanCapture.analyze(blank), invalid: RealScanCapture.validQuad([{ x: 0, y: 0 }, { x: 300, y: 300 }, { x: 300, y: 0 }, { x: 0, y: 300 }], 400, 400) };
   });
   assert(analysis.a.quad, "Detect skewed white page on contrasting table");
   assert(Math.abs(analysis.a.quad[0].x - 0.125) < 0.025);
   assert(Math.abs(analysis.a.quad[2].y - 0.833) < 0.025);
   assert.equal(analysis.blank.quad, null);
   assert.equal(analysis.invalid, false);
+  assert(analysis.low.quad,'Detect a light page on a uniform light background');
+  assert(analysis.soft.sharpness<analysis.a.sharpness,'Blur estimate must distinguish the softened image');
   pass("Skewed page edges detected; blank scene and crossed corners rejected");
   await page.locator('[data-camera="front"]').click();
   await page.locator(".scan-dialog [data-act=capture]").waitFor();

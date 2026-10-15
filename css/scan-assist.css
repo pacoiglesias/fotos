@@ -11,6 +11,9 @@
   font: 14px/1.5 system-ui, sans-serif;
   box-shadow: 0 24px 80px #0008;
 }
+
+
+
 .scan-dialog::backdrop {
   background: #020617d9;
 }
@@ -205,3 +208,40 @@
 [data-save-state=error]{color:#b45309!important;font-weight:bold}
 
 .duplex-sheet{position:relative;transform-style:preserve-3d}.duplex-front,.duplex-back{position:absolute;inset:0;display:grid;place-content:center;backface-visibility:hidden;background:#e0e7ff}.duplex-back{background:#d1fae5;transform:rotateY(180deg)}.duplex-sheet[data-flip=calendar] .duplex-back{transform:rotateX(180deg)}
+
+/* Mobile capture workspace: stable geometry, readable feedback and reachable actions. */
+.scan-dialog {background:#f8fafc;color:#0f172a;border:1px solid #cbd5e1;border-radius:24px;padding:16px;box-shadow:0 24px 90px #02061780;overscroll-behavior:contain;scrollbar-gutter:stable;}
+.scan-dialog::backdrop {background:#020617cc;backdrop-filter:blur(5px);}
+.scan-head {position:sticky;top:-16px;z-index:4;background:#f8fafcf5;padding:12px 0;backdrop-filter:blur(8px);}
+.scan-head strong {font-size:1.13rem;letter-spacing:-.025em;}
+.scan-head small {display:block;color:#64748b;font-size:.75rem;margin-top:3px;}
+.scan-dialog button {min-height:44px;border-radius:12px;font-weight:650;touch-action:manipulation;}
+.scan-steps {display:flex;gap:6px;list-style:none;padding:0;margin:6px 0 14px;}
+.scan-steps li {flex:1;padding:8px 4px;border-radius:9px;background:#e2e8f0;color:#64748b;font-size:.73rem;text-align:center;font-weight:650;}
+.scan-steps [aria-current=step] {background:#e0e7ff;color:#3730a3;box-shadow:inset 0 0 0 1px #a5b4fc;}
+.scan-quality {display:flex;flex-wrap:wrap;gap:6px;min-height:30px;margin:10px 0;}
+.scan-quality span {padding:6px 8px;border-radius:8px;font-size:.7rem;font-weight:650;background:#fff7ed;color:#9a3412;}
+.scan-quality [data-ok=true] {background:#dcfce7;color:#166534;}
+.scan-focus-info,.scan-help {font-size:.75rem!important;line-height:1.5!important;color:#64748b;}
+.scan-status {min-height:3em;font-size:.85rem!important;font-weight:600;line-height:1.5!important;}
+.scan-actions {position:sticky;bottom:-16px;z-index:3;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;background:#f8fafcf5;padding:12px 0 max(12px,env(safe-area-inset-bottom));border-top:1px solid #e2e8f0;backdrop-filter:blur(10px);}
+.scan-actions button {background:white;color:#334155;border:1px solid #cbd5e1;padding:10px;font-size:.8rem;}
+.scan-actions [data-act=capture],.scan-actions [data-act=confirm] {grid-column:1/-1;background:#4f46e5;color:white;border-color:#4f46e5;min-height:50px;box-shadow:0 3px 8px #4f46e52a;}
+.scan-actions [data-act=accept] {background:#047857;color:white;border-color:#047857;}
+.scan-auto {display:flex;gap:9px;align-items:center;font-size:.8rem;line-height:1.4;padding:10px;background:#eef2ff;border-radius:12px;color:#3730a3;}
+.scan-auto input {width:20px;height:20px;accent-color:#4f46e5;flex:none;}
+.scan-stage {border:1px solid #334155;box-shadow:0 4px 18px #0f172a20;}
+.phone-transfer {background:radial-gradient(ellipse at top,#e0e7ff,#f8fafc 65%);align-items:center;justify-content:flex-start;padding-top:max(20px,env(safe-area-inset-top));}
+.phone-transfer-card {box-shadow:0 16px 48px #33415514!important;}
+.phone-transfer .phone-capture-modes {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;}
+.phone-capture-modes button {min-height:70px;text-align:left;padding:12px;border-radius:14px;border:1px solid #cbd5e1;background:white;color:#334155;font-size:.8rem;}
+.phone-capture-modes button span {display:block;font-size:.7rem;font-weight:400;margin-top:4px;}
+.phone-capture-modes [aria-pressed=true] {border-color:#6366f1;background:#eef2ff;color:#3730a3;box-shadow:0 0 0 1px #6366f1;}
+.phone-transfer #btnSmartScan {min-height:52px;border-radius:14px;}
+.phone-transfer #btnSendFiles {position:sticky;bottom:max(8px,env(safe-area-inset-bottom));z-index:2;box-shadow:0 5px 20px #4f46e530;min-height:52px;}
+.phone-transfer #thumbnailsList button {min-height:40px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:9px;background:#f8fafc;color:#334155;}
+@media(max-width:480px){.scan-dialog{padding:12px;border-radius:20px;}.scan-head{top:-12px;}.scan-actions{bottom:-12px;}.scan-stage{margin-inline:auto;}.scan-head strong{font-size:1rem;}.scan-quality span{font-size:.66rem;}.phone-transfer{padding-inline:12px;}.phone-transfer-card{padding:18px!important;}}
+.scan-format,.scan-filter{color:#475569;padding:0 0 10px;font-size:.8rem;}
+.scan-format select,.scan-filter select{background:white;color:#334155;border:1px solid #cbd5e1;border-radius:10px;min-height:44px;padding:8px;max-width:100%;}
+.scan-head [data-act=close]{background:#e2e8f0;color:#334155;border:0;width:44px;font-size:22px;}
+.scan-status{color:#334155;}

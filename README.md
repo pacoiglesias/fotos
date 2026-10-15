@@ -118,3 +118,7 @@ Para comprobar la entrega completa contra Firebase: npm run test:delivery. Gener
 ## Guías y ajuste proporcional 3.6.1
 
 Guías coherentes en pantalla, PDF e imagen; ajuste completo centrado sin estirar; distribución de fotos dentro de los márgenes y diagnóstico compartible con ajustes técnicos sin imágenes. Véanse [auditoría](audit/GUIAS_Y_AJUSTE_3_6_1.md) y [prompt de mantenimiento](audit/PROMPT_AUTOMEJORA_REALSCAN.md).
+
+## Captura y flujo móvil 3.7.0
+
+Vista previa bloqueada por defecto, ajuste táctil explícito, fotografías completas sin giro automático, modo Documento/Fotografía en recepción QR y cámara renovada con revisión de calidad y reintento de enfoque cuando el navegador lo admite. Diagnóstico descargable también desde el móvil. [Auditoría del flujo móvil](audit/FLUJO_MOVIL_Y_CAPTURA_3_7_0.md).

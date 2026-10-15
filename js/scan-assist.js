@@ -41,8 +41,12 @@
       values.sort((a, b) => a - b);
       return values[values.length >> 1];
     });
+    const borderNoise = [];
+    for(let x=0;x<w;x+=6) for(const y of [2,h-3]) borderNoise.push((Math.abs(p[(y*w+x)*4]-bg[0])+Math.abs(p[(y*w+x)*4+1]-bg[1])+Math.abs(p[(y*w+x)*4+2]-bg[2]))/3);
+    borderNoise.sort((a,b)=>a-b);
+    const threshold = Math.max(10,Math.min(35,10+4*(borderNoise[borderNoise.length>>1] || 0)));
     const mask = new Uint8Array(w * h);
-    for (let i = 0; i < mask.length; i++) mask[i] = (Math.abs(p[i * 4] - bg[0]) + Math.abs(p[i * 4 + 1] - bg[1]) + Math.abs(p[i * 4 + 2] - bg[2])) / 3 > 35 ? 1 : 0;
+    for (let i = 0; i < mask.length; i++) mask[i] = (Math.abs(p[i * 4] - bg[0]) + Math.abs(p[i * 4 + 1] - bg[1]) + Math.abs(p[i * 4 + 2] - bg[2])) / 3 > threshold ? 1 : 0;
     const work = new Int32Array(w * h);
     let best = null, bestSize = 0;
     for (let start = w + 1; start < mask.length - w - 1; start++) {
@@ -82,7 +86,7 @@
     }
     const quad = best?.map((p2) => ({ x: p2.x / w, y: p2.y / h })) || null;
     let message = brightness < 55 ? "Añade luz sin reflejos." : brightness > 235 ? "Evita la luz directa y los reflejos." : sharpness < 35 ? "Mantén el teléfono quieto y deja que enfoque." : quad ? "Bordes encontrados. Revisa las cuatro esquinas al capturar." : "Deja un margen y usa un fondo que contraste con la página.";
-    return { quad, brightness, sharpness, message };
+    return { quad, brightness, sharpness, message, coverage:quad?area(quad):0 };
   }
   let current = null;
   function close() {
@@ -94,16 +98,21 @@
     const dialog = document.createElement("dialog");
     dialog.className = "scan-dialog";
     dialog.setAttribute("aria-label", "Captura y encuadre de documento");
-    dialog.innerHTML = `<div class="scan-head"><div><strong>Captura asistida</strong><small>Encuadra, revisa y confirma</small></div><button type="button" data-act="close" aria-label="Cerrar cámara">×</button></div>
+    dialog.innerHTML = `<div class="scan-head"><div><strong>${options.photoMode?'Fotografía sin deformaciones':'Escáner de documentos'}</strong><small>Captura privada · Revisión antes de usar</small></div><button type="button" data-act="close" aria-label="Cerrar cámara">×</button></div>
+      <ol class="scan-steps" aria-label="Progreso de captura"><li data-phase="capture">1 · Capturar</li><li data-phase="review">2 · Revisar</li><li data-phase="confirm">3 · Confirmar</li></ol>
       <label class="scan-format">Forma del documento <select aria-label="Forma del documento"><option value="auto">Automática / Otro documento</option><option value="card">Tarjeta (INE / licencia)</option><option value="a4">Hoja A4</option><option value="letter">Hoja Carta</option></select></label>
       <label class="scan-filter">Aspecto <select aria-label="Aspecto de la imagen"><option value="color">Color original</option><option value="gray">Escala de grises</option><option value="document">Documento contrastado</option></select></label>
       <div class="scan-stage"><video autoplay playsinline muted></video><canvas class="scan-still" hidden></canvas><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="scan-shade" fill-rule="evenodd"/><polygon/></svg><div class="scan-corners" hidden></div></div>
       <p class="scan-status" role="status" aria-live="polite">Preparando la cámara…</p><p class="scan-help">Apoya el documento plano, deja sus cuatro bordes visibles y evita sombras. Las medidas reales se eligen en el mostrador.</p>
+      <div class="scan-quality" aria-label="Calidad estimada"><span data-quality="light">Luz: revisando</span><span data-quality="sharp">Nitidez: revisando</span><span data-quality="steady">Encuadre: revisando</span></div>
+      <p class="scan-focus-info">El control de enfoque depende de la cámara y del navegador.</p>
       <label class="scan-auto"><input type="checkbox"> Capturar al mantener el documento estable</label>
-      <div class="scan-actions"><button type="button" data-act="capture">Tomar foto</button><button type="button" data-act="switch">Girar cámara</button><button type="button" data-act="torch" hidden>Linterna</button><button type="button" data-act="native">Cámara del teléfono</button>
+      <div class="scan-actions"><button type="button" data-act="capture">Tomar foto</button><button type="button" data-act="focus">Reintentar enfoque</button><button type="button" data-act="switch">Cambiar cámara</button><button type="button" data-act="torch" hidden>Linterna</button><button type="button" data-act="native">Cámara del teléfono</button>
       <button type="button" data-act="left" hidden>Girar izquierda</button><button type="button" data-act="right" hidden>Girar derecha</button><button type="button" data-act="reset" hidden>Restaurar original</button><button type="button" data-act="confirm" hidden>Usar esta imagen</button><button type="button" data-act="edit" hidden>Volver a ajustar</button>
       <button type="button" data-act="retry" hidden>Repetir</button><button type="button" data-act="original" hidden>Usar completa</button><button type="button" data-act="accept" hidden>Enderezar y usar</button></div>`;
     document.body.append(dialog);
+    const oldOverflow = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
     const $ = (s) => dialog.querySelector(s), video = $("video"), canvas = $("canvas"), svg = $("svg"), poly = $("polygon"), handles = $(".scan-corners"), status = $(".scan-status"), stage = $(".scan-stage");
     const format = $(".scan-format select"), filter = $(".scan-filter select");
     if (Number.isFinite(options.targetRatio) && options.targetRatio > 0) {
@@ -111,6 +120,7 @@
       option.value = "target";
       option.textContent = "Formato elegido en el mostrador";
       format.prepend(option);
+      if(!options.photoMode)format.value='target';
     }
     if (options.photoMode) {
       $(".scan-format").hidden = true;
@@ -127,7 +137,50 @@
     };
     let stream = null, timer = null, revision = 0, disposed = false, captured = null, quad = null, facing = "environment", busy = false, torch = false;
     const btn = (a) => $(`[data-act="${a}"]`);
+    function phase(value) {
+      dialog.dataset.phase=value;
+      dialog.querySelectorAll('[data-phase]').forEach(step=>{if(step.dataset.phase===value)step.setAttribute('aria-current','step');else step.removeAttribute('aria-current');});
+    }
+    let focusBusy = false, focusRequest = 0;
+    function fitStage() {
+      if(disposed)return;
+      const source = captured ? canvas : video;
+      const w = captured ? canvas.width : video.videoWidth, h = captured ? canvas.height : video.videoHeight;
+      if(!w || !h)return;
+      const availableHeight = Math.max(180,(root.visualViewport?.height || innerHeight)*0.48);
+      stage.style.width = Math.max(1,Math.min(dialog.clientWidth-24,availableHeight*w/h))+'px';
+      stage.style.aspectRatio = w+'/'+h;
+      source.style.aspectRatio = w+'/'+h;
+      paint();
+    }
+    async function requestFocus() {
+      const track = stream?.getVideoTracks()[0], r = revision;
+      if(!track || focusBusy)return;
+      const request = ++focusRequest;
+      focusBusy=true;btn('focus').disabled=true;
+      let caps={};try{caps=track.getCapabilities?.()||{};}catch{}
+      const mode = caps.focusMode?.includes('continuous')?'continuous':caps.focusMode?.includes('single-shot')?'single-shot':null;
+      let applied=false;
+      try {if(mode)applied=await new Promise(resolve=>{const timeout=setTimeout(()=>resolve(false),1800);Promise.resolve(track.applyConstraints({advanced:[{focusMode:mode}]})).then(()=>{clearTimeout(timeout);resolve(true);},()=>{clearTimeout(timeout);resolve(false);});});}catch{}
+      if(disposed || r!==revision || request!==focusRequest)return;
+      if(!disposed && r===revision){
+        $('.scan-focus-info').textContent=applied?'Enfoque automático solicitado. Revisa que los detalles se vean nítidos.':'Este navegador no permite ajustar el enfoque. Usa Cámara del teléfono para ajustarlo.';
+        btn('focus').textContent=applied?'Reintentar enfoque':'Ver ayuda de enfoque';
+        stableFrames=0;lastQuad=null;
+        root.RealScanDiagnostics?.record('camera.focus',applied?'info':'warning',{supported:!!mode,applied});
+      }
+      focusBusy=false;if(!disposed)btn('focus').disabled=false;
+    }
+    function showQuality(a) {
+      if(!a)return;
+      const light=a.brightness>=55&&a.brightness<=235, sharp=a.sharpness>=35;
+      for(const [name,ok,text]of [['light',light,light?'Luz adecuada':a.brightness<55?'Falta luz':'Posibles reflejos'],['sharp',sharp,sharp?'Nitidez estimada adecuada':'Posible desenfoque'],['steady',options.photoMode?sharp:stableFrames>=3,options.photoMode?'Fotografía completa':!quad?'Busca los cuatro bordes':stableFrames>=3?'Documento estable':'Mantén quieto · '+Math.min(3,stableFrames)+'/3']]){
+        const element=$('[data-quality="'+name+'"]');element.textContent=text;element.dataset.ok=String(ok);
+      }
+    }
+    root.addEventListener('resize',fitStage);root.visualViewport?.addEventListener('resize',fitStage);
     function stop() {
+      focusRequest++;focusBusy=false;
       clearTimeout(timer);
       timer = null;
       stream?.getTracks().forEach((t) => t.stop());
@@ -139,8 +192,10 @@
       disposed = true;
       revision++;
       stop();
+      root.removeEventListener('resize',fitStage);root.visualViewport?.removeEventListener('resize',fitStage);
       dialog.close();
       dialog.remove();
+      document.documentElement.style.overflow = oldOverflow;
       if (current === controller) current = null;
       root.RealScanDiagnostics?.record("camera.close");
     }
@@ -174,7 +229,7 @@
       svg.classList.toggle("scan-found", !!quad);
       const points = quad || [{ x, y }, { x: x + w, y }, { x: x + w, y: y + h }, { x, y: y + h }];
       $(".scan-shade").setAttribute("d", "M0 0H100V100H0Z M" + points.map((p) => p.x * 100 + " " + p.y * 100).join("L") + "Z");
-      handles.querySelectorAll("button").forEach((b, i) => {
+      if(quad)handles.querySelectorAll("button").forEach((b, i) => {
         b.style.left = quad[i].x * 100 + "%";
         b.style.top = quad[i].y * 100 + "%";
       });
@@ -185,11 +240,14 @@
       try {
         const a = analyze(video);
         if (a) {
-          quad = options.photoMode ? null : a.quad;
-          status.textContent = a.message;
-          const stable = quad && lastQuad && quad.every((p, i) => Math.hypot(p.x - lastQuad[i].x, p.y - lastQuad[i].y) < 0.015) && a.brightness > 60 && a.brightness < 235 && a.sharpness >= 35;
+          const rawQuad = options.photoMode ? null : a.quad;
+          const motion = rawQuad && lastQuad ? Math.max(...rawQuad.map((p,i)=>Math.hypot(p.x-lastQuad[i].x,p.y-lastQuad[i].y))) : Infinity;
+          quad = rawQuad && quad && motion<0.06 ? rawQuad.map((p,i)=>({x:quad[i].x*.55+p.x*.45,y:quad[i].y*.55+p.y*.45})) : rawQuad;
+          status.textContent = options.photoMode ? 'Conserva el encuadre del retrato. Revisa luz y nitidez antes de tomar la foto.' : a.coverage>0&&a.coverage<.2?'Acerca el teléfono dejando visibles los cuatro bordes.':a.message;
+          const stable = rawQuad && motion<0.012 && a.coverage>=.2 && a.coverage<=.9 && a.brightness > 60 && a.brightness < 235 && a.sharpness >= 35 && !focusBusy;
           stableFrames = stable ? stableFrames + 1 : 0;
-          lastQuad = quad?.map((p) => ({ ...p }));
+          lastQuad = rawQuad?.map((p) => ({ ...p }));
+          showQuality(a);
           paint();
           if (autoCapture.checked && !options.photoMode && stableFrames >= 3) {
             status.textContent = "Documento estable. Capturando…";
@@ -203,10 +261,13 @@
       timer = setTimeout(live, 650);
     }
     async function start() {
+      phase('capture');
+      svg.toggleAttribute('hidden',!!options.photoMode);
       const r = ++revision;
       stop();
       captured = null;
       stableFrames = 0;
+      quad = null;
       lastQuad = null;
       $(".scan-auto").hidden = !!options.sourceDataUrl || !!options.photoMode;
       busy = false;
@@ -215,7 +276,7 @@
       canvas.hidden = true;
       handles.hidden = true;
       video.hidden = false;
-      for (const a of ["capture", "switch", "native"]) btn(a).hidden = false;
+      for (const a of ["capture", "switch", "native", "focus"]) btn(a).hidden = false;
       for (const a of ["retry", "accept", "original", "torch"]) btn(a).hidden = true;
       btn("capture").disabled = true;
       status.textContent = "Preparando la cámara…";
@@ -236,13 +297,14 @@
           caps = track.getCapabilities?.() || {};
         } catch {
         }
-        if (caps.focusMode?.includes("continuous")) await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {
-        });
+        await requestFocus();
+        for(const name of ['exposureMode','whiteBalanceMode'])if(caps[name]?.includes('continuous'))Promise.resolve(track.applyConstraints({advanced:[{[name]:'continuous'}]})).catch(()=>{});
         if (disposed || r !== revision) return;
-        stage.style.width = Math.min(dialog.clientWidth - 24, innerHeight * 0.53 * video.videoWidth / video.videoHeight) + "px";
+        fitStage();
         stage.style.marginInline = "auto";
         btn("torch").hidden = !caps.torch;
         btn("capture").disabled = false;
+        root.RealScanDiagnostics?.record('camera.ready','info',{widthPx:video.videoWidth,heightPx:video.videoHeight});
         live();
       } catch {
         if (disposed || r !== revision) return;
@@ -276,21 +338,24 @@
         photo?.close();
         $(".scan-auto").hidden = true;
         captured = canvas.toDataURL("image/jpeg", 0.96);
+        phase('review');
         if (!originalData) originalData = captured;
         pendingResult = null;
-        svg.hidden = false;
+        svg.toggleAttribute('hidden',!!options.photoMode);
         filter.closest("label").hidden = !!options.photoMode;
         for (const action of ["left", "right", "reset"]) btn(action).hidden = false;
         for (const action of ["confirm", "edit"]) btn(action).hidden = true;
         stop();
         video.hidden = true;
         canvas.hidden = false;
-        stage.style.width = Math.min(dialog.clientWidth - 24, innerHeight * 0.53 * canvas.width / canvas.height) + "px";
+        fitStage();
         const a = analyze(canvas);
+        root.RealScanDiagnostics?.record('camera.quality','info',{brightness:a?.brightness,sharpness:a?.sharpness,hasEdges:!!a?.quad,widthPx:canvas.width,heightPx:canvas.height});
+        showQuality(a);
         quad = options.photoMode ? null : a?.quad;
         if (!quad) quad = [{ x: 0.04, y: 0.04 }, { x: 0.96, y: 0.04 }, { x: 0.96, y: 0.96 }, { x: 0.04, y: 0.96 }];
         status.textContent = options.photoMode ? "Revisa la nitidez. La fotografía se conserva completa." : (a?.quad ? "Bordes propuestos." : "No se detectaron bordes con suficiente confianza.") + " Ajusta las cuatro esquinas o usa la foto completa. " + (a?.sharpness < 35 ? "Puede faltar nitidez; considera repetir." : "");
-        for (const a2 of ["capture", "switch", "native", "torch"]) btn(a2).hidden = true;
+        for (const a2 of ["capture", "switch", "native", "torch", "focus"]) btn(a2).hidden = true;
         for (const a2 of ["retry", "original"]) btn(a2).hidden = false;
         btn("retry").hidden = !!options.sourceDataUrl;
         btn("accept").hidden = !!options.photoMode;
@@ -328,6 +393,7 @@
       } catch {
         status.textContent = "No se pudo tomar la foto. Reintenta o usa la cámara del teléfono.";
         btn("capture").disabled = false;
+        stableFrames = 0; lastQuad = null;
         live();
       } finally {
         busy = false;
@@ -373,6 +439,7 @@
         }
         if (disposed) return;
         pendingResult = result;
+        phase('confirm');
         savedQuad = quad.map((p) => ({ ...p }));
         const preview = new Image();
         preview.src = result;
@@ -382,9 +449,9 @@
         canvas.height = preview.naturalHeight;
         canvas.style.filter = "none";
         canvas.getContext("2d").drawImage(preview, 0, 0);
-        stage.style.width = Math.min(dialog.clientWidth - 24, innerHeight * 0.53 * canvas.width / canvas.height) + "px";
+        fitStage();
         handles.hidden = true;
-        svg.hidden = true;
+        svg.setAttribute('hidden','');
         $(".scan-filter").hidden = true;
         $(".scan-format").hidden = true;
         for (const action of ["left", "right", "reset", "retry", "original", "accept"]) btn(action).hidden = true;
@@ -400,6 +467,7 @@
     }
     btn("close").onclick = finish;
     btn("capture").onclick = () => take();
+    btn("focus").onclick = requestFocus;
     async function loadImage(data) {
       const image = new Image();
       image.src = data;
@@ -478,7 +546,7 @@
     };
     dialog.showModal();
     if (options.sourceDataUrl) {
-      btn("capture").hidden = btn("switch").hidden = btn("native").hidden = true;
+      btn("capture").hidden = btn("switch").hidden = btn("native").hidden = btn("focus").hidden = true;
       loadImage(options.sourceDataUrl).catch(() => {
         status.textContent = "No se pudo abrir la imagen. Cierra y selecciona otra.";
       });
