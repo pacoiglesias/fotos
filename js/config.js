@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.3.0-Enterprise';
+window.APP_VERSION = 'v3.4.0';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -73,7 +73,7 @@ function getActivePaperSpec(st) {
   return ps[st.paperSize] || ps.a4;
 }
 
-// Catálogo de Formatos Oficiales Verificados y sus Especificaciones de Trámite
+// Catálogo de plantillas de tamaño; requisitos sujetos a verificación y sus Especificaciones de Trámite
 window.FORMAT_SPECS = {
   card: {
     category: 'docs',
@@ -497,3 +497,16 @@ if (typeof document !== 'undefined') {
     else closeModal(id);
   });
 }
+
+// These sources were checked on 2026-10-14. Other templates remain explicitly indicative.
+Object.assign(window.FORMAT_SPECS.photo_visa_usa, {
+  sourceUrl:'https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/photos/digital-image-requirements.html',
+  noRetouch:true, digital:{formats:['jpg'],minPixels:600,maxPixels:1200,maxBytes:240000},
+  reqsDigital:'JPG en color sRGB; imagen cuadrada de 600 a 1200 px, máximo 240 KB. Confirma el portal y trámite específico.',
+  reqsPhysical:'2 × 2 pulgadas (50.8 × 50.8 mm), fondo blanco o blanquecino; comprobar la guía de composición oficial.'
+});
+Object.assign(window.FORMAT_SPECS.photo_carnet, {
+  sourceUrl:'https://www.dnielectronico.es/PDFs/Politicas_de_certificacion_v3.2.pdf',noRetouch:true,
+  reqsPhysical:'Fotografía reciente en color, 26 mm de ancho × 32 mm de alto, de frente y fondo blanco uniforme. Confirma los requisitos al solicitar la cita.'
+});
+window.FORMAT_SPECS.photo_passport.noRetouch = true;

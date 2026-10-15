@@ -42,6 +42,8 @@
       spec = { widthMm: 85.6, heightMm: 53.98, shortName: 'DNI / INE', isOval: false, category: 'docs' };
     }
 
+    const outputScale = Math.max(25, Math.min(200, Number(state.outputScalePercent) || 100)) / 100;
+    spec = Object.assign({}, spec, { widthMm: spec.widthMm * outputScale, heightMm: spec.heightMm * outputScale });
     const targetW = spec.widthMm;
     const targetH = spec.heightMm;
     const category = state.activeCategory || spec.category || 'docs';
@@ -121,7 +123,7 @@
       const copies = Math.min(effectiveRequested, totalAllowed);
 
       if (effectiveRequested > totalAllowed) {
-        plan.warnings.push('La cantidad máxima soportada en ' + paper.shortName + ' es de ' + totalAllowed + ' fotos (' + maxSupportedPages + ' hojas).');
+        plan.errors.push('La cantidad máxima soportada en ' + paper.shortName + ' es de ' + totalAllowed + ' fotos (' + maxSupportedPages + ' hojas). Reduce las copias antes de exportar.');
       }
 
       const totalPages = Math.max(1, Math.ceil(copies / maxPerPage));

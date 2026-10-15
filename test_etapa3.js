@@ -12,6 +12,7 @@ console.log('--- INICIANDO VALIDACIÓN DE ETAPA 3 (M-16 A M-21) ---\n');
 const resultsPath = '.audit/results.json';
 assert(fs.existsSync(resultsPath), 'Debe existir .audit/results.json generado por Playwright');
 const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+assert.strictEqual(results.buildVersion, JSON.parse(fs.readFileSync('dist/version.json','utf8')).version, 'La evidencia de navegador debe corresponder a la compilación actual');
 
 console.log('--- TEST 1: Control de Desbordamiento Móvil (M-17) ---');
 assert.strictEqual(results.mobile.viewport, 390, 'El viewport móvil debe ser de 390px');
@@ -53,6 +54,7 @@ global.setPrintMode = (m) => { state.printMode = m; };
 const appCode = fs.readFileSync('js/app.js', 'utf8');
 const vm = require('vm');
 const context = {
+  document: {body: {dataset: {}}},
   window: global.window,
   state: global.state,
   $: global.$,

@@ -51,6 +51,10 @@ function getDB() {
 function prepareWorkspaceForJobSwitch(options) {
   options = options || {};
   if (typeof state !== 'undefined') {
+    if (window.RealScanQrSync) {window.RealScanQrSync.revokeReceiveSession().catch(console.warn);window.RealScanQrSync.revokeDeliverySession().catch(console.warn);window.RealScanQrSync.clearInbox().catch(console.warn);}
+    state.outputScalePercent = 100;
+    state.photoCopiesPersonA = 2;
+    state.photoCopiesPersonB = 2;
     state._jobRevision = (state._jobRevision || 0) + 1;
     state._processingPending = 0;
   }
@@ -202,6 +206,9 @@ async function saveScanToStorage(customTitle, retentionDays) {
       customHeight: state.customHeight,
       customUnit: state.customUnit || 'cm',
       photoCopies: state.photoCopies || 4,
+      photoCopiesPersonA: state.photoCopiesPersonA ?? Math.ceil((state.photoCopies || 4) / 2),
+      photoCopiesPersonB: state.photoCopiesPersonB ?? Math.floor((state.photoCopies || 4) / 2),
+      outputScalePercent: state.outputScalePercent || 100,
       mixTwoPhotos: !!state.mixTwoPhotos,
       passportOpenOrientation: state.passportOpenOrientation || 'portrait',
       passportPageOrientation: state.passportPageOrientation || 'landscape',
@@ -353,6 +360,9 @@ async function restoreScanToApp(id) {
     if (scan.customHeight) state.customHeight = scan.customHeight;
     if (scan.customUnit) state.customUnit = scan.customUnit;
     if (scan.photoCopies) state.photoCopies = scan.photoCopies;
+    state.photoCopiesPersonA = Number.isInteger(scan.photoCopiesPersonA) ? scan.photoCopiesPersonA : Math.ceil((scan.photoCopies || 4) / 2);
+    state.photoCopiesPersonB = Number.isInteger(scan.photoCopiesPersonB) ? scan.photoCopiesPersonB : Math.floor((scan.photoCopies || 4) / 2);
+    state.outputScalePercent = Math.max(25, Math.min(200, Number(scan.outputScalePercent) || 100));
     if (scan.mixTwoPhotos !== undefined) state.mixTwoPhotos = scan.mixTwoPhotos;
 
     if (scan.passportOpenOrientation) {
@@ -380,6 +390,9 @@ async function restoreScanToApp(id) {
     } else {
       state.documentPageCount = numPages;
     }
+
+    state.sheetLayout = scan.sheetLayout || 'same_page';
+    if (scan.printMode) state.printMode = scan.printMode;
 
     // 3. Restaurar imágenes: prevenir degradación acumulativa de filtros y preservar recortes
     const isV2 = (scan.schemaVersion >= 2);
@@ -888,6 +901,8 @@ async function importScansFromJson(file) {
         createdAt: typeof s.createdAt === 'number' ? s.createdAt : now,
         createdFormatted: s.createdFormatted || new Date(now).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }),
         title: (s.title && typeof s.title === 'string') ? s.title.slice(0, 150) : 'Documento Importado',
+        projectTitle: typeof s.projectTitle === 'string' ? s.projectTitle.slice(0,150) : (s.title || 'Documento importado'),
+        printedSheetTitle: typeof s.printedSheetTitle === 'string' ? s.printedSheetTitle.slice(0,150) : '',
         category: s.category || 'docs',
         format: s.format || 'card',
         formatName: s.formatName || 'Documento Oficial',
@@ -903,6 +918,9 @@ async function importScansFromJson(file) {
         customHeight: s.customHeight,
         customUnit: s.customUnit || 'cm',
         photoCopies: s.photoCopies || 4,
+        photoCopiesPersonA: s.photoCopiesPersonA ?? Math.ceil((s.photoCopies || 4) / 2),
+        photoCopiesPersonB: s.photoCopiesPersonB ?? Math.floor((s.photoCopies || 4) / 2),
+        outputScalePercent: s.outputScalePercent || 100,
         mixTwoPhotos: !!s.mixTwoPhotos,
         passportOpenOrientation: s.passportOpenOrientation || 'portrait',
         passportPageOrientation: s.passportPageOrientation || 'landscape',
@@ -915,6 +933,10 @@ async function importScansFromJson(file) {
             label: p.label || ('Página ' + (pIdx + 1)),
             rawOriginalSrc: (isV2 && p.rawOriginalSrc) ? p.rawOriginalSrc : p.dataUrl,
             originalSrc: (isV2 && p.originalSrc) ? p.originalSrc : p.dataUrl,
+            croppedSrc: isV2 ? (p.croppedSrc || null) : null,
+            isCropApplied: isV2 && !!p.isCropApplied,
+            cropData: isV2 ? (p.cropData || null) : null,
+            warpQuad: isV2 ? (p.warpQuad || null) : null,
             dataUrl: p.dataUrl,
             filter: isV2 ? (p.filter || 'color') : 'color',
             rotation: isV2 ? (p.rotation || 0) : 0,
@@ -1017,6 +1039,9 @@ async function saveActiveDraft() {
         customHeight: state.customHeight,
         customUnit: state.customUnit,
         photoCopies: state.photoCopies,
+        photoCopiesPersonA: state.photoCopiesPersonA ?? Math.ceil((state.photoCopies || 4) / 2),
+        photoCopiesPersonB: state.photoCopiesPersonB ?? Math.floor((state.photoCopies || 4) / 2),
+        outputScalePercent: state.outputScalePercent || 100,
         mixTwoPhotos: !!state.mixTwoPhotos,
         passportOpenOrientation: state.passportOpenOrientation || 'portrait',
         passportPageOrientation: state.passportPageOrientation || 'landscape',
@@ -1080,6 +1105,9 @@ async function restoreActiveDraft() {
   state.customHeight = draft.customHeight || 5.5;
   state.customUnit = draft.customUnit || 'cm';
   state.photoCopies = draft.photoCopies || 4;
+  state.photoCopiesPersonA = Number.isInteger(draft.photoCopiesPersonA) ? draft.photoCopiesPersonA : Math.ceil((draft.photoCopies || 4) / 2);
+  state.photoCopiesPersonB = Number.isInteger(draft.photoCopiesPersonB) ? draft.photoCopiesPersonB : Math.floor((draft.photoCopies || 4) / 2);
+  state.outputScalePercent = Math.max(25, Math.min(200, Number(draft.outputScalePercent) || 100));
   state.mixTwoPhotos = !!draft.mixTwoPhotos;
 
   if (draft.passportOpenOrientation) {
@@ -1145,6 +1173,9 @@ function saveUserPreset(presetName) {
     customHeight: state.customHeight,
     customUnit: state.customUnit,
     photoCopies: state.photoCopies || 4,
+    photoCopiesPersonA: state.photoCopiesPersonA ?? Math.ceil((state.photoCopies || 4) / 2),
+    photoCopiesPersonB: state.photoCopiesPersonB ?? Math.floor((state.photoCopies || 4) / 2),
+    outputScalePercent: state.outputScalePercent || 100,
     mixTwoPhotos: !!state.mixTwoPhotos,
     passportOpenOrientation: state.passportOpenOrientation || 'portrait',
     passportPageOrientation: state.passportPageOrientation || 'landscape'
@@ -1188,6 +1219,9 @@ function applyUserPreset(presetId) {
   if (p.customHeight) state.customHeight = p.customHeight;
   if (p.customUnit) state.customUnit = p.customUnit;
   if (p.photoCopies) state.photoCopies = p.photoCopies;
+  state.photoCopiesPersonA = Number.isInteger(p.photoCopiesPersonA) ? p.photoCopiesPersonA : Math.ceil((p.photoCopies || 4) / 2);
+  state.photoCopiesPersonB = Number.isInteger(p.photoCopiesPersonB) ? p.photoCopiesPersonB : Math.floor((p.photoCopies || 4) / 2);
+  state.outputScalePercent = Math.max(25, Math.min(200, Number(p.outputScalePercent) || 100));
   if (p.mixTwoPhotos !== undefined) state.mixTwoPhotos = !!p.mixTwoPhotos;
 
   if (p.passportOpenOrientation) {
@@ -1300,7 +1334,7 @@ function runPreflightChecks() {
 
   // 2. Validación geométrica común centralizada
   const geomValidation = (engine && typeof engine.validateDocumentGeometry === 'function')
-    ? engine.validateDocumentGeometry(layout, spec, paper)
+    ? engine.validateDocumentGeometry(layout, layout.spec || spec, paper)
     : { valid: true, errors: [], warnings: [] };
 
   if (geomValidation.errors && geomValidation.errors.length > 0) {
@@ -1313,7 +1347,8 @@ function runPreflightChecks() {
     });
   }
 
-  if (spec.widthMm > paper.widthMm || spec.heightMm > paper.heightMm) {
+  const outputSpec = layout.spec || spec;
+  if (outputSpec.widthMm > paper.widthMm || outputSpec.heightMm > paper.heightMm) {
     const oversizedMsg = '❌ El tamaño del documento (' + spec.widthMm + ' × ' + spec.heightMm + ' mm) supera el papel (' + paper.widthMm + ' × ' + paper.heightMm + ' mm).';
     if (!issues.some(function(x) { return x.type === 'error' && x.message.includes('supera el papel'); })) {
       issues.push({
@@ -1333,6 +1368,9 @@ function runPreflightChecks() {
       });
     });
   }
+
+  (layout.errors || []).forEach(message=>{if (!issues.some(x=>x.type==='error' && x.message.includes(message))) issues.push({type:'error',code:'GEOMETRY_ERROR',message});});
+  if (spec.noRetouch) Object.values(state.images || {}).forEach(img=>{if(img.originalSrc && (img.filter !== 'color' || img.brightness || img.contrast)) issues.push({type:'error',code:'PROFILE_RETOUCH',message:'Este perfil requiere color original sin filtros ni ajustes de luz. Restablece los ajustes antes de exportar.'});});
 
   // 3. Determinar ranuras requeridas por la composición activa
   let requiredSlots = [];

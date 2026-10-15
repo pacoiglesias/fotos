@@ -68,6 +68,7 @@
 
     delayMs = delayMs || 0;
     const masterVol = typeof st.audioVolume === 'number' ? st.audioVolume : 0.7;
+    if (masterVol <= 0) return;
     const startTime = ctx.currentTime + (delayMs / 1000);
     const stopTime = startTime + (durationMs / 1000);
 
@@ -135,7 +136,8 @@
     },
 
     setVolume: function(volume) {
-      const v = Math.max(0, Math.min(1, parseFloat(volume) || 0.7));
+      const parsed = Number(volume);
+      const v = Number.isFinite(parsed) ? Math.max(0, Math.min(1, parsed)) : 0.7;
       if (global.state) global.state.audioVolume = v;
       saveAudioPrefs();
     },

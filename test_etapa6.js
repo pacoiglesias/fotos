@@ -18,13 +18,13 @@ async function runTests() {
   // TEST 1: M-32 Cobertura Exhaustiva de Caché Offline en Service Worker (sw.js)
   {
     console.log('  ▶ Test 1: Verificación de sw.js y Existencia Física de Activos (M-32)...');
-    const swPath = path.join(__dirname, 'sw.js');
+    const swPath = path.join(__dirname, 'dist/sw.js');
     assert(fs.existsSync(swPath), 'sw.js debe existir físicamente');
     const swContent = fs.readFileSync(swPath, 'utf8');
 
-    // Extraer STATIC_ASSETS
-    const matchAssets = swContent.match(/const\s+STATIC_ASSETS\s*=\s*\[([\s\S]*?)\];/);
-    assert(matchAssets, 'sw.js debe definir STATIC_ASSETS');
+    // Extraer CORE_ASSETS
+    const matchAssets = swContent.match(/const\s+CORE_ASSETS\s*=\s*\[([\s\S]*?)\];/);
+    assert(matchAssets, 'sw.js debe definir CORE_ASSETS');
     const assetsList = matchAssets[1]
       .split(',')
       .map(s => s.trim().replace(/['"]/g, ''))
@@ -32,7 +32,6 @@ async function runTests() {
 
     // Módulos locales obligatorios
     const requiredLocalAssets = [
-      './',
       './index.html',
       './manifest.json',
       './css/styles.css',
@@ -48,9 +47,9 @@ async function runTests() {
     ];
 
     requiredLocalAssets.forEach(asset => {
-      assert(assetsList.includes(asset), `sw.js STATIC_ASSETS debe incluir: ${asset}`);
+      assert(assetsList.includes(asset), `sw.js CORE_ASSETS debe incluir: ${asset}`);
       if (asset !== './') {
-        const localFilePath = path.join(__dirname, asset.replace(/^\.\//, ''));
+        const localFilePath = path.join(__dirname, 'dist', asset.replace(/^\.\//, ''));
         assert(fs.existsSync(localFilePath), `El archivo local referenciado por el SW debe existir físicamente: ${asset}`);
       }
     });
@@ -58,7 +57,7 @@ async function runTests() {
     // Versionado del Service Worker
     const matchCache = swContent.match(/const\s+CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
     assert(matchCache, 'sw.js debe definir CACHE_NAME');
-    assert(matchCache[1].startsWith('realscan-cache-v3'), 'CACHE_NAME debe tener prefijo de versión 3');
+    assert(matchCache[1].startsWith('realscan-'), 'CACHE_NAME identifica el contenido de la compilación');
     console.log(`    ✅ M-32 sw.js verificado con ${assetsList.length} activos cacheados y versión ${matchCache[1]}.`);
   }
 

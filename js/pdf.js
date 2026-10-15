@@ -107,9 +107,9 @@ function generatePdfDoc() {
 
   try {
     doc.setProperties({
-      title: 'RealScan — ' + spec.name + ' (1:1 Real)',
+      title: 'RealScan — ' + spec.name + ' (' + (state.outputScalePercent || 100) + '%)' ,
       author: 'Paco Iglesias (RealScan Pro)',
-      creator: 'RealScan Pro v3.3.0-Enterprise'
+      creator: 'RealScan Pro ' + window.APP_VERSION
     });
   } catch (e) {}
 

@@ -3,6 +3,34 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Físicamente Calibrada
    ============================================================ */
 
+async function createDigitalFile(side, format, maxPx) {
+  const source = state.images[side]?.processedDataUrl;
+  if (!source) throw Error('No hay imagen procesada en la cara seleccionada.');
+  const image = new Image(); image.src = source; await image.decode();
+  const policy = getActiveSpec().digital;
+  if(getActiveSpec().noRetouch && (state.images[side].filter !== 'color' || state.images[side].brightness || state.images[side].contrast)) throw Error('Restablece color y luz originales antes de entregar una foto de este perfil.');
+  if(policy && !policy.formats.includes(format)) throw Error('Este perfil requiere JPG para la foto digital. La hoja de impresión se entrega como PDF por separado.');
+  const requestedLimit = maxPx === 'original' ? Math.max(image.naturalWidth, image.naturalHeight) : Math.max(100, Number(maxPx) || 1920);
+  const limit = policy ? Math.min(requestedLimit, policy.maxPixels) : requestedLimit;
+  const ratio = Math.min(1, limit / Math.max(image.naturalWidth, image.naturalHeight));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * ratio));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * ratio));
+  if(policy && (canvas.width < policy.minPixels || canvas.height < policy.minPixels)) throw Error('La imagen digital necesita al menos '+policy.minPixels+' × '+policy.minPixels+' píxeles. Carga una foto con mayor resolución.');
+  const ctx = canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);
+  let type, dataUrl, extension;
+  if (format === 'pdf') {
+    const spec = getActiveSpec();
+    const doc = new window.jspdf.jsPDF({orientation:spec.widthMm>spec.heightMm?'landscape':'portrait',unit:'mm',format:[spec.widthMm,spec.heightMm]});
+    doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,spec.widthMm,spec.heightMm);
+    type='application/pdf';extension='pdf';dataUrl='data:application/pdf;base64,'+doc.output('datauristring').split(',')[1];
+  } else {
+    type=format==='png'?'image/png':'image/jpeg';extension=format==='png'?'png':'jpg';dataUrl=canvas.toDataURL(type,.94);
+    if(policy?.maxBytes){for(const quality of [.90,.85,.80,.75]){if(Math.floor(dataUrl.split(',')[1].length*.75)<=policy.maxBytes)break;dataUrl=canvas.toDataURL(type,quality);}if(Math.floor(dataUrl.split(',')[1].length*.75)>policy.maxBytes)throw Error('La foto supera el peso máximo del perfil. Prueba la opción de 600 px.');}
+  }
+  return {name:'RealScan_'+(side==='front'?'Frente':'Reverso')+'_'+Date.now()+'.'+extension,type,dataUrl,size:Math.floor((dataUrl.length-dataUrl.indexOf(',')-1)*.75)};
+}
+
 /**
  * Descarga de Blob PDF generado con fallback robusto
  */
@@ -32,7 +60,7 @@ function downloadPdfBlob(doc, fileName) {
  */
 async function handleExportPDF(tryShare) {
   if (typeof waitForProcessingComplete === 'function') {
-    await waitForProcessingComplete();
+    if (!await waitForProcessingComplete()) return;
   }
   // Verificación de Pre-Vuelo Estricta (M-31)
   if (typeof runPreflightChecks === 'function') {
@@ -102,7 +130,7 @@ async function handleExportPDF(tryShare) {
  */
 async function handlePrintDirect() {
   if (typeof waitForProcessingComplete === 'function') {
-    await waitForProcessingComplete();
+    if (!await waitForProcessingComplete()) return;
   }
   // Verificación de Pre-Vuelo Estricta (M-31)
   if (typeof runPreflightChecks === 'function') {
@@ -308,7 +336,7 @@ function renderPageToCanvas(page, layout, loadedImages) {
  */
 async function downloadA4Image() {
   if (typeof waitForProcessingComplete === 'function') {
-    await waitForProcessingComplete();
+    if (!await waitForProcessingComplete()) return;
   }
   // Verificación de Pre-Vuelo Estricta antes de generar imagen(es)
   if (typeof runPreflightChecks === 'function') {

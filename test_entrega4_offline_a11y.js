@@ -32,12 +32,12 @@ console.log('\n--- INICIANDO TEST SUITE ENTREGA 4 (PWA Offline, Accesibilidad y 
 // BLOQUE 1: Verificación estricta de Service Worker (sw.js)
 // -------------------------------------------------------------
 console.log('1. Verificación de Service Worker (sw.js)...');
-const swCode = fs.readFileSync(path.join(__dirname, 'sw.js'), 'utf-8');
+const swCode = fs.readFileSync(path.join(__dirname, 'dist/sw.js'), 'utf-8');
 
 // 1.1 Debe definir CORE_ASSETS y OPTIONAL_ASSETS por separado
 assert(
-  swCode.includes('CORE_ASSETS') && swCode.includes('OPTIONAL_ASSETS'),
-  'sw.js separa activos esenciales locales (CORE_ASSETS) de activos de CDN opcionales (OPTIONAL_ASSETS)'
+  swCode.includes('CORE_ASSETS') && !swCode.includes('https://'),
+  'La compilación precarga dependencias locales y no requiere CDN'
 );
 
 // 1.2 NO debe contener la expresión errónea caches.match(...) || caches.match(...)
@@ -55,7 +55,7 @@ assert(
 
 // 1.4 Debe asociar index.html y la ruta raíz './' para evitar net::ERR_FAILED
 assert(
-  swCode.includes("./index.html") && swCode.includes("./"),
+  swCode.includes("/index.html") && swCode.includes("url.pathname==='/'"),
   'sw.js contempla explícitamente tanto ./ como ./index.html en la caché'
 );
 
@@ -273,12 +273,12 @@ const appCode = fs.readFileSync(path.join(__dirname, 'js/app.js'), 'utf-8');
 const indexCode = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');
 
 assert(
-  appCode.includes("APP_VERSION = 'v3.3.0-Enterprise'"),
-  'js/app.js define la versión canónica v3.3.0-Enterprise'
+  configCode.includes("APP_VERSION = 'v3.4.0'") && appCode.includes('window.APP_VERSION ||'),
+  'La aplicación consume la versión canónica de configuración'
 );
 assert(
-  swCode.includes("realscan-cache-v3.3.0"),
-  'sw.js define la versión de caché coherente realscan-cache-v3.3.0'
+  /realscan-[a-f0-9]{16}/.test(swCode),
+  'La caché identifica el contenido de la compilación'
 );
 assert(
   appCode.includes("syncAppVersion()"),

@@ -2,43 +2,45 @@
   "hosting": [
     {
       "site": "fotos-cobertores-pro",
-      "public": ".",
+      "public": "dist",
       "ignore": [
-        "firebase.json",
-        ".firebaserc",
-        "**/.*",
-        ".git/**",
-        "**/.git/**",
-        ".audit/**",
-        "**/.audit/**",
-        "**/node_modules/**",
-        "**/*.bat",
-        "**/*.cmd",
-        "**/*.ps1",
-        "**/*.sh",
-        "**/*.md",
-        "test_*.js"
-      ]
-    },
-    {
-      "site": "fotos-cobertores",
-      "public": ".",
-      "ignore": [
-        "firebase.json",
-        ".firebaserc",
-        "**/.*",
-        ".git/**",
-        "**/.git/**",
-        ".audit/**",
-        "**/.audit/**",
-        "**/node_modules/**",
-        "**/*.bat",
-        "**/*.cmd",
-        "**/*.ps1",
-        "**/*.sh",
-        "**/*.md",
-        "test_*.js"
+        "**/.*"
+      ],
+      "headers": [
+        {
+          "source": "**",
+          "headers": [
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "no-referrer"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            }
+          ]
+        }
+      ],
+      "predeploy": [
+        "npm run check",
+        "npm run build"
       ]
     }
-  ]
+  ],
+  "database": {
+    "rules": "database.rules.json"
+  },
+  "auth": {
+    "providers": {
+      "anonymous": true
+    }
+  }
 }

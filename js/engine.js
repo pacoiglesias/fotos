@@ -98,53 +98,44 @@ function triggerNativeUpload(side, isCamera) {
 function handleImageFile(event, side) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
-  loadBlobIntoSide(file, side);
+  loadBlobIntoSide(file, side).catch(e=>showToast(e.message, 'error'));
 }
 
 async function loadBlobIntoSide(blob, side) {
-  const isPdf = blob.type === 'application/pdf' || (blob.name && blob.name.toLowerCase().endsWith('.pdf'));
-  if (isPdf) { await handlePdfFile(blob, side); return; }
-
-  const name = (blob.name || '').toLowerCase();
-  if (name.endsWith('.heic') || name.endsWith('.heif') || blob.type === 'image/heic' || blob.type === 'image/heif') {
-    showToast('⚠️ Archivo HEIC detectado: Los navegadores no decodifican HEIC de forma nativa. Por favor exporta la foto como JPG o PNG desde tu iPhone.', 'warning');
-    return;
-  }
-
-  if (blob.size === 0) {
-    showToast('❌ El archivo seleccionado está vacío o dañado (0 bytes).', 'error');
-    return;
-  }
-  if (blob.size > 30 * 1024 * 1024) {
-    showToast('⚠️ Archivo muy pesado (>30 MB). El navegador puede demorar en procesarlo.', 'warning');
-  }
-
-  const reader = new FileReader();
-  reader.onload = function(e) { processRawDataUrl(e.target.result, side); };
-  reader.onerror = function() {
-    showToast('❌ No se pudo leer el archivo seleccionado. Puede estar dañado.', 'error');
-  };
-  reader.readAsDataURL(blob);
+  try {
+    if (!blob || !blob.size || blob.size > 30*1024*1024) throw Error('Selecciona un archivo válido de hasta 30 MB.');
+    if (blob.type === 'application/pdf' || /\.pdf$/i.test(blob.name || '')) {await handlePdfFile(blob,side);return true;}
+    if (/\.hei[cf]$/i.test(blob.name || '')) throw Error('Exporta la imagen HEIC como JPG o PNG desde tu teléfono.');
+    const dataUrl = await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('No se pudo leer el archivo.'));reader.readAsDataURL(blob);});
+    await window.handleLoadedFile(side,dataUrl,blob.name);return true;
+  } catch(e) {showToast(e.message || 'No se pudo procesar el archivo.', 'error');return false;}
 }
 
 // Función global para inyectar archivos cargados (usada por sincronización QR)
-window.handleLoadedFile = function(side, dataUrl, name) {
-  if (dataUrl) {
-    processRawDataUrl(dataUrl, side);
-  }
+window.handleLoadedFile = async function(side, dataUrl, name, onAssigned) {
+  if (!state.images[side] || typeof dataUrl !== 'string') throw Error('Destino o archivo no válido.');
+  const blob = await (await fetch(dataUrl)).blob();
+  if (blob.type === 'application/pdf') return handlePdfFile(new File([blob],name||'documento.pdf',{type:blob.type}),side,onAssigned);
+  if (!blob.type.startsWith('image/')) throw Error('El archivo no es una imagen o PDF.');
+  const probe = new Image();probe.src=dataUrl;await probe.decode();
+  processRawDataUrl(dataUrl,side);
+  if (!await waitForProcessingComplete(15000)) throw Error('La imagen no terminó de procesarse.');
+  onAssigned?.(side);
+  return {loaded:true};
 };
 
-async function handlePdfFile(file, targetSide) {
-  if (!window.pdfjsLib) { showToast('Cargando motor PDF, reintenta en un segundo...', 'warning'); return; }
+async function handlePdfFile(file, targetSide, onAssigned) {
+  if (!window.pdfjsLib) throw Error('No se pudo cargar el lector PDF. Recarga la aplicación.');
   try {
     showToast('Procesando PDF escaneado...', 'info');
     const arrayBuffer = await file.arrayBuffer();
-    const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer, isEvalSupported: false, cMapUrl:'vendor/cmaps/', cMapPacked:true, standardFontDataUrl:'vendor/standard_fonts/', wasmUrl:'vendor/wasm/' }).promise;
+    if (pdfDoc.numPages > 40) {await pdfDoc.destroy();throw Error('El PDF supera 40 páginas. Divide el documento antes de cargarlo.');}
 
     if (pdfDoc.numPages >= 2) {
       if (typeof openPdfPageSelector === 'function') {
-        await openPdfPageSelector(pdfDoc, targetSide);
-        return;
+        await openPdfPageSelector(pdfDoc, targetSide, onAssigned);
+        return {pendingSelection:true};
       }
       const numToLoad = Math.min(pdfDoc.numPages, 4);
       if (typeof setDocumentPages === 'function' && numToLoad > 2) {
@@ -160,15 +151,23 @@ async function handlePdfFile(file, targetSide) {
     } else {
       const p = await pdfDoc.getPage(1);
       processRawDataUrl(await renderPdfPageToDataUrl(p), targetSide);
+      if (!await waitForProcessingComplete()) throw Error('El PDF aún se está procesando.');
+      onAssigned?.(targetSide);
       showToast('¡PDF cargado en ' + getSlotFriendlyName(targetSide) + '!', 'success');
     }
   } catch (err) {
-    showToast('No se pudo leer el PDF. Asegúrate de que no tenga contraseña.', 'warning');
+    throw Error(err.message?.includes('40 páginas') ? err.message : 'No se pudo abrir el PDF. Comprueba que sea válido y no tenga contraseña.');
   }
 }
 
+function getSafePdfViewport(page, requestedScale, maxDimension = 4000) {
+  const natural = page.getViewport({scale:1});
+  if(!Number.isFinite(natural.width) || !Number.isFinite(natural.height) || natural.width<=0 || natural.height<=0) throw Error('La página PDF tiene medidas inválidas.');
+  return page.getViewport({scale:Math.min(requestedScale,maxDimension/Math.max(natural.width,natural.height))});
+}
+
 async function renderPdfPageToDataUrl(page) {
-  const viewport = page.getViewport({ scale: 3.0 });
+  const viewport = getSafePdfViewport(page, 3.0);
   const canvas = document.createElement('canvas');
   canvas.width = viewport.width;
   canvas.height = viewport.height;
@@ -561,11 +560,14 @@ function clearSlot(side) {
    ============================================================ */
 function processRawDataUrl(rawSrc, side) {
   const startRevision = state._jobRevision || 0;
+  const slot = state.images[side];
+  const loadVersion = (slot._loadVersion || 0) + 1; slot._loadVersion = loadVersion;
+  const settle = function(){if(startRevision === (state._jobRevision || 0)) state._processingPending = Math.max(0, (state._processingPending || 1) - 1);};
   state._processingPending = (state._processingPending || 0) + 1;
   const img = new Image();
   img.onload = function() {
-    if (startRevision !== (state._jobRevision || 0)) {
-      state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
+    if (startRevision !== (state._jobRevision || 0) || state.images[side] !== slot || slot._loadVersion !== loadVersion) {
+      settle();
       return;
     }
     state.images[side].rawOriginalSrc = rawSrc;
@@ -600,7 +602,7 @@ function processRawDataUrl(rawSrc, side) {
       }
     }
 
-    const croppedData = detectAndCropCard(img);
+    const croppedData = state.activeCategory === 'photos' ? null : detectAndCropCard(img);
     const toggleBtn = $('btnToggleCrop' + suffix);
 
     if (croppedData) {
@@ -611,8 +613,8 @@ function processRawDataUrl(rawSrc, side) {
 
       const ci = new Image();
       ci.onload = function() {
-        if (startRevision !== (state._jobRevision || 0)) {
-          state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
+        if (startRevision !== (state._jobRevision || 0) || state.images[side] !== slot || slot._loadVersion !== loadVersion) {
+          settle();
           return;
         }
         state.images[side].naturalWidth = ci.naturalWidth;
@@ -622,12 +624,12 @@ function processRawDataUrl(rawSrc, side) {
         const imgIsPortrait = ci.naturalHeight > ci.naturalWidth;
         state.images[side].rotation = (specIsPortrait === imgIsPortrait) ? 0 : 90;
         inspectSlotImage(side, ci);
-        state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
+        settle();
         renderProcessedImage(side);
         showToast('✂️ ¡Bordes blancos eliminados automáticamente! Escala 1:1 real.', 'success');
       };
       ci.onerror = function() {
-        state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
+        settle();
       };
       ci.src = croppedData;
       return;
@@ -643,11 +645,11 @@ function processRawDataUrl(rawSrc, side) {
     const imgIsPortrait = img.naturalHeight > img.naturalWidth;
     state.images[side].rotation = (specIsPortrait === imgIsPortrait) ? 0 : 90;
     inspectSlotImage(side, img);
-    state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
+    settle();
     renderProcessedImage(side);
   };
   img.onerror = function() {
-    state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
+    settle();
   };
   img.src = rawSrc;
 }
@@ -675,11 +677,13 @@ function renderProcessedImage(side) {
   const imgData = state.images[side];
   if (!imgData.originalSrc) return;
   const startRevision = state._jobRevision || 0;
+  const renderVersion = (imgData._renderVersion || 0) + 1; imgData._renderVersion = renderVersion;
+  const settle = function(){if(startRevision === (state._jobRevision || 0)) state._processingPending = Math.max(0, (state._processingPending || 1) - 1);};
   state._processingPending = (state._processingPending || 0) + 1;
   const img = new Image();
   img.onload = function() {
-    if (startRevision !== (state._jobRevision || 0)) {
-      state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
+    if (startRevision !== (state._jobRevision || 0) || state.images[side] !== imgData || imgData._renderVersion !== renderVersion) {
+      settle();
       return;
     }
     const rotation = imgData.rotation || 0;
@@ -734,18 +738,6 @@ function renderProcessedImage(side) {
     ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
     ctx.restore();
 
-    // Trazar línea de corte elíptica punteada oficial
-    if (spec.isOval) {
-      ctx.save();
-      ctx.setLineDash([14, 10]);
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = Math.max(2, Math.round(outW * 0.005));
-      ctx.beginPath();
-      ctx.ellipse(outW / 2, outH / 2, outW / 2 - 3, outH / 2 - 3, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    }
-
     // Filtros de Escáner y Blanco y Negro
     if (filter === 'bw' || filter === 'scanner') {
       try {
@@ -771,47 +763,18 @@ function renderProcessedImage(side) {
       } catch(e) {}
     }
 
-    // Regla Milimétrica Superpuesta Opcional (Virtual mm Grid)
-    if (imgData.showMmGrid) {
-      try {
-        ctx.save();
-        const mmPx = window.TARGET_DPI / 25.4;
-        ctx.strokeStyle = 'rgba(79, 70, 229, 0.22)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        for (let x = 0; x <= outW; x += mmPx * 5) {
-          ctx.moveTo(x, 0); ctx.lineTo(x, outH);
-        }
-        for (let y = 0; y <= outH; y += mmPx * 5) {
-          ctx.moveTo(0, y); ctx.lineTo(outW, y);
-        }
-        ctx.stroke();
-
-        ctx.strokeStyle = 'rgba(79, 70, 229, 0.45)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        for (let x = 0; x <= outW; x += mmPx * 10) {
-          ctx.moveTo(x, 0); ctx.lineTo(x, outH);
-        }
-        for (let y = 0; y <= outH; y += mmPx * 10) {
-          ctx.moveTo(0, y); ctx.lineTo(outW, y);
-        }
-        ctx.stroke();
-        ctx.restore();
-      } catch(e) {}
-    }
-
     imgData.processedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
-    state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
+    settle();
     updateSidePreview(side);
   };
   img.onerror = function() {
-    state._processingPending = Math.max(0, (state._processingPending || 1) - 1);
+    settle();
   };
   img.src = imgData.originalSrc;
 }
 
 function setFilter(side, filter) {
+  if (getActiveSpec().noRetouch && filter !== 'color') {showToast('Este perfil requiere una fotografía en color sin filtros.', 'warning');return;}
   if (!state.images[side].originalSrc) return;
   if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
     RealScanEditor.recordSnapshot(side, state.images[side]);
@@ -847,6 +810,7 @@ function resetPan(side) {
    CORRECTOR RÁPIDO DE ILUMINACIÓN Y CONTRASTE (+15% / -15%)
    ============================================================ */
 function adjustSlotLight(side, type, delta) {
+  if (getActiveSpec().noRetouch) {showToast('Este perfil requiere conservar la apariencia original.', 'warning');return;}
   const imgData = state.images[side];
   if (!imgData || !imgData.originalSrc) {
     showToast('Carga primero una foto para ajustar la luz y sombra.', 'warning');
@@ -1031,14 +995,12 @@ function autoEnhanceActiveSlots() {
 }
 
 function waitForProcessingComplete(timeoutMs) {
-  timeoutMs = timeoutMs || 2500;
+  timeoutMs = timeoutMs || 15000;
   return new Promise(function(resolve) {
     const start = Date.now();
     function check() {
-      if (!state._processingPending || state._processingPending <= 0 || (Date.now() - start > timeoutMs)) {
-        state._processingPending = 0;
-        return resolve();
-      }
+      if (!state._processingPending || state._processingPending <= 0) return resolve(true);
+      if (Date.now() - start > timeoutMs) {showToast('El procesamiento aún no termina. Espera y vuelve a intentar.', 'error');return resolve(false);}
       setTimeout(check, 30);
     }
     check();

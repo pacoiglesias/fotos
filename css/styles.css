@@ -421,3 +421,12 @@ html, body {
   }
 }
 
+
+/* Guides assist editing without contaminating exported images. */
+@media print {.preview-only {display:none !important;}}
+@media (max-width:1023px) {
+ body[data-mobile-step="1"] .hud-bar, body[data-mobile-step="2"] .hud-bar {display:none;}
+ header .app-version-label,header #appVersionHeader {display:none;}
+ header button {min-height:32px;min-width:32px;}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important;}}

@@ -1,0 +1,30 @@
+{
+  "name": "realscan",
+  "version": "3.4.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.cjs",
+    "check": "node scripts/check.cjs",
+    "test": "node scripts/regression.cjs",
+    "verify": "node scripts/verify.cjs",
+    "test:auth": "node scripts/auth-regression.cjs",
+    "test:legacy": "node scripts/legacy.cjs",
+    "test:rules": "node scripts/rules-regression.cjs"
+  },
+  "dependencies": {
+    "@firebase/app": "0.16.3",
+    "@firebase/auth": "1.13.7",
+    "@firebase/database": "1.1.5",
+    "jspdf": "4.2.1",
+    "jszip": "3.10.2",
+    "pdfjs-dist": "6.4.299",
+    "qrcode-generator": "2.0.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.0",
+    "esbuild": "0.28.2",
+    "jsqr": "1.4.0",
+    "playwright": "1.64.1",
+    "tailwindcss": "4.3.0"
+  }
+}

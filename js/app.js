@@ -48,6 +48,7 @@ function setStageSheetZoom(zoomLevel) {
    NAVEGACIÓN MÓVIL POR ETAPAS FLUIDAS (M-20)
    ============================================================ */
 function setMobileStep(step) {
+  document.body.dataset.mobileStep = String(step);
   const stepNum = parseInt(step, 10) || 1;
   $$('.mobile-step-tab').forEach(function(tab) {
     const s = parseInt(tab.getAttribute('data-mob-step'), 10);
@@ -590,7 +591,7 @@ function initCropCanvasEvents() {
 let activePdfDoc = null;
 let activePdfTargetSide = 'front';
 
-async function openPdfPageSelector(pdfDoc, targetSide) {
+async function openPdfPageSelector(pdfDoc, targetSide, onAssigned) {
   activePdfDoc = pdfDoc;
   activePdfTargetSide = targetSide || 'front';
   const grid = $('pdfThumbnailsGrid');
@@ -605,7 +606,7 @@ async function openPdfPageSelector(pdfDoc, targetSide) {
   for (let i = 1; i <= pdfDoc.numPages; i++) {
     const pageNum = i;
     const page = await pdfDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: 0.6 });
+    const viewport = getSafePdfViewport(page, 0.6, 600);
     const canvas = document.createElement('canvas');
     canvas.width = viewport.width;
     canvas.height = viewport.height;
@@ -632,6 +633,8 @@ async function openPdfPageSelector(pdfDoc, targetSide) {
       const fullPage = await pdfDoc.getPage(pageNum);
       const dataUrl = await renderPdfPageToDataUrl(fullPage);
       processRawDataUrl(dataUrl, 'front');
+      if (!await waitForProcessingComplete()) return;
+      if (onAssigned) onAssigned('front');
       closeModal('pdfPageSelectorModal');
       showToast('Página ' + pageNum + ' asignada al Frente.', 'success');
     };
@@ -644,12 +647,18 @@ async function openPdfPageSelector(pdfDoc, targetSide) {
       const fullPage = await pdfDoc.getPage(pageNum);
       const dataUrl = await renderPdfPageToDataUrl(fullPage);
       processRawDataUrl(dataUrl, 'back');
+      if (!await waitForProcessingComplete()) return;
+      if (onAssigned) onAssigned('back');
       closeModal('pdfPageSelectorModal');
       showToast('Página ' + pageNum + ' asignada al Reverso.', 'success');
     };
 
     btnGroup.appendChild(btnFront);
     btnGroup.appendChild(btnBack);
+    if (state.activeCategory !== 'photos') for (const [side, count] of [['page3',3],['page4',4]]) {
+      const button = document.createElement('button');button.type='button';button.className=btnFront.className;button.textContent='Página '+count;
+      button.onclick=async function(){try{const full=await pdfDoc.getPage(pageNum);const data=await renderPdfPageToDataUrl(full);setDocumentPages(Math.max(state.documentPageCount||2,count));processRawDataUrl(data,side);if(!await waitForProcessingComplete())return;onAssigned?.(side);closeModal('pdfPageSelectorModal');showToast('Página '+pageNum+' asignada a Página '+count,'success');}catch(e){showToast('No se pudo cargar esta página.','error');}};btnGroup.appendChild(button);
+    }
 
     card.appendChild(pLabel);
     card.appendChild(canvas);
@@ -661,9 +670,10 @@ async function openPdfPageSelector(pdfDoc, targetSide) {
 /* ============================================================
    INTEGRACIÓN DE CÓDIGOS QR, RECEPCIÓN MÓVIL Y ENTREGA DIGITAL
    ============================================================ */
-function openReceiveFromPhoneModal() {
+async function openReceiveFromPhoneModal() {
+  try {
   if (!window.RealScanQrSync) return;
-  const session = window.RealScanQrSync.createReceiveSession();
+  const session = await window.RealScanQrSync.createReceiveSession();
   const label = $('labelReceiveSessionId');
   if (label) label.textContent = session.id;
 
@@ -674,6 +684,8 @@ function openReceiveFromPhoneModal() {
 
   updateQrInboxUI();
   openModal('receiveFromPhoneModal');
+  return true;
+  } catch(e) { showToast(e.message || 'No se pudo abrir la recepción. Comprueba internet.', 'error'); }
 }
 
 function updateQrInboxUI() {
@@ -702,16 +714,17 @@ function updateQrInboxUI() {
       <div class="flex items-center gap-2 truncate">
         <span class="text-xl">${f.type.includes('pdf') ? '📑' : '🖼️'}</span>
         <div class="truncate">
-          <p class="font-bold text-slate-900 dark:text-white truncate">${f.name}</p>
+          <p class="qr-file-name font-bold text-slate-900 dark:text-white truncate"></p>
           <p class="text-[10px] text-slate-400 font-mono">${f.sizeKb} KB • ${f.receivedAt} • ${assignedTag}</p>
         </div>
       </div>
       <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
         <button type="button" data-assign-file="${f.id}" data-slot="front" class="px-2 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[11px] hover:bg-indigo-700">Frente</button>
         <button type="button" data-assign-file="${f.id}" data-slot="back" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold text-[11px] hover:bg-slate-300">Reverso</button>
-        ${state.mixTwoPhotos ? `<button type="button" data-assign-file="${f.id}" data-slot="page3" class="px-2 py-1 rounded-lg bg-amber-600 text-white font-bold text-[11px] hover:bg-amber-700">Persona B</button>` : ''}
+        ${state.mixTwoPhotos ? `<button type="button" data-assign-file="${f.id}" data-slot="back" class="px-2 py-1 rounded-lg bg-amber-600 text-white font-bold text-[11px] hover:bg-amber-700">Persona B</button>` : ''}
       </div>
     `;
+    item.querySelector('.qr-file-name').textContent = f.name;
     listEl.appendChild(item);
   });
 
@@ -727,12 +740,20 @@ window.updateQrInboxUI = updateQrInboxUI;
 
 function openDigitalDeliveryModal() {
   if (!window.RealScanQrSync) return;
+  const policy = getActiveSpec().digital;
+  const formatSelect = $('selectDeliveryFormat');
+  for(const option of formatSelect.options) option.disabled = !!policy && !policy.formats.includes(option.value);
+  if(policy) {formatSelect.value='jpg';$('selectDeliveryMaxPx').value='600';}
   const resultBox = $('deliveryQrResultBox');
   if (resultBox) resultBox.classList.add('hidden');
   openModal('digitalDeliveryModal');
 }
 
 async function handleGenerateDeliveryQr() {
+  try {
+  if (!await waitForProcessingComplete(15000)) return;
+  const format = $('selectDeliveryFormat')?.value || 'jpg';
+  const maxPx = $('selectDeliveryMaxPx')?.value || '1920';
   if (!window.RealScanQrSync) return;
   const deliverPdf = $('checkDeliverPdfSheet') ? $('checkDeliverPdfSheet').checked : true;
   const deliverFront = $('checkDeliverFrontJpg') ? $('checkDeliverFrontJpg').checked : true;
@@ -740,23 +761,16 @@ async function handleGenerateDeliveryQr() {
 
   const files = [];
 
-  if (deliverFront && state.images.front && state.images.front.processedDataUrl) {
-    files.push({
-      name: 'RealScan_Frente_' + Date.now() + '.jpg',
-      type: 'image/jpeg',
-      dataUrl: state.images.front.processedDataUrl
-    });
-  }
-
-  if (deliverBack && state.images.back && state.images.back.processedDataUrl) {
-    files.push({
-      name: 'RealScan_Reverso_' + Date.now() + '.jpg',
-      type: 'image/jpeg',
-      dataUrl: state.images.back.processedDataUrl
-    });
+  for (const [side, selected] of [['front', deliverFront], ['back', deliverBack]]) {
+    if (selected && state.images[side]?.processedDataUrl) files.push(await createDigitalFile(side, format, maxPx));
   }
 
   if (deliverPdf && typeof generatePdfDoc === 'function') {
+    const preflight = runPreflightChecks();
+    const fatal = preflight.issues.filter(x=>x.type==='error' && x.code!=='MISSING_SLOT');
+    if(fatal.length) throw Error(fatal.map(x=>x.message).join(' '));
+    const missing = preflight.issues.filter(x=>x.code==='MISSING_SLOT');
+    if(missing.length && !confirm('Faltan caras para la hoja PDF. ¿Entregar solo las disponibles dejando vacíos los espacios faltantes?')) return;
     try {
       const doc = await generatePdfDoc(true);
       if (doc) {
@@ -764,7 +778,8 @@ async function handleGenerateDeliveryQr() {
         files.push({
           name: 'RealScan_Hoja_Impresion_' + Date.now() + '.pdf',
           type: 'application/pdf',
-          dataUrl: pdfDataUri
+          dataUrl: 'data:application/pdf;base64,' + pdfDataUri.split(',')[1],
+          size: Math.floor(pdfDataUri.split(',')[1].length * .75)
         });
       }
     } catch(e) {
@@ -777,10 +792,8 @@ async function handleGenerateDeliveryQr() {
     return;
   }
 
-  const format = $('selectDeliveryFormat') ? $('selectDeliveryFormat').value : 'jpg';
-  const maxPx = $('selectDeliveryMaxPx') ? $('selectDeliveryMaxPx').value : '1920';
 
-  const session = window.RealScanQrSync.createDeliverySession(files, { format: format, maxPx: maxPx });
+  const session = await window.RealScanQrSync.createDeliverySession(files, { format: format, maxPx: maxPx });
   const canvas = $('canvasDeliveryQr');
   if (canvas) {
     window.RealScanQrSync.renderQrToCanvas(session.url, canvas, 5);
@@ -789,12 +802,13 @@ async function handleGenerateDeliveryQr() {
   const resultBox = $('deliveryQrResultBox');
   if (resultBox) resultBox.classList.remove('hidden');
 
-  if (window.RealScanAudio) window.RealScanAudio.playSuccess();
-  showToast('✅ Código QR de Entrega Digital generado.', 'success');
+  showToast('Entrega disponible durante 15 minutos mientras este puesto siga abierto.', 'success');
+  } catch(e) { showToast(e.message || 'No se pudo preparar la entrega.', 'error'); }
 }
 
 function openFormatRequirementsModal() {
-  const spec = (typeof getActiveSpec === 'function') ? getActiveSpec() : (window.FORMAT_SPECS[state.format] || window.FORMAT_SPECS.card);
+  const activeSpec = (typeof getActiveSpec === 'function') ? getActiveSpec() : (window.FORMAT_SPECS[state.format] || window.FORMAT_SPECS.card);
+  const spec = Object.assign({}, window.FORMAT_SPECS[state.format] || {}, activeSpec);
   const nameEl = $('reqFormatName');
   const dimsEl = $('reqDimensionsMm');
   const sourceEl = $('reqOfficialSource');
@@ -805,8 +819,12 @@ function openFormatRequirementsModal() {
 
   if (nameEl) nameEl.textContent = spec.name || spec.shortName;
   if (dimsEl) dimsEl.textContent = `${spec.widthMm.toFixed(2)} × ${spec.heightMm.toFixed(2)} mm`;
-  if (sourceEl) sourceEl.textContent = spec.officialSource || 'Estándar Oficial';
-  if (dateEl) dateEl.textContent = spec.reviewDate || 'Octubre 2026';
+  if (sourceEl) {
+    sourceEl.replaceChildren();
+    if(spec.sourceUrl){const a=document.createElement('a');a.href=spec.sourceUrl;a.target='_blank';a.rel='noopener noreferrer';a.className='underline';a.textContent=spec.officialSource;sourceEl.append(a);}
+    else sourceEl.textContent='Plantilla orientativa; confirma con la institución';
+  }
+  if (dateEl) dateEl.textContent = spec.sourceUrl ? '14/10/2026; consulta la fuente vigente' : 'Sin verificación oficial';
   if (physEl) physEl.textContent = spec.reqsPhysical || 'Impresión al 100% de escala sin ajuste automático.';
   if (digiEl) digiEl.textContent = spec.reqsDigital || 'Resolución mínima 300 DPI nítida.';
   if (restrEl) restrEl.textContent = spec.editingRestrictions || 'No alterar rasgos anatómicos.';
@@ -815,7 +833,7 @@ function openFormatRequirementsModal() {
 }
 
 function setPrintScale(scalePct) {
-  scalePct = parseInt(scalePct, 10) || 100;
+  scalePct = Math.max(25, Math.min(200, parseInt(scalePct, 10) || 100));
   state.outputScalePercent = scalePct;
 
   const warnEl = $('bannerScaleWarning');
@@ -829,6 +847,7 @@ function setPrintScale(scalePct) {
     }
   }
 
+  savePreferences();
   updateUI();
   if (scalePct !== 100) {
     showToast('⚠️ Escala modificada al ' + scalePct + '%. Copia no calibrada a tamaño real.', 'warning');
@@ -864,6 +883,7 @@ function handleSlotRedo(side) {
 }
 
 function applyAdaptiveAutoLight(side) {
+  if (getActiveSpec().noRetouch) {showToast('Este perfil requiere conservar el color y la apariencia originales.', 'warning');return;}
   const imgData = state.images[side];
   if (!imgData || !imgData.originalSrc || !window.RealScanEditor) {
     showToast('Carga primero una foto para compensar la iluminación.', 'warning');
@@ -1170,10 +1190,6 @@ function setPhotoCopies(num) {
   updatePhotoGridStats();
   updateUI();
   savePreferences();
-}
-
-  updatePhotoGridStats();
-  updateUI();
 }
 
 function setDocumentPages(count) {
@@ -1633,6 +1649,10 @@ function prevPreviewPage() {
 }
 
 function updateUI() {
+  const scale = Math.max(25, Math.min(200, Number(state.outputScalePercent) || 100));
+  if ($('selectOutputScale')) $('selectOutputScale').value = String(scale);
+  if ($('bannerScaleWarning')) $('bannerScaleWarning').classList.toggle('hidden', scale === 100);
+  if ($('labelActiveScalePct')) $('labelActiveScalePct').textContent = scale + '%';
   const spec = getActiveSpec();
   const tag = $('previewDimensionsTag');
   const canvasFront = $('canvasDocFront');
@@ -1682,9 +1702,10 @@ function updateUI() {
   const faithfulLayer = $('faithfulSheetPlacements');
   const isPhotos = (state.activeCategory === 'photos');
 
+  const outputSpec = layout?.spec || spec;
   if (tag) {
     if (isPhotos) {
-      tag.textContent = spec.widthMm + ' × ' + spec.heightMm + ' mm (' + state.photoCopies + ' fotos)';
+      tag.textContent = outputSpec.widthMm + ' × ' + outputSpec.heightMm + ' mm (' + state.photoCopies + ' fotos)';
     } else {
       tag.textContent = spec.widthMm + ' × ' + spec.heightMm + ' mm' + (state.activeCategory === 'custom' ? ' (Personalizada)' : '');
     }
@@ -1760,10 +1781,11 @@ function updateUI() {
         if (p.isOval) im.style.borderRadius = '50%';
         im.alt = p.label || ('Elemento ' + (pIdx + 1));
         pBox.appendChild(im);
+        if(imgData.showMmGrid){const grid=document.createElement('div');grid.className='preview-only absolute inset-0 pointer-events-none';grid.style.backgroundImage='linear-gradient(to right,rgba(79,70,229,.25) 1px,transparent 1px),linear-gradient(to bottom,rgba(79,70,229,.25) 1px,transparent 1px)';grid.style.backgroundSize=(500/p.widthMm)+'% '+(500/p.heightMm)+'%';pBox.appendChild(grid);}
 
         if (imgData.showOaciGuide) {
           const guide = document.createElement('div');
-          guide.className = 'pointer-events-none absolute inset-0 flex items-center justify-center p-0.5';
+          guide.className = 'preview-only pointer-events-none absolute inset-0 flex items-center justify-center p-0.5';
           guide.innerHTML = '<svg class="w-full h-full max-w-[85%] max-h-[92%] text-indigo-600/90 drop-shadow-xs" viewBox="0 0 100 130" fill="none" stroke="currentColor"><ellipse cx="50" cy="56" rx="26" ry="38" stroke-width="2" stroke-dasharray="3,2" /><line x1="20" y1="52" x2="80" y2="52" stroke-width="1.5" stroke-dasharray="2,2" /><line x1="32" y1="94" x2="68" y2="94" stroke-width="2" /><line x1="32" y1="18" x2="68" y2="18" stroke-width="2" /></svg>';
           pBox.appendChild(guide);
         }
@@ -1892,6 +1914,9 @@ function savePreferences() {
       printMode: state.printMode,
       documentPageCount: state.documentPageCount || 2,
       photoCopies: state.photoCopies,
+      photoCopiesPersonA: state.photoCopiesPersonA ?? Math.ceil((state.photoCopies || 4) / 2),
+      photoCopiesPersonB: state.photoCopiesPersonB ?? Math.floor((state.photoCopies || 4) / 2),
+      outputScalePercent: state.outputScalePercent || 100,
       customWidth: state.customWidth,
       customHeight: state.customHeight,
       customUnit: state.customUnit,
@@ -1936,6 +1961,9 @@ function loadPreferences() {
       }
     }
     if (p.photoCopies) state.photoCopies = p.photoCopies;
+    state.photoCopiesPersonA = Number.isInteger(p.photoCopiesPersonA) ? p.photoCopiesPersonA : Math.ceil((p.photoCopies || 4) / 2);
+    state.photoCopiesPersonB = Number.isInteger(p.photoCopiesPersonB) ? p.photoCopiesPersonB : Math.floor((p.photoCopies || 4) / 2);
+    state.outputScalePercent = Math.max(25, Math.min(200, Number(p.outputScalePercent) || 100));
     if (p.documentPageCount) state.documentPageCount = p.documentPageCount;
     if (p.printMode) setPrintMode(p.printMode);
     if (p.mixTwoPhotos !== undefined) {
@@ -2105,12 +2133,12 @@ function bindEvents() {
   // Copias independientes Persona A y Persona B
   if ($('btnMinusCopiesA')) {
     on($('btnMinusCopiesA'), 'click', function() {
-      setIndependentPhotoCopies('A', Math.max(1, (state.photoCopiesPersonA || 2) - 1));
+      setIndependentPhotoCopies('A', Math.max(0, (state.photoCopiesPersonA ?? 2) - 1));
     });
   }
   if ($('btnPlusCopiesA')) {
     on($('btnPlusCopiesA'), 'click', function() {
-      setIndependentPhotoCopies('A', (state.photoCopiesPersonA || 2) + 1);
+      setIndependentPhotoCopies('A', (state.photoCopiesPersonA ?? 2) + 1);
     });
   }
   if ($('inputCopiesPersonA')) {
@@ -2120,12 +2148,12 @@ function bindEvents() {
   }
   if ($('btnMinusCopiesB')) {
     on($('btnMinusCopiesB'), 'click', function() {
-      setIndependentPhotoCopies('B', Math.max(1, (state.photoCopiesPersonB || 2) - 1));
+      setIndependentPhotoCopies('B', Math.max(0, (state.photoCopiesPersonB ?? 2) - 1));
     });
   }
   if ($('btnPlusCopiesB')) {
     on($('btnPlusCopiesB'), 'click', function() {
-      setIndependentPhotoCopies('B', (state.photoCopiesPersonB || 2) + 1);
+      setIndependentPhotoCopies('B', (state.photoCopiesPersonB ?? 2) + 1);
     });
   }
   if ($('inputCopiesPersonB')) {
@@ -2856,14 +2884,16 @@ function bindEvents() {
 
   on($('btnRenewReceiveSession'), 'click', function() {
     openReceiveFromPhoneModal();
-    showToast('↺ Código QR de sesión renovado.', 'info');
+
   });
 
-  on($('btnClearQrInbox'), 'click', function() {
+  on($('btnClearQrInbox'), 'click', async function() {
+    try {
     if (window.RealScanQrSync) {
-      window.RealScanQrSync.clearInbox();
+      await window.RealScanQrSync.clearInbox();
       showToast('Bandeja de archivos vaciada.', 'info');
     }
+    } catch(e){showToast('No se pudo vaciar la bandeja. Comprueba la conexión.', 'error');}
   });
 
   // Acciones en modal de entrega digital
@@ -2877,13 +2907,15 @@ function bindEvents() {
     }
   });
 
-  on($('btnRevokeDeliverySession'), 'click', function() {
+  on($('btnRevokeDeliverySession'), 'click', async function() {
+    try {
     if (window.RealScanQrSync) {
-      window.RealScanQrSync.revokeDeliverySession();
+      await window.RealScanQrSync.revokeDeliverySession();
       const resultBox = $('deliveryQrResultBox');
       if (resultBox) resultBox.classList.add('hidden');
       showToast('🔒 Enlace de entrega revocado por seguridad.', 'warning');
     }
+    } catch(e){showToast('No se confirmó la revocación. Comprueba la conexión.', 'error');}
   });
 
   // Pestaña y Controles de Sonido (Web Audio API)
@@ -2898,7 +2930,8 @@ function bindEvents() {
   }
   if ($('rangeAudioVolume')) {
     on($('rangeAudioVolume'), 'input', function() {
-      const volPct = parseInt(this.value, 10) || 70;
+      const parsedVolume = parseInt(this.value, 10);
+      const volPct = Number.isFinite(parsedVolume) ? Math.max(0, Math.min(100, parsedVolume)) : 70;
       const lbl = $('labelAudioVolume');
       if (lbl) lbl.textContent = volPct + '%';
       if (window.RealScanAudio) window.RealScanAudio.setVolume(volPct / 100);
@@ -2994,7 +3027,7 @@ function setupPwaSupport() {
   });
 }
 
-const APP_VERSION = 'v3.3.0-Enterprise';
+const APP_VERSION = window.APP_VERSION || 'v3.4.0';
 window.APP_VERSION = APP_VERSION;
 
 function syncAppVersion() {
@@ -3015,6 +3048,7 @@ function init() {
   syncAppVersion();
   bindEvents();
   setupPwaSupport();
+  setMobileStep(1);
   if (typeof checkAuthSession === 'function') checkAuthSession();
   loadPreferences();
   updatePhotoGridStats();

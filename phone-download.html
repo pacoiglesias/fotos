@@ -4,13 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>RealScan — Descargar Archivos Digitales</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'media',
-      theme: { extend: { colors: { brand: { 500:'#6366f1', 600:'#4f46e5' } } } }
-    };
-  </script>
+  <link rel="stylesheet" href="css/tailwind.css">
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen p-4 flex flex-col items-center justify-center font-sans antialiased">
   <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-5">
@@ -36,55 +30,12 @@
 
     <!-- Pie Informativo -->
     <div class="text-center pt-2 border-t border-slate-100 dark:border-slate-800">
-      <p class="text-[10px] text-slate-400">🔒 Descarga privada directa • Escala real 1:1 a 300 DPI • Desarrollado por Paco Iglesias</p>
+      <p class="text-[10px] text-slate-400">🔒 Descarga privada directa • Verifica tamaño y resolución antes de imprimir • Desarrollado por Paco Iglesias</p>
     </div>
   </div>
 
-  <script>
-    (function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const deliveryId = urlParams.get('delivery') || '';
-      document.getElementById('labelDeliveryId').textContent = deliveryId || 'No especificada';
-
-      const listEl = document.getElementById('deliveryFilesList');
-
-      if (!deliveryId) {
-        listEl.innerHTML = '<p class="text-xs text-red-500 text-center py-4">Enlace de entrega no válido o expirado.</p>';
-        return;
-      }
-
-      // Buscar sesión de entrega en localStorage
-      try {
-        const raw = localStorage.getItem('realscan_delivery_' + deliveryId);
-        if (raw) {
-          const data = JSON.parse(raw);
-          if (data && data.files && data.files.length > 0) {
-            listEl.innerHTML = '';
-            data.files.forEach((f, idx) => {
-              const card = document.createElement('div');
-              card.className = 'flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
-              card.innerHTML = `
-                <div class="flex items-center gap-2 truncate pr-2">
-                  <span class="text-xl">${f.name.endsWith('.pdf') ? '📄' : '🖼️'}</span>
-                  <div class="truncate">
-                    <p class="font-bold text-xs text-slate-900 dark:text-white truncate">${f.name}</p>
-                    <p class="text-[10px] text-slate-400 font-mono">${Math.round(f.dataUrl.length * 0.75 / 1024)} KB</p>
-                  </div>
-                </div>
-                <a href="${f.dataUrl}" download="${f.name}" class="shrink-0 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors flex items-center gap-1 shadow-sm">
-                  <span>⬇️</span>
-                  <span>Descargar</span>
-                </a>
-              `;
-              listEl.appendChild(card);
-            });
-            return;
-          }
-        }
-      } catch(e) {}
-
-      listEl.innerHTML = '<div class="text-center py-4 space-y-2"><p class="text-xs text-slate-500">Esta sesión de entrega no está disponible en este dispositivo o ha caducado por seguridad.</p><p class="text-[11px] text-indigo-600 font-semibold">Solicita al operador generar un nuevo código QR.</p></div>';
-    })();
-  </script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/firebase-transfer.js"></script>
+  <script src="js/phone-download.js"></script>
 </body>
 </html>

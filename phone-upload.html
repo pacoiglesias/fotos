@@ -4,13 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>RealScan — Enviar Archivos al Mostrador</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'media',
-      theme: { extend: { colors: { brand: { 500:'#6366f1', 600:'#4f46e5' } } } }
-    };
-  </script>
+  <link rel="stylesheet" href="css/tailwind.css">
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen p-4 flex flex-col items-center justify-center font-sans antialiased">
   <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-5">
@@ -82,132 +76,12 @@
 
     <!-- Pie Informativo -->
     <div class="text-center pt-2 border-t border-slate-100 dark:border-slate-800">
-      <p class="text-[10px] text-slate-400">🔒 Transferencia segura • Esta sesión expira al finalizar el trámite • Desarrollado por Paco Iglesias</p>
+      <p class="text-[10px] text-slate-400">🔒 Transferencia segura • Sesión de 15 minutos; el mostrador debe permanecer abierto • Desarrollado por Paco Iglesias</p>
     </div>
   </div>
 
-  <script>
-    (function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const sessionId = urlParams.get('session') || 'RS-DIRECT';
-      document.getElementById('labelSessionId').textContent = sessionId;
-
-      let queue = [];
-      const fileInput = document.getElementById('fileInput');
-      const cameraInput = document.getElementById('cameraInput');
-      const container = document.getElementById('selectedFilesContainer');
-      const thumbnails = document.getElementById('thumbnailsList');
-      const countEl = document.getElementById('filesCount');
-      const sendBtn = document.getElementById('btnSendFiles');
-      const clearBtn = document.getElementById('btnClearFiles');
-      const progressContainer = document.getElementById('progressContainer');
-      const progressBar = document.getElementById('progressBar');
-      const progressPercent = document.getElementById('progressPercent');
-      const successBox = document.getElementById('successBox');
-      const sendMoreBtn = document.getElementById('btnSendMore');
-
-      function handleFiles(files) {
-        if (!files || files.length === 0) return;
-        Array.from(files).forEach(f => {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            queue.push({
-              name: f.name,
-              size: f.size,
-              type: f.type,
-              dataUrl: e.target.result
-            });
-            renderQueue();
-          };
-          reader.readAsDataURL(f);
-        });
-      }
-
-      function renderQueue() {
-        thumbnails.innerHTML = '';
-        if (queue.length === 0) {
-          container.classList.add('hidden');
-          sendBtn.disabled = true;
-          return;
-        }
-        container.classList.remove('hidden');
-        sendBtn.disabled = false;
-        countEl.textContent = queue.length;
-
-        queue.forEach((item, idx) => {
-          const row = document.createElement('div');
-          row.className = 'flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs border border-slate-200 dark:border-slate-700';
-          row.innerHTML = `
-            <div class="flex items-center gap-2 truncate">
-              <span class="text-base">${item.type.includes('pdf') ? '📑' : '🖼️'}</span>
-              <span class="truncate font-medium max-w-[180px]">${item.name}</span>
-              <span class="text-[10px] text-slate-400 font-mono">(${Math.round(item.size / 1024)} KB)</span>
-            </div>
-            <button type="button" data-idx="${idx}" class="btn-remove-item text-slate-400 hover:text-red-500 font-bold px-2">&times;</button>
-          `;
-          thumbnails.appendChild(row);
-        });
-
-        thumbnails.querySelectorAll('.btn-remove-item').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const idx = parseInt(this.getAttribute('data-idx'));
-            queue.splice(idx, 1);
-            renderQueue();
-          });
-        });
-      }
-
-      fileInput.addEventListener('change', function() { handleFiles(this.files); this.value = ''; });
-      cameraInput.addEventListener('change', function() { handleFiles(this.files); this.value = ''; });
-      clearBtn.addEventListener('click', function() { queue = []; renderQueue(); });
-
-      sendBtn.addEventListener('click', function() {
-        if (queue.length === 0) return;
-        sendBtn.disabled = true;
-        progressContainer.classList.remove('hidden');
-
-        let sent = 0;
-        const total = queue.length;
-
-        queue.forEach((item, idx) => {
-          setTimeout(() => {
-            // Enviar vía BroadcastChannel si está en el mismo navegador
-            try {
-              if (window.BroadcastChannel) {
-                const bc = new BroadcastChannel('realscan_qr_sync_channel');
-                bc.postMessage({ type: 'NEW_CLIENT_UPLOAD', sessionId: sessionId, fileData: item });
-                bc.close();
-              }
-            } catch(e) {}
-
-            // Enviar vía localStorage Event
-            try {
-              const eventKey = 'realscan_upload_event_' + Date.now() + '_' + idx;
-              localStorage.setItem(eventKey, JSON.stringify({ sessionId: sessionId, fileData: item }));
-            } catch(e) {}
-
-            sent++;
-            const pct = Math.round((sent / total) * 100);
-            progressBar.style.width = pct + '%';
-            progressPercent.textContent = pct + '%';
-
-            if (sent === total) {
-              setTimeout(() => {
-                progressContainer.classList.add('hidden');
-                container.classList.add('hidden');
-                successBox.classList.remove('hidden');
-                queue = [];
-              }, 400);
-            }
-          }, idx * 250);
-        });
-      });
-
-      sendMoreBtn.addEventListener('click', function() {
-        successBox.classList.add('hidden');
-        renderQueue();
-      });
-    })();
-  </script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/firebase-transfer.js"></script>
+  <script src="js/phone-upload.js"></script>
 </body>
 </html>

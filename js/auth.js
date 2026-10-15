@@ -23,7 +23,7 @@ function getAuthData() {
         // Auto-migración si algún usuario tiene el PIN viejo de 2026 o sin hash
         let migrated = false;
         parsed.users.forEach(function(u) {
-          if (!u.passwordHash || u.passwordHash === '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab') {
+          if (!u.passwordHash) {
             u.passwordHash = window.DEFAULT_PIN_HASH;
             migrated = true;
           }
@@ -40,7 +40,7 @@ function getAuthData() {
       const old = JSON.parse(oldRaw);
       const migrated = {
         users: [
-          { username: old.username || window.DEFAULT_USER, passwordHash: (old.passwordHash && old.passwordHash !== '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab') ? old.passwordHash : window.DEFAULT_PIN_HASH, role: 'admin' }
+          { username: old.username || window.DEFAULT_USER, passwordHash: old.passwordHash || window.DEFAULT_PIN_HASH, role: 'admin' }
         ],
         currentUsername: old.username || window.DEFAULT_USER,
         sessionToken: old.sessionToken || null,
@@ -403,18 +403,9 @@ async function handleLoginSubmit(e) {
 
   const auth = getAuthData();
   const passHash = await computeSha256(pass);
-  const isMasterAdmin = (user.toLowerCase() === 'admin' && (pass === '1313' || pass === '2026'));
-
-  let matched = auth.users.find(function(u) {
-    return u.username.toLowerCase() === user.toLowerCase() && (u.passwordHash === passHash || isMasterAdmin);
+  const matched = auth.users.find(function(u) {
+    return u.username.toLowerCase() === user.toLowerCase() && u.passwordHash === passHash;
   });
-
-  if (!matched && isMasterAdmin) {
-    matched = { username: 'admin', passwordHash: window.DEFAULT_PIN_HASH, role: 'admin' };
-    auth.users.push(matched);
-  } else if (matched && isMasterAdmin && matched.passwordHash !== window.DEFAULT_PIN_HASH) {
-    matched.passwordHash = window.DEFAULT_PIN_HASH;
-  }
 
   if (matched) {
     auth.currentUsername = matched.username;
@@ -533,7 +524,7 @@ function switchSettingsTab(tabKey) {
     const lbl = $('labelAudioVolume');
     if (chk && window.state) chk.checked = !!window.state.audioFeedbackEnabled;
     if (rng && window.state) {
-      const volPct = Math.round((window.state.audioVolume || 0.7) * 100);
+      const volPct = Math.round((Number.isFinite(window.state.audioVolume) ? window.state.audioVolume : 0.7) * 100);
       rng.value = volPct;
       if (lbl) lbl.textContent = volPct + '%';
     }
