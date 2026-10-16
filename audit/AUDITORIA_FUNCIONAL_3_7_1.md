@@ -43,6 +43,12 @@ Resultado de la ejecución integral local: salida 0, 96 comprobaciones PASS y lo
 
 Para fotografías, conserva el modo Fotografía y revisa el marco antes de elegir relleno con recorte. Para documentos, selecciona el formato conocido al enderezar y revisa las cuatro esquinas. Los ajustes rápidos no deben girar, recolorear ni recortar contenido de forma implícita. Antes de imprimir o entregar, confirma tamaño, caras, copias, guías y formato de archivo.
 
-## Límites que permanecen
+## Acceso operativo a Firebase — 16 de octubre de 2026
+
+Se añade `Firebase-Acceso.bat` con menú local para comprobar la sesión, renovarla mediante navegador o utilizar un código manual en una sesión interactiva que permanece abierta. Se comprueba la sesión consultando los sitios de los dos proyectos; no se interpreta simplemente «ya hay una cuenta guardada» como prueba de acceso. Los fallos de conexión o permisos no fuerzan una renovación automática. El asistente reutiliza la herramienta oficial disponible en la caché de npm y la descarga cuando falta. No almacena códigos ni contraseñas en archivos del repositorio y no publica ni elimina contenido. El acceso a Google sigue requiriendo que el operador complete su identidad cuando Google lo solicite.
+
+El BAT de autenticación y publicación existente utiliza esta comprobación previa; cuando falla ofrece el menú y vuelve a comprobar el acceso antes de publicar. La validación del nuevo asistente comprende análisis sintáctico de PowerShell y ejecución aprobada del BAT con `-Action Check` contra los dos proyectos, sin solicitar otro código ni modificar permisos.
+
+## Comprobación física
 
 No se puede certificar perfección de una foto mediante software: la óptica, luz, movimiento, papel, impresora y requisitos de cada institución necesitan comprobación en el equipo real. La cámara se valida con fuentes simuladas; el intercambio por Firebase sí se prueba con el servicio real. Una captura sin nitidez debe repetirse, y la escala impresa debe comprobarse con una regla física. La auditoría no promete ausencia de cualquier fallo futuro.

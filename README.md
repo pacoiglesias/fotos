@@ -126,3 +126,9 @@ Vista previa bloqueada por defecto, ajuste táctil explícito, fotografías comp
 ## Auditoría funcional 3.7.1
 
 Guía del trabajo en tres pasos con acciones contextuales, avisos de escala y cara pendiente, navegación accesible y textos más claros. Recorte sin acciones duplicadas, ajuste repetible, protección de archivos y PDF pendientes, restauración móvil y encabezados coherentes entre vista previa y exportación. [Hallazgos y correcciones](audit/AUDITORIA_FUNCIONAL_3_7_1.md).
+
+## Acceso sencillo a Firebase en Windows
+
+Abre **Firebase-Acceso.bat** con doble clic. Elige **1** para comprobar la sesión en los dos proyectos de RealScan; si funciona, no necesitas volver a identificarte. La opción **2** renueva el acceso en el navegador y la **3** permite completar un código manual manteniendo abierta la misma ventana. Usa la cuenta que administra los proyectos. El asistente utiliza la herramienta oficial de Firebase, conserva la ventana para leer errores y no publica ni elimina archivos. No copies contraseñas al asistente ni reutilices códigos anteriores. Para comprobarlo sin menú: `Firebase-Acceso.bat -Action Check`.
+
+`autenticar_y_desplegar.bat` comprueba primero el acceso; si falla, ofrece el menú y vuelve a comprobarlo antes de continuar. Después conserva el flujo de verificación y publicación existente.
