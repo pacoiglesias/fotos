@@ -47,7 +47,7 @@
       if(f.type.startsWith('image/')){
         const edit=document.createElement('button');edit.type='button';edit.textContent='Revisar / girar';edit.disabled=sending||preparing;
         edit.onclick=()=>RealScanCapture.open({sourceDataUrl:f.originalDataUrl||f.dataUrl,photoMode:(f.captureMode||captureMode)==='photo',onAccept:async result=>{if(sending||preparing||!queue.includes(f))return;preparing=true;render();try{const blob=await(await fetch(result)).blob();const replacement=await prepare(new File([blob],f.name,{type:'image/jpeg'}));replacement.captureMode=f.captureMode;replacement.originalDataUrl=f.originalDataUrl||f.dataUrl;queue[queue.indexOf(f)]=replacement;render();}catch(e){report(e.message,true);}finally{preparing=false;render();}}});row.append(edit);
-        if(f.originalDataUrl){const restore=document.createElement('button');restore.type='button';restore.textContent='Original';restore.disabled=sending||preparing;restore.onclick=async()=>{if(sending||preparing)return;preparing=true;render();try{const original=f.originalDataUrl;const blob=await(await fetch(original)).blob();queue[index]=await prepare(new File([blob],f.name,{type:'image/jpeg'}));}catch(e){report(e.message,true);}finally{preparing=false;render();}};row.append(restore);}
+        if(f.originalDataUrl){const restore=document.createElement('button');restore.type='button';restore.textContent='Original';restore.disabled=sending||preparing;restore.onclick=async()=>{if(sending||preparing)return;preparing=true;render();try{const original=f.originalDataUrl;const blob=await(await fetch(original)).blob();const restored=await prepare(new File([blob],f.name,{type:'image/jpeg'}));restored.captureMode=f.captureMode;queue[queue.indexOf(f)]=restored;}catch(e){report(e.message,true);}finally{preparing=false;render();}};row.append(restore);}
       }
       for(const [label,step] of [['↑',-1],['↓',1]]){const move=document.createElement('button');move.type='button';move.textContent=label;move.setAttribute('aria-label',step<0?'Mover antes':'Mover después');move.disabled=sending||preparing||index+step<0||index+step>=queue.length;move.onclick=()=>{[queue[index],queue[index+step]]=[queue[index+step],queue[index]];render();};row.append(move);}
       row.append(name,b);
@@ -122,7 +122,7 @@
     if (!sessionReady || sending || preparing) return;
     RealScanCapture.open({photoMode:captureMode==='photo',onNative: () => $("cameraInput").click(), onAccept: async dataUrl => {
       const blob = await (await fetch(dataUrl)).blob();
-      await choose([new File([blob], "Escaneo.jpg", {type: "image/jpeg"})]);
+      await choose([new File([blob], captureMode==='photo'?"Foto.jpg":"Escaneo.jpg", {type: "image/jpeg"})]);
     }});
   };
   for(const [id,mode]of [['btnModeDocument','document'],['btnModePhoto','photo']])$(id).onclick=()=>{if(sending||preparing)return;captureMode=mode;render();};

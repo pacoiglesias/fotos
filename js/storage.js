@@ -58,6 +58,9 @@ function prepareWorkspaceForJobSwitch(options) {
     state.photoCopiesPersonB = 2;
     state._jobRevision = (state._jobRevision || 0) + 1;
     state._processingPending = 0;
+    state._previewDragging = false;
+    state._previewDragSide = null;
+    state._previewEditEnabled = false;
   }
 
   // 1. Limpieza rigurosa de todas las ranuras de imagen

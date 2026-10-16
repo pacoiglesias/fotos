@@ -66,40 +66,69 @@ function handleImageFile(event, side) {
   loadBlobIntoSide(file, side).catch(e=>showToast(e.message, 'error'));
 }
 
+function beginSlotRequest(side) {
+  const slot=state.images[side];if(!slot)throw Error('Destino no válido.');
+  slot._requestVersion=(slot._requestVersion||0)+1;slot._reading=true;
+  window.RealScanWorkflow?.update();
+  return {side,slot,version:slot._requestVersion,job:state._jobRevision||0};
+}
+function slotRequestCurrent(request) {
+  return request && request.job===(state._jobRevision||0) && state.images[request.side]===request.slot && request.slot._requestVersion===request.version;
+}
+function finishSlotRequest(request) {if(slotRequestCurrent(request)){request.slot._reading=false;window.RealScanWorkflow?.update();}}
+
 async function loadBlobIntoSide(blob, side) {
+  const request=beginSlotRequest(side);
   try {
     if (!blob || !blob.size || blob.size > 30*1024*1024) throw Error('Selecciona un archivo válido de hasta 30 MB.');
-    if (blob.type === 'application/pdf' || /\.pdf$/i.test(blob.name || '')) {await handlePdfFile(blob,side);return true;}
+    if (blob.type === 'application/pdf' || /\.pdf$/i.test(blob.name || '')) {await handlePdfFile(blob,side,null,request);return slotRequestCurrent(request);}
     if (/\.hei[cf]$/i.test(blob.name || '')) throw Error('Exporta la imagen HEIC como JPG o PNG desde tu teléfono.');
     const dataUrl = await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('No se pudo leer el archivo.'));reader.readAsDataURL(blob);});
-    await window.handleLoadedFile(side,dataUrl,blob.name);return true;
-  } catch(e) {showToast(e.message || 'No se pudo procesar el archivo.', 'error');return false;}
+    if(!slotRequestCurrent(request))return false;
+    const result=await window.handleLoadedFile(side,dataUrl,blob.name,null,{request});return !!result?.loaded;
+  } catch(e) {if(slotRequestCurrent(request))showToast(e.message || 'No se pudo procesar el archivo.', 'error');return false;}
+  finally {finishSlotRequest(request);}
 }
 
 // Función global para inyectar archivos cargados (usada por sincronización QR)
 window.handleLoadedFile = async function(side, dataUrl, name, onAssigned, options = {}) {
   if (!state.images[side] || typeof dataUrl !== 'string') throw Error('Destino o archivo no válido.');
+  const request=options.request||beginSlotRequest(side);
+  try {
+  if(!slotRequestCurrent(request))return {cancelled:true};
   const blob = await (await fetch(dataUrl)).blob();
-  if (blob.type === 'application/pdf') return handlePdfFile(new File([blob],name||'documento.pdf',{type:blob.type}),side,onAssigned);
+  if(!slotRequestCurrent(request))return {cancelled:true};
+  if (blob.type === 'application/pdf') return await handlePdfFile(new File([blob],name||'documento.pdf',{type:blob.type}),side,onAssigned,request);
   if (!blob.type.startsWith('image/')) throw Error('El archivo no es una imagen o PDF.');
   const probe = new Image();probe.src=dataUrl;await probe.decode();
-  processRawDataUrl(dataUrl,side,!!options.preserveFrame);
+  if(!slotRequestCurrent(request))return {cancelled:true};
+  if(probe.naturalWidth*probe.naturalHeight>60000000)throw Error('La imagen supera 60 megapíxeles. Reduce su resolución antes de cargarla.');
+  finishSlotRequest(request);
+  processRawDataUrl(dataUrl,side,!!options.preserveFrame,request);
   if (!await waitForProcessingComplete(15000)) throw Error('La imagen no terminó de procesarse.');
+  if(!slotRequestCurrent(request))return {cancelled:true};
   onAssigned?.(side);
   return {loaded:true};
+  } finally {finishSlotRequest(request);}
 };
 
-async function handlePdfFile(file, targetSide, onAssigned) {
-  if (!window.pdfjsLib) throw Error('No se pudo cargar el lector PDF. Recarga la aplicación.');
+async function handlePdfFile(file, targetSide, onAssigned, request = beginSlotRequest(targetSide)) {
+  let task=null, retained=false;
   try {
+    if (!window.pdfjsLib) throw Error('No se pudo cargar el lector PDF. Recarga la aplicación.');
     showToast('Procesando PDF escaneado...', 'info');
     const arrayBuffer = await file.arrayBuffer();
-    const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer, isEvalSupported: false, cMapUrl:'vendor/cmaps/', cMapPacked:true, standardFontDataUrl:'vendor/standard_fonts/', wasmUrl:'vendor/wasm/' }).promise;
-    if (pdfDoc.numPages > 40) {await pdfDoc.destroy();throw Error('El PDF supera 40 páginas. Divide el documento antes de cargarlo.');}
+    if(!slotRequestCurrent(request))return {cancelled:true};
+    task = pdfjsLib.getDocument({ data: arrayBuffer, isEvalSupported: false, cMapUrl:'vendor/cmaps/', cMapPacked:true, standardFontDataUrl:'vendor/standard_fonts/', wasmUrl:'vendor/wasm/' });
+    const pdfDoc = await task.promise;
+    if(!slotRequestCurrent(request))return {cancelled:true};
+    if (pdfDoc.numPages > 40) throw Error('El PDF supera 40 páginas. Divide el documento antes de cargarlo.');
 
     if (pdfDoc.numPages >= 2) {
       if (typeof openPdfPageSelector === 'function') {
-        await openPdfPageSelector(pdfDoc, targetSide, onAssigned);
+        finishSlotRequest(request);
+        retained=true;
+        await openPdfPageSelector(pdfDoc, targetSide, onAssigned,()=>task.destroy?.());
         return {pendingSelection:true};
       }
       const numToLoad = Math.min(pdfDoc.numPages, 4);
@@ -110,19 +139,25 @@ async function handlePdfFile(file, targetSide, onAssigned) {
       for (let i = 1; i <= numToLoad; i++) {
         const page = await pdfDoc.getPage(i);
         const dataUrl = await renderPdfPageToDataUrl(page);
-        processRawDataUrl(dataUrl, slots[i - 1]);
+        if(!slotRequestCurrent(request))return {cancelled:true};
+        processRawDataUrl(dataUrl, slots[i - 1],true,slots[i - 1]===targetSide?request:null);
       }
       showToast('¡PDF de ' + numToLoad + ' páginas detectado y cargado con éxito!', 'success');
     } else {
       const p = await pdfDoc.getPage(1);
-      processRawDataUrl(await renderPdfPageToDataUrl(p), targetSide);
+      const data=await renderPdfPageToDataUrl(p);
+      if(!slotRequestCurrent(request))return {cancelled:true};
+      finishSlotRequest(request);
+      processRawDataUrl(data, targetSide,true,request);
       if (!await waitForProcessingComplete()) throw Error('El PDF aún se está procesando.');
+      if(!slotRequestCurrent(request))return {cancelled:true};
       onAssigned?.(targetSide);
       showToast('¡PDF cargado en ' + getSlotFriendlyName(targetSide) + '!', 'success');
     }
   } catch (err) {
+    if(!slotRequestCurrent(request))return {cancelled:true};
     throw Error(err.message?.includes('40 páginas') ? err.message : 'No se pudo abrir el PDF. Comprueba que sea válido y no tenga contraseña.');
-  }
+  } finally {finishSlotRequest(request);if(!retained)await Promise.resolve(task?.destroy?.()).catch(()=>{});}
 }
 
 function getSafePdfViewport(page, requestedScale, maxDimension = 4000) {
@@ -282,60 +317,8 @@ function toggleAutoCrop(side) {
 }
 
 function autoFitSlotToCard(side) {
-  const imgData = state.images[side];
-  if (!imgData.originalSrc) {
-    showToast('Primero captura o sube una imagen en esta ranura.', 'warning');
-    return;
-  }
-
-  // 1. Si existe versión recortada pero no está activa, aplicarla
-  if (imgData.croppedSrc && !imgData.isCropApplied) {
-    imgData.isCropApplied = true;
-    imgData.originalSrc = imgData.croppedSrc;
-    imgData.fitMode = 'cover';
-    const btn = $('btnToggleCrop' + getSlotIdSuffix(side));
-    if (btn) btn.textContent = '✂️ Recorte Auto';
-    setZoomScale(side, 1.0);
-    imgData.panX = 0;
-    imgData.panY = 0;
-    renderProcessedImage(side);
-    showToast('¡Ajuste 1:1 aplicado! Documento ampliado para rellenar la ranura exacta.', 'success');
-  } else if (!imgData.croppedSrc && imgData.rawOriginalSrc) {
-    const tempImg = new Image();
-    tempImg.onload = function() {
-      const cropped = detectAndCropCard(tempImg);
-      if (cropped) {
-        imgData.croppedSrc = cropped;
-        imgData.isCropApplied = true;
-        imgData.originalSrc = cropped;
-        imgData.naturalWidth = tempImg.naturalWidth;
-        imgData.naturalHeight = tempImg.naturalHeight;
-        imgData.fitMode = 'cover';
-        setZoomScale(side, 1.0);
-      } else {
-        // Si la foto no tiene bordes detectables pero el DNI es pequeño, ampliarlo un paso (+25%)
-        let nextZ = parseFloat(((imgData.zoom || 1.0) + 0.25).toFixed(2));
-        setZoomScale(side, nextZ);
-      }
-      imgData.panX = 0;
-      imgData.panY = 0;
-      renderProcessedImage(side);
-      showToast('⚡ ¡DNI ajustado (' + (imgData.zoom || 1.0) + 'x) a tamaño real 1:1! Arrastra sobre la vista previa para centrarlo.', 'success');
-    };
-    tempImg.src = imgData.rawOriginalSrc;
-    return;
-  } else {
-    // Si ya está activo o recortado, ampliar incrementalmente (+25%) con cada clic para fotos pequeñas
-    let currentZ = imgData.zoom || 1.0;
-    if (currentZ >= 2.5) {
-      currentZ = 1.0;
-      showToast('🔄 Zoom restablecido a 1.0x (Tamaño estándar).', 'info');
-    } else {
-      currentZ = parseFloat((currentZ + 0.25).toFixed(2));
-      showToast('🔍 DNI ampliado a ' + currentZ + 'x para llenar la ranura real (85.6 × 54.0 mm).', 'success');
-    }
-    setZoomScale(side, currentZ);
-  }
+  // A repeatable operation: never crop the original or increase zoom per click.
+  setFitMode(side, 'fit');
 }
 
 let _lastContinuousSnapshotTime = 0;
@@ -535,7 +518,10 @@ function clearSlot(side) {
 /* ============================================================
    PROCESAMIENTO DE IMAGEN Y ROTACIÓN INTELIGENTE
    ============================================================ */
-function processRawDataUrl(rawSrc, side, preserveFrame = false) {
+function processRawDataUrl(rawSrc, side, preserveFrame = false, request = null) {
+  if(request && !slotRequestCurrent(request))return;
+  if(!request){state.images[side]._requestVersion=(state.images[side]._requestVersion||0)+1;state.images[side]._reading=false;}
+  request=request||{side,slot:state.images[side],version:state.images[side]._requestVersion,job:state._jobRevision||0};
   const startRevision = state._jobRevision || 0;
   const slot = state.images[side];
   const loadVersion = (slot._loadVersion || 0) + 1; slot._loadVersion = loadVersion;
@@ -543,11 +529,18 @@ function processRawDataUrl(rawSrc, side, preserveFrame = false) {
   state._processingPending = (state._processingPending || 0) + 1;
   const img = new Image();
   img.onload = function() {
-    if (startRevision !== (state._jobRevision || 0) || state.images[side] !== slot || slot._loadVersion !== loadVersion) {
+    if (!slotRequestCurrent(request) || startRevision !== (state._jobRevision || 0) || state.images[side] !== slot || slot._loadVersion !== loadVersion) {
       settle();
       return;
     }
     state.images[side].rawOriginalSrc = rawSrc;
+    state.images[side].croppedSrc = null;
+    state.images[side].cropData = null;
+    state.images[side].perspectiveQuad = null;
+    state.images[side].warpQuad = null;
+    state.images[side].isCropApplied = false;
+    window.RealScanEditor?.clearHistory?.(side);
+    if(getActiveSpec().noRetouch){state.images[side].filter='color';state.images[side].brightness=0;state.images[side].contrast=0;}
     state._previewEditEnabled = false;
     state._previewDragging = false;
     state._previewDragSide = null;
@@ -595,7 +588,7 @@ function processRawDataUrl(rawSrc, side, preserveFrame = false) {
 
       const ci = new Image();
       ci.onload = function() {
-        if (startRevision !== (state._jobRevision || 0) || state.images[side] !== slot || slot._loadVersion !== loadVersion) {
+        if (!slotRequestCurrent(request) || startRevision !== (state._jobRevision || 0) || state.images[side] !== slot || slot._loadVersion !== loadVersion) {
           settle();
           return;
         }
@@ -846,6 +839,8 @@ function updateSidePreview(side) {
   const tools = $('tools' + suffix);
   const badge = $('badgeStatus' + suffix);
   const btnDelete = $('btnDelete' + suffix);
+  const manualCrop=$('btnToggleCrop'+suffix);
+  if(manualCrop)manualCrop.classList.toggle('hidden',!imgData?.originalSrc);
   for(const [prefix,mode]of [['btnFitMode','fit'],['btnCoverMode','cover']]){
     const control=$(prefix+suffix);if(control){control.classList.toggle('is-active',imgData?.fitMode===mode);control.setAttribute('aria-pressed',String(imgData?.fitMode===mode));}
   }
@@ -949,37 +944,10 @@ document.addEventListener('paste', function(e) {
    AUTO-AJUSTE MÁGICO 1:1 (Luz, Nitidez, Encuadre y Milímetros)
    ============================================================ */
 function autoEnhanceActiveSlots() {
-  const activeSlots = ['front', 'back', 'page3', 'page4'].slice(0, state.documentPageCount || 2);
-  let enhancedCount = 0;
-
-  activeSlots.forEach(function(side) {
-    const imgData = state.images[side];
-    if (imgData && imgData.originalSrc) {
-      // 1. Resetear paneo y centrar milimétricamente
-      imgData.panX = 0;
-      imgData.panY = 0;
-      imgData.zoom = 1.0;
-      imgData.rotation = 0;
-      imgData.isCropApplied = true;
-
-      // 2. Si es documento oficial y está en color, aplicar escaneo de alta nitidez
-      if (state.activeCategory === 'docs' && imgData.filter === 'color') {
-        imgData.filter = 'scanner';
-      }
-
-      renderProcessedImage(side);
-      enhancedCount++;
-    }
-  });
-
-  if (enhancedCount > 0) {
-    showToast('✨ Auto-Ajuste Mágico 1:1 aplicado en ' + enhancedCount + ' cara(s): luz optimizada, textos nítidos y escala calibrada.', 'success');
-    if (typeof logActivity === 'function') {
-      logActivity('Auto-Ajuste Mágico 1:1', enhancedCount + ' caras optimizadas automáticamente');
-    }
-  } else {
-    showToast('Carga primero una foto o escaneo para aplicar el Auto-Ajuste Mágico.', 'warning');
-  }
+  const activeSlots = state.activeCategory==='photos' ? (state.mixTwoPhotos?['front','back']:['front']) : ['front','back','page3','page4'].slice(0,state.documentPageCount||2);
+  let count=0;
+  for(const side of activeSlots)if(state.images[side]?.originalSrc){setFitMode(side,'fit');count++;}
+  showToast(count ? count+' cara(s) centradas y encajadas. Se conservan orientación, color y original.' : 'Carga una imagen antes de encajar las caras.',count?'success':'warning');
 }
 
 function waitForProcessingComplete(timeoutMs) {
@@ -987,7 +955,7 @@ function waitForProcessingComplete(timeoutMs) {
   return new Promise(function(resolve) {
     const start = Date.now();
     function check() {
-      if ((!state._processingPending || state._processingPending <= 0) && !state._previewDragging) return resolve(true);
+      if ((!state._processingPending || state._processingPending <= 0) && !state._previewDragging && !Object.values(state.images||{}).some(image=>image?._reading)) return resolve(true);
       if (Date.now() - start > timeoutMs) {showToast('El procesamiento aún no termina. Espera y vuelve a intentar.', 'error');return resolve(false);}
       setTimeout(check, 30);
     }

@@ -51,6 +51,7 @@ function setMobileStep(step) {
   const stepNum = Number(step);
   if (![1,2,3].includes(stepNum)) return;
   document.body.dataset.mobileStep = String(stepNum);
+  window.RealScanWorkflow?.update();
   $$('.mobile-step-tab').forEach(function(tab) {
     const s = parseInt(tab.getAttribute('data-mob-step'), 10);
     const active = (s === stepNum);
@@ -103,12 +104,12 @@ let warpDragIndex = -1;
 function openPerspectiveWarpModal(side) {
   const slot=state.images[side], source=slot?.rawOriginalSrc||slot?.originalSrc;
   if(source&&window.RealScanCapture){
-    const job=state._jobRevision||0;
+    const job=state._jobRevision||0, request=slot._requestVersion||0;
     RealScanCapture.open({sourceDataUrl:source,photoMode:state.activeCategory==='photos',onError:e=>showToast(e.message,'error'),onAccept:async result=>{
-      if(job!==(state._jobRevision||0)||state.images[side]!==slot)return;
+      if(job!==(state._jobRevision||0)||state.images[side]!==slot||(slot._requestVersion||0)!==request)return;
       RealScanEditor.recordSnapshot(side,slot);
       const image=new Image();image.src=result;await image.decode();
-      if(job!==(state._jobRevision||0)||state.images[side]!==slot)return;
+      if(job!==(state._jobRevision||0)||state.images[side]!==slot||(slot._requestVersion||0)!==request)return;
       Object.assign(slot,{croppedSrc:result,originalSrc:result,isCropApplied:true,rotation:0,zoom:1,panX:0,panY:0,fitMode:'fit',naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight});
       renderProcessedImage(side);saveActiveDraft();showToast('Ajuste aplicado conservando el original.','success');
     }});return;
@@ -355,6 +356,11 @@ let cropImage = null;
 let cropBox = { x: 0, y: 0, width: 100, height: 100 }; // Coordenadas nativas
 let cropDragHandle = null; // 'all', 'tl', 'tr', 'br', 'bl'
 let isComparingCropOriginal = false;
+let cropSession = 0, cropContext = null;
+document.addEventListener('realscan:modal-closed',event=>{if(event.detail.id==='cropModal'){cropSession++;cropContext=null;cropImage=null;cropDragHandle=null;}});
+function cropContextCurrent(context) {
+  return context && context.session===cropSession && context.job===(state._jobRevision||0) && state.images[context.side]===context.slot && (context.slot._requestVersion||0)===context.request;
+}
 
 function openCropModal(side) {
   const imgData = state.images[side];
@@ -364,11 +370,14 @@ function openCropModal(side) {
     return;
   }
   activeCropSide = side;
+  const context={session:++cropSession,job:state._jobRevision||0,side,slot:imgData,request:imgData._requestVersion||0};
+  cropContext=context;
   const title = $('cropModalTitle');
   if (title) title.textContent = 'Recorte Manual — ' + getSlotFriendlyName(side);
 
   const img = new Image();
   img.onload = function() {
+    if(!cropContextCurrent(context))return;
     cropImage = img;
     isComparingCropOriginal = false;
     const w = img.naturalWidth;
@@ -450,11 +459,12 @@ function renderCropCanvas() {
     { x: bx, y: by + bh }
   ];
   handles.forEach(function(pt) {
+    const grip = 6 * (canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1);
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(pt.x - 6, pt.y - 6, 12, 12);
+    ctx.fillRect(pt.x - grip, pt.y - grip, grip * 2, grip * 2);
     ctx.strokeStyle = '#4f46e5';
     ctx.lineWidth = 2;
-    ctx.strokeRect(pt.x - 6, pt.y - 6, 12, 12);
+    ctx.strokeRect(pt.x - grip, pt.y - grip, grip * 2, grip * 2);
   });
   ctx.restore();
 }
@@ -462,6 +472,7 @@ function renderCropCanvas() {
 function initCropCanvasEvents() {
   const canvas = $('canvasCropInteractive');
   if (!canvas) return;
+  canvas.style.touchAction = 'none';
 
   let dragStartX = 0, dragStartY = 0;
   let initialBox = null;
@@ -479,7 +490,7 @@ function initCropCanvasEvents() {
     const by = cropBox.y * scale;
     const bw = cropBox.width * scale;
     const bh = cropBox.height * scale;
-    const d = 16;
+    const d = Math.max(16,22*canvas.width/Math.max(1,canvas.getBoundingClientRect().width));
 
     if (Math.hypot(cx - bx, cy - by) <= d) return 'tl';
     if (Math.hypot(cx - (bx + bw), cy - by) <= d) return 'tr';
@@ -494,6 +505,7 @@ function initCropCanvasEvents() {
     const { cx, cy, scale } = getCoords(e);
     cropDragHandle = getHandleAt(cx, cy, scale);
     if (cropDragHandle) {
+      e.preventDefault();
       dragStartX = cx / scale;
       dragStartY = cy / scale;
       initialBox = Object.assign({}, cropBox);
@@ -505,6 +517,7 @@ function initCropCanvasEvents() {
     if (!cropImage || isComparingCropOriginal) return;
     const { cx, cy, scale } = getCoords(e);
     if (cropDragHandle && initialBox) {
+      e.preventDefault();
       const curX = cx / scale;
       const curY = cy / scale;
       const dx = curX - dragStartX;
@@ -553,6 +566,7 @@ function initCropCanvasEvents() {
 
   canvas.addEventListener('pointerup', stopCropDrag);
   canvas.addEventListener('pointercancel', stopCropDrag);
+  canvas.addEventListener('lostpointercapture', stopCropDrag);
 
   // Botón Comparar con original
   if ($('btnCropCompareOriginal')) {
@@ -579,6 +593,7 @@ function initCropCanvasEvents() {
   if ($('btnApplyCrop')) {
     on($('btnApplyCrop'), 'click', function() {
       if (!cropImage || !window.RealScanEditor) return;
+      if(!cropContextCurrent(cropContext)){closeModal('cropModal');showToast('La imagen cambió. Abre Recorte de nuevo para revisar la actual.','warning');return;}
       const side = activeCropSide;
       window.RealScanEditor.recordSnapshot(side, state.images[side]);
 
@@ -590,6 +605,10 @@ function initCropCanvasEvents() {
         state.images[side].cropData = Object.assign({}, cropBox);
         state.images[side].panX = 0;
         state.images[side].panY = 0;
+        state.images[side].zoom = 1;
+        state.images[side].fitMode = 'fit';
+        state.images[side].naturalWidth = Math.round(cropBox.width);
+        state.images[side].naturalHeight = Math.round(cropBox.height);
         closeModal('cropModal');
         renderProcessedImage(side);
         showToast('✂️ Recorte aplicado con éxito.', 'success');
@@ -606,80 +625,46 @@ function initCropCanvasEvents() {
 let activePdfDoc = null;
 let activePdfTargetSide = 'front';
 
-async function openPdfPageSelector(pdfDoc, targetSide, onAssigned) {
-  activePdfDoc = pdfDoc;
-  activePdfTargetSide = targetSide || 'front';
-  const grid = $('pdfThumbnailsGrid');
-  const sub = $('pdfPageSelectorSubtitle');
-  if (!grid || !pdfDoc) return;
-
-  grid.innerHTML = '<div class="col-span-full py-8 text-center text-xs text-slate-400">Generando miniaturas de las páginas del PDF...</div>';
-  if (sub) sub.textContent = 'El archivo PDF contiene ' + pdfDoc.numPages + ' páginas. Asigna las que necesites.';
-  openModal('pdfPageSelectorModal');
-
-  grid.innerHTML = '';
-  for (let i = 1; i <= pdfDoc.numPages; i++) {
-    const pageNum = i;
-    const page = await pdfDoc.getPage(pageNum);
-    const viewport = getSafePdfViewport(page, 0.6, 600);
-    const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    const ctx = canvas.getContext('2d');
-    await page.render({ canvasContext: ctx, viewport }).promise;
-
-    const card = document.createElement('div');
-    card.className = 'p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 flex flex-col items-center gap-2 shadow-xs';
-
-    const pLabel = document.createElement('span');
-    pLabel.className = 'font-bold font-mono text-[11px] text-slate-700 dark:text-slate-300';
-    pLabel.textContent = 'Página ' + pageNum;
-
-    canvas.className = 'rounded border border-slate-200 dark:border-slate-700 max-h-[140px] w-auto shadow-xs';
-
-    const btnGroup = document.createElement('div');
-    btnGroup.className = 'flex flex-wrap items-center justify-center gap-1 w-full pt-1';
-
-    const btnFront = document.createElement('button');
-    btnFront.type = 'button';
-    btnFront.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100';
-    btnFront.textContent = 'Frente';
-    btnFront.onclick = async function() {
-      const fullPage = await pdfDoc.getPage(pageNum);
-      const dataUrl = await renderPdfPageToDataUrl(fullPage);
-      processRawDataUrl(dataUrl, 'front');
-      if (!await waitForProcessingComplete()) return;
-      if (onAssigned) onAssigned('front');
-      closeModal('pdfPageSelectorModal');
-      showToast('Página ' + pageNum + ' asignada al Frente.', 'success');
-    };
-
-    const btnBack = document.createElement('button');
-    btnBack.type = 'button';
-    btnBack.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100';
-    btnBack.textContent = 'Reverso';
-    btnBack.onclick = async function() {
-      const fullPage = await pdfDoc.getPage(pageNum);
-      const dataUrl = await renderPdfPageToDataUrl(fullPage);
-      processRawDataUrl(dataUrl, 'back');
-      if (!await waitForProcessingComplete()) return;
-      if (onAssigned) onAssigned('back');
-      closeModal('pdfPageSelectorModal');
-      showToast('Página ' + pageNum + ' asignada al Reverso.', 'success');
-    };
-
-    btnGroup.appendChild(btnFront);
-    btnGroup.appendChild(btnBack);
-    if (state.activeCategory !== 'photos') for (const [side, count] of [['page3',3],['page4',4]]) {
-      const button = document.createElement('button');button.type='button';button.className=btnFront.className;button.textContent='Página '+count;
-      button.onclick=async function(){try{const full=await pdfDoc.getPage(pageNum);const data=await renderPdfPageToDataUrl(full);setDocumentPages(Math.max(state.documentPageCount||2,count));processRawDataUrl(data,side);if(!await waitForProcessingComplete())return;onAssigned?.(side);closeModal('pdfPageSelectorModal');showToast('Página '+pageNum+' asignada a Página '+count,'success');}catch(e){showToast('No se pudo cargar esta página.','error');}};btnGroup.appendChild(button);
-    }
-
-    card.appendChild(pLabel);
-    card.appendChild(canvas);
-    card.appendChild(btnGroup);
-    grid.appendChild(card);
+let pdfSelectorRevision=0, pdfSelectorRelease=null;
+document.addEventListener('realscan:modal-closed',event=>{if(event.detail.id==='pdfPageSelectorModal'){pdfSelectorRevision++;const release=pdfSelectorRelease;pdfSelectorRelease=null;activePdfDoc=null;Promise.resolve(release?.()).catch(()=>{});}});
+async function openPdfPageSelector(pdfDoc,targetSide,onAssigned,release) {
+  const previous=pdfSelectorRelease;pdfSelectorRelease=null;Promise.resolve(previous?.()).catch(()=>{});
+  const revision=++pdfSelectorRevision,job=state._jobRevision||0;
+  activePdfDoc=pdfDoc;activePdfTargetSide=targetSide||'front';pdfSelectorRelease=release||null;
+  const grid=$('pdfThumbnailsGrid'),sub=$('pdfPageSelectorSubtitle');
+  if(!grid||!pdfDoc){Promise.resolve(release?.()).catch(()=>{});return;}
+  grid.replaceChildren();if(sub)sub.textContent='El PDF contiene '+pdfDoc.numPages+' páginas. Elige una página y su destino.';
+  openModal('pdfPageSelectorModal');let selecting=false;
+  const current=()=>revision===pdfSelectorRevision&&job===(state._jobRevision||0)&&!$('pdfPageSelectorModal').classList.contains('hidden');
+  async function assign(pageNum,side,count) {
+    if(selecting||!current())return;selecting=true;
+    grid.querySelectorAll('button').forEach(b=>b.disabled=true);
+    if(count)setDocumentPages(Math.max(state.documentPageCount||2,count));
+    const request=beginSlotRequest(side);
+    try{
+      const full=await pdfDoc.getPage(pageNum),data=await renderPdfPageToDataUrl(full);
+      if(!current()||!slotRequestCurrent(request))return;
+      finishSlotRequest(request);processRawDataUrl(data,side,true,request);
+      if(!await waitForProcessingComplete()||!current()||!slotRequestCurrent(request))return;
+      onAssigned?.(side);closeModal('pdfPageSelectorModal');showToast('Página '+pageNum+' asignada a '+getSlotFriendlyName(side)+'.','success');
+    }catch(error){if(current())showToast('No se pudo cargar esta página. Reintenta o elige otra.','error');}
+    finally{finishSlotRequest(request);selecting=false;if(current())grid.querySelectorAll('button').forEach(b=>b.disabled=false);}
   }
+  try{
+    for(let pageNum=1;pageNum<=pdfDoc.numPages;pageNum++){
+      if(!current())return;
+      const page=await pdfDoc.getPage(pageNum),viewport=getSafePdfViewport(page,.6,600),canvas=document.createElement('canvas');
+      canvas.width=viewport.width;canvas.height=viewport.height;
+      await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;if(!current())return;
+      const card=document.createElement('div');card.className='p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center gap-2';
+      const label=document.createElement('span');label.textContent='Página '+pageNum;label.className='text-xs font-bold';
+      canvas.className='rounded max-h-[140px] w-auto';const buttons=document.createElement('div');buttons.className='flex flex-wrap gap-2';
+      const destinations=[['front',state.activeCategory==='photos'?'Foto A':'Frente'],['back',state.activeCategory==='photos'?'Foto B':'Reverso']];
+      if(state.activeCategory!=='photos')destinations.push(['page3','Página 3',3],['page4','Página 4',4]);
+      for(const [side,name,count]of destinations){const button=document.createElement('button');button.type='button';button.textContent=name;button.className='px-3 py-2 rounded-lg text-xs border border-indigo-200 bg-indigo-50 text-indigo-800';button.disabled=selecting;button.onclick=()=>assign(pageNum,side,count);buttons.append(button);}
+      card.append(label,canvas,buttons);grid.append(card);
+    }
+  }catch(error){if(current()){showToast('No se pudieron leer las miniaturas del PDF. Prueba otro archivo.','error');closeModal('pdfPageSelectorModal');}}
 }
 
 /* ============================================================
@@ -1636,13 +1621,8 @@ function updatePreviewAnnotations() {
   // 4. Header de la hoja
   const sheetTitle = $('previewSheetTitle');
   if (sheetTitle) {
-    if (!isLabels && !isRuler && !isCutMarks) {
-      sheetTitle.innerHTML = '<span class="text-amber-600 dark:text-amber-400 font-bold">🏛️ Hoja 100% Limpia</span> <span class="text-slate-400 font-normal text-[7.5px]">(Trámite Oficial)</span>';
-    } else if (hasCustomTitle) {
-      sheetTitle.textContent = state.documentCustomTitle;
-    } else {
-      sheetTitle.textContent = (state.activeCategory === 'photos') ? 'Planilla de Fotos Oficiales' : (spec.shortName + ' — Escala 1:1 Real');
-    }
+    const annotationLayout = RealScanLayout.computeDocumentLayout(state);
+    sheetTitle.textContent = annotationLayout.pages[state.activePreviewPageIndex || 0]?.sheetTitle || '';
   }
 
   // 5. Encabezados de ranuras individuales en la vista previa
@@ -1713,6 +1693,7 @@ function prevPreviewPage() {
 }
 
 function updateUI() {
+  $('docsModeNote')?.classList.toggle('hidden',state.activeCategory === 'photos');
   const editPreview = !!state._previewEditEnabled;
   if ($('btnPreviewEdit')) {
     $('btnPreviewEdit').setAttribute('aria-pressed',String(editPreview));
@@ -1945,18 +1926,21 @@ function setPaperSize(paperId, silent) {
 }
 
 function updatePreFlightBar() {
+  const work = window.RealScanWorkflow?.describe();
+  window.RealScanWorkflow?.update(work?.layout);
   const docsEl = $('preFlightDocsStatus');
   const scaleEl = $('preFlightScaleStatus');
   const sheetEl = $('preFlightSheetStatus');
   if (!docsEl || !scaleEl || !sheetEl) return;
 
   const spec = getActiveSpec();
-  const pCount = (state.activeCategory === 'photos') ? 1 : (state.documentPageCount || 2);
+  const pCount = work ? work.wanted.length : ((state.activeCategory === 'photos') ? 1 : (state.documentPageCount || 2));
   let loaded = 0;
   if (state.images.front && state.images.front.processedDataUrl) loaded++;
   if (pCount >= 2 && state.images.back && state.images.back.processedDataUrl) loaded++;
   if (pCount >= 3 && state.images.page3 && state.images.page3.processedDataUrl) loaded++;
   if (pCount >= 4 && state.images.page4 && state.images.page4.processedDataUrl) loaded++;
+  if (work) loaded = work.wanted.length - work.missing.length;
 
   if (loaded >= pCount) {
     docsEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span class="font-bold text-emerald-700 dark:text-emerald-300">${loaded}/${pCount} caras listas</span>`;
@@ -1966,10 +1950,10 @@ function updatePreFlightBar() {
     docsEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span><span class="text-slate-500 dark:text-slate-400">0/${pCount} cargadas</span>`;
   }
 
-  scaleEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-500"></span><span class="font-bold text-indigo-700 dark:text-indigo-300">1:1 Real (300 DPI)</span>`;
+  scaleEl.textContent = (Number(state.outputScalePercent) || 100) === 100 ? '100 % · Tamaño real en el PDF' : state.outputScalePercent + ' % · Escala modificada';
 
-  if (!state.includeRulerFooter && !state.includeDocLabels) {
-    sheetEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="font-bold text-emerald-700 dark:text-emerald-300">🏛️ Trámite Oficial (Limpia)</span>`;
+  if (work ? work.layout.isCleanSheet : (!state.includeRulerFooter && !state.includeDocLabels && !state.includeCutMarks && !state.documentCustomTitle)) {
+    sheetEl.textContent = 'Hoja limpia · Sin guías ni anotaciones';
   } else if (!state.includeRulerFooter) {
     sheetEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-500"></span><span class="font-bold text-indigo-700 dark:text-indigo-300">📄 Sin Regla al Pie</span>`;
   } else {
@@ -2440,9 +2424,7 @@ function bindEvents() {
   $$('.rotate-btn').forEach(function(b) {
     on(b, 'click', function(){ if (typeof rotateImage === 'function') rotateImage(b.getAttribute('data-rotate')); });
   });
-  $$('[data-crop]').forEach(function(b) {
-    on(b, 'click', function(){ if (typeof toggleAutoCrop === 'function') toggleAutoCrop(b.getAttribute('data-crop')); });
-  });
+  // Recorte has one action: open the editor. Cancelling must not toggle the image.
 
   // Auto-Fit / Rellenar Ranura 1:1
   $$('[data-autofit]').forEach(function(b) {

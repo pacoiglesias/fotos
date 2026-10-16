@@ -53,7 +53,9 @@
     const includeRuler = (state.includeRulerFooter !== false);
     const includeLabels = (state.includeDocLabels !== false);
     const includeCutMarks = (state.includeCutMarks !== false);
-    const isCleanSheet = (!includeRuler && !includeLabels && !includeCutMarks);
+    const customTitle = (state.documentCustomTitle || '').trim();
+    const includeSheetTitle = includeLabels || !!customTitle;
+    const isCleanSheet = (!includeRuler && !includeLabels && !includeCutMarks && !customTitle);
 
     // Márgenes y límites físicos de seguridad
     const marginSide = 12; // 12 mm margen lateral mínimo
@@ -80,8 +82,15 @@
     };
 
     function finalizePlan(p) {
+      function describeScale(text) {
+        return outputScale === 1 ? text : text.replace(/escala 1:1(?: real)?/gi,'escala ' + Math.round(outputScale * 100) + ' %').replace(/a tama[ñÑ]o real 1:1/gi,'a escala ' + Math.round(outputScale * 100) + ' %');
+      }
+      p.summary = describeScale(p.summary);
+      p.warnings = p.warnings.map(describeScale);
       p.pages.forEach(function(page) {
         if (!page.paper) page.paper = paper;
+        if (!includeSheetTitle) page.sheetTitle = '';
+        else if (!customTitle) page.sheetTitle = describeScale(page.sheetTitle || '');
       });
       const geom = validateDocumentGeometry(p, spec, paper);
       if (geom.errors && geom.errors.length > 0) {
@@ -153,10 +162,10 @@
         const pageObj = {
           pageIndex: pIdx,
           pageNumber: pIdx + 1,
-          sheetTitle: (totalPages > 1) ? ('Planilla de Fotos Oficiales • Hoja ' + (pIdx + 1) + ' de ' + totalPages) : 'Planilla de Fotos Oficiales',
+          sheetTitle: (customTitle || 'Planilla de Fotos Oficiales') + (totalPages > 1 ? ' • Hoja ' + (pIdx + 1) + ' de ' + totalPages : ''),
           hasRuler: includeRuler,
           rulerX: (paper.widthMm - 50) / 2,
-          rulerY: paper.heightMm - 24,
+          rulerY: paper.heightMm - 35,
           placements: []
         };
 
@@ -241,7 +250,7 @@
         sheetTitle: (state.documentCustomTitle || '').trim() || 'COPIA DOBLE OFICIAL (2 JUEGOS A TAMAÑO REAL 1:1)',
         hasRuler: includeRuler,
         rulerX: (paper.widthMm - 50) / 2,
-        rulerY: paper.heightMm - 24,
+        rulerY: paper.heightMm - 35,
         placements: []
       };
       plan.pages.push(currentPage);
@@ -262,7 +271,7 @@
             sheetTitle: ((state.documentCustomTitle || '').trim() || 'COPIA DOBLE OFICIAL') + ' • Hoja ' + (nextIdx + 1),
             hasRuler: includeRuler,
             rulerX: (paper.widthMm - 50) / 2,
-            rulerY: paper.heightMm - 24,
+            rulerY: paper.heightMm - 35,
             placements: []
           };
           plan.pages.push(currentPage);
@@ -318,7 +327,7 @@
           sheetTitle: pageTitle,
           hasRuler: includeRuler,
           rulerX: (paper.widthMm - 50) / 2,
-          rulerY: paper.heightMm - 24,
+          rulerY: paper.heightMm - 35,
           placements: [{
             slot: slotObj.key,
             globalIndex: idx,
@@ -355,7 +364,7 @@
         sheetTitle: (state.documentCustomTitle || '').trim() || (spec.shortName + ' — Escala 1:1 Real'),
         hasRuler: includeRuler,
         rulerX: (paper.widthMm - 50) / 2,
-        rulerY: paper.heightMm - 24,
+        rulerY: paper.heightMm - 35,
         placements: [{
           slot: 'front',
           globalIndex: 0,
@@ -407,7 +416,7 @@
         sheetTitle: pageTitle,
         hasRuler: includeRuler,
         rulerX: (paper.widthMm - 50) / 2,
-        rulerY: paper.heightMm - 24,
+        rulerY: paper.heightMm - 35,
         placements: []
       };
 

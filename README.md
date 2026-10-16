@@ -122,3 +122,7 @@ Guías coherentes en pantalla, PDF e imagen; ajuste completo centrado sin estira
 ## Captura y flujo móvil 3.7.0
 
 Vista previa bloqueada por defecto, ajuste táctil explícito, fotografías completas sin giro automático, modo Documento/Fotografía en recepción QR y cámara renovada con revisión de calidad y reintento de enfoque cuando el navegador lo admite. Diagnóstico descargable también desde el móvil. [Auditoría del flujo móvil](audit/FLUJO_MOVIL_Y_CAPTURA_3_7_0.md).
+
+## Auditoría funcional 3.7.1
+
+Guía del trabajo en tres pasos con acciones contextuales, avisos de escala y cara pendiente, navegación accesible y textos más claros. Recorte sin acciones duplicadas, ajuste repetible, protección de archivos y PDF pendientes, restauración móvil y encabezados coherentes entre vista previa y exportación. [Hallazgos y correcciones](audit/AUDITORIA_FUNCIONAL_3_7_1.md).

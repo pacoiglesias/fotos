@@ -73,6 +73,7 @@
           },
           {preserveFrame:true},
         );
+        if(result?.cancelled || result?.loaded===false)return false;
         if (result?.pendingSelection)
           global.showToast?.(
             "Selecciona la página del PDF y su destino.",
