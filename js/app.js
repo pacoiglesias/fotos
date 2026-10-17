@@ -637,7 +637,9 @@ async function openPdfPageSelector(pdfDoc,targetSide,onAssigned,release) {
   openModal('pdfPageSelectorModal');let selecting=false;
   const current=()=>revision===pdfSelectorRevision&&job===(state._jobRevision||0)&&!$('pdfPageSelectorModal').classList.contains('hidden');
   async function assign(pageNum,side,count) {
-    if(selecting||!current())return;selecting=true;
+    if(selecting||!current())return;
+    if(state.activeCategory==='photos'&&!RealScanLayout.computeDocumentLayout(state).pages.some(page=>page.placements.some(piece=>piece.slot===side))){showToast('Ese destino no forma parte de la planilla. Revisa las personas y sus copias.','warning');return;}
+    selecting=true;
     grid.querySelectorAll('button').forEach(b=>b.disabled=true);
     if(count)setDocumentPages(Math.max(state.documentPageCount||2,count));
     const request=beginSlotRequest(side);
@@ -659,7 +661,8 @@ async function openPdfPageSelector(pdfDoc,targetSide,onAssigned,release) {
       const card=document.createElement('div');card.className='p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center gap-2';
       const label=document.createElement('span');label.textContent='Página '+pageNum;label.className='text-xs font-bold';
       canvas.className='rounded max-h-[140px] w-auto';const buttons=document.createElement('div');buttons.className='flex flex-wrap gap-2';
-      const destinations=[['front',state.activeCategory==='photos'?'Foto A':'Frente'],['back',state.activeCategory==='photos'?'Foto B':'Reverso']];
+      const photoSlots=new Set(RealScanLayout.computeDocumentLayout(state).pages.flatMap(page=>page.placements.map(piece=>piece.slot)));
+      const destinations=state.activeCategory==='photos'?[['front',state.mixTwoPhotos?'Foto A':'Usar fotografía'],['back','Foto B']].filter(([side])=>photoSlots.has(side)):[['front','Frente'],['back','Reverso',2]];
       if(state.activeCategory!=='photos')destinations.push(['page3','Página 3',3],['page4','Página 4',4]);
       for(const [side,name,count]of destinations){const button=document.createElement('button');button.type='button';button.textContent=name;button.className='px-3 py-2 rounded-lg text-xs border border-indigo-200 bg-indigo-50 text-indigo-800';button.disabled=selecting;button.onclick=()=>assign(pageNum,side,count);buttons.append(button);}
       card.append(label,canvas,buttons);grid.append(card);

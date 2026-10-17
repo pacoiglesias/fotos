@@ -63,11 +63,12 @@
       savePreferences();
       updateUI();
       closeModal('newServiceModal');
+      const firstSide=RealScanWorkflow.describe().wanted[0] || 'front';
       setMobileStep(source === 'choose' ? 1 : 2);
       window.RealScanDiagnostics?.record('counter.new-service','info',{service:kind,source,output,keepDelivery});
       if (source === 'qr' && followSource) $('btnOpenReceiveModal').click();
-      else if (source === 'camera' && followSource) document.querySelector('[data-camera="front"]')?.click();
-      else if (source === 'file') { setMobileStep(2); $('dropzoneFront').scrollIntoView({block:'start'}); $('dropzoneFront').focus(); showToast('Elige «Archivo» en la zona de carga. También puedes arrastrar o pegar una imagen.','info'); }
+      else if (source === 'camera' && followSource) document.querySelector('[data-camera="'+firstSide+'"]')?.click();
+      else if (source === 'file') { setMobileStep(2); const target=$({front:'dropzoneFront',back:'cardBackContainer',page3:'cardPage3Container',page4:'cardPage4Container'}[firstSide]);target.tabIndex=-1;target.scrollIntoView({block:'start'});target.focus({preventScroll:true});showToast('Elige «Archivo» en la zona de carga. También puedes arrastrar o pegar una imagen.','info'); }
       else showToast('Nuevo servicio preparado. Elige el formato y continúa con la captura.','success');
     } catch(e) { $('newServiceError').textContent='No se pudo preparar el servicio. '+e.message; }
     finally {starting=false;$('newServiceStart').disabled=false;}
