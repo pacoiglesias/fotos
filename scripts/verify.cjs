@@ -8,6 +8,7 @@ try {
     "photo-layout-regression",
     "mobile-workflow-regression",
     "functional-audit-regression",
+    "counter-regression",
     "navigation-regression",
     "capture-regression",
     "practical-regression",

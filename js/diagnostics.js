@@ -4,14 +4,19 @@
   const KEY = 'realscan_diagnostics_v1', MAX = 200, TTL = 14 * 86400000;
   let events = [], persistent = true, build = null;
   const staticIds = new Set(Array.from(document.querySelectorAll('[id]')).map(element=>element.id));
+  for(const id of ['counterStart','counterDeliver','counterMore','counterShowDelivery','newServiceStart','newServiceModal','counterMoreModal','pendingDeliveryModal','pendingDeliveryRevoke'])staticIds.add(id);
   const session = global.crypto?.randomUUID?.() || String(Date.now());
   const allowedEvents = new Set(['draft.failed','camera.open','camera.close','camera.failed','camera.corrected','camera.full_frame','app.start','app.ready','ui.click','ui.feedback','modal.open','modal.close','modal.recover','receive.start','receive.ready','receive.failed','receive.cancelled','delivery.start','delivery.ready','delivery.failed','delivery.cancelled','pwa.request','pwa.accepted','pwa.dismissed','pwa.failed','pwa.fallback','pwa.installed','pwa.worker_failed','runtime.error','runtime.rejection','runtime.resource_failed','network.online','network.offline']);
-  for (const event of ['layout.guides','image.fit','output.pdf','output.raster','camera.focus','camera.ready','camera.quality']) allowedEvents.add(event);
+  for (const event of ['layout.guides','image.fit','output.pdf','output.raster','camera.focus','camera.ready','camera.quality','counter.new-service']) allowedEvents.add(event);
   function cleanDetails(details) {
     const result = {};
     if (!details || typeof details !== 'object') return result;
     for (const key of ['guides','ruler','labels','supported','applied','hasEdges']) if (typeof details[key] === 'boolean') result[key] = details[key];
     if (['fit','cover'].includes(details.fitMode)) result.fitMode = details.fitMode;
+    if (['id','photos','multi','custom','repeat'].includes(details.service)) result.service=details.service;
+    if (['choose','qr','camera','file'].includes(details.source)) result.source=details.source;
+    if (['print','digital','both'].includes(details.output)) result.output=details.output;
+    if (typeof details.keepDelivery==='boolean') result.keepDelivery=details.keepDelivery;
     for (const key of ['depth','line','column','durationMs','count','widthPx','heightPx','brightness','sharpness']) if (Number.isFinite(details[key])) result[key] = Math.max(0, Math.min(100000000, Math.round(details[key])));
     for (const key of ['modal','control']) {
       const value = details[key], element = typeof value === 'string' ? document.getElementById(value) : null;
@@ -71,7 +76,7 @@
     if (summary) summary.textContent = events.length + ' eventos · ' + events.filter(e => e.level === 'error').length + ' errores · ' + (navigator.onLine ? 'Con conexión' : 'Sin conexión') + (persistent ? '' : ' · Registro temporal: almacenamiento no disponible');
     if (list) {
       list.replaceChildren();
-      events.slice(-12).reverse().forEach(e => { const row = document.createElement('p'); row.textContent = new Date(e.at).toLocaleTimeString() + ' · ' + ({info:'Información',warning:'Aviso',error:'Error'}[e.level]) + ' · ' + (labels[e.event] || {'layout.guides':'Guías de corte cambiadas','image.fit':'Ajuste proporcional cambiado','output.pdf':'Hoja PDF preparada','output.raster':'Hoja de imagen preparada'}[e.event] || 'Evento del sistema'); list.appendChild(row); });
+      events.slice(-12).reverse().forEach(e => { const row = document.createElement('p'); row.textContent = new Date(e.at).toLocaleTimeString() + ' · ' + ({info:'Información',warning:'Aviso',error:'Error'}[e.level]) + ' · ' + (labels[e.event] || {'counter.new-service':'Nuevo servicio preparado','layout.guides':'Guías de corte cambiadas','image.fit':'Ajuste proporcional cambiado','output.pdf':'Hoja PDF preparada','output.raster':'Hoja de imagen preparada'}[e.event] || 'Evento del sistema'); list.appendChild(row); });
     }
   }
   function exportReport() {

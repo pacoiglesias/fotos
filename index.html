@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>RealScan — Impresión de Documentos a Tamaño Real (1:1) en 1 Hoja A4</title>
+  <title>RealScan — Fotos, documentos y entrega digital</title>
   <script>
     // Update independently of app.js so an old broken cached script can recover.
     if ('serviceWorker' in navigator) {
@@ -77,7 +77,7 @@
           <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.7.1</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.8.0</span>
           </div>
           <p class="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1 mt-0.5">
             <span class="hidden sm:inline">Desarrollado por</span>
@@ -242,9 +242,9 @@
       <section class="bg-white dark:bg-slate-900 rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
         <div class="flex items-center justify-between mb-2.5">
           <div class="flex items-center gap-2">
-            <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Acceso Rápido</span>
+            <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Formato del servicio</span>
             <span class="text-slate-300 dark:text-slate-700">•</span>
-            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">¿Qué deseas imprimir hoy?</span>
+            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">Ajusta el trabajo actual</span>
           </div>
           <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono hidden sm:inline">Configuración en 1 clic</span>
         </div>
@@ -346,7 +346,7 @@
                 <p class="title-main font-bold text-xs sm:text-sm text-slate-900 dark:text-white">2 Caras en 1 Hoja</p>
                 <span class="text-[8.5px] font-bold uppercase tracking-wider bg-emerald-600 text-white px-1.5 py-0.2 rounded">Trámites</span>
               </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Anverso + Reverso juntos en la misma hoja A4</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Frente y reverso juntos en la misma hoja</p>
             </div>
             <span class="active-badge text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
@@ -405,13 +405,13 @@
 
       <div id="docsModeNote" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
         <span id="docsModeNoteText" class="text-slate-600 dark:text-slate-300">
-          💡 <strong>Opciones para DNI y Documentos:</strong> Puedes colocar <strong>Anverso y Reverso en 1 sola hoja A4</strong> (ideal para trámites y bancos) o en <strong>Hojas Separadas</strong> si deseas imprimir frente y vuelta por la impresora.
+          💡 <strong>Opciones para DNI y Documentos:</strong> Puedes colocar <strong>Anverso y Reverso en una misma hoja</strong> (ideal para trámites y bancos) o en <strong>Hojas Separadas</strong> si deseas imprimir frente y vuelta por la impresora.
         </span>
       </div>
 
       <div id="step1PhotosMode" class="hidden space-y-3">
         <div class="flex items-center justify-between">
-          <p class="text-xs text-slate-500 dark:text-slate-400">¿Cuántas fotos deseas imprimir en la hoja A4?</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Elige cuántas fotografías necesita el cliente.</p>
           <span id="badgeMaxPhotosFit" class="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
             Caben hasta 36 fotos
           </span>
@@ -427,7 +427,7 @@
             <span class="text-base" aria-hidden="true">⭐</span>
             <div class="text-left">
               <p class="font-bold text-xs">Llenar Hoja al Máximo (Sin Desperdiciar Papel)</p>
-              <p class="text-[10px] text-emerald-700 dark:text-emerald-300 font-normal">Aprovecha el 100% de la hoja A4 con fotos perfectamente alineadas</p>
+              <p class="text-[10px] text-emerald-700 dark:text-emerald-300 font-normal">Distribuye las fotos con proporciones y márgenes de corte</p>
             </div>
           </div>
           <span id="badgeFillA4Count" class="text-xs font-mono font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-md shrink-0">
@@ -686,7 +686,7 @@
         </div>
 
         <div id="passportOptionsNote" class="p-2 rounded-lg bg-indigo-100/60 dark:bg-indigo-900/40 text-[11px] text-indigo-900 dark:text-indigo-200">
-          💡 La libreta abierta ya incluye la doble página en una sola toma. Se imprime centrada en 1 hoja A4 a escala 1:1 real.
+          💡 La libreta abierta ya incluye la doble página en una sola toma. Se imprime centrada en la hoja seleccionada a escala 1:1 real.
         </div>
       </div>
 
@@ -1848,14 +1848,14 @@
             <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
             </svg>
-            <span>Descargar PDF A4 (1:1)</span>
+            <span>Descargar hoja PDF</span>
           </button>
 
           <button type="button" id="btnDownloadImage" class="w-full py-2.5 px-3 rounded-xl border-2 border-indigo-400 dark:border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-950 dark:text-indigo-200 font-semibold text-xs transition-all flex items-center justify-center gap-2">
             <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
-            <span>🖼️ Descargar Imagen A4 (300 DPI)</span>
+            <span>🖼️ Descargar hoja de imagen (300 DPI)</span>
           </button>
         </div>
       </div>
@@ -1936,7 +1936,7 @@
     <footer class="text-center text-xs text-slate-500 space-y-2.5 py-6 border-t border-slate-200 dark:border-slate-800 mt-8">
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.7.1</span>
+        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.8.0</span>
         <span class="text-slate-300 dark:text-slate-600">•</span>
         <span class="font-medium">Desarrollado por <strong class="font-bold text-slate-900 dark:text-white">Paco Iglesias</strong></span>
       </div>
@@ -2140,7 +2140,7 @@
             ⚙️
           </div>
           <div>
-            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.7.1</span></h3>
+            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.8.0</span></h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400">Control de acceso y bitácora de auditoría</p>
           </div>
         </div>
@@ -2823,7 +2823,7 @@
       <span class="hidden sm:inline">Imprimir</span>
     </button>
 
-    <button type="button" id="hudBtnDownloadPdf" class="px-2.5 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-all flex items-center gap-1 border border-slate-700" title="Descargar archivo PDF A4 listo para imprimir">
+    <button type="button" id="hudBtnDownloadPdf" class="px-2.5 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-all flex items-center gap-1 border border-slate-700" title="Descargar PDF con el papel y la escala seleccionados">
       <span>📄</span>
       <span class="hidden sm:inline">PDF</span>
     </button>
@@ -2867,6 +2867,7 @@
   <script src="js/output-review.js"></script>
   <script src="js/receive-workflow.js"></script>
   <script src="js/workflow-guide.js"></script>
+  <script src="js/counter-flow.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

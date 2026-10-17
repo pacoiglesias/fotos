@@ -70,5 +70,5 @@
   });
   window.addEventListener('online', () => update());
   window.addEventListener('offline', () => update());
-  window.RealScanWorkflow = {describe,update};
+  window.RealScanWorkflow = {describe,update,moveTo};
 })();
