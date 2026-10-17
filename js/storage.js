@@ -52,7 +52,11 @@ function prepareWorkspaceForJobSwitch(options) {
   options = options || {};
   window.RealScanP2P?.close();window.RealScanOcr?.cancel(true);
   if (typeof state !== 'undefined') {
-    if (window.RealScanQrSync) {window.RealScanQrSync.revokeReceiveSession().catch(console.warn);window.RealScanQrSync.revokeDeliverySession().catch(console.warn);window.RealScanQrSync.clearInbox().catch(console.warn);}
+    if (window.RealScanQrSync) {
+      const cleanup = [window.RealScanQrSync.revokeReceiveSession(),window.RealScanQrSync.clearInbox()];
+      if(!options.keepDelivery)cleanup.push(window.RealScanQrSync.revokeDeliverySession());
+      state._jobSwitchCleanup = Promise.allSettled(cleanup);
+    }
     state.outputScalePercent = 100;
     state.photoCopiesPersonA = 2;
     state.photoCopiesPersonB = 2;

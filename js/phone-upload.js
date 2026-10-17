@@ -22,12 +22,14 @@
     for(const [id,mode]of [['btnModeDocument','document'],['btnModePhoto','photo']]){$(id).setAttribute('aria-pressed',String(mode===captureMode));$(id).disabled=sending||preparing;}
     $('captureModeHelp').textContent=captureMode==='photo'?'Fotografía: conserva su orientación y proporciones. El tamaño de impresión se elige en el mostrador.':'Documento: busca sus cuatro bordes, revisa el recorte y confirma antes de enviar.';
     $("fileInput").disabled = $("cameraInput").disabled = !sessionReady || sending || preparing;
+    $('selectTransferPolicy').disabled = sending || preparing;
+    $('transferPolicyHelp').textContent = $('selectTransferPolicy').value==='preserve' ? 'Archivo sin modificar, hasta 6 MB. Puede conservar ubicación y otros metadatos. Un ajuste manual crea una imagen nueva; podrás restaurar el archivo recibido.' : 'Imágenes JPG hasta 3000 px, proporciones conservadas y metadatos eliminados. PDF sin cambios. Máximo 6 MB por archivo y 8 archivos.';
     $("thumbnailsList").replaceChildren();
     queue.forEach((f, index) => {
       const row = document.createElement("div");
       row.className = "flex items-center justify-between gap-2 p-2 text-xs";
       const name = document.createElement("span");
-      name.textContent = f.name + " · " + Math.round(f.size / 1024) + " KB";
+      name.textContent = f.name + " · " + Math.round(f.size / 1024) + " KB · " + (f.captureEdited?'Captura revisada · ':'') + (f.transferPolicy==='preserve'?'Archivo sin modificar':'Imagen optimizada') + (f.width?' · '+f.width+' × '+f.height+' px':'');
       const b = document.createElement("button");
       b.type = "button";
       b.textContent = "Quitar";
@@ -46,22 +48,23 @@
       name.style.cssText='min-width:0;overflow-wrap:anywhere';row.style.flexWrap='wrap';
       if(f.type.startsWith('image/')){
         const edit=document.createElement('button');edit.type='button';edit.textContent='Revisar / girar';edit.disabled=sending||preparing;
-        edit.onclick=()=>RealScanCapture.open({sourceDataUrl:f.originalDataUrl||f.dataUrl,photoMode:(f.captureMode||captureMode)==='photo',onAccept:async result=>{if(sending||preparing||!queue.includes(f))return;preparing=true;render();try{const blob=await(await fetch(result)).blob();const replacement=await prepare(new File([blob],f.name,{type:'image/jpeg'}));replacement.captureMode=f.captureMode;replacement.originalDataUrl=f.originalDataUrl||f.dataUrl;queue[queue.indexOf(f)]=replacement;render();}catch(e){report(e.message,true);}finally{preparing=false;render();}}});row.append(edit);
-        if(f.originalDataUrl){const restore=document.createElement('button');restore.type='button';restore.textContent='Original';restore.disabled=sending||preparing;restore.onclick=async()=>{if(sending||preparing)return;preparing=true;render();try{const original=f.originalDataUrl;const blob=await(await fetch(original)).blob();const restored=await prepare(new File([blob],f.name,{type:'image/jpeg'}));restored.captureMode=f.captureMode;queue[queue.indexOf(f)]=restored;}catch(e){report(e.message,true);}finally{preparing=false;render();}};row.append(restore);}
+        edit.onclick=()=>RealScanCapture.open({sourceDataUrl:f.originalDataUrl||f.dataUrl,photoMode:(f.captureMode||captureMode)==='photo',onAccept:async result=>{if(sending||preparing||!queue.includes(f))return;preparing=true;render();try{const blob=await(await fetch(result)).blob();const replacement=await prepare(new File([blob],f.name,{type:blob.type}),'optimize');replacement.captureMode=f.captureMode;replacement.originalDataUrl=f.originalDataUrl||f.dataUrl;replacement.originalName=f.originalName||f.name;replacement.originalPolicy=f.originalPolicy||f.transferPolicy;queue[queue.indexOf(f)]=replacement;render();}catch(e){report(e.message,true);}finally{preparing=false;render();}}});row.append(edit);
+        if(f.originalDataUrl){const restore=document.createElement('button');restore.type='button';restore.textContent='Original';restore.disabled=sending||preparing;restore.onclick=async()=>{if(sending||preparing)return;preparing=true;render();try{const blob=await(await fetch(f.originalDataUrl)).blob();const restored=await prepare(new File([blob],f.originalName||f.name,{type:blob.type}),'preserve');restored.transferPolicy=f.originalPolicy||f.transferPolicy;restored.captureMode=f.captureMode;queue[queue.indexOf(f)]=restored;}catch(e){report(e.message,true);}finally{preparing=false;render();}};row.append(restore);}
       }
       for(const [label,step] of [['↑',-1],['↓',1]]){const move=document.createElement('button');move.type='button';move.textContent=label;move.setAttribute('aria-label',step<0?'Mover antes':'Mover después');move.disabled=sending||preparing||index+step<0||index+step>=queue.length;move.onclick=()=>{[queue[index],queue[index+step]]=[queue[index+step],queue[index]];render();};row.append(move);}
       row.append(name,b);
       $("thumbnailsList").append(row);
     });
   }
-  async function prepare(file) {
+  async function prepare(file, policy = $('selectTransferPolicy').value) {
     if (file.size <= 0 || file.size > 30 * 1024 * 1024)
       throw Error("Elige un archivo de hasta 30 MB.");
     let type = file.type,
       dataUrl,
-      name = file.name;
+      name = file.name, width = null, height = null;
     if (type === "application/pdf" || /\.pdf$/i.test(name)) {
       type = "application/pdf";
+      policy = 'preserve';
       dataUrl = await new Promise((resolve, reject) => {
         const r = new FileReader();
         r.onload = () => resolve(r.result);
@@ -78,6 +81,13 @@
         image.close();
         throw Error("La imagen supera 60 megapíxeles. Reduce su resolución.");
       }
+      width=image.width;height=image.height;
+      if(policy==='preserve') {
+        image.close();
+        if(!['image/jpeg','image/png','image/webp'].includes(type))throw Error('Conservar archivo admite JPG, PNG o WebP. Elige optimizar para convertir esta imagen.');
+        if(file.size>6*1024*1024)throw Error('El archivo supera 6 MB. No se modificó: elige Optimizar y selecciónalo otra vez, o entrégalo por USB.');
+        dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('No se pudo leer la imagen.'));reader.readAsDataURL(file);});
+      } else {
       const scale = Math.min(1, 3000 / Math.max(image.width, image.height)),
         c = document.createElement("canvas");
       c.width = Math.round(image.width * scale);
@@ -90,29 +100,30 @@
       type = "image/jpeg";
       name = name.replace(/\.[^.]*$/, "") + ".jpg";
       dataUrl = c.toDataURL(type, 0.94);
+      width=c.width;height=c.height;
+      }
     }
     const f = {
       name: name.slice(0, 180),
       captureMode,
+      transferPolicy:policy,width,height,
       type,
       dataUrl,
-      size: Math.floor((dataUrl.length - dataUrl.indexOf(",") - 1) * 0.75),
+      size: atob(dataUrl.split(',')[1]).length,
     };
     RealScanRelay.validate(f);
     return f;
   }
-  async function choose(files) {
+  async function choose(files, captured = false) {
     if (sending || preparing || !sessionReady) return;
     preparing = true; render();
     try {
       for (const f of files) {
         if (queue.length >= 8)
           throw Error("Puedes enviar hasta 8 archivos por sesión.");
-        queue.push(await prepare(f));
+        const prepared=await prepare(f);prepared.captureEdited=captured;queue.push(prepared);
       }
-      report(
-        "Listo para enviar. Las fotos se orientan y se eliminan sus metadatos de ubicación.",
-      );
+      report('Listo para enviar. Revisa las miniaturas, su orientación y la preparación indicada en cada archivo.');
     } catch (e) {
       report(e.message, true);
     }
@@ -122,10 +133,11 @@
     if (!sessionReady || sending || preparing) return;
     RealScanCapture.open({photoMode:captureMode==='photo',onNative: () => $("cameraInput").click(), onAccept: async dataUrl => {
       const blob = await (await fetch(dataUrl)).blob();
-      await choose([new File([blob], captureMode==='photo'?"Foto.jpg":"Escaneo.jpg", {type: "image/jpeg"})]);
+      await choose([new File([blob], captureMode==='photo'?"Foto.jpg":"Escaneo.jpg", {type: "image/jpeg"})],true);
     }});
   };
   for(const [id,mode]of [['btnModeDocument','document'],['btnModePhoto','photo']])$(id).onclick=()=>{if(sending||preparing)return;captureMode=mode;render();};
+  $('selectTransferPolicy').onchange=render;
   for (const id of ["fileInput", "cameraInput"])
     $(id).addEventListener("change", function () {
       choose(Array.from(this.files));

@@ -7,6 +7,7 @@
   const notify = () => global.updateQrInboxUI?.();
   const api = {
     async createReceiveSession() {
+      await global.state?._jobSwitchCleanup;
       const revision = global.state?._jobRevision || 0;
       inbox = [];
       notify();
@@ -50,12 +51,16 @@
       return inbox.slice();
     },
     async clearInbox() {
-      await global.RealScanRelay.clearFiles("receive");
       inbox = [];
       notify();
+      await global.RealScanRelay.clearFiles("receive");
     },
     async assignFileToSlot(id, side) {
       if (!["front", "back", "page3", "page4"].includes(side)) return false;
+      if(global.state?.activeCategory==='photos') {
+        const used=new Set(global.RealScanLayout.computeDocumentLayout(global.state).pages.flatMap(page=>page.placements.map(piece=>piece.slot)));
+        if(!used.has(side)){global.showToast?.('Ese destino no forma parte de la planilla. Activa la segunda persona y sus copias si la necesitas.','warning');return false;}
+      }
       const file = inbox.find((x) => x.id === id);
       if (!file) return false;
       if(file.assigning)return false;
@@ -95,9 +100,11 @@
     removeReceivedFile(id) {if(!confirm('¿Quitar este archivo de la bandeja? Las caras ya asignadas se conservan.'))return;inbox=inbox.filter(f=>f.id!==id);notify();},
     downloadOriginal(id) {const file=inbox.find(f=>f.id===id);if(!file)return;const a=document.createElement('a');a.href=file.dataUrl;a.download=file.name;document.body.append(a);a.click();a.remove();},
     async createDeliverySession(files, config) {
+      await global.state?._jobSwitchCleanup;
       delivery = await global.RealScanRelay.create("delivery", files);
       delivery.files = files;
       delivery.config = config;
+      delivery.jobRevision = global.state?._jobRevision || 0;
       return delivery;
     },
     getActiveDeliverySession() {

@@ -43,14 +43,18 @@
       }
       const actions = document.createElement("div");
       actions.className = "flex flex-wrap gap-2";
-      for (const [side, label] of [["front", root.state?.activeCategory === "photos" ? "Foto A" : "Frente"], ["back", root.state?.activeCategory === "photos" ? "Foto B" : "Reverso"], ["page3", "Página 3"], ["page4", "Página 4"]]) {
-        const b = button(label, () => api.assignFileToSlot(file.id, side));
+      const photos=root.state?.activeCategory==='photos';
+      const used=new Set(root.RealScanLayout.computeDocumentLayout(root.state).pages.flatMap(page=>page.placements.map(piece=>piece.slot)));
+      const destinations=photos ? [['front',root.state.mixTwoPhotos?'Persona A':'Usar fotografía'],['back','Persona B']].filter(([side])=>used.has(side)) : [['front','Frente'],['back',used.has('back')?'Reverso':'Añadir reverso'],['page3',used.has('page3')?'Página 3':'Añadir página 3'],['page4',used.has('page4')?'Página 4':'Añadir página 4']];
+      for (const [side, label] of destinations) {
+        const b = button(label, () => {if(!photos&&side==='back'&&!used.has(side))root.setDocumentPages(2);return api.assignFileToSlot(file.id, side);});
         b.dataset.assignFile = file.id;
         b.dataset.slot = side;
         b.disabled = !!file.assigning;
         actions.append(b);
       }
-      actions.append(button("Descargar original", () => api.downloadOriginal(file.id)));
+      if(photos&&!root.state.mixTwoPhotos)actions.append(button('Añadir segunda persona',()=>{root.state.photoCopiesPersonA=Math.max(1,Math.ceil(root.state.photoCopies/2));root.state.photoCopiesPersonB=Math.max(1,Math.floor(root.state.photoCopies/2));root.setMixTwoPhotos(true);}));
+      actions.append(button("Descargar archivo recibido", () => api.downloadOriginal(file.id)));
       if (file.editedDataUrl) actions.append(button("Restaurar original", () => api.restoreReceivedFile(file.id)));
       actions.append(button("Quitar de bandeja", () => api.removeReceivedFile(file.id)));
       card.append(actions);

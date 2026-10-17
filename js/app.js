@@ -839,6 +839,8 @@ async function handleGenerateDeliveryQr() {
 
 
   if (job !== (state._jobRevision || 0) || dialogRevision !== deliveryDialogRevision || $('digitalDeliveryModal').classList.contains('hidden')) { window.RealScanDiagnostics?.record('delivery.cancelled'); return; }
+  const previousDelivery=RealScanQrSync.getActiveDeliverySession();
+  if(previousDelivery && !['revoked','expired'].includes(previousDelivery.status) && Date.now()<previousDelivery.expiresAt && !confirm('Este puesto tiene una entrega vigente. Generar este QR cerrará el enlace anterior. Confirma que el cliente anterior terminó de descargar antes de reemplazarlo.'))return;
   const session = await window.RealScanQrSync.createDeliverySession(files, { format: format, maxPx: maxPx });
   if (job !== (state._jobRevision || 0) || dialogRevision !== deliveryDialogRevision || $('digitalDeliveryModal').classList.contains('hidden')) { await RealScanQrSync.revokeDeliverySession(); window.RealScanDiagnostics?.record('delivery.cancelled'); return; }
   window.RealScanDiagnostics?.record('delivery.ready');
@@ -851,6 +853,7 @@ async function handleGenerateDeliveryQr() {
   if (resultBox) resultBox.classList.remove('hidden');
 
   showToast('Entrega disponible durante 15 minutos mientras este puesto siga abierto.', 'success');
+  window.RealScanCounter?.update();
   } catch(e) { window.RealScanDiagnostics?.record('delivery.failed','error',{errorType:e.name,code:e.code}); showToast(e.message || 'No se pudo preparar la entrega.', 'error'); }
   finally { deliveryGenerating = false; if (button) button.disabled = false; }
 }
@@ -1002,7 +1005,7 @@ function switchCategory(cat) {
     if (step1PhotosMode) step1PhotosMode.classList.add('hidden');
     if (slot1Title) slot1Title.textContent = '1. Frente (Delantera con Foto)';
     if (slot2Title) slot2Title.textContent = '2. Reverso (Atrás / Vuelta)';
-    if (cardBackContainer) cardBackContainer.classList.toggle('hidden', state.printMode !== 'both');
+    if (cardBackContainer) cardBackContainer.classList.toggle('hidden', (state.documentPageCount || 2) < 2);
     if (!FORMAT_SPECS[state.format] || FORMAT_SPECS[state.format].category !== 'docs') selectFormat('card');
   } else if (cat === 'photos') {
     if (step1Title) step1Title.textContent = 'Planilla de Fotos en Hoja A4';
@@ -1021,7 +1024,7 @@ function switchCategory(cat) {
     if (step1PhotosMode) step1PhotosMode.classList.add('hidden');
     if (slot1Title) slot1Title.textContent = 'Documento / Foto (Frente)';
     if (slot2Title) slot2Title.textContent = 'Reverso (Atrás / Vuelta)';
-    if (cardBackContainer) cardBackContainer.classList.toggle('hidden', state.printMode !== 'both');
+    if (cardBackContainer) cardBackContainer.classList.toggle('hidden', (state.documentPageCount || 2) < 2);
     state.format = 'custom';
     handleCustomInput();
   }
@@ -1719,7 +1722,15 @@ function updateUI() {
     ? window.RealScanLayout.computeDocumentLayout(state)
     : null;
 
+  if (layout) {
+    const visibleSlots = new Set(layout.pages.flatMap(page => page.placements.map(piece => piece.slot)));
+    for (const [side,id] of [['back','cardBackContainer'],['page3','cardPage3Container'],['page4','cardPage4Container']]) {
+      $(id)?.classList.toggle('hidden',!visibleSlots.has(side));
+    }
+  }
+
   const paper = layout ? layout.paper : ((typeof getActivePaperSpec === 'function') ? getActivePaperSpec() : { widthMm: 210, heightMm: 297, shortName: 'A4' });
+  if($('step1Title'))$('step1Title').textContent=state.activeCategory==='photos'?'Planilla de fotos · '+paper.shortName:'Distribución del documento · '+paper.shortName;
 
   // 1. Proporción física exacta de la hoja en pantalla
   const sheetEl = document.querySelector('.a4-sheet');
@@ -1883,6 +1894,8 @@ function updateUI() {
 
   updatePreviewAnnotations();
   updatePreFlightBar();
+  window.RealScanReceiveUI?.render();
+  window.RealScanCounter?.update();
 }
 
 function setPaperSize(paperId, silent) {
@@ -2583,10 +2596,10 @@ function bindEvents() {
 
   // Nuevo Trabajo (M-28)
   if ($('btnNewProject')) {
-    on($('btnNewProject'), 'click', resetWorkspaceToNewProject);
+    on($('btnNewProject'), 'click', function(){window.RealScanCounter ? RealScanCounter.openNewService() : resetWorkspaceToNewProject();});
   }
   if ($('hudBtnNewProject')) {
-    on($('hudBtnNewProject'), 'click', resetWorkspaceToNewProject);
+    on($('hudBtnNewProject'), 'click', function(){window.RealScanCounter ? RealScanCounter.openNewService() : resetWorkspaceToNewProject();});
   }
 
   // Presets de Usuario (M-29)
