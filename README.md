@@ -1,7 +1,7 @@
 # 📸 RealScan Pro — Impresión de Documentos y Fotos a Escala Real (1:1) en Hoja A4
 
 > **Desarrollado por:** Paco Iglesias  
-> **Producción:** [https://fotos-cobertores.web.app](https://fotos-cobertores.web.app) / [https://fotos-cobertores.firebaseapp.com](https://fotos-cobertores.firebaseapp.com)  
+> **Producción:** [https://fotos-cobertores-pro.web.app](https://fotos-cobertores-pro.web.app) / [https://fotos-cobertores-pro.firebaseapp.com](https://fotos-cobertores-pro.firebaseapp.com)  
 > **Dominio Objetivo:** `fotos.cobertores.com`  
 
 ---
@@ -48,12 +48,12 @@ subir_a_firebase.bat
 ```
 O manualmente:
 ```bash
-firebase deploy --only hosting:fotos-cobertores
+firebase deploy --only hosting:fotos-cobertores-pro
 ```
 
 ---
 
-## 🔒 Acceso Predeterminado Inicial
+## 🔒 Acceso Inicial
 - **Usuario:** `admin`
-- **PIN:** `1313`  
-*(Modificable en la interfaz dentro de ⚙️ Ajustes)*
+- En el primer ingreso el sistema te pedirá cambiar la clave inicial de inmediato.  
+*(Modificable en la interfaz dentro de ⚠️ Ajustes → Credenciales)*

@@ -735,7 +735,8 @@ function updateUI() {
     }
     if (canvasBack) canvasBack.classList.toggle('hidden', state.printMode === 'single');
 
-    const scalePercent = Math.max(38, Math.min(94, (spec.widthMm / 210) * 100));
+    const paperW = (typeof getActivePaperSpec === 'function') ? getActivePaperSpec().widthMm : 210;
+    const scalePercent = Math.max(38, Math.min(94, (spec.widthMm / paperW) * 100));
     const ratio = spec.widthMm + ' / ' + spec.heightMm;
     ['canvasDocFront', 'canvasDocBack', 'canvasDocPage3', 'canvasDocPage4'].forEach(function(cId) {
       const cEl = $(cId);
@@ -1156,9 +1157,9 @@ function bindEvents() {
 
   // Eliminar / Borrar Foto de Ranura
   $$('[data-delete]').forEach(function(b) {
-    on(b, 'click', function() {
+    on(b, 'click', async function() {
       const side = b.getAttribute('data-delete');
-      if (confirm('¿Eliminar la foto cargada en ' + getSlotFriendlyName(side) + '? Podrás subir o capturar una nueva.')) {
+      if (await confirmDialog('¿Eliminar la foto cargada en ' + getSlotFriendlyName(side) + '? Podrás subir o capturar una nueva.')) {
         if (typeof clearSlot === 'function') clearSlot(side);
       }
     });
@@ -1219,7 +1220,7 @@ function bindEvents() {
 
   if ($('btnClearAllHistory')) {
     on($('btnClearAllHistory'), 'click', async function() {
-      if (confirm('¿Estás seguro de vaciar todos los escaneos guardados en este navegador?')) {
+      if (await confirmDialog('¿Estás seguro de vaciar todos los escaneos guardados en este navegador?')) {
         if (typeof clearAllScansFromStorage === 'function') {
           await clearAllScansFromStorage();
           if (typeof renderHistoryUI === 'function') renderHistoryUI();

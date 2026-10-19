@@ -46,8 +46,18 @@ async function openLiveCamera(side) {
       audio: false
     });
     state.cameraStream = stream;
+    // iOS/Safari: el video debe ir muteado + playsinline y con play() explícito,
+    // si no la cámara se queda en negro (mismo fix que el scanner de Alacena).
+    video.muted = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('autoplay', '');
     video.srcObject = stream;
     openModal('liveCameraModal');
+    try {
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') playPromise.catch(function() {});
+    } catch (e) { /* el autoplay del elemento lo intentará de nuevo */ }
   } catch (err) {
     showToast('Usando cámara nativa del sistema...', 'info');
     triggerNativeUpload(side, true);
@@ -71,7 +81,7 @@ function captureLivePhoto() {
   const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
   const side = state.activeCameraSide;
   closeLiveCamera();
-  processRawDataUrl(dataUrl, side);
+  downscaleDataUrlIfNeeded(dataUrl).then(function(src) { processRawDataUrl(src, side); });
   showToast('¡Foto capturada para ' + getSlotFriendlyName(side) + '!', 'success');
 }
 
@@ -101,11 +111,41 @@ function handleImageFile(event, side) {
   loadBlobIntoSide(file, side);
 }
 
+/* Límite de seguridad: archivos de más de 25 MB no se procesan (evita colgar el navegador móvil) */
+const MAX_INPUT_FILE_BYTES = 25 * 1024 * 1024;
+
+/* Redimensiona imágenes gigantes a la entrada (máx 3000 px por lado) para no saturar la memoria */
+function downscaleDataUrlIfNeeded(dataUrl, maxDim) {
+  maxDim = maxDim || 3000;
+  return new Promise(function(resolve) {
+    const img = new Image();
+    img.onload = function() {
+      if (img.naturalWidth <= maxDim && img.naturalHeight <= maxDim) { resolve(dataUrl); return; }
+      try {
+        const scale = Math.min(maxDim / img.naturalWidth, maxDim / img.naturalHeight);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.92));
+      } catch (e) { resolve(dataUrl); }
+    };
+    img.onerror = function() { resolve(dataUrl); };
+    img.src = dataUrl;
+  });
+}
+
 async function loadBlobIntoSide(blob, side) {
   const isPdf = blob.type === 'application/pdf' || (blob.name && blob.name.toLowerCase().endsWith('.pdf'));
   if (isPdf) { await handlePdfFile(blob, side); return; }
+  if (blob.size && blob.size > MAX_INPUT_FILE_BYTES) {
+    showToast('La imagen supera los 25 MB. Usa una foto más ligera o tómala con menor resolución.', 'warning');
+    return;
+  }
   const reader = new FileReader();
-  reader.onload = function(e) { processRawDataUrl(e.target.result, side); };
+  reader.onload = async function(e) {
+    processRawDataUrl(await downscaleDataUrlIfNeeded(e.target.result), side);
+  };
   reader.readAsDataURL(blob);
 }
 
@@ -124,13 +164,13 @@ async function handlePdfFile(file, targetSide) {
       const slots = ['front', 'back', 'page3', 'page4'];
       for (let i = 1; i <= numToLoad; i++) {
         const page = await pdfDoc.getPage(i);
-        const dataUrl = await renderPdfPageToDataUrl(page);
+        const dataUrl = await downscaleDataUrlIfNeeded(await renderPdfPageToDataUrl(page));
         processRawDataUrl(dataUrl, slots[i - 1]);
       }
       showToast('¡PDF de ' + numToLoad + ' páginas detectado y cargado con éxito!', 'success');
     } else {
       const p = await pdfDoc.getPage(1);
-      processRawDataUrl(await renderPdfPageToDataUrl(p), targetSide);
+      processRawDataUrl(await downscaleDataUrlIfNeeded(await renderPdfPageToDataUrl(p)), targetSide);
       showToast('¡PDF cargado en ' + getSlotFriendlyName(targetSide) + '!', 'success');
     }
   } catch (err) {

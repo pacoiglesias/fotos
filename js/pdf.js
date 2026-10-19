@@ -57,14 +57,14 @@ function drawCalibrationFooter(doc, pageW, spec, pageH) {
   doc.text('RealScan — Desarrollado por Paco Iglesias | ' + spec.name + ' • Hoja ' + paper.name, pageW / 2, rulerY + 21.5, { align: 'center' });
 }
 
-function generatePdfDoc() {
+async function generatePdfDoc() {
   if (!state.images.front.processedDataUrl) {
     showToast('Por favor captura o sube al menos el Anverso o Foto principal.', 'warning');
     return null;
   }
 
   if (state.activeCategory === 'docs' && state.printMode === 'both' && !state.images.back.processedDataUrl) {
-    const ok = confirm('Has seleccionado imprimir Anverso + Reverso en 1 hoja, pero no has cargado la foto del Reverso.\n\n¿Deseas generar el PDF incluyendo solo el Anverso?');
+    const ok = await confirmDialog('Has seleccionado imprimir Anverso + Reverso en 1 hoja, pero no has cargado la foto del Reverso.\n\n¿Deseas generar el PDF incluyendo solo el Anverso?');
     if (!ok) return null;
   }
 
@@ -133,7 +133,19 @@ function generatePdfDoc() {
 
       const useBack = (state.mixTwoPhotos && state.images.back.processedDataUrl && i >= Math.floor(copies / 2));
       const curImg = useBack ? state.images.back.processedDataUrl : state.images.front.processedDataUrl;
-      doc.addImage(curImg, 'JPEG', photoX, photoY, targetW, targetH, undefined, 'FAST');
+      if (spec.isOval) {
+        // Máscara elíptica REAL: recorta la imagen al óvalo (antes salía rectangular)
+        try {
+          doc.saveGraphicsState();
+          doc.ellipse(photoX + targetW / 2, photoY + targetH / 2, targetW / 2, targetH / 2, 'CN');
+          doc.addImage(curImg, 'JPEG', photoX, photoY, targetW, targetH, undefined, 'FAST');
+          doc.restoreGraphicsState();
+        } catch (e) {
+          doc.addImage(curImg, 'JPEG', photoX, photoY, targetW, targetH, undefined, 'FAST');
+        }
+      } else {
+        doc.addImage(curImg, 'JPEG', photoX, photoY, targetW, targetH, undefined, 'FAST');
+      }
 
       if (spec.isOval) {
         // Línea de corte elíptica calibrada oficial (SEP / Título)
@@ -194,7 +206,7 @@ function generatePdfDoc() {
     }
 
     if (activeItems.length === 1 && state.printMode !== 'single' && !state.duplicateCard) {
-      const ok = confirm('Has seleccionado imprimir múltiples caras o páginas, pero solo has cargado 1 foto.\n\n¿Deseas generar el PDF incluyendo solo esta página?');
+      const ok = await confirmDialog('Has seleccionado imprimir múltiples caras o páginas, pero solo has cargado 1 foto.\n\n¿Deseas generar el PDF incluyendo solo esta página?');
       if (!ok) return null;
     }
 

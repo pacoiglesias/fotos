@@ -8,8 +8,10 @@ window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
 window.DEFAULT_USER = 'admin';
-window.DEFAULT_PIN = '1313';
-window.DEFAULT_PIN_HASH = '1cfafff6d51a03662b85b93dc3417f51687034ba9a46682f5328257eff7133ed'; // sha256('1313')
+// NOTA: la clave inicial por defecto se define solo por su hash (SHA-256). El PIN en
+// texto plano ('1313') se eliminó del código por seguridad; se informa solo en privado
+// al administrador y el sistema exige cambiarlo en el primer ingreso.
+window.DEFAULT_PIN_HASH = '1cfafff6d51a03662b85b93dc3417f51687034ba9a46682f5328257eff7133ed'; // hash de la clave inicial
 window.LEGACY_PIN_HASH = '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab'; // sha256('2026')
 window.TARGET_DPI = 300;
 window.MAX_OUT_PX = 4000;
@@ -173,11 +175,46 @@ function anyModalOpen() {
 
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape' && anyModalOpen()) {
+    // El modal de confirmación resuelve "cancelar" con Escape
+    const cm = $('customConfirmModal');
+    if (cm && !cm.classList.contains('hidden')) { _resolveConfirm(false); return; }
     $$('[role="dialog"]:not(.hidden)').forEach(function(m){
       if (m.id === 'liveCameraModal' && typeof closeLiveCamera === 'function') closeLiveCamera();
       else closeModal(m.id);
     });
   }
+});
+
+/* ============================================================
+   DIÁLOGO DE CONFIRMACIÓN PROPIO (reemplaza confirm() nativo)
+   Uso: const ok = await confirmDialog('¿Seguro?'); → true/false
+   ============================================================ */
+let _confirmResolve = null;
+
+function confirmDialog(message) {
+  return new Promise(function(resolve) {
+    const msgEl = $('customConfirmMsg');
+    if (msgEl) msgEl.textContent = message || '¿Confirmas esta acción?';
+    _confirmResolve = resolve;
+    openModal('customConfirmModal');
+    const okBtn = $('btnCustomConfirmOk');
+    if (okBtn) setTimeout(function(){ okBtn.focus(); }, 50);
+  });
+}
+
+function _resolveConfirm(value) {
+  closeModal('customConfirmModal');
+  if (_confirmResolve) {
+    const r = _confirmResolve;
+    _confirmResolve = null;
+    r(value);
+  }
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target || !e.target.closest) return;
+  if (e.target.closest('#btnCustomConfirmOk')) _resolveConfirm(true);
+  else if (e.target.closest('#btnCustomConfirmCancel')) _resolveConfirm(false);
 });
 
 document.addEventListener('click', function(e) {

@@ -9,6 +9,81 @@ const STORE_NAME = 'scans';
 
 let dbInstance = null;
 
+/* URL de miniatura segura: solo data:image permitidos (evita XSS por importación) */
+function safeThumbUrl(url) {
+  if (typeof url === 'string' && /^data:image\/(png|jpe?g|webp|gif);base64,/.test(url) && url.length <= 3 * 1024 * 1024) return url;
+  return '';
+}
+
+/* Valida los ajustes de proyecto importados (lista blanca de campos y tipos) */
+function sanitizeSettings(st) {
+  if (!st || typeof st !== 'object') return null;
+  const out = {};
+  const str = function(v, max) { return (typeof v === 'string' ? v : '').slice(0, max || 60); };
+  if (typeof st.paperSize === 'string' && typeof window.PAPER_SPECS !== 'undefined' && window.PAPER_SPECS[st.paperSize]) out.paperSize = st.paperSize;
+  if (['both', 'both_separate', 'single', 'multi'].indexOf(st.printMode) >= 0) out.printMode = st.printMode;
+  if (['same_page', 'separate_pages', 'separate_sheets'].indexOf(st.sheetLayout) >= 0) out.sheetLayout = st.sheetLayout;
+  if (typeof st.includeRulerFooter === 'boolean') out.includeRulerFooter = st.includeRulerFooter;
+  if (typeof st.includeDocLabels === 'boolean') out.includeDocLabels = st.includeDocLabels;
+  if (typeof st.documentCustomTitle === 'string') out.documentCustomTitle = str(st.documentCustomTitle, 120);
+  if (typeof st.duplicateCard === 'boolean') out.duplicateCard = st.duplicateCard;
+  if (typeof st.photoCopies === 'number' && isFinite(st.photoCopies)) out.photoCopies = Math.max(1, Math.min(36, Math.floor(st.photoCopies)));
+  if (typeof st.customWidth === 'number' && isFinite(st.customWidth) && st.customWidth > 0) out.customWidth = Math.min(st.customWidth, 100);
+  if (typeof st.customHeight === 'number' && isFinite(st.customHeight) && st.customHeight > 0) out.customHeight = Math.min(st.customHeight, 100);
+  if (st.customUnit === 'cm' || st.customUnit === 'mm') out.customUnit = st.customUnit;
+  if (st.passportOpenOrientation === 'portrait' || st.passportOpenOrientation === 'landscape') out.passportOpenOrientation = st.passportOpenOrientation;
+  if (st.passportPageOrientation === 'portrait' || st.passportPageOrientation === 'landscape') out.passportPageOrientation = st.passportPageOrientation;
+  if (typeof st.documentPageCount === 'number' && isFinite(st.documentPageCount)) out.documentPageCount = Math.max(1, Math.min(4, Math.floor(st.documentPageCount)));
+  if (typeof st.mixTwoPhotos === 'boolean') out.mixTwoPhotos = st.mixTwoPhotos;
+  if (['docs', 'photos', 'custom'].indexOf(st.activeCategory) >= 0) out.activeCategory = st.activeCategory;
+  return out;
+}
+
+/* Valida y sanea un escaneo importado desde JSON antes de guardarlo en IndexedDB.
+   Devuelve el objeto limpio o null si el esquema es inválido. */
+function sanitizeImportedScan(s) {
+  if (!s || typeof s !== 'object') return null;
+  if (typeof s.id !== 'string' || !s.id) return null;
+  if (!Array.isArray(s.pages) || s.pages.length === 0 || s.pages.length > 8) return null;
+
+  const cleanId = String(s.id).replace(/[^a-zA-Z0-9_\-]/g, '').slice(0, 100);
+  if (!cleanId) return null;
+
+  const validSlots = ['front', 'back', 'page3', 'page4'];
+  const pages = [];
+  for (let i = 0; i < s.pages.length; i++) {
+    const p = s.pages[i];
+    if (!p || typeof p !== 'object') return null;
+    if (typeof p.dataUrl !== 'string' || !/^data:image\/(png|jpe?g|webp);base64,/.test(p.dataUrl)) return null;
+    if (p.dataUrl.length > 15 * 1024 * 1024) return null; // ~11 MB por página como máximo
+    pages.push({
+      slot: validSlots.indexOf(p.slot) >= 0 ? p.slot : 'front',
+      label: (typeof p.label === 'string' ? p.label : '').slice(0, 80),
+      dataUrl: p.dataUrl,
+      originalSrc: (typeof p.originalSrc === 'string' && /^data:image\/(png|jpe?g|webp);base64,/.test(p.originalSrc) && p.originalSrc.length <= 15 * 1024 * 1024) ? p.originalSrc : null,
+      filter: (typeof p.filter === 'string' ? p.filter : 'color').slice(0, 20),
+      rotation: (typeof p.rotation === 'number' && isFinite(p.rotation)) ? p.rotation : 0,
+      zoom: (typeof p.zoom === 'number' && isFinite(p.zoom) && p.zoom > 0) ? Math.min(p.zoom, 10) : 1.0
+    });
+  }
+
+  const thumb = safeThumbUrl(s.thumbnail) || pages[0].dataUrl;
+  return {
+    id: cleanId,
+    createdAt: (typeof s.createdAt === 'number' && isFinite(s.createdAt)) ? s.createdAt : Date.now(),
+    createdFormatted: (typeof s.createdFormatted === 'string' ? s.createdFormatted : '').slice(0, 60) || new Date().toLocaleString('es-ES'),
+    title: (typeof s.title === 'string' ? s.title : 'Documento importado').slice(0, 120),
+    format: (typeof s.format === 'string' && typeof FORMAT_SPECS !== 'undefined' && FORMAT_SPECS[s.format]) ? s.format : 'card',
+    formatName: (typeof s.formatName === 'string' ? s.formatName : '').slice(0, 120),
+    category: (s.category === 'photos' || s.category === 'custom') ? s.category : 'docs',
+    retentionDays: (typeof s.retentionDays === 'number' && s.retentionDays >= 0) ? Math.min(Math.floor(s.retentionDays), 3650) : 3,
+    expiresAt: (typeof s.expiresAt === 'number' && isFinite(s.expiresAt)) ? s.expiresAt : 0,
+    pages: pages,
+    thumbnail: thumb,
+    settings: sanitizeSettings(s.settings)
+  };
+}
+
 function getDB() {
   return new Promise(function(resolve, reject) {
     if (dbInstance) return resolve(dbInstance);
@@ -58,6 +133,9 @@ async function saveScanToStorage(customTitle, retentionDays) {
           slot: slotKey,
           label: pageLabel,
           dataUrl: imgData.processedDataUrl,
+          // Se conserva la imagen original (previa a filtros/zoom/rotación) por separado
+          // para que al restaurar no se reapliquen transformaciones sobre la ya procesada.
+          originalSrc: imgData.originalSrc || imgData.rawOriginalSrc || null,
           filter: imgData.filter || 'color',
           rotation: imgData.rotation || 0,
           zoom: imgData.zoom || 1.0
@@ -85,7 +163,26 @@ async function saveScanToStorage(customTitle, retentionDays) {
       retentionDays: days,
       expiresAt: expiresAt,
       pages: pages,
-      thumbnail: thumb
+      thumbnail: thumb,
+      // Proyecto completo: permite restaurar el escaneo con los mismos ajustes
+      settings: {
+        paperSize: state.paperSize || 'a4',
+        printMode: state.printMode,
+        sheetLayout: state.sheetLayout,
+        includeRulerFooter: state.includeRulerFooter !== false,
+        includeDocLabels: state.includeDocLabels !== false,
+        documentCustomTitle: state.documentCustomTitle || '',
+        duplicateCard: !!state.duplicateCard,
+        photoCopies: state.photoCopies,
+        customWidth: state.customWidth,
+        customHeight: state.customHeight,
+        customUnit: state.customUnit,
+        passportOpenOrientation: state.passportOpenOrientation,
+        passportPageOrientation: state.passportPageOrientation,
+        documentPageCount: state.documentPageCount || 2,
+        mixTwoPhotos: !!state.mixTwoPhotos,
+        activeCategory: state.activeCategory
+      }
     };
 
     return new Promise(function(resolve, reject) {
@@ -193,6 +290,57 @@ async function purgeExpiredScans() {
 }
 
 /* Restaurar un escaneo al lienzo de trabajo */
+/* Aplica los ajustes de proyecto guardados con un escaneo (papel, modo, copias, etc.) */
+function applyScanSettings(scan) {
+  const st = scan && scan.settings;
+  if (!st || typeof st !== 'object') return;
+  try {
+    if (st.activeCategory && typeof switchCategory === 'function') switchCategory(st.activeCategory);
+    if (st.paperSize && typeof setPaperSize === 'function') setPaperSize(st.paperSize, true);
+    if (st.printMode && typeof setPrintMode === 'function') setPrintMode(st.printMode);
+    if (st.sheetLayout !== undefined) state.sheetLayout = st.sheetLayout;
+    if (st.customWidth) state.customWidth = st.customWidth;
+    if (st.customHeight) state.customHeight = st.customHeight;
+    if (st.customUnit) {
+      state.customUnit = st.customUnit;
+      const btnCm = $('btnUnitCm'), btnMm = $('btnUnitMm');
+      if (btnCm && btnMm) {
+        btnCm.classList.toggle('is-active', st.customUnit === 'cm');
+        btnMm.classList.toggle('is-active', st.customUnit === 'mm');
+      }
+    }
+    if (st.photoCopies) { state.photoCopies = st.photoCopies; const pc = $('photoCopiesInput'); if (pc) pc.value = st.photoCopies; }
+    if (st.mixTwoPhotos !== undefined) {
+      state.mixTwoPhotos = st.mixTwoPhotos;
+      const chk = $('chkMixTwoPhotos');
+      if (chk) chk.checked = st.mixTwoPhotos;
+    }
+    if (st.includeRulerFooter !== undefined) {
+      state.includeRulerFooter = st.includeRulerFooter;
+      const chk = $('chkIncludeRulerFooter');
+      if (chk) chk.checked = st.includeRulerFooter;
+    }
+    if (st.includeDocLabels !== undefined) {
+      state.includeDocLabels = st.includeDocLabels;
+      const chk = $('chkIncludeDocLabels');
+      if (chk) chk.checked = st.includeDocLabels;
+    }
+    if (st.duplicateCard !== undefined) {
+      state.duplicateCard = !!st.duplicateCard;
+      const chk = $('chkDuplicateCard');
+      if (chk) chk.checked = state.duplicateCard;
+    }
+    if (st.documentCustomTitle !== undefined) {
+      state.documentCustomTitle = st.documentCustomTitle;
+      const inp = $('inputDocumentTitle');
+      if (inp) inp.value = st.documentCustomTitle;
+    }
+    if (st.passportOpenOrientation) state.passportOpenOrientation = st.passportOpenOrientation;
+    if (st.passportPageOrientation) state.passportPageOrientation = st.passportPageOrientation;
+    if (typeof updatePassportOptionsUI === 'function') updatePassportOptionsUI();
+  } catch (e) {}
+}
+
 async function restoreScanToApp(id) {
   try {
     const scans = await getAllScansFromStorage();
@@ -206,6 +354,9 @@ async function restoreScanToApp(id) {
       selectFormat(scan.format);
     }
 
+    // Restaurar ajustes del proyecto (papel, modo de impresión, copias, títulos, etc.)
+    applyScanSettings(scan);
+
     // Configurar cantidad de páginas
     const numPages = Math.min(4, Math.max(1, scan.pages ? scan.pages.length : 1));
     if (typeof setDocumentPages === 'function') {
@@ -214,12 +365,14 @@ async function restoreScanToApp(id) {
       state.documentPageCount = numPages;
     }
 
-    // Cargar cada página
+    // Cargar cada página: original y procesada por separado para no reaplicar
+    // transformaciones (filtros/zoom/rotación) sobre una imagen ya transformada.
     scan.pages.forEach(function(p) {
       const slot = p.slot || 'front';
       if (state.images[slot]) {
-        state.images[slot].originalSrc = p.dataUrl;
-        state.images[slot].rawOriginalSrc = p.dataUrl;
+        const original = p.originalSrc || p.dataUrl;
+        state.images[slot].originalSrc = original;
+        state.images[slot].rawOriginalSrc = original;
         state.images[slot].processedDataUrl = p.dataUrl;
         state.images[slot].filter = p.filter || 'color';
         state.images[slot].rotation = p.rotation || 0;
@@ -300,10 +453,10 @@ async function renderSavedScansDashboard() {
     card.innerHTML = `
       <div class="flex items-start gap-3 min-w-0">
         <div class="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center cursor-pointer btn-dash-restore" data-id="${s.id}" title="Hacer clic para cargar en el lienzo">
-          ${s.thumbnail ? `<img src="${s.thumbnail}" class="w-full h-full object-cover" alt="Miniatura" />` : `<span class="text-2xl">📄</span>`}
+          ${safeThumbUrl(s.thumbnail) ? `<img src="${safeThumbUrl(s.thumbnail)}" class="w-full h-full object-cover" alt="Miniatura" />` : `<span class="text-2xl">📄</span>`}
         </div>
         <div class="min-w-0 flex-1">
-          <p class="font-bold text-xs text-slate-900 dark:text-white truncate" title="${s.title}">${s.title}</p>
+          <p class="font-bold text-xs text-slate-900 dark:text-white truncate" title="${escapeHtml(s.title)}">${escapeHtml(s.title)}</p>
           <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
             <span class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded">${s.pages ? s.pages.length : 1} cara(s)</span>
             <span class="text-[9.5px] text-slate-400 font-mono">${s.createdFormatted}</span>
@@ -353,7 +506,7 @@ async function renderSavedScansDashboard() {
 
   grid.querySelectorAll('.btn-dash-delete').forEach(function(btn) {
     btn.addEventListener('click', async function() {
-      if (confirm('¿Deseas eliminar este escaneo guardado?')) {
+      if (await confirmDialog('¿Deseas eliminar este escaneo guardado?')) {
         await deleteScanFromStorage(btn.getAttribute('data-id'));
         renderSavedScansDashboard();
         renderHistoryUI();
@@ -405,10 +558,10 @@ async function renderHistoryUI() {
     card.innerHTML = `
       <div class="flex items-center gap-3 min-w-0">
         <div class="w-14 h-14 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center">
-          ${s.thumbnail ? `<img src="${s.thumbnail}" class="w-full h-full object-cover" alt="Miniatura" />` : `<span class="text-xl">📄</span>`}
+          ${safeThumbUrl(s.thumbnail) ? `<img src="${safeThumbUrl(s.thumbnail)}" class="w-full h-full object-cover" alt="Miniatura" />` : `<span class="text-xl">📄</span>`}
         </div>
         <div class="min-w-0">
-          <p class="font-bold text-sm text-slate-900 dark:text-white truncate">${s.title}</p>
+          <p class="font-bold text-sm text-slate-900 dark:text-white truncate">${escapeHtml(s.title)}</p>
           <div class="flex flex-wrap items-center gap-1.5 mt-1">
             <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400 font-mono">${s.createdFormatted}</span>
             <span class="text-slate-300 dark:text-slate-700">•</span>
@@ -450,7 +603,7 @@ async function renderHistoryUI() {
 
   container.querySelectorAll('.btn-delete-scan').forEach(function(btn) {
     btn.addEventListener('click', async function() {
-      if (confirm('¿Deseas eliminar este escaneo del historial?')) {
+      if (await confirmDialog('¿Deseas eliminar este escaneo del historial?')) {
         await deleteScanFromStorage(btn.getAttribute('data-id'));
         renderHistoryUI();
       }
@@ -578,26 +731,28 @@ async function importScansFromJson(file) {
 
     const db = await getDB();
     let imported = 0;
+    let skipped = 0;
 
-    for (let i = 0; i < items.length; i++) {
-      const s = items[i];
-      if (s && s.id && s.pages) {
-        await new Promise(function(resolve, reject) {
-          const tx = db.transaction(STORE_NAME, 'readwrite');
-          const store = tx.objectStore(STORE_NAME);
-          const req = store.put(s);
-          req.onsuccess = function() { imported++; resolve(true); };
-          req.onerror = function(e) { reject(e.target.error); };
-        });
-      }
+    const limited = items.slice(0, 200); // tope de seguridad: 200 escaneos por importación
+
+    for (let i = 0; i < limited.length; i++) {
+      const clean = sanitizeImportedScan(items[i]);
+      if (!clean) { skipped++; continue; }
+      await new Promise(function(resolve, reject) {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.put(clean);
+        req.onsuccess = function() { imported++; resolve(true); };
+        req.onerror = function(e) { reject(e.target.error); };
+      });
     }
 
     updateHistoryBadge();
     renderHistoryUI();
     if (typeof logActivity === 'function') {
-      logActivity('Importación de Respaldo', 'Importados ' + imported + ' escaneos desde JSON');
+      logActivity('Importación de Respaldo', 'Importados ' + imported + ' escaneos desde JSON' + (skipped > 0 ? (' (' + skipped + ' descartados por formato inválido)') : ''));
     }
-    showToast('¡Se importaron ' + imported + ' escaneos al historial correctamente!', 'success');
+    showToast('¡Se importaron ' + imported + ' escaneos al historial correctamente!' + (skipped > 0 ? (' ' + skipped + ' descartados por formato inválido.') : ''), 'success');
   } catch (err) {
     showToast('Error leyendo archivo de respaldo: ' + err.message, 'warning');
   }

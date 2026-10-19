@@ -20,11 +20,13 @@ function getAuthData() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.users) && parsed.users.length > 0) {
-        // Auto-migración si algún usuario tiene el PIN viejo de 2026
+        // Migración de seguridad: usuarios con el PIN viejo publicado ('2026') conservan
+        // acceso pero quedan marcados para cambiar su clave en el próximo ingreso.
         let migrated = false;
         parsed.users.forEach(function(u) {
-          if (u.passwordHash === '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab' || (u.username === 'admin' && !u.passwordHash)) {
+          if (u.passwordHash === window.LEGACY_PIN_HASH || (u.username === 'admin' && !u.passwordHash)) {
             u.passwordHash = window.DEFAULT_PIN_HASH;
+            u.mustChangePassword = true;
             migrated = true;
           }
         });
@@ -40,7 +42,7 @@ function getAuthData() {
       const old = JSON.parse(oldRaw);
       const migrated = {
         users: [
-          { username: old.username || window.DEFAULT_USER, passwordHash: (old.passwordHash && old.passwordHash !== '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab') ? old.passwordHash : window.DEFAULT_PIN_HASH, role: 'admin' }
+          { username: old.username || window.DEFAULT_USER, passwordHash: (old.passwordHash && old.passwordHash !== window.LEGACY_PIN_HASH) ? old.passwordHash : window.DEFAULT_PIN_HASH, role: 'admin', mustChangePassword: true }
         ],
         currentUsername: old.username || window.DEFAULT_USER,
         sessionToken: old.sessionToken || null,
@@ -52,7 +54,8 @@ function getAuthData() {
   } catch(e) {}
   return {
     users: [
-      { username: window.DEFAULT_USER, passwordHash: window.DEFAULT_PIN_HASH, role: 'admin' }
+      // Cuenta inicial: queda marcada para cambio obligatorio de clave en el primer ingreso.
+      { username: window.DEFAULT_USER, passwordHash: window.DEFAULT_PIN_HASH, role: 'admin', mustChangePassword: true }
     ],
     currentUsername: window.DEFAULT_USER,
     sessionToken: null,
@@ -160,8 +163,9 @@ function exportAuditLogCsv() {
   showToast('Bitácora descargada en formato CSV', 'success');
 }
 
-function clearAuditLog() {
-  if (!confirm('¿Estás seguro de que deseas vaciar la bitácora de auditoría? Esta acción no se puede deshacer.')) return;
+async function clearAuditLog() {
+  const ok = await confirmDialog('¿Estás seguro de que deseas vaciar la bitácora de auditoría? Esta acción no se puede deshacer.');
+  if (!ok) return;
   localStorage.removeItem(window.AUDIT_STORAGE_KEY);
   renderAuditLogs();
   logActivity('Bitácora Vaciada', 'El historial fue reiniciado manualmente');
@@ -254,9 +258,10 @@ async function handleAddUser(e) {
   showToast('¡Usuario "' + newName + '" creado con éxito!', 'success');
 }
 
-function handleDeleteUser(usernameToDelete) {
+async function handleDeleteUser(usernameToDelete) {
   if (!usernameToDelete) return;
-  if (!confirm('¿Estás seguro de que deseas eliminar al usuario "' + usernameToDelete + '"?')) return;
+  const ok = await confirmDialog('¿Estás seguro de que deseas eliminar al usuario "' + usernameToDelete + '"?');
+  if (!ok) return;
 
   const auth = getAuthData();
   auth.users = auth.users.filter(function(u) {
@@ -311,24 +316,15 @@ async function handleLoginSubmit(e) {
 
   const auth = getAuthData();
   const passHash = await computeSha256(pass);
-  const isMaster1313 = (pass === '1313' || passHash === window.DEFAULT_PIN_HASH);
 
-  let matched = auth.users.find(function(u) {
-    return u.username.toLowerCase() === user.toLowerCase() && (u.passwordHash === passHash || (isMaster1313 && (u.role === 'admin' || u.username === 'admin')));
+  // Autenticación estricta: solo coincide usuario + hash exacto de su propia contraseña.
+  // El antiguo PIN maestro '1313'/'2026' (que permitía entrar como cualquier admin y
+  // cambiaba credenciales sin conocer la clave real) fue eliminado por seguridad.
+  const matched = auth.users.find(function(u) {
+    return u.username.toLowerCase() === user.toLowerCase() && u.passwordHash === passHash;
   });
 
-  if (!matched && (user.toLowerCase() === 'admin' || user.toLowerCase() === 'paco') && isMaster1313) {
-    matched = auth.users.find(function(u) { return u.username.toLowerCase() === 'admin'; });
-    if (!matched) {
-      matched = { username: 'admin', passwordHash: window.DEFAULT_PIN_HASH, role: 'admin' };
-      auth.users.unshift(matched);
-    }
-  }
-
   if (matched) {
-    if (isMaster1313 && matched.passwordHash !== window.DEFAULT_PIN_HASH) {
-      matched.passwordHash = window.DEFAULT_PIN_HASH;
-    }
     auth.currentUsername = matched.username;
     auth.sessionToken = 'token_' + Date.now() + '_' + Math.random().toString(36).substring(2);
     auth.sessionExpiry = remember ? (Date.now() + 30 * 24 * 60 * 60 * 1000) : (Date.now() + 12 * 60 * 60 * 1000);
@@ -344,6 +340,19 @@ async function handleLoginSubmit(e) {
 
     logActivity('Inicio de Sesión', 'Acceso correcto con usuario: ' + matched.username + ' (' + matched.role + ')');
     showToast('¡Bienvenido al sistema, ' + matched.username + '!', 'success');
+
+    // Si el usuario aún usa la clave inicial/publicada, exigir el cambio de inmediato.
+    if (matched.mustChangePassword === true) {
+      setTimeout(function() {
+        if (typeof openSettingsModal === 'function') openSettingsModal();
+        const alertBox = $('credsAlertMsg');
+        if (alertBox) {
+          alertBox.textContent = '⚠️ Estás usando la clave inicial. Por seguridad, cámbiala ahora antes de seguir.';
+          alertBox.classList.remove('hidden');
+        }
+        showToast('Cambia tu clave inicial en Ajustes por seguridad', 'warning');
+      }, 600);
+    }
   } else {
     if (errorBox) {
       errorBox.textContent = 'Usuario o contraseña/PIN incorrectos';
@@ -394,7 +403,8 @@ async function handleUpdateCredentials(e) {
     return u.username.toLowerCase() === (auth.currentUsername || window.DEFAULT_USER).toLowerCase();
   });
 
-  const isAuthorized = activeUser && (currentPass === '1313' || currentPass === '2026' || currentHash === activeUser.passwordHash || currentHash === window.DEFAULT_PIN_HASH);
+  // Autorización estricta: solo la contraseña real del usuario activo autoriza el cambio.
+  const isAuthorized = activeUser && currentHash === activeUser.passwordHash;
   if (!isAuthorized) {
     showAlert('La contraseña actual es incorrecta', false);
     return;
@@ -402,6 +412,7 @@ async function handleUpdateCredentials(e) {
 
   const newHash = await computeSha256(newPass);
   activeUser.passwordHash = newHash;
+  activeUser.mustChangePassword = false;
   saveAuthData(auth);
 
   $('inputCurrentPass').value = '';
