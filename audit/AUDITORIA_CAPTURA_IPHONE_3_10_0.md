@@ -76,3 +76,10 @@ Iconos PNG dedicados 180/192/512, icono Apple y manifest con identidad estable. 
 - Verificación completa reproducible: `npm run verify`. Evidencias locales en `.audit/`; no se publican documentos de clientes. CI incluye Chromium y WebKit.
 - El build identifica su commit en `dist/version.json`; la publicación debe comprobar la misma huella en los cuatro alias Firebase.
 - No se ha probado la cámara física del iPhone del usuario, impresión física ni su instalación de Paperless. WebKit automatizado no sustituye esa validación. No se garantiza ausencia absoluta de errores ni enfoque óptico controlable desde todos los navegadores.
+
+## Corrección de cierre 3.10.1 — borrado durable del documento móvil
+
+GitHub detectó un caso que no apareció inicialmente en Windows: iniciar Nuevo y recargar con rapidez podía recuperar las dos capturas anteriores. El contador se vaciaba antes de terminar la escritura de IndexedDB.
+
+La operación Nuevo espera ahora las escrituras pendientes y la confirmación de borrado de IndexedDB antes de vaciar la pantalla y habilitar otro trabajo. Si el borrado falla, se mantienen las capturas y se informa al operador. La prueba simula una transacción de borrado lenta y exige que el sistema espere; después recarga para comprobar que el borrador anterior no reaparece. Se publica como parche 3.10.1.
+La misma confirmación durable se aplica a Quitar: la captura desaparece de la pantalla sólo después de confirmar la escritura. Se conserva si el almacenamiento falla. Durante esas operaciones atómicas no se ofrece Cancelar, para evitar que un segundo cambio contradiga el borrado que está confirmándose.
