@@ -1,7 +1,8 @@
 (function(root) {
   "use strict";
-  let worker = null, epoch = 0, busy = false;
-  function open() {
+  let worker = null, epoch = 0, busy = false, externalSource=null;
+  function open(options = {}) {
+    externalSource=options.dataUrl || null;
     let modal = document.getElementById("localOcrModal");
     if (!modal) {
       modal = document.createElement("div");
@@ -32,9 +33,11 @@
         setTimeout(() => URL.revokeObjectURL(url), 2e3);
       };
     }
+    document.getElementById('ocrSide').closest('label').hidden=!!externalSource;
     openModal("localOcrModal");
   }
   async function cancel(clearText = false) {
+    if(clearText===true)externalSource=null;
     if(clearText===true){const text=document.getElementById("ocrText");if(text)text.value="";}
     ++epoch;
     busy = false;
@@ -48,7 +51,7 @@
   }
   async function run() {
     if (busy) return;
-    const $ = (id) => document.getElementById(id), source = root.state?.images[$("ocrSide").value]?.originalSrc;
+    const $ = (id) => document.getElementById(id), source = externalSource || root.state?.images[$("ocrSide").value]?.originalSrc;
     if (!source) {
       $("ocrStatus").textContent = "Carga una imagen en la cara seleccionada.";
       return;

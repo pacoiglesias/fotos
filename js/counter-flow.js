@@ -11,13 +11,17 @@
   }
   function update() {
     if (!$('counterCurrent')) return;
-    $('counterCurrent').textContent = getActiveSpec().shortName + ' · ' + ({print:'Impresión',digital:'Entrega digital',both:'Impresión y digital'}[output]);
+    const documents=window.RealScanDocuments?.status();
+    $('counterCurrent').textContent = (documents?.active?'Documento · '+documents.count+' página(s)':getActiveSpec().shortName) + ' · ' + ({print:'Impresión',digital:'Entrega digital',both:'Impresión y digital'}[output]);
+    document.body.dataset.outputMode=output;if($('counterOutput'))$('counterOutput').value=output;
+    rootDigitalUpdate();
     const delivery = activeDelivery();
     $('counterDelivery').hidden = !delivery;
     if (delivery) $('counterDeliveryText').textContent = (delivery.jobRevision === (state._jobRevision || 0) ? 'Entrega disponible' : 'Entrega anterior disponible') + ' · ' + Math.max(1,Math.ceil((delivery.expiresAt-Date.now())/60000)) + ' min. Mantén este puesto abierto.';
-    $('counterDeliver').disabled = !RealScanWorkflow.describe().ready;
+    $('counterDeliver').disabled = documents?.active?!documents.ready:!RealScanWorkflow.describe().ready;
     $('counterDeliver').textContent = output === 'print' ? 'Revisar impresión' : 'Preparar entrega digital';
   }
+  function rootDigitalUpdate(){window.RealScanDigital?.render();window.RealScanWorkflow?.update();}
   function openNewService() {
     if (starting) return;
     const delivery = activeDelivery();
@@ -26,7 +30,7 @@
     $('newServiceKind').value = 'id';
     $('newServiceSource').value = 'choose';
     $('newServiceOutput').value = 'both';
-    $('newServiceConfirm').checked = !Object.values(state.images).some(i=>i.originalSrc || i._reading) && !RealScanQrSync.getInboxFiles().length;
+    $('newServiceConfirm').checked = !Object.values(state.images).some(i=>i.originalSrc || i._reading) && !RealScanQrSync.getInboxFiles().length && !window.RealScanDocuments?.status().count;
     $('newServiceError').textContent = '';
     openModal('newServiceModal');
   }
@@ -38,6 +42,7 @@
     try {
       const kind = $('newServiceKind').value, source = $('newServiceSource').value, selectedOutput = $('newServiceOutput').value;
       const previous = Object.fromEntries(settings.map(key=>[key,state[key]]));
+      const wasDocument=window.RealScanDocuments?.status().active;
       const keepDelivery = !!activeDelivery() && $('newKeepDelivery').checked;
       prepareWorkspaceForJobSwitch({clearDraft:true,keepTitle:false,keepDelivery});
       const revision=state._jobRevision;
@@ -49,7 +54,7 @@
       else {
         Object.assign(state,{paperSize:'a4',photoCopies:4,photoCopiesPersonA:2,photoCopiesPersonB:2,includeRulerFooter:true,includeDocLabels:true,includeCutMarks:true,documentPageCount:2,sheetLayout:'same_page',printMode:'both',customWidth:8.5,customHeight:5.5,customUnit:'cm',passportOpenOrientation:'portrait',passportPageOrientation:'landscape'});
         $('inputCustomWidth').value=state.customWidth;$('inputCustomHeight').value=state.customHeight;
-        switchIntent(kind);
+        if(kind!=='document')switchIntent(kind);
       }
       $('inputCustomWidth').value=state.customWidth;$('inputCustomHeight').value=state.customHeight;
       $('btnUnitCm').classList.toggle('is-active',state.customUnit==='cm');$('btnUnitMm').classList.toggle('is-active',state.customUnit==='mm');
@@ -62,10 +67,12 @@
       setPaperSize(state.paperSize,true);
       savePreferences();
       updateUI();
+      if(kind==='document'||kind==='repeat'&&wasDocument)window.RealScanDocuments.activate();
       closeModal('newServiceModal');
       const firstSide=RealScanWorkflow.describe().wanted[0] || 'front';
       setMobileStep(source === 'choose' ? 1 : 2);
       window.RealScanDiagnostics?.record('counter.new-service','info',{service:kind,source,output,keepDelivery});
+      if(window.RealScanDocuments?.status().active){if(followSource&&source==='qr')$('docReceive').click();else if(followSource&&source==='camera')$('docCamera').click();else if(source==='file'){$('documentWorkspace').scrollIntoView({block:'start'});$('docImport').focus();}return;}
       if (source === 'qr' && followSource) $('btnOpenReceiveModal').click();
       else if (source === 'camera' && followSource) document.querySelector('[data-camera="'+firstSide+'"]')?.click();
       else if (source === 'file') { setMobileStep(2); const target=$({front:'dropzoneFront',back:'cardBackContainer',page3:'cardPage3Container',page4:'cardPage4Container'}[firstSide]);target.tabIndex=-1;target.scrollIntoView({block:'start'});target.focus({preventScroll:true});showToast('Elige «Archivo» en la zona de carga. También puedes arrastrar o pegar una imagen.','info'); }
@@ -87,7 +94,7 @@
       <div id="newServiceModal" class="hidden counter-overlay" role="dialog" aria-labelledby="newServiceTitle">
         <div class="counter-dialog"><div class="counter-dialog-heading"><div><p class="counter-kicker">ATENCIÓN EN MOSTRADOR</p><h2 id="newServiceTitle">Comienza con lo que necesita el cliente</h2></div><button type="button" data-close-modal="newServiceModal" aria-label="Cerrar">×</button></div>
           <p class="counter-help">Prepara el servicio antes de recibir sus archivos. Las imágenes actuales se limpiarán al continuar.</p>
-          <label class="counter-field">1. ¿Qué servicio necesita?<select id="newServiceKind"><option value="id">Identificación · frente y reverso</option><option value="photos">Fotografías · elegir medida y copias</option><option value="multi">Pasaporte · páginas en hojas separadas</option><option value="custom">Medida personalizada</option><option value="repeat">Repetir la configuración actual con imágenes nuevas</option></select></label>
+          <label class="counter-field">1. ¿Qué servicio necesita?<select id="newServiceKind"><option value="id">Identificación · frente y reverso</option><option value="photos">Fotografías · elegir medida y copias</option><option value="multi">Pasaporte · páginas en hojas separadas</option><option value="document">Documento completo · hasta 40 páginas</option><option value="custom">Medida personalizada</option><option value="repeat">Repetir la configuración actual con imágenes nuevas</option></select></label>
           <div class="counter-field-grid"><label class="counter-field">2. ¿Cómo recibes el archivo?<select id="newServiceSource"><option value="choose">Elegir después</option><option value="qr">Desde el celular del cliente por QR</option><option value="camera">Cámara de este dispositivo</option><option value="file">Archivo, USB o escáner</option></select></label>
           <label class="counter-field">3. ¿Cómo lo entregarás?<select id="newServiceOutput"><option value="both">Impresión y archivo digital</option><option value="print">Impresión</option><option value="digital">Archivo digital</option></select></label></div>
           <p class="counter-help">Cada servicio nuevo comienza en A4, escala 100 %, con guías y copias iniciales. «Repetir» conserva el formato y las opciones, sin conservar imágenes ni el nombre del cliente. El destino de entrega orienta el siguiente paso; puedes cambiarlo al finalizar.</p>
@@ -109,13 +116,18 @@
     }
     const more=document.createElement('button');more.id='counterMore';more.type='button';more.className='counter-header-more';more.textContent='Más opciones';more.setAttribute('aria-haspopup','dialog');more.onclick=()=>openModal('counterMoreModal');header.append(more);
     header.prepend($('btnNewProject'));
+    $('colControlPanel').parentElement.classList.add('calibrated-workspace');
+    $('workflowGuide').previousElementSibling.id='serviceFormats';
+    $('labelActivePaperDesc').parentElement.parentElement.id='printPaperSettings';
+    const outputChoice=document.createElement('label');outputChoice.className='counter-output-choice';outputChoice.textContent='Salida del servicio';const select=document.createElement('select');select.id='counterOutput';for(const [value,label] of [['both','Impresión y digital'],['print','Impresión'],['digital','Solo digital']]){const option=document.createElement('option');option.value=value;option.textContent=label;select.append(option);}select.onchange=()=>{output=select.value;update();};outputChoice.append(select);$('counterService').firstElementChild.append(outputChoice);
+
     const themeLabel=document.createElement('span');themeLabel.textContent='Tema claro / oscuro';$('btnThemeToggle').append(themeLabel);
     for(const [id,label] of [['btnNewProject','Nuevo servicio'],['btnOpenReceiveModal','Recibir por QR'],['btnOpenDeliveryModal','Entrega digital']]){const b=$(id);b.setAttribute('aria-label',label);b.lastElementChild.textContent=label;}
     $('counterStart').onclick=openNewService;$('newServiceStart').onclick=start;$('counterShowDelivery').onclick=showDelivery;
-    $('counterDeliver').onclick=()=>{if(!RealScanWorkflow.describe().ready)return;if(output==='print')RealScanWorkflow.moveTo(3);else $('btnOpenDeliveryModal').click();};
+    $('counterDeliver').onclick=()=>{if(window.RealScanDocuments?.status().active){$('documentWorkspace').scrollIntoView({block:'start'});$(output==='print'?'docPrint':'docQr').focus();return;}if(!RealScanWorkflow.describe().ready)return;if(output==='print')RealScanWorkflow.moveTo(3);else $('btnOpenDeliveryModal').click();};
     $('pendingDeliveryRevoke').onclick=async()=>{if(!confirm('¿El cliente ya descargó sus archivos? Este QR dejará de funcionar.'))return;try{await RealScanQrSync.revokeDeliverySession();closeModal('pendingDeliveryModal');update();}catch(e){showToast(e.message,'error');}};
     update();
   });
   setInterval(update,10000);
-  window.RealScanCounter={openNewService,update};
+  window.RealScanCounter={openNewService,update,setOutput(value){if(['digital','print','both'].includes(value)){output=value;update();}},getOutput(){return output;}};
 })();

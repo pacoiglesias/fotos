@@ -50,10 +50,12 @@ function getDB() {
    ============================================================ */
 function prepareWorkspaceForJobSwitch(options) {
   options = options || {};
+  window.RealScanReview?.cancel();
+  const documentCleanup=window.RealScanDocuments?.reset(!!options.clearDraft);
   window.RealScanP2P?.close();window.RealScanOcr?.cancel(true);
   if (typeof state !== 'undefined') {
     if (window.RealScanQrSync) {
-      const cleanup = [window.RealScanQrSync.revokeReceiveSession(),window.RealScanQrSync.clearInbox()];
+      const cleanup = [documentCleanup,window.RealScanQrSync.revokeReceiveSession(),window.RealScanQrSync.clearInbox()];
       if(!options.keepDelivery)cleanup.push(window.RealScanQrSync.revokeDeliverySession());
       state._jobSwitchCleanup = Promise.allSettled(cleanup);
     }

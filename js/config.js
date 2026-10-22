@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.8.0';
+window.APP_VERSION = 'v3.9.0';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -473,6 +473,7 @@ function closeModal(id) {
 }
 
 function closeAllModals() {
+  window.RealScanReview?.cancel();
   window.RealScanCapture?.close();
   window.RealScanLocalTransfer?.stopCamera();window.RealScanOcr?.cancel();
   if (typeof closeLiveCamera === 'function' && window.state?.cameraStream) closeLiveCamera();

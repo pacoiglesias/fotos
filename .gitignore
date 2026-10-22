@@ -8,3 +8,9 @@ Thumbs.db
 dist/
 
 backups/
+
+# External recon and audit artifacts
+apps-*
+provi-*
+auditoria-seguridad-*.md
+tools/

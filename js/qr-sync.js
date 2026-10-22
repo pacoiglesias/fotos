@@ -55,7 +55,7 @@
       notify();
       await global.RealScanRelay.clearFiles("receive");
     },
-    async assignFileToSlot(id, side) {
+    async assignFileToSlot(id, side, options = {}) {
       if (!["front", "back", "page3", "page4"].includes(side)) return false;
       if(global.state?.activeCategory==='photos') {
         const used=new Set(global.RealScanLayout.computeDocumentLayout(global.state).pages.flatMap(page=>page.placements.map(piece=>piece.slot)));
@@ -68,6 +68,12 @@
       if(['page3','page4'].includes(side)&&typeof setDocumentPages==='function')setDocumentPages(Math.max(global.state?.documentPageCount||2,side==='page4'?4:3));
       file.assigning=true;notify();
       try {
+        const job=global.state?._jobRevision||0,mode=global.state?.activeCategory==='photos'?'photo':'document';
+        if(options.review&&file.type.startsWith('image/')&&file.reviewMode!==mode){
+          const reviewed=await global.RealScanReview.open({dataUrl:file.editedDataUrl||file.dataUrl,name:file.name,photoMode:mode==='photo'});
+          if(!reviewed||job!==(global.state?._jobRevision||0)||!inbox.includes(file))return false;
+          if(reviewed!==file.dataUrl)file.editedDataUrl=reviewed;file.reviewMode=mode;
+        }
         const result = await global.handleLoadedFile(
           side,
           file.editedDataUrl || file.dataUrl,
@@ -94,9 +100,10 @@
     editReceivedFile(id) {
       const file=inbox.find(f=>f.id===id);if(!file||file.type==='application/pdf')return;
       const revision=global.state?._jobRevision||0;
-      global.RealScanCapture.open({sourceDataUrl:file.dataUrl,photoMode:global.state?.activeCategory==='photos',onAccept:result=>{if((global.state?._jobRevision||0)!==revision||!inbox.includes(file))return;file.editedDataUrl=result;file.assignedTo=null;notify();}});
+      const mode=global.state?.activeCategory==='photos'?'photo':'document';
+      global.RealScanCapture.open({sourceDataUrl:file.dataUrl,photoMode:mode==='photo',onAccept:result=>{if((global.state?._jobRevision||0)!==revision||!inbox.includes(file))return;file.editedDataUrl=result;file.reviewMode=mode;file.assignedTo=null;notify();}});
     },
-    restoreReceivedFile(id) {const file=inbox.find(f=>f.id===id);if(file){file.editedDataUrl=null;file.assignedTo=null;notify();}},
+    restoreReceivedFile(id) {const file=inbox.find(f=>f.id===id);if(file){file.editedDataUrl=null;file.reviewMode=null;file.assignedTo=null;notify();}},
     removeReceivedFile(id) {if(!confirm('¿Quitar este archivo de la bandeja? Las caras ya asignadas se conservan.'))return;inbox=inbox.filter(f=>f.id!==id);notify();},
     downloadOriginal(id) {const file=inbox.find(f=>f.id===id);if(!file)return;const a=document.createElement('a');a.href=file.dataUrl;a.download=file.name;document.body.append(a);a.click();a.remove();},
     async createDeliverySession(files, config) {

@@ -77,7 +77,7 @@
           <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.8.0</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.9.0</span>
           </div>
           <p class="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1 mt-0.5">
             <span class="hidden sm:inline">Desarrollado por</span>
@@ -1936,7 +1936,7 @@
     <footer class="text-center text-xs text-slate-500 space-y-2.5 py-6 border-t border-slate-200 dark:border-slate-800 mt-8">
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.8.0</span>
+        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.9.0</span>
         <span class="text-slate-300 dark:text-slate-600">•</span>
         <span class="font-medium">Desarrollado por <strong class="font-bold text-slate-900 dark:text-white">Paco Iglesias</strong></span>
       </div>
@@ -2140,7 +2140,7 @@
             ⚙️
           </div>
           <div>
-            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.8.0</span></h3>
+            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.9.0</span></h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400">Control de acceso y bitácora de auditoría</p>
           </div>
         </div>
@@ -2689,6 +2689,7 @@
               <input type="checkbox" id="checkDeliverBackJpg" class="rounded accent-emerald-600">
               <span>🖼️ Reverso en Alta Resolución (Si aplica)</span>
             </label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="checkDeliverPage3"><span>Página 3 individual</span></label><label class="flex items-center gap-2"><input type="checkbox" id="checkDeliverPage4"><span>Página 4 individual</span></label>
           </div>
         </div>
 
@@ -2853,6 +2854,7 @@
   <script src="js/storage.js"></script>
   <script src="js/crop-warp.js"></script>
   <script src="js/scan-assist.js"></script>
+  <script src="js/asset-review.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/layout-engine.js"></script>
   <script src="js/pdf.js"></script>
@@ -2868,6 +2870,8 @@
   <script src="js/receive-workflow.js"></script>
   <script src="js/workflow-guide.js"></script>
   <script src="js/counter-flow.js"></script>
+  <script src="js/document-job.js"></script>
+  <script src="js/digital-workflow.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

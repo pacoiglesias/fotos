@@ -15,7 +15,7 @@
   }
   function moveTo(step, side) {
     setMobileStep(step);
-    const target = side ? document.getElementById(targets[side]) : document.querySelector('.mob-pane-' + step);
+    const target = side ? document.getElementById(targets[side]) : step===3&&document.body.dataset.outputMode==='digital'?document.getElementById('digitalOutput'):document.querySelector('.mob-pane-' + step);
     if (!target) return;
     target.tabIndex = -1;
     target.focus({preventScroll:true});
@@ -28,7 +28,7 @@
   function update(layout) {
     const card = document.getElementById('workflowGuide');
     if (!card) return;
-    const work = describe(layout), photos = state.activeCategory === 'photos';
+    const work = describe(layout), photos = state.activeCategory === 'photos',digital=document.body.dataset.outputMode==='digital';
     const sideName = side => photos ? (side === 'back' ? 'la foto de la persona B' : state.mixTwoPhotos ? 'la foto de la persona A' : 'tu fotografía') : 'el ' + names[side];
     const loaded = work.wanted.length - work.missing.length;
     const intent = photos ? 'photos' : state.activeCategory === 'custom' ? 'custom' : ['passport','passport_open'].includes(state.format) ? 'multi' : state.format === 'card' ? 'id' : '';
@@ -41,7 +41,7 @@
       (loaded ? 'Falta cargar ' + sideName(work.missing[0]) : 'Carga ' + (photos ? sideName(work.missing[0]) : 'el frente del documento')) : 'Revisa el resultado antes de entregar';
     card.dataset.state = work.busy ? 'busy' : work.ready ? 'review' : 'load';
     text('workflowTitle', next);
-    text('workflowSummary', getActiveSpec().shortName + ' · ' + work.layout.paper.shortName + ' · ' + work.layout.pages.length + ' hoja(s)' + (photos ? ' · ' + state.photoCopies + ' foto(s)' : '') + ' · ' + work.scale + ' %');
+    text('workflowSummary', digital?getActiveSpec().shortName+' · '+work.wanted.length+' archivo(s) individuales':getActiveSpec().shortName + ' · ' + work.layout.paper.shortName + ' · ' + work.layout.pages.length + ' hoja(s)' + (photos ? ' · ' + state.photoCopies + ' foto(s)' : '') + ' · ' + work.scale + ' %');
     text('workflowProgress', loaded + ' de ' + work.wanted.length + ' imágenes preparadas');
     text('workflowTip', work.busy ? 'Espera a que termine la carga. Tu selección más reciente tiene prioridad.' : work.missing.length ?
       'Elige cámara o archivo en la zona de carga, o recibe las imágenes desde otro celular por QR.' :
@@ -49,6 +49,7 @@
     const primary = document.getElementById('workflowNext');
     primary.disabled = work.busy;
     primary.textContent = work.busy ? 'Preparando…' : work.missing.length ? (loaded ? 'Cargar ' + sideName(work.missing[0]) : 'Elegir cámara o archivo') : 'Revisar hoja';
+    if(digital&&!work.missing.length&&!work.busy){primary.textContent='Revisar archivos';text('workflowTip','Revisa orientación, bordes y nitidez. Después elige formato, dimensiones y peso de los archivos que recibirá el cliente.');}
     const notice = document.getElementById('workflowNotice');
     notice.hidden = !work.warnings.length;
     text('workflowNotice', work.warnings.join(' '));

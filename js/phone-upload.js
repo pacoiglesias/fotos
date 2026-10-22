@@ -121,7 +121,7 @@
       for (const f of files) {
         if (queue.length >= 8)
           throw Error("Puedes enviar hasta 8 archivos por sesión.");
-        const prepared=await prepare(f);prepared.captureEdited=captured;queue.push(prepared);
+        const prepared=await prepare(f);prepared.captureEdited=captured;prepared.reviewed=captured;queue.push(prepared);
       }
       report('Listo para enviar. Revisa las miniaturas, su orientación y la preparación indicada en cada archivo.');
     } catch (e) {
@@ -155,6 +155,18 @@
   };
   $("btnSendFiles").onclick = async () => {
     if (!sessionReady || sending || preparing || !queue.length) return;
+    preparing=true;render();
+    try {
+      for(let index=0;index<queue.length;index++){
+        const file=queue[index];if(file.reviewed)continue;
+        if(file.type==='application/pdf'){if(!confirm('Enviar '+file.name+' sin modificar. El operador revisará sus páginas en el mostrador. ¿Confirmas este PDF?'))return;file.reviewed=true;continue;}
+        const result=await RealScanReview.open({dataUrl:file.dataUrl,name:(index+1)+' de '+queue.length+' · '+file.name,photoMode:file.captureMode==='photo'});
+        if(!result)return;
+        if(result!==file.dataUrl){const blob=await(await fetch(result)).blob();const edited=await prepare(new File([blob],file.name,{type:blob.type}),'optimize');edited.captureMode=file.captureMode;edited.originalDataUrl=file.originalDataUrl||file.dataUrl;edited.originalName=file.originalName||file.name;edited.originalPolicy=file.originalPolicy||file.transferPolicy;queue[index]=edited;}
+        queue[index].reviewed=true;
+      }
+    }catch(e){report(e.message,true);return;}
+    finally{preparing=false;render();}
     sending = true;
     render();
     $("successBox").classList.add("hidden");

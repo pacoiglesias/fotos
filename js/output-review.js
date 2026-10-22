@@ -14,6 +14,7 @@
       pairs.push(["Peso máximo por archivo", Number($("selectDeliveryMaxBytes")?.value)?(Number($("selectDeliveryMaxBytes").value)/1000000)+" MB":"Sin límite adicional"]);
       pairs.push(["Archivos individuales", format + " \xB7 " + (max === "original" ? "Resoluci\xF3n original" : max + " px m\xE1ximo")], ["Hoja completa", $("checkDeliverPdfSheet").checked ? "Incluida como PDF" : "No incluida"]);
     }
+    if(delivery&&!$('checkDeliverPdfSheet').checked)pairs.splice(0,3);
     for (const [label, value] of pairs) {
       const box = document.createElement("div"), small = document.createElement("small"), strong = document.createElement("strong");
       box.className = "output-review-fact";
@@ -27,7 +28,7 @@
     const wanted = delivery ? new Set([
       ...($("checkDeliverPdfSheet").checked ? sheetSlots : []),
       ...($("checkDeliverFrontJpg").checked ? ['front'] : []),
-      ...($("checkDeliverBackJpg").checked ? ['back'] : [])
+      ...($("checkDeliverBackJpg").checked ? ['back'] : []),...($("checkDeliverPage3").checked ? ['page3'] : []),...($("checkDeliverPage4").checked ? ['page4'] : [])
     ]) : sheetSlots;
     const names = {front:'Frente',back:'Reverso',page3:'Página 3',page4:'Página 4'};
     const missing = [...wanted].filter(side => !state.images[side]?.processedDataUrl);
@@ -43,7 +44,7 @@
       const src = state.images[side]?.processedDataUrl;
       if (!src) continue;
       if (!delivery && !sheetSlots.has(side)) continue;
-      if (delivery && !($("checkDeliverPdfSheet").checked && sheetSlots.has(side)) && !(side === "front" && $("checkDeliverFrontJpg").checked) && !(side === "back" && $("checkDeliverBackJpg").checked)) continue;
+      if (delivery && !($("checkDeliverPdfSheet").checked && sheetSlots.has(side)) && !(side === "front" && $("checkDeliverFrontJpg").checked) && !(side === "back" && $("checkDeliverBackJpg").checked) && !(side === "page3" && $("checkDeliverPage3").checked) && !(side === "page4" && $("checkDeliverPage4").checked)) continue;
       const figure = document.createElement("figure"), image = document.createElement("img"), caption = document.createElement("figcaption");
       image.src = src;
       image.alt = label + " preparado";

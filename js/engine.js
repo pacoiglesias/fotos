@@ -63,8 +63,11 @@ function triggerNativeUpload(side, isCamera) {
 function handleImageFile(event, side) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
-  loadBlobIntoSide(file, side).catch(e=>showToast(e.message, 'error'));
+  loadBlobIntoSide(file, side, {review:true}).catch(e=>showToast(e.message, 'error'));
 }
+function handleDragOver(event){event.preventDefault();event.currentTarget.classList.add('ring-2');}
+function handleDragLeave(event){event.currentTarget.classList.remove('ring-2');}
+function handleDrop(event,side){event.preventDefault();event.stopPropagation();event.currentTarget.classList.remove('ring-2');const file=event.dataTransfer?.files?.[0];if(file)loadBlobIntoSide(file,side,{review:true});}
 
 function beginSlotRequest(side) {
   const slot=state.images[side];if(!slot)throw Error('Destino no válido.');
@@ -77,7 +80,7 @@ function slotRequestCurrent(request) {
 }
 function finishSlotRequest(request) {if(slotRequestCurrent(request)){request.slot._reading=false;window.RealScanWorkflow?.update();}}
 
-async function loadBlobIntoSide(blob, side) {
+async function loadBlobIntoSide(blob, side, options = {}) {
   const request=beginSlotRequest(side);
   try {
     if (!blob || !blob.size || blob.size > 30*1024*1024) throw Error('Selecciona un archivo válido de hasta 30 MB.');
@@ -85,7 +88,11 @@ async function loadBlobIntoSide(blob, side) {
     if (/\.hei[cf]$/i.test(blob.name || '')) throw Error('Exporta la imagen HEIC como JPG o PNG desde tu teléfono.');
     const dataUrl = await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('No se pudo leer el archivo.'));reader.readAsDataURL(blob);});
     if(!slotRequestCurrent(request))return false;
-    const result=await window.handleLoadedFile(side,dataUrl,blob.name,null,{request});return !!result?.loaded;
+    const reviewed=options.review ? await RealScanReview.open({dataUrl,name:blob.name,photoMode:state.activeCategory==='photos'}) : dataUrl;
+    if(!reviewed||!slotRequestCurrent(request))return false;
+    const result=await window.handleLoadedFile(side,reviewed,blob.name,null,{request,preserveFrame:!!options.review});
+    if(result?.loaded&&slotRequestCurrent(request))state.images[side].rawOriginalSrc=dataUrl;
+    return !!result?.loaded;
   } catch(e) {if(slotRequestCurrent(request))showToast(e.message || 'No se pudo procesar el archivo.', 'error');return false;}
   finally {finishSlotRequest(request);}
 }
@@ -907,8 +914,7 @@ async function pasteFromClipboard(side) {
       for (const type of item.types) {
         if (type.startsWith('image/')) {
           const blob = await item.getType(type);
-          loadBlobIntoSide(blob, side);
-          showToast('¡Imagen pegada desde el portapapeles con éxito!', 'success');
+          if(await loadBlobIntoSide(blob, side,{review:true}))showToast('Imagen revisada y cargada.','success');
           return;
         }
       }
@@ -932,8 +938,7 @@ document.addEventListener('paste', function(e) {
       else if (pageCount >= 2 && !state.images.back.processedDataUrl) target = 'back';
       else if (pageCount >= 3 && !state.images.page3.processedDataUrl) target = 'page3';
       else if (pageCount >= 4 && !state.images.page4.processedDataUrl) target = 'page4';
-      loadBlobIntoSide(blob, target);
-      showToast('¡Imagen pegada con éxito en ' + getSlotFriendlyName(target) + '!', 'success');
+      loadBlobIntoSide(blob, target,{review:true});
       e.preventDefault();
       break;
     }

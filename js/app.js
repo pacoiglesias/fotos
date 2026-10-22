@@ -777,6 +777,7 @@ window.updateQrInboxUI = updateQrInboxUI;
 
 let deliveryDialogRevision = 0;
 function openDigitalDeliveryModal() {
+  if(window.RealScanDocuments?.status().active){$('documentWorkspace').scrollIntoView({block:'start'});$('docQr').focus();showToast('Prepara el PDF completo desde el panel del documento.','info');return;}
   if (!window.RealScanQrSync) return;
   deliveryDialogRevision++;
   const policy = getActiveSpec().digital;
@@ -808,7 +809,7 @@ async function handleGenerateDeliveryQr() {
 
   const files = [];
 
-  for (const [side, selected] of [['front', deliverFront], ['back', deliverBack]]) {
+  for (const [side, selected] of [['front', deliverFront], ['back', deliverBack],['page3',$('checkDeliverPage3')?.checked],['page4',$('checkDeliverPage4')?.checked]]) {
     if (selected && state.images[side]?.processedDataUrl) files.push(await createDigitalFile(side, format, maxPx));
   }
 
