@@ -3,7 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>RealScan — Impresión de Documentos a Tamaño Real (1:1) en 1 Hoja A4</title>
+  <title>RealScan — Fotos, documentos y entrega digital</title>
+  <script>
+    // Update independently of app.js so an old broken cached script can recover.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        function recover() { if (typeof window.updateUI !== 'function') location.reload(); }
+        if (document.readyState === 'complete') recover();
+        else window.addEventListener('load', recover, {once:true});
+      });
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.getRegistration().then(function(registration) {
+          return registration ? registration.update() : navigator.serviceWorker.register('sw.js', {updateViaCache:'none'});
+        }).catch(function() {});
+      });
+    }
+  </script>
 
   <!-- PWA & iOS Safari Meta Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -27,66 +42,48 @@
   </script>
 
   <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: { 50:'#eef2ff', 100:'#e0e7ff', 500:'#6366f1', 600:'#4f46e5', 700:'#4338ca' }
-          }
-        }
-      }
-    }
-  </script>
+  <link rel="stylesheet" href="css/tailwind.css">
 
   <!-- Google Fonts: Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- jsPDF CDN (v2.5.1) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="vendor/jspdf.umd.min.js"></script>
 
   <!-- JSZip CDN (v3.10.1) para exportar paquetes de fotos y respaldos -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="vendor/jszip.min.js"></script>
 
   <!-- PDF.js CDN (v3.11.174) para leer PDFs escaneados -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script>
-    if (window.pdfjsLib) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    }
-  </script>
+  <script type="module" src="js/pdf-loader.mjs"></script>
 
   <!-- Web App Manifest (PWA) -->
   <link rel="manifest" href="manifest.json" />
 
   <!-- Estilos del Sistema Modular -->
   <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/scan-assist.css">
+</head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen antialiased selection:bg-indigo-100 dark:selection:bg-indigo-900 selection:text-indigo-700 dark:selection:text-indigo-300 transition-colors duration-200">
 
   <!-- Header -->
   <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
-    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-      <div class="flex items-center space-x-3 shrink-0">
-        <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 dark:shadow-none">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <div class="max-w-[1560px] mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 overflow-hidden">
+      <div class="flex items-center space-x-2.5 shrink min-w-0">
+        <div class="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 dark:shadow-none">
+          <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
         </div>
-        <div>
-          <div class="flex items-center gap-1.5">
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.2.0-Enterprise</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.9.0</span>
           </div>
-          <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap flex items-center gap-1 mt-0.5">
-            <span>Desarrollado por</span>
-            <strong class="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/70 px-1.5 py-0.5 rounded border border-indigo-200/60 dark:border-indigo-800/60">Paco Iglesias</strong>
+          <p class="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1 mt-0.5">
+            <span class="hidden sm:inline">Desarrollado por</span>
+            <strong class="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/70 px-1 py-0.2 rounded border border-indigo-200/60 dark:border-indigo-800/60">Paco Iglesias</strong>
             <span class="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
-            <span class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/60 hidden sm:inline">Escala 1:1</span>
+            <span class="text-[9.5px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1 py-0.2 rounded border border-emerald-200/60 dark:border-emerald-800/60 hidden sm:inline">Escala 1:1</span>
           </p>
         </div>
       </div>
@@ -94,18 +91,38 @@
       <div class="flex items-center gap-1.5 shrink-0">
         <button
           type="button"
+          id="btnOpenReceiveModal"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 transition-colors shadow-xs"
+          title="Recibir fotos y documentos desde celulares mediante Código QR"
+        >
+          <span class="text-xs">📲</span>
+          <span class="hidden sm:inline">Recibir por QR</span>
+        </button>
+
+        <button
+          type="button"
+          id="btnOpenDeliveryModal"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-[11px] font-bold text-emerald-800 dark:text-emerald-200 transition-colors shadow-xs"
+          title="Entrega digital directa mediante Código QR"
+        >
+          <span class="text-xs">📥</span>
+          <span class="hidden sm:inline">Entrega Digital</span>
+        </button>
+
+        <button
+          type="button"
           id="btnInstallPwa"
-          class="hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-[11px] font-semibold text-emerald-800 dark:text-emerald-200 transition-colors shadow-xs"
+          class="hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-[11px] font-semibold text-emerald-800 dark:text-emerald-200 transition-colors shadow-xs"
           title="Instalar RealScan en tu dispositivo para usarlo sin conexión"
         >
           <span class="text-xs">📲</span>
           <span class="hidden sm:inline">Instalar App</span>
         </button>
 
-        <div id="userBadge" class="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+        <button type="button" aria-label="Cuenta y ajustes" title="Abrir cuenta y ajustes" id="userBadge" class="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
           <span>👤</span>
           <span id="currentUserLabel">admin</span>
-        </div>
+        </button>
 
         <button
           type="button"
@@ -116,6 +133,26 @@
         >
           <span class="dark:hidden text-sm leading-none" aria-hidden="true">🌙</span>
           <span class="hidden dark:inline text-sm leading-none" aria-hidden="true">☀️</span>
+        </button>
+
+        <button
+          type="button"
+          id="btnNewProject"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[11px] font-bold text-slate-800 dark:text-slate-100 transition-colors shadow-xs"
+          title="Comenzar un Nuevo Trabajo (Limpiar lienzo)"
+        >
+          <span class="text-xs">✨</span>
+          <span class="hidden sm:inline">Nuevo</span>
+        </button>
+
+        <button
+          type="button"
+          id="btnOpenPresets"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50/80 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-[11px] font-semibold text-amber-800 dark:text-amber-200 transition-colors shadow-xs"
+          title="Mis Configuraciones Predefinidas Favoritas"
+        >
+          <span class="text-xs">⭐</span>
+          <span class="hidden sm:inline">Favoritos</span>
         </button>
 
         <button
@@ -142,7 +179,7 @@
         <button
           type="button"
           id="btnLogout"
-          class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-[11px] font-semibold text-red-700 dark:text-red-300 transition-colors"
+          class="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-[11px] font-semibold text-red-700 dark:text-red-300 transition-colors"
           title="Cerrar Sesión"
         >
           <span class="text-xs">🔒</span>
@@ -152,7 +189,7 @@
         <button
           type="button"
           id="btnIphoneHelp"
-          class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 transition-colors"
+          class="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 transition-colors"
           title="Cómo abrir y guardar en tu iPhone"
         >
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
@@ -162,7 +199,7 @@
         <button
           type="button"
           id="btnScannerHelp"
-          class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[11px] font-medium text-slate-700 dark:text-slate-300 transition-colors"
+          class="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[11px] font-medium text-slate-700 dark:text-slate-300 transition-colors"
           title="Cómo conectar tu escáner físico"
         >
           <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -174,15 +211,132 @@
     </div>
   </header>
 
-  <main class="max-w-3xl mx-auto px-4 pt-4 space-y-4">
+  <main class="w-full max-w-full overflow-x-hidden px-3 sm:px-4 lg:px-6 pt-3 pb-8">
+    <div class="max-w-[1560px] mx-auto space-y-4">
 
-    <!-- Paso 1 -->
-    <section class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 transition-colors">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Paso 1</span>
-        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium" id="step1Subtitle">Configuración de hoja</span>
-      </div>
-      <h2 class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white" id="step1Title">¿Cómo deseas imprimir en la hoja A4?</h2>
+      <!-- ============================================================
+           BANNER DE RECUPERACIÓN DE BORRADOR ACTIVO (M-27)
+           ============================================================ -->
+      <aside id="bannerActiveDraftRecovery" class="hidden bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-purple-500/10 border border-amber-300/80 dark:border-amber-700/80 rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all" aria-live="polite">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span class="text-2xl shrink-0 p-1 bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 rounded-xl">💾</span>
+          <div class="min-w-0">
+            <p class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">Se encontró un borrador previo no guardado</p>
+            <p id="labelDraftInfo" class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 truncate">Tienes fotos y ajustes de tu sesión anterior listos para continuar.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+          <button type="button" id="btnDiscardActiveDraft" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+            Descartar
+          </button>
+          <button type="button" id="btnRestoreActiveDraft" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-sm flex items-center gap-1">
+            <span>🔄</span>
+            <span>Restaurar Trabajo</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- ============================================================
+           BARRA DE ACCESO RÁPIDO POR INTENCIÓN (M-18)
+           ============================================================ -->
+      <section class="bg-white dark:bg-slate-900 rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+        <div class="flex items-center justify-between mb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Formato del servicio</span>
+            <span class="text-slate-300 dark:text-slate-700">•</span>
+            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">Ajusta el trabajo actual</span>
+          </div>
+          <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono hidden sm:inline">Configuración en 1 clic</span>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs" role="group" aria-label="Tipo de trabajo">
+          <button type="button" id="btnIntentId" data-intent="id" class="intent-card is-active p-3 rounded-xl flex items-start gap-2.5 text-left">
+            <span class="text-xl shrink-0 p-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400">🪪</span>
+            <div class="min-w-0">
+              <p class="font-bold text-slate-900 dark:text-white truncate">Identificaciones</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">INE, DNI, Licencias (8.6 × 5.4 cm)</p>
+              <span class="inline-block mt-1 text-[9px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100/70 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded font-mono">2 Caras 1 Hoja</span>
+            </div>
+          </button>
+
+          <button type="button" id="btnIntentPhotos" data-intent="photos" class="intent-card p-3 rounded-xl flex items-start gap-2.5 text-left">
+            <span class="text-xl shrink-0 p-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400">📷</span>
+            <div class="min-w-0">
+              <p class="font-bold text-slate-900 dark:text-white truncate">Fotos Oficiales</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">Infantil, Carnet, Visa, Título</p>
+              <span class="inline-block mt-1 text-[9px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded font-mono">Planilla 1:1</span>
+            </div>
+          </button>
+
+          <button type="button" id="btnIntentMulti" data-intent="multi" class="intent-card p-3 rounded-xl flex items-start gap-2.5 text-left">
+            <span class="text-xl shrink-0 p-1 rounded-lg bg-purple-50 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400">📑</span>
+            <div class="min-w-0">
+              <p class="font-bold text-slate-900 dark:text-white truncate">Multipágina / Visas</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">Pasaporte abierto o 3-4 páginas</p>
+              <span class="inline-block mt-1 text-[9px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100/70 dark:bg-purple-950/60 px-1.5 py-0.2 rounded font-mono">Dúplex / Libretas</span>
+            </div>
+          </button>
+
+          <button type="button" id="btnIntentCustom" data-intent="custom" class="intent-card p-3 rounded-xl flex items-start gap-2.5 text-left">
+            <span class="text-xl shrink-0 p-1 rounded-lg bg-amber-50 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400">📐</span>
+            <div class="min-w-0">
+              <p class="font-bold text-slate-900 dark:text-white truncate">Medidas Libres</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">Documentos en cm o mm</p>
+              <span class="inline-block mt-1 text-[9px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/60 px-1.5 py-0.2 rounded font-mono">Personalizado</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           STEPPER MÓVIL (M-20) Solo visible en móviles / tablets (< lg)
+           ============================================================ -->
+      <section id="workflowGuide" class="workflow-guide" aria-labelledby="workflowTitle">
+        <div class="workflow-body">
+          <p class="workflow-eyebrow">Tu trabajo, paso a paso <span id="workflowProgress"></span></p>
+          <h2 id="workflowTitle" role="status" aria-live="polite">Prepara tu trabajo</h2>
+          <p id="workflowSummary" class="workflow-summary"></p>
+          <p id="workflowTip" class="workflow-tip"></p>
+          <p id="workflowNotice" class="workflow-notice" hidden></p>
+        </div>
+        <div class="workflow-actions">
+          <button type="button" id="workflowNext" class="workflow-primary">Elegir cámara o archivo</button>
+          <button type="button" id="workflowReceive" class="workflow-secondary">Recibir de otro celular por QR</button>
+          <small id="workflowConnection"></small>
+        </div>
+        <nav class="workflow-steps" aria-label="Pasos del trabajo">
+          <button type="button" data-workflow-step="1"><span aria-hidden="true">1</span> Elegir formato</button>
+          <button type="button" data-workflow-step="2"><span aria-hidden="true">2</span> Cargar y ajustar</button>
+          <button type="button" data-workflow-step="3"><span aria-hidden="true">3</span> Revisar y entregar</button>
+        </nav>
+      </section>
+      <nav id="mobileStepperNav" class="lg:hidden flex items-center justify-between bg-white dark:bg-slate-900 rounded-xl p-1.5 border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-semibold">
+        <button type="button" id="tabMobStep1" data-mob-step="1" class="mobile-step-tab is-active flex-1 py-2 text-center flex items-center justify-center gap-1">
+          <span>1.</span><span>Formato</span>
+        </button>
+        <button type="button" id="tabMobStep2" data-mob-step="2" class="mobile-step-tab flex-1 py-2 text-center flex items-center justify-center gap-1 text-slate-500 dark:text-slate-400">
+          <span>2.</span><span>Cargar</span>
+        </button>
+        <button type="button" id="tabMobStep3" data-mob-step="3" class="mobile-step-tab flex-1 py-2 text-center flex items-center justify-center gap-1 text-slate-500 dark:text-slate-400">
+          <span>3.</span><span>Hoja & Imprimir</span>
+        </button>
+      </nav>
+
+      <!-- ============================================================
+           WORKSTATION SPLIT-GRID: 2 COLUMNAS EN ESCRITORIO (M-16 & M-19)
+           ============================================================ -->
+      <div class="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start space-y-4 lg:space-y-0">
+        
+        <!-- COLUMNA IZQUIERDA: CONTROLES, FORMATO Y RANURAS -->
+        <div id="colControlPanel" class="lg:col-span-5 xl:col-span-5 space-y-4">
+
+          <!-- Paso 1 -->
+          <section class="mob-pane mob-pane-1 mob-pane-active bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 transition-colors">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Formato</span>
+              <span class="text-xs text-slate-400 dark:text-slate-500 font-medium" id="step1Subtitle">Configuración de hoja</span>
+            </div>
+            <h2 class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white" id="step1Title">¿Cómo deseas imprimir en la hoja A4?</h2>
 
       <div id="step1DocsMode" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
         <button type="button" id="btnModeBoth" data-mode="both" class="mode-btn is-active relative text-left p-3 rounded-xl flex flex-col justify-between transition-all">
@@ -192,7 +346,7 @@
                 <p class="title-main font-bold text-xs sm:text-sm text-slate-900 dark:text-white">2 Caras en 1 Hoja</p>
                 <span class="text-[8.5px] font-bold uppercase tracking-wider bg-emerald-600 text-white px-1.5 py-0.2 rounded">Trámites</span>
               </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Anverso + Reverso juntos en la misma hoja A4</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Frente y reverso juntos en la misma hoja</p>
             </div>
             <span class="active-badge text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
@@ -251,13 +405,13 @@
 
       <div id="docsModeNote" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
         <span id="docsModeNoteText" class="text-slate-600 dark:text-slate-300">
-          💡 <strong>Opciones para DNI y Documentos:</strong> Puedes colocar <strong>Anverso y Reverso en 1 sola hoja A4</strong> (ideal para trámites y bancos) o en <strong>Hojas Separadas</strong> si deseas imprimir frente y vuelta por la impresora.
+          💡 <strong>Opciones para DNI y Documentos:</strong> Puedes colocar <strong>Anverso y Reverso en una misma hoja</strong> (ideal para trámites y bancos) o en <strong>Hojas Separadas</strong> si deseas imprimir frente y vuelta por la impresora.
         </span>
       </div>
 
       <div id="step1PhotosMode" class="hidden space-y-3">
         <div class="flex items-center justify-between">
-          <p class="text-xs text-slate-500 dark:text-slate-400">¿Cuántas fotos deseas imprimir en la hoja A4?</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Elige cuántas fotografías necesita el cliente.</p>
           <span id="badgeMaxPhotosFit" class="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
             Caben hasta 36 fotos
           </span>
@@ -273,7 +427,7 @@
             <span class="text-base" aria-hidden="true">⭐</span>
             <div class="text-left">
               <p class="font-bold text-xs">Llenar Hoja al Máximo (Sin Desperdiciar Papel)</p>
-              <p class="text-[10px] text-emerald-700 dark:text-emerald-300 font-normal">Aprovecha el 100% de la hoja A4 con fotos perfectamente alineadas</p>
+              <p class="text-[10px] text-emerald-700 dark:text-emerald-300 font-normal">Distribuye las fotos con proporciones y márgenes de corte</p>
             </div>
           </div>
           <span id="badgeFillA4Count" class="text-xs font-mono font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-md shrink-0">
@@ -329,29 +483,56 @@
         </div>
 
         <!-- Opción 2 personas / 2 fotos distintas en 1 misma hoja -->
-        <div class="p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/80 flex items-center justify-between gap-3">
-          <div class="min-w-0">
-            <p class="text-xs font-semibold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
-              <span>👥 Modo 2 Personas / 2 Fotos</span>
-              <span class="text-[9px] font-mono bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-200 px-1.5 py-0.5 rounded font-bold">50% y 50%</span>
-            </p>
-            <p class="text-[10px] text-indigo-800/80 dark:text-indigo-300">
-              Imprime 2 fotos distintas en la misma hoja (ej. 2 hermanos o 2 trámites) sin desperdiciar papel.
-            </p>
+        <div class="p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/80 space-y-2">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-xs font-semibold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+                <span>👥 Modo 2 Personas / 2 Fotos</span>
+                <span id="labelMixBadgeRatio" class="text-[9px] font-mono bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-200 px-1.5 py-0.5 rounded font-bold">Cantidades Libres</span>
+              </p>
+              <p class="text-[10px] text-indigo-800/80 dark:text-indigo-300">
+                Imprime 2 fotos distintas en la misma hoja (ej. 2 personas o 2 trámites) sin desperdiciar papel.
+              </p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" id="chkMixTwoPhotos" class="sr-only peer">
+              <div class="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
           </div>
-          <label class="relative inline-flex items-center cursor-pointer shrink-0">
-            <input type="checkbox" id="chkMixTwoPhotos" class="sr-only peer">
-            <div class="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-          </label>
+          <!-- Cantidades independientes Persona A y Persona B -->
+          <div id="containerMixIndependentCopies" class="hidden pt-2 border-t border-indigo-100 dark:border-indigo-900/60 grid grid-cols-2 gap-2 text-xs">
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 space-y-1">
+              <label for="inputCopiesPersonA" class="font-bold text-[10.5px] text-indigo-900 dark:text-indigo-200 flex items-center justify-between">
+                <span>Persona A (Frente):</span>
+                <span id="tagCopiesPersonA" class="text-indigo-600 dark:text-indigo-400 font-mono">2</span>
+              </label>
+              <div class="flex items-center gap-1">
+                <button type="button" id="btnMinusCopiesA" class="w-7 h-7 rounded border border-slate-300 dark:border-slate-600 font-bold text-xs bg-slate-50 dark:bg-slate-700 hover:bg-slate-100">-</button>
+                <input type="number" id="inputCopiesPersonA" min="0" max="48" value="2" class="w-full h-7 text-center font-bold font-mono text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
+                <button type="button" id="btnPlusCopiesA" class="w-7 h-7 rounded border border-slate-300 dark:border-slate-600 font-bold text-xs bg-slate-50 dark:bg-slate-700 hover:bg-slate-100">+</button>
+              </div>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800 space-y-1">
+              <label for="inputCopiesPersonB" class="font-bold text-[10.5px] text-amber-900 dark:text-amber-200 flex items-center justify-between">
+                <span>Persona B (Reverso):</span>
+                <span id="tagCopiesPersonB" class="text-amber-600 dark:text-amber-400 font-mono">2</span>
+              </label>
+              <div class="flex items-center gap-1">
+                <button type="button" id="btnMinusCopiesB" class="w-7 h-7 rounded border border-slate-300 dark:border-slate-600 font-bold text-xs bg-slate-50 dark:bg-slate-700 hover:bg-slate-100">-</button>
+                <input type="number" id="inputCopiesPersonB" min="0" max="48" value="2" class="w-full h-7 text-center font-bold font-mono text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
+                <button type="button" id="btnPlusCopiesB" class="w-7 h-7 rounded border border-slate-300 dark:border-slate-600 font-bold text-xs bg-slate-50 dark:bg-slate-700 hover:bg-slate-100">+</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Paso 2 -->
-    <section class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3.5 transition-colors">
+    <section class="mob-pane mob-pane-1 mob-pane-active bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3.5 transition-colors">
       <div class="flex items-center justify-between">
-        <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Paso 2</span>
-        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Tamaño físico calibrado</span>
+        <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Opciones de impresión</span>
+        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Medidas de salida configuradas</span>
       </div>
       <div>
         <h2 class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">Tipo de Documento o Medida</h2>
@@ -505,7 +686,7 @@
         </div>
 
         <div id="passportOptionsNote" class="p-2 rounded-lg bg-indigo-100/60 dark:bg-indigo-900/40 text-[11px] text-indigo-900 dark:text-indigo-200">
-          💡 La libreta abierta ya incluye la doble página en una sola toma. Se imprime centrada en 1 hoja A4 a escala 1:1 real.
+          💡 La libreta abierta ya incluye la doble página en una sola toma. Se imprime centrada en la hoja seleccionada a escala 1:1 real.
         </div>
       </div>
 
@@ -708,12 +889,20 @@
           </div>
         </div>
       </div>
+
+      <!-- Botón de Navegación Móvil Paso 1 -> 2 -->
+      <div class="lg:hidden pt-2 flex justify-end">
+        <button type="button" class="btn-mob-nav px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1 active:scale-95" data-mob-nav-step="2">
+          <span>Continuar a Cargar Fotos</span>
+          <span>▶</span>
+        </button>
+      </div>
     </section>
 
     <!-- Paso 3 -->
-    <section class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
+    <section class="mob-pane mob-pane-2 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
       <div class="flex items-center justify-between">
-        <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Paso 3</span>
+        <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Cargar y ajustar</span>
         <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Cámara, Archivo o Escáner</span>
       </div>
 
@@ -782,9 +971,9 @@
             <div class="flex items-center gap-1 flex-wrap">
               <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span>
               <button type="button" id="btnFitModeFront" data-fit-mode="front:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa dentro del marco sin cortar nada (ideal para imágenes grandes)">📐 Encajar Todo</button>
-              <button type="button" id="btnCoverModeFront" data-fit-mode="front:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Rellenar el marco completo 1:1">🔲 Llenar 1:1</button>
-              <button type="button" data-autofit="front" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Ajuste automático 1:1">⚡ Auto 1:1</button>
-              <button type="button" id="btnToggleCropFront" data-crop="front" class="hidden px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 transition-colors">✂️ Recorte</button>
+              <button type="button" id="btnCoverModeFront" data-fit-mode="front:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button>
+              <button type="button" data-autofit="front" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Centrar y encajar la imagen completa sin recortar">Centrar y encajar</button>
+              <button type="button" id="btnToggleCropFront" data-crop="front" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button>
             </div>
 
             <div class="flex items-center gap-1.5 flex-wrap">
@@ -833,6 +1022,25 @@
               <button type="button" data-pan="front:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Derecha">→</button>
               <button type="button" data-pan-reset="front" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[9.5px] font-medium" title="Restablecer posición inicial">🎯 Reset</button>
               <button type="button" data-delete="front" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/80 transition-colors ml-1" title="Eliminar foto">🗑️</button>
+            </div>
+          </div>
+
+          <!-- Fila 3: Precisión Documental (Enderezar 4 esquinas, Auto-Luz, Intercambiar, Undo/Redo) -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-indigo-50/50 dark:bg-slate-900/40 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-warp="front" class="warp-btn px-2 py-0.5 rounded border border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/80 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 font-bold text-[10px] text-indigo-800 dark:text-indigo-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
+                <span>📐</span><span>Enderezar 4 Esquinas</span>
+              </button>
+              <button type="button" data-autolight="front" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+                <span>🪄</span><span>Auto-Luz</span>
+              </button>
+              <button type="button" data-swap="front:back" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con el Reverso">
+                <span>⇄</span><span>Intercambiar con Reverso</span>
+              </button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button type="button" data-undo="front" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button>
+              <button type="button" data-redo="front" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button>
             </div>
           </div>
         </div>
@@ -893,9 +1101,9 @@
             <div class="flex items-center gap-1 flex-wrap">
               <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span>
               <button type="button" id="btnFitModeBack" data-fit-mode="back:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa dentro del marco sin cortar nada (ideal para imágenes grandes)">📐 Encajar Todo</button>
-              <button type="button" id="btnCoverModeBack" data-fit-mode="back:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Rellenar el marco completo 1:1">🔲 Llenar 1:1</button>
-              <button type="button" data-autofit="back" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Ajuste automático 1:1">⚡ Auto 1:1</button>
-              <button type="button" id="btnToggleCropBack" data-crop="back" class="hidden px-2 py-0.5 rounded text-[10px] font-bold border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/80 transition-colors">✂️ Recorte</button>
+              <button type="button" id="btnCoverModeBack" data-fit-mode="back:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button>
+              <button type="button" data-autofit="back" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Centrar y encajar la imagen completa sin recortar">Centrar y encajar</button>
+              <button type="button" id="btnToggleCropBack" data-crop="back" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button>
             </div>
 
             <div class="flex items-center gap-1.5 flex-wrap">
@@ -940,10 +1148,29 @@
               <span class="text-[9.5px] font-semibold text-slate-400">Centrar:</span>
               <button type="button" data-pan="back:0:-5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Arriba">↑</button>
               <button type="button" data-pan="back:0:5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Abajo">↓</button>
-              <button type="button" data-pan="back:-5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Izquierda">←</button>
+              <button type="button" data-pan-back="back:-5:0" data-pan="back:-5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Izquierda">←</button>
               <button type="button" data-pan="back:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Derecha">→</button>
               <button type="button" data-pan-reset="back" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[9.5px] font-medium" title="Restablecer posición inicial">🎯 Reset</button>
               <button type="button" data-delete="back" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/80 transition-colors ml-1" title="Eliminar foto">🗑️</button>
+            </div>
+          </div>
+
+          <!-- Fila 3: Precisión Documental (Enderezar 4 esquinas, Auto-Luz, Intercambiar, Undo/Redo) -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-amber-50/50 dark:bg-slate-900/40 rounded-lg border border-amber-200/50 dark:border-amber-900/30 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-warp="back" class="warp-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar reverso tomado en ángulo">
+                <span>📐</span><span>Enderezar 4 Esquinas</span>
+              </button>
+              <button type="button" data-autolight="back" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+                <span>🪄</span><span>Auto-Luz</span>
+              </button>
+              <button type="button" data-swap="back:front" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con el Frente">
+                <span>⇄</span><span>Intercambiar con Frente</span>
+              </button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button type="button" data-undo="back" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button>
+              <button type="button" data-redo="back" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button>
             </div>
           </div>
         </div>
@@ -996,9 +1223,9 @@
             <div class="flex items-center gap-1 flex-wrap">
               <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span>
               <button type="button" id="btnFitModePage3" data-fit-mode="page3:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa sin cortar nada">📐 Encajar Todo</button>
-              <button type="button" id="btnCoverModePage3" data-fit-mode="page3:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Rellenar el marco completo 1:1">🔲 Llenar 1:1</button>
-              <button type="button" data-autofit="page3" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">⚡ Auto 1:1</button>
-              <button type="button" id="btnToggleCropPage3" data-crop="page3" class="hidden px-2 py-0.5 rounded text-[10px] font-bold border border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 hover:bg-purple-100 transition-colors">✂️ Recorte</button>
+              <button type="button" id="btnCoverModePage3" data-fit-mode="page3:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button>
+              <button type="button" data-autofit="page3" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">Centrar y encajar</button>
+              <button type="button" id="btnToggleCropPage3" data-crop="page3" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-800 text-purple-800 dark:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button>
             </div>
 
             <div class="flex items-center gap-1.5 flex-wrap">
@@ -1037,6 +1264,25 @@
               <button type="button" data-pan="page3:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">→</button>
               <button type="button" data-pan-reset="page3" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[9.5px]">🎯 Reset</button>
               <button type="button" data-delete="page3" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 ml-1">🗑️</button>
+            </div>
+          </div>
+
+          <!-- Fila 3: Precisión Documental (Enderezar 4 esquinas, Auto-Luz, Intercambiar, Undo/Redo) -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-purple-50/50 dark:bg-slate-900/40 rounded-lg border border-purple-200/50 dark:border-purple-900/30 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-warp="page3" class="warp-btn px-2 py-0.5 rounded border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/80 hover:bg-purple-100 dark:hover:bg-purple-900/80 font-bold text-[10px] text-purple-800 dark:text-purple-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
+                <span>📐</span><span>Enderezar 4 Esquinas</span>
+              </button>
+              <button type="button" data-autolight="page3" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+                <span>🪄</span><span>Auto-Luz</span>
+              </button>
+              <button type="button" data-swap="page3:page4" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con la Página 4">
+                <span>⇄</span><span>Intercambiar con Pág 4</span>
+              </button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button type="button" data-undo="page3" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button>
+              <button type="button" data-redo="page3" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button>
             </div>
           </div>
         </div>
@@ -1089,9 +1335,9 @@
             <div class="flex items-center gap-1 flex-wrap">
               <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span>
               <button type="button" id="btnFitModePage4" data-fit-mode="page4:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa sin cortar nada">📐 Encajar Todo</button>
-              <button type="button" id="btnCoverModePage4" data-fit-mode="page4:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Rellenar el marco completo 1:1">🔲 Llenar 1:1</button>
-              <button type="button" data-autofit="page4" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">⚡ Auto 1:1</button>
-              <button type="button" id="btnToggleCropPage4" data-crop="page4" class="hidden px-2 py-0.5 rounded text-[10px] font-bold border border-teal-300 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/70 text-teal-800 dark:text-teal-300 hover:bg-teal-100 transition-colors">✂️ Recorte</button>
+              <button type="button" id="btnCoverModePage4" data-fit-mode="page4:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button>
+              <button type="button" data-autofit="page4" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">Centrar y encajar</button>
+              <button type="button" id="btnToggleCropPage4" data-crop="page4" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-teal-300 dark:border-teal-700 bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-200 hover:bg-teal-50 dark:hover:bg-teal-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button>
             </div>
 
             <div class="flex items-center gap-1.5 flex-wrap">
@@ -1132,6 +1378,25 @@
               <button type="button" data-delete="page4" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 ml-1">🗑️</button>
             </div>
           </div>
+
+          <!-- Fila 3: Precisión Documental (Enderezar 4 esquinas, Auto-Luz, Intercambiar, Undo/Redo) -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-teal-50/50 dark:bg-slate-900/40 rounded-lg border border-teal-200/50 dark:border-teal-900/30 text-xs">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-warp="page4" class="warp-btn px-2 py-0.5 rounded border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/80 hover:bg-teal-100 dark:hover:bg-teal-900/80 font-bold text-[10px] text-teal-800 dark:text-teal-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
+                <span>📐</span><span>Enderezar 4 Esquinas</span>
+              </button>
+              <button type="button" data-autolight="page4" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+                <span>🪄</span><span>Auto-Luz</span>
+              </button>
+              <button type="button" data-swap="page4:page3" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con la Página 3">
+                <span>⇄</span><span>Intercambiar con Pág 3</span>
+              </button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button type="button" data-undo="page4" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button>
+              <button type="button" data-redo="page4" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1156,12 +1421,37 @@
           <span>Guardar Escaneo</span>
         </button>
       </div>
+
+      <!-- Botones de Navegación Móvil Paso 2 -> 1 y 2 -> 3 -->
+      <div class="lg:hidden pt-3 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800">
+        <button type="button" class="btn-mob-nav px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all active:scale-95" data-mob-nav-step="1">
+          <span>◀ Volver a Formato</span>
+        </button>
+        <button type="button" class="btn-mob-nav px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1 active:scale-95" data-mob-nav-step="3">
+          <span>Ver Hoja e Imprimir</span>
+          <span>▶</span>
+        </button>
+      </div>
     </section>
+  </div>
+  <!-- Fin Columna Izquierda: Controles -->
+
+  <!-- ========================================================
+       COLUMNA DERECHA: LIENZO CENTRAL AMPLIO Y ACCIONES (7 Cols)
+       ======================================================== -->
+  <div id="colStageWorkspace" class="lg:col-span-7 xl:col-span-7 space-y-4 lg:sticky lg:top-16 mob-pane mob-pane-3">
 
     <!-- Paso 4 -->
     <section class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
+      <!-- Navegación Móvil Paso 3 -> 2 -->
+      <div class="lg:hidden pb-1">
+        <button type="button" class="btn-mob-nav px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all active:scale-95" data-mob-nav-step="2">
+          <span>◀ Volver a Cargar / Editar Ranuras</span>
+        </button>
+      </div>
+
       <div class="flex items-center justify-between">
-        <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Paso 4</span>
+        <span class="text-xs font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400">Revisar y entregar</span>
         <span id="previewSheetBadgeTag" class="text-xs text-slate-400 dark:text-slate-500 font-medium">Hoja A4 final</span>
       </div>
 
@@ -1173,7 +1463,7 @@
           </label>
           <span id="labelActivePaperDesc" class="text-[10.5px] font-mono text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded">A4 Estándar (210 × 297 mm)</span>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
           <button type="button" data-paper="a4" class="paper-size-btn is-active p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between" title="Estándar internacional ISO 216">
             <span class="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white"><span>📄</span><span>A4 Estándar</span></span>
             <span class="text-[9.5px] opacity-75 mt-1 font-mono">210 × 297 mm</span>
@@ -1190,20 +1480,84 @@
             <span class="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white"><span>📜</span><span>Oficio Legal USA</span></span>
             <span class="text-[9.5px] opacity-75 mt-1 font-mono">215.9 × 355.6 mm</span>
           </button>
+          <button type="button" data-paper="photo_10x15" class="paper-size-btn p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between" title="Papel Fotográfico Métrico 10 × 15 cm">
+            <span class="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white"><span>🖼️</span><span>Foto 10×15 cm</span></span>
+            <span class="text-[9.5px] opacity-75 mt-1 font-mono">100.0 × 150.0 mm</span>
+          </button>
+          <button type="button" data-paper="photo_4x6" class="paper-size-btn p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between" title="Papel Fotográfico Imperial 4 × 6 pulgadas">
+            <span class="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white"><span>🖼️</span><span>Foto 4×6 pulg</span></span>
+            <span class="text-[9.5px] opacity-75 mt-1 font-mono">101.6 × 152.4 mm</span>
+          </button>
+        </div>
+
+        <!-- Selector de Escala de Salida / Impresión (%) -->
+        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <label for="selectOutputScale" class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+              <span>🔍</span><span>Escala de Impresión:</span>
+            </label>
+            <select id="selectOutputScale" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200">
+              <option value="100" selected>100% — Tamaño Real 1:1 Oficial (Por defecto)</option>
+              <option value="50">50% — Reducción a la mitad</option>
+              <option value="75">75% — Reducción al 75%</option>
+              <option value="125">125% — Ampliación al 125%</option>
+              <option value="150">150% — Ampliación al 150%</option>
+              <option value="200">200% — Ampliación al doble (2×)</option>
+            </select>
+          </div>
+          <button type="button" id="btnOpenFormatRequirements" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
+            <span>📋</span><span>Ver Guía del formato</span>
+          </button>
+        </div>
+
+        <!-- Banner de advertencia cuando la escala no es 100% -->
+        <div id="bannerScaleWarning" class="hidden p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs flex items-center gap-2 font-medium">
+          <span>⚠️</span>
+          <span><strong>Copia a escala modificada:</strong> Se aplicará una escala del <strong id="labelActiveScalePct">100%</strong>. El documento <u>NO</u> se imprimirá a tamaño real 1:1 original.</span>
         </div>
       </div>
 
-      <div class="flex items-center justify-between gap-2">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
         <div class="min-w-0">
           <h2 id="previewMainTitle" class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">Vista previa en 1 hoja</h2>
           <p class="text-xs text-slate-500 dark:text-slate-400" id="previewSubtext">Anverso y Reverso alineados a escala 1:1 real</p>
+          <p id="previewGestureHelp" class="text-xs text-slate-500">Encuadre bloqueado: puedes deslizar la página sin mover la foto.</p>
+          <button type="button" id="btnPreviewEdit" aria-pressed="false" class="mt-2 px-3 py-2 rounded-xl border border-indigo-300 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">Ajustar encuadre</button>
         </div>
-        <span id="previewDimensionsTag" class="text-[11px] font-mono font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-700 whitespace-nowrap">85.6 × 54.0 mm</span>
+        <div class="flex items-center gap-2">
+          <!-- Controles de Zoom de Visualización de la Hoja (M-19) -->
+          <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px]" role="group" aria-label="Zoom de vista de hoja">
+            <span class="text-slate-400 font-bold px-1 hidden sm:inline">Zoom:</span>
+            <button type="button" data-sheet-zoom="fit" class="sheet-zoom-btn is-active px-2 py-0.5 rounded font-bold transition-all">Ajustar</button>
+            <button type="button" data-sheet-zoom="75" class="sheet-zoom-btn px-1.5 py-0.5 rounded font-medium transition-all">75%</button>
+            <button type="button" data-sheet-zoom="100" class="sheet-zoom-btn px-1.5 py-0.5 rounded font-medium transition-all">100%</button>
+            <button type="button" data-sheet-zoom="125" class="sheet-zoom-btn px-1.5 py-0.5 rounded font-medium transition-all">125%</button>
+          </div>
+          <span id="previewDimensionsTag" class="text-[11px] font-mono font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-700 whitespace-nowrap">85.6 × 54.0 mm</span>
+        </div>
       </div>
 
-      <div class="bg-slate-100/70 dark:bg-slate-950/80 p-3 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex justify-center transition-colors">
-        <div class="a4-sheet w-full max-w-[280px] sm:max-w-[320px] rounded-sm p-4 relative flex flex-col items-center bg-white shadow-xl">
-          <div id="previewSheetHeader" class="w-full flex justify-between items-center text-[8px] text-slate-400 border-b border-dashed border-slate-200 pb-1 mb-2 transition-all">
+      <div class="bg-slate-100/70 dark:bg-slate-950/80 p-3 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col items-center justify-center transition-colors">
+        <!-- Paginador de Hojas para vistas previas multipágina -->
+        <div id="previewSheetPaginationBar" class="hidden mb-3 w-full max-w-[280px] sm:max-w-[320px] flex items-center justify-between bg-slate-200/90 dark:bg-slate-800/90 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs">
+          <button type="button" id="btnPreviewPrevPage" class="px-2.5 py-1 rounded bg-white dark:bg-slate-700 shadow-xs hover:bg-slate-50 text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:pointer-events-none text-[11px] font-bold transition-all">
+            ◀ Anterior
+          </button>
+          <span id="labelPreviewPageCounter" class="font-mono text-[11px] text-indigo-700 dark:text-indigo-300 font-bold">
+            Hoja 1 de 1
+          </span>
+          <button type="button" id="btnPreviewNextPage" class="px-2.5 py-1 rounded bg-white dark:bg-slate-700 shadow-xs hover:bg-slate-50 text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:pointer-events-none text-[11px] font-bold transition-all">
+            Siguiente ▶
+          </button>
+        </div>
+
+        <div class="stage-canvas-area w-full overflow-auto">
+          <div id="stageSheetWrapper" class="stage-sheet-wrapper" data-sheet-zoom="fit">
+            <div class="a4-sheet w-full max-w-[320px] lg:max-w-[580px] lg:w-[560px] rounded-sm p-4 lg:p-6 relative flex flex-col items-center bg-white shadow-xl transition-all overflow-hidden">
+          <!-- Capa interactiva de Placements de Alta Fidelidad 1:1 -->
+          <div id="faithfulSheetPlacements" class="absolute inset-0 pointer-events-none"></div>
+
+          <div id="previewSheetHeader" class="w-full flex justify-between items-center text-[8px] text-slate-400 border-b border-dashed border-slate-200 pb-1 mb-2 transition-all relative z-10">
             <span id="previewSheetTitle" class="font-semibold text-slate-700 dark:text-slate-800 truncate max-w-[70%]">RealScan — 1 SOLA PÁGINA</span>
             <span id="previewSheetScale" class="font-mono text-slate-500">Escala 100% Real</span>
           </div>
@@ -1323,6 +1677,8 @@
             <p class="text-[8px] text-slate-400 mt-0.5 font-medium">Regla de calibración de 5 cm incluida en el PDF final</p>
           </div>
         </div>
+        </div>
+      </div>
       </div>
 
       <!-- CHECKLIST BOX: ACABADO Y LIMPIEZA DE HOJA (1-CLIC PRESETS + CONTROL EXACTO) -->
@@ -1402,13 +1758,29 @@
             </label>
           </div>
 
-          <!-- Item 4: Modo Copia Doble / Duplicado en la Misma Hoja -->
+          <!-- Item 4: Marcas y Guías de Corte -->
+          <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+            <label class="flex items-start gap-2.5 cursor-pointer">
+              <input type="checkbox" id="chkIncludeCutMarks" checked class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer" />
+              <div class="min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-bold text-slate-800 dark:text-slate-200">4. ✂️ Guías y Marcas de Corte (Líneas para Tijera)</span>
+                  <span id="badgeCutMarksStatus" class="text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded shrink-0">Visible</span>
+                </div>
+                <span class="text-[10.5px] text-slate-500 dark:text-slate-400 block mt-0.5 leading-snug">
+                  Traza marcas de corte en esquinas y silueta punteada. Desmárcalo para ocultar contornos y marcas. Para una hoja limpia, desactiva también regla, rótulos y título.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Item 5: Modo Copia Doble / Duplicado en la Misma Hoja -->
           <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
             <label class="flex items-start gap-2.5 cursor-pointer">
               <input type="checkbox" id="chkDuplicateCard" class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer" />
               <div class="min-w-0">
                 <div class="flex items-center justify-between gap-2">
-                  <span class="font-bold text-slate-800 dark:text-slate-200">4. 👥 2 Juegos de Copias en la Misma Hoja (INE / DNI x2)</span>
+                  <span class="font-bold text-slate-800 dark:text-slate-200">5. 👥 2 Juegos de Copias en la Misma Hoja (INE / DNI x2)</span>
                   <span id="badgeDuplicateStatus" class="text-[9.5px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded shrink-0">1 Juego</span>
                 </div>
                 <span class="text-[10.5px] text-slate-500 dark:text-slate-400 block mt-0.5 leading-snug">
@@ -1456,11 +1828,12 @@
       </div>
 
       <div class="space-y-2.5 pt-1">
+        <div class="flex gap-2 flex-wrap mb-3"><button type="button" id="btnOpenOcr" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold">Extraer texto · OCR local</button><button type="button" id="btnOpenDuplex" class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-xs font-semibold">Asistente doble cara</button></div>
         <button type="button" id="btnPrintDirect" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
           <svg class="w-5 h-5 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
           </svg>
-          <span>🖨️ Imprimir Directo (1 Clic • Escala 100%)</span>
+          <span>🖨️ Imprimir (selecciona escala 100%)</span>
         </button>
 
         <button type="button" id="btnShare" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
@@ -1475,26 +1848,30 @@
             <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
             </svg>
-            <span>Descargar PDF A4 (1:1)</span>
+            <span>Descargar hoja PDF</span>
           </button>
 
           <button type="button" id="btnDownloadImage" class="w-full py-2.5 px-3 rounded-xl border-2 border-indigo-400 dark:border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-950 dark:text-indigo-200 font-semibold text-xs transition-all flex items-center justify-center gap-2">
             <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
-            <span>🖼️ Descargar Imagen A4 (300 DPI)</span>
+            <span>🖼️ Descargar hoja de imagen (300 DPI)</span>
           </button>
         </div>
       </div>
 
       <div id="statusToast" role="status" aria-live="polite" class="hidden text-xs py-2 px-3 rounded-lg text-center font-medium transition-all"></div>
     </section>
+  </div>
+  <!-- Fin Columna Derecha: Stage -->
+</div>
+<!-- Fin Workstation Split-Grid -->
 
     <!-- SECCIÓN: MIS ESCANEOS GUARDADOS (HISTORIAL LOCAL PERMANENTE Y VISIBLE) -->
-    <section id="sectionSavedScansDashboard" class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+    <section id="sectionSavedScansDashboard" class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3.5 transition-colors">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-slate-200 dark:border-slate-800">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
             📁
           </div>
           <div>
@@ -1504,40 +1881,113 @@
                 0 guardados
               </span>
             </div>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
               Tus documentos se guardan aquí de forma 100% privada y local en tu navegador con auto-expiración.
             </p>
           </div>
         </div>
 
         <div class="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
-          <button type="button" id="btnDashboardQuickSave" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-all flex items-center gap-1.5 shadow-xs active:scale-95" title="Guardar el escaneo actual en este panel">
+          <button type="button" id="btnDashboardQuickSave" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-all flex items-center gap-1.5 shadow-xs active:scale-95" title="Guardar el escaneo actual en este panel">
             <span>💾</span>
             <span>Guardar Escaneo Actual</span>
           </button>
-          <button type="button" id="btnDashboardOpenModal" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-300 font-medium text-xs transition-all flex items-center gap-1.5" title="Opciones avanzadas de retención, respaldo JSON y ZIP">
+          <button type="button" id="btnDashboardOpenModal" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-300 font-medium text-xs transition-all flex items-center gap-1.5" title="Opciones avanzadas de retención, respaldo JSON y ZIP">
             <span>⚙️</span>
-            <span>Ajustes y Respaldo</span>
+            <span>Ajustes</span>
+          </button>
+          <button type="button" id="btnToggleSavedScansSection" class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-300 font-medium text-xs transition-all flex items-center gap-1" title="Contraer o expandir vista rápida">
+            <span id="iconToggleSavedScans">▶</span>
+            <span id="labelToggleSavedScans">Mostrar</span>
           </button>
         </div>
       </div>
 
-      <!-- Grid de Tarjetas Guardadas -->
-      <div id="mainSavedScansGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+      <!-- Grid de Tarjetas Guardadas (Colapsable) -->
+      <div id="mainSavedScansGrid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
         <!-- Renderizado dinámico vía js/storage.js -->
       </div>
+    </section>
+
+    <p id="draftStorageStatus" role="status" class="text-xs text-slate-600 dark:text-slate-300 px-4 py-2">Comprobando borrador local…</p>
+  <section id="dailyCare" aria-labelledby="dailyCareTitle" class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 space-y-3 mt-4">
+      <h2 id="dailyCareTitle" class="text-base font-bold text-slate-900 dark:text-white">Cierre diario y prueba de impresión</h2>
+      <p class="text-xs text-slate-600 dark:text-slate-300">Guarda primero el trabajo actual en el historial. El respaldo incluye los trabajos guardados; el borrador, los ajustes y los enlaces QR no son un respaldo permanente.</p>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" id="dailyBackup" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Descargar respaldo del historial</button>
+        <button type="button" id="dailyVerify" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold">Verificar archivo de respaldo</button>
+        <label class="text-xs self-center" for="dailyCalibrationPaper">Papel de prueba</label>
+        <select id="dailyCalibrationPaper" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm"><option value="a4">A4</option><option value="letter">Carta</option><option value="oficio">Oficio México</option><option value="legal">Legal USA</option></select>
+        <button type="button" id="dailyCalibration" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold">Hoja de prueba de tamaño real</button>
+        <input type="file" id="dailyBackupFile" accept=".json,application/json" class="hidden" aria-label="Seleccionar respaldo para verificar">
+      </div>
+      <p id="dailyCareStatus" role="status" aria-live="polite" class="text-xs text-slate-600 dark:text-slate-300">Conserva el archivo descargado en otra unidad. Puedes verificarlo aquí sin importar ni modificar tus trabajos.</p>
+      <details class="text-sm text-slate-600 dark:text-slate-300">
+        <summary class="cursor-pointer font-semibold">Comprobación antes de atender clientes</summary>
+        <ol class="list-decimal pl-5 space-y-2 mt-3">
+          <li>Imprime la hoja de prueba al 100 %, sin ajustar a página. Mide los 50 mm de la regla y ambos lados de la tarjeta de referencia. Repite al cambiar de impresora, papel o configuración.</li>
+          <li>Lee el QR con tu teléfono, envía una foto y un PDF de varias páginas, asígnalos y descarga la entrega. Revisa el aviso al cerrar o caducar el enlace. El QR necesita internet.</li>
+          <li>Completa varios trabajos seguidos: recorte, fotos A/B, páginas, cancelación y nuevo trabajo. Comprueba que no reaparezcan imágenes del cliente anterior.</li>
+          <li>Descarga y verifica el respaldo al terminar. Prueba una restauración en otro navegador con archivos de prueba. Borrar los datos del navegador elimina el historial local.</li>
+        </ol>
+      </details>
     </section>
 
     <footer class="text-center text-xs text-slate-500 space-y-2.5 py-6 border-t border-slate-200 dark:border-slate-800 mt-8">
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.0.0-Titanium</span>
+        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.9.0</span>
         <span class="text-slate-300 dark:text-slate-600">•</span>
         <span class="font-medium">Desarrollado por <strong class="font-bold text-slate-900 dark:text-white">Paco Iglesias</strong></span>
       </div>
-      <p class="text-[11px] text-slate-400 dark:text-slate-500">100% procesamiento privado en tu dispositivo local • Escala 1:1 calibrada • Impresión segura</p>
+      <p class="text-[11px] text-slate-400 dark:text-slate-500">Edición local · Transferencias QR temporales mediante Firebase · Verifica la escala impresa</p>
     </footer>
+    </div>
   </main>
+
+  <!-- Modal Corrección de Perspectiva de 4 Esquinas (Warp) -->
+  <div id="perspectiveWarpModal" role="dialog" aria-modal="true" aria-labelledby="warpModalTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col border border-slate-200 dark:border-slate-800 max-h-[95vh]">
+      <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+            📐
+          </div>
+          <div>
+            <h3 id="warpModalTitle" class="font-bold text-sm sm:text-base leading-tight">Enderezar Perspectiva y Recorte (4 Esquinas)</h3>
+            <p class="text-[11px] text-slate-400">Arrastra los 4 círculos a las esquinas del documento para enderezarlo a 300 DPI</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="perspectiveWarpModal" class="text-slate-400 hover:text-white text-xl font-bold px-1.5" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <!-- Área de trabajo interactiva de perspectiva -->
+      <div class="relative bg-slate-950 flex items-center justify-center p-3 overflow-hidden min-h-[300px] max-h-[62vh] select-none touch-none">
+        <canvas id="canvasWarpInteractive" class="max-w-full max-h-[60vh] object-contain rounded-lg shadow-lg cursor-crosshair"></canvas>
+      </div>
+
+      <!-- Controles y acciones -->
+      <div class="p-3.5 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button type="button" id="btnWarpAutoCorners" class="px-2.5 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-bold text-xs hover:bg-indigo-100 dark:hover:bg-indigo-900/80 transition-colors flex items-center gap-1">
+            <span>✨</span><span>Auto-Detectar</span>
+          </button>
+          <button type="button" id="btnWarpResetCorners" class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs hover:bg-slate-50 transition-colors">
+            <span>↺</span><span>Bordes Completos</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" data-close-modal="perspectiveWarpModal" class="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+            Cancelar
+          </button>
+          <button type="button" id="btnApplyWarp" class="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-sm flex items-center gap-1 active:scale-95">
+            <span>✓</span><span>Enderezar y Aplicar 1:1</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal cámara -->
   <div id="liveCameraModal" role="dialog" aria-modal="true" aria-labelledby="cameraModalTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1581,35 +2031,17 @@
           <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
           </div>
-          <h3 id="iphoneHelpTitle" class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">¿Cómo usar RealScan en tu iPhone?</h3>
+          <h3 id="iphoneHelpTitle" class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">Instalar y abrir RealScan</h3>
         </div>
         <button type="button" data-close-modal="iphoneHelpModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold" aria-label="Cerrar">&times;</button>
       </div>
 
       <div class="text-xs text-slate-600 dark:text-slate-300 space-y-3 leading-relaxed">
-        <p>RealScan está 100% optimizado para <strong>Safari en iPhone</strong>. Tienes dos maneras muy sencillas de abrirlo:</p>
-
-        <div class="p-3 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 space-y-1.5">
-          <p class="font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5"><span>Opción 1 (Recomendada):</span> Enviártelo por WhatsApp o Mail</p>
-          <ol class="list-decimal list-inside space-y-1 text-slate-700 dark:text-slate-300">
-            <li>Envía este archivo <code class="bg-white dark:bg-slate-800 px-1 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 font-mono text-[10px]">index.html</code> a tu propio WhatsApp o correo.</li>
-            <li>En tu iPhone, toca el archivo y dale <strong>"Abrir en Safari"</strong> o guárdalo en la app <strong>Archivos</strong>.</li>
-          </ol>
-        </div>
-
-        <div class="p-3 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 space-y-1.5">
-          <p class="font-bold text-emerald-950 dark:text-emerald-200 flex items-center gap-1.5"><span>Opción 2:</span> Convertirlo en App en tu pantalla de inicio</p>
-          <ol class="list-decimal list-inside space-y-1 text-slate-700 dark:text-slate-300">
-            <li>Toca el botón <strong>Compartir</strong> de Safari (⬆️ abajo).</li>
-            <li>Baja y selecciona <strong>"Agregar a pantalla de inicio"</strong>.</li>
-            <li>¡Listo! Te quedará un icono como una App instalada de la App Store.</li>
-          </ol>
-        </div>
-
-        <div class="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200/80 dark:border-amber-900/60 space-y-1">
-          <p class="font-bold text-amber-900 dark:text-amber-200">Impresión inalámbrica con AirPrint:</p>
-          <p class="text-amber-800 dark:text-amber-300">Al pulsar "Compartir / Guardar", el iPhone abre su menú nativo: puedes enviarlo directo por WhatsApp o tocar <strong>"Imprimir" (AirPrint)</strong> sin salir de la app.</p>
-        </div>
+        <p>Abre la dirección web de RealScan en el navegador. Usa siempre el mismo dominio para conservar el acceso a tus trabajos guardados en este equipo.</p>
+        <p><strong>Computadora y Android:</strong> pulsa «Instalar App». Si el navegador permite instalarla, aparecerá su ventana de instalación. También puedes buscar la opción de instalación en el menú del navegador.</p>
+        <p><strong>iPhone y iPad:</strong> abre la web en Safari, pulsa Compartir y busca «Agregar a pantalla de inicio».</p>
+        <p>Si ya está instalada o tu navegador no ofrece instalación, puedes seguir usando la web. No necesitas enviar ni abrir el archivo index.html.</p>
+        <p>La edición puede usarse sin conexión una vez preparados sus recursos. Recibir y entregar por QR requiere internet. Comprueba la captura, descarga e impresión con tu dispositivo.</p>
       </div>
 
       <button type="button" data-close-modal="iphoneHelpModal" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs transition-colors">Entendido</button>
@@ -1708,7 +2140,7 @@
             ⚙️
           </div>
           <div>
-            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v2.4.0</span></h3>
+            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.9.0</span></h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400">Control de acceso y bitácora de auditoría</p>
           </div>
         </div>
@@ -1716,10 +2148,12 @@
       </div>
 
       <!-- Navegación de pestañas de ajustes -->
-      <div class="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl gap-1 shrink-0">
+      <div class="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl gap-1 shrink-0 flex-wrap">
         <button type="button" id="tabBtnCreds" class="settings-tab-btn is-active flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">👥 Usuarios</button>
-        <button type="button" id="tabBtnLog" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">📋 Auditoría (Log)</button>
-        <button type="button" id="tabBtnCloud" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">🌐 Proyecto Nube</button>
+        <button type="button" id="tabBtnLog" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">📋 Auditoría</button>
+        <button type="button" id="tabBtnStorage" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">💾 Almacenamiento</button>
+        <button type="button" id="tabBtnAudio" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">🔊 Sonido</button>
+        <button type="button" id="tabBtnCloud" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">🌐 Nube</button>
       </div>
 
       <!-- Contenido scrolleable -->
@@ -1728,6 +2162,13 @@
         <!-- Tab 1: Usuarios y Credenciales -->
         <div id="tabContentCreds" class="space-y-4">
           
+          <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-400 space-y-1">
+            <p class="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <span>🛡️</span> <span>Control de Acceso y Bitácora Local</span>
+            </p>
+            <p>Las contraseñas se almacenan como hashes SHA-256 en el almacenamiento local del navegador (localStorage). Este mecanismo previene accesos casuales y operaciones accidentales en terminal de mostrador; no constituye autorización de servidor ni autenticación remota.</p>
+          </div>
+
           <!-- Lista de Usuarios Existentes -->
           <div class="space-y-2">
             <div class="flex items-center justify-between">
@@ -1821,9 +2262,32 @@
           <div id="auditLogList" class="space-y-1.5 max-h-[320px] overflow-y-auto pr-1">
             <!-- Items del log generados dinámicamente -->
           </div>
+          <section class="space-y-2 border-t border-slate-200 dark:border-slate-700 pt-3" aria-labelledby="diagnosticsTitle">
+            <h4 id="diagnosticsTitle" class="font-bold text-slate-900 dark:text-white">Diagnóstico de funcionamiento</h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300">Registra errores y navegación de esta instalación. No incluye fotos, documentos, contraseñas ni enlaces QR. Conserva hasta 200 eventos durante 14 días, sólo en este navegador.</p>
+            <p id="diagnosticsSummary" class="text-xs" role="status" aria-live="polite"></p>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" id="btnExportDiagnostics" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold">Descargar diagnóstico</button>
+              <button type="button" id="btnShareDiagnostics" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-xs">Compartir diagnóstico</button>
+              <button type="button" id="btnClearDiagnostics" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-xs">Borrar diagnóstico</button>
+              <button type="button" id="btnRecoverControls" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-xs">Recuperar controles</button>
+            </div>
+            <p class="text-xs text-slate-500">Si una ventana no responde: pulsa Esc. También puedes usar Alt + Mayús + R para cerrar las ventanas y recuperar los controles sin recargar ni borrar el trabajo.</p>
+            <div id="diagnosticsEvents" class="text-xs space-y-1 max-h-36 overflow-auto"></div>
+          </section>
         </div>
 
         <!-- Tab 3: Dominio & Nube -->
+        <div id="tabContentAudio" class="hidden space-y-4">
+          <div class="p-4 rounded-2xl border border-indigo-200 bg-indigo-50 dark:bg-indigo-950 dark:border-indigo-800 space-y-3">
+            <h4 class="font-bold">Alertas de operación</h4>
+            <label class="flex items-center gap-2"><input type="checkbox" id="checkAudioEnabled" checked> Activar avisos sonoros</label>
+            <label for="rangeAudioVolume" class="flex justify-between font-semibold">Volumen <span id="labelAudioVolume">70%</span></label>
+            <input type="range" id="rangeAudioVolume" min="0" max="100" step="5" value="70" class="w-full accent-indigo-600">
+            <button type="button" id="btnTestAudioFeedback" class="px-3 py-2 rounded-xl bg-indigo-600 text-white font-bold">Probar sonido</button>
+            <p class="text-slate-600 dark:text-slate-300">Los avisos visuales permanecen disponibles al silenciar. Los sonidos requieren una primera interacción con la pantalla.</p>
+          </div>
+        </div>
         <div id="tabContentCloud" class="hidden space-y-3">
           <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-900/60 space-y-2">
             <div class="flex items-center gap-2">
@@ -1846,6 +2310,46 @@
             <p class="text-[11px] text-slate-500 dark:text-slate-400">
               Despliega en 1 solo clic ejecutando <code class="font-mono bg-white dark:bg-slate-700 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-600">subir_a_firebase.bat</code>.
             </p>
+          </div>
+        </div>
+
+        <!-- Tab 4: Almacenamiento & Diagnóstico Offline (M-36) -->
+        <div id="tabContentStorage" class="hidden space-y-3">
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+            <p class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <span>📊</span> <span>Uso de Almacenamiento Local Privado</span>
+            </p>
+            <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
+              <span>Espacio Ocupado:</span>
+              <strong id="labelStorageUsed" class="font-mono text-indigo-600 dark:text-indigo-400">Calculando...</strong>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
+              <span>Cuota Disponible:</span>
+              <strong id="labelStorageQuota" class="font-mono text-emerald-600 dark:text-emerald-400">Calculando...</strong>
+            </div>
+            <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden mt-1">
+              <div id="barStorageUsage" class="bg-indigo-600 h-full w-0 transition-all duration-300"></div>
+            </div>
+          </div>
+
+          <div class="p-3 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200/80 dark:border-indigo-900/60 space-y-2">
+            <p class="font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+              <span>📲</span> <span>Estado de Aplicación Offline (PWA)</span>
+            </p>
+            <div class="flex items-center justify-between text-[11px] text-indigo-900 dark:text-indigo-300">
+              <span>Service Worker:</span>
+              <span id="labelSwStatus" class="font-bold text-emerald-600 dark:text-emerald-400">● Activo y Calibrado</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-indigo-900 dark:text-indigo-300">
+              <span>Versión de Caché:</span>
+              <span id="labelSwVersion" class="font-mono font-bold">Versión al iniciar</span>
+            </div>
+            <div class="pt-1">
+              <button type="button" id="btnRefreshAppCache" class="w-full py-2 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-300 font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                <span>🔄</span>
+                <span>Verificar y Actualizar Caché Offline</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1899,6 +2403,16 @@
         </div>
       </div>
 
+      <!-- Buscador y Filtro Dinámico de Escaneos (M-30) -->
+      <div class="relative shrink-0">
+        <input
+          type="text"
+          id="inputSearchHistory"
+          placeholder="🔍 Buscar por nombre o fecha (ej. INE, Licencia, 2026)..."
+          class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
+        />
+      </div>
+
       <!-- Contenedor scrolleable de items -->
       <div class="flex-1 overflow-y-auto pr-1 space-y-2.5 min-h-[180px]">
         <div id="historyEmptyState" class="text-center py-12 px-4 space-y-2">
@@ -1943,27 +2457,374 @@
   </div>
 
   <!-- ============================================================
+       MODAL DE PRESETS PERSONALIZADOS DE USUARIO (M-29)
+       ============================================================ -->
+  <div id="userPresetsModal" role="dialog" aria-modal="true" aria-labelledby="userPresetsModalTitle" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      
+      <!-- Header del modal -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center text-lg">
+            ⭐
+          </div>
+          <div>
+            <h3 id="userPresetsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Mis Configuraciones Predefinidas</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Guarda combinaciones de formato, papel y opciones favoritas</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="userPresetsModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <!-- Guardar configuración actual como preset -->
+      <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-2 shrink-0">
+        <label for="inputNewPresetName" class="text-xs font-bold text-slate-700 dark:text-slate-300">Guardar estado actual como Preset:</label>
+        <div class="flex items-center gap-2">
+          <input
+            type="text"
+            id="inputNewPresetName"
+            placeholder="Ej. Mi Carnet con Marcas de Corte"
+            class="flex-1 px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          />
+          <button
+            type="button"
+            id="btnSaveCurrentAsPreset"
+            class="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition-colors shadow-sm"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+
+      <!-- Lista de presets guardados -->
+      <div class="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[140px]">
+        <div id="userPresetsEmptyState" class="text-center py-8 px-4 space-y-1">
+          <span class="text-3xl block">📑</span>
+          <p class="font-bold text-xs text-slate-700 dark:text-slate-300">No hay configuraciones guardadas</p>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">Personaliza tus medidas o activa opciones y presiona "Guardar" arriba.</p>
+        </div>
+        <div id="userPresetsListContainer" class="space-y-2"></div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        <button type="button" data-close-modal="userPresetsModal" class="w-full py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE CORRECCIÓN DE PERSPECTIVA (4 ESQUINAS) (M-22)
+       ============================================================ -->
+  <!-- ============================================================
+       MODAL DE RECORTE MANUAL PRECISO (CROP & COMPARE) (M-23)
+       ============================================================ -->
+  <div id="cropModal" role="dialog" aria-modal="true" aria-labelledby="cropModalTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-3xl p-4 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-lg">✂️</div>
+          <div>
+            <h3 id="cropModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Recorte Manual Preciso</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Selecciona el área que deseas conservar. Compara con el original en cualquier momento.</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="cropModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="flex-1 bg-slate-950/90 rounded-2xl p-2 flex items-center justify-center overflow-auto min-h-[300px]">
+        <canvas id="canvasCropInteractive" class="max-w-full max-h-[60vh] rounded-lg shadow-lg"></canvas>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button type="button" id="btnCropCompareOriginal" class="px-3 py-1.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 text-amber-800 dark:text-amber-200 font-bold text-xs transition-colors flex items-center gap-1">
+            <span>👁️</span> <span>Ver Original</span>
+          </button>
+          <button type="button" id="btnCropResetBox" class="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors">
+            Restablecer
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" data-close-modal="cropModal" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+            Cancelar
+          </button>
+          <button type="button" id="btnApplyCrop" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-md">
+            Aplicar Recorte
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE SELECTOR DE PÁGINAS PDF (M-24)
+       ============================================================ -->
+  <div id="pdfPageSelectorModal" role="dialog" aria-modal="true" aria-labelledby="pdfPageSelectorTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-4xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 flex items-center justify-center text-lg">📑</div>
+          <div>
+            <h3 id="pdfPageSelectorTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Seleccionar Páginas del PDF</h3>
+            <p id="pdfPageSelectorSubtitle" class="text-[11px] text-slate-500 dark:text-slate-400">Elige qué páginas del archivo PDF cargar en cada cara del documento</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="pdfPageSelectorModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div id="pdfThumbnailsGrid" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-1 min-h-[220px]">
+        <!-- Miniaturas generadas dinámicamente con pdf.js -->
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        <p class="text-xs text-slate-500 dark:text-slate-400">Haz clic en una página para asignarla o usa los botones de cara.</p>
+        <button type="button" data-close-modal="pdfPageSelectorModal" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL 1: RECIBIR FOTOS Y DOCUMENTOS DESDE MÓVIL (QR)
+       ============================================================ -->
+  <div id="receiveFromPhoneModal" role="dialog" aria-modal="true" aria-labelledby="receiveModalTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-lg">📲</div>
+          <div>
+            <h3 id="receiveModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Recibir desde Celular por QR</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Escanea con la cámara del celular para subir fotos o documentos sin cables</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="receiveFromPhoneModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+        <p id="receiveConnectionStatus" role="status" aria-live="polite" class="text-xs text-slate-600 dark:text-slate-300">Preparando conexión…</p>
+        <p id="receiveDraftStatus" role="status" class="text-xs text-slate-600 dark:text-slate-300">Los originales recibidos permanecen en la bandeja mientras este trabajo está abierto.</p>
+        <!-- Código QR e Instrucciones -->
+        <div class="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+          <div class="shrink-0 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+            <canvas id="canvasReceiveQr" class="w-56 h-56 max-w-full rounded-lg"></canvas>
+          </div>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold font-mono text-[11px]">Sesión Activa: <span id="labelReceiveSessionId">Conectando…</span></span>
+              <span id="receiveSessionRemaining" class="text-[10px] text-slate-400 font-mono">15 min</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300">Pide al cliente que apunte la cámara de su celular al código QR para abrir el portal de carga sin instalar aplicaciones.</p>
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              <button type="button" id="btnCopyReceiveUrl" class="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs hover:bg-slate-100 transition-colors flex items-center gap-1">
+                <span>📋</span><span>Copiar Enlace</span>
+              </button>
+              <button type="button" id="btnTestOpenReceiveUrl" class="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs hover:bg-slate-100 transition-colors flex items-center gap-1">
+                <span>↗️</span><span>Abrir en nueva pestaña</span>
+              </button>
+              <button type="button" id="btnRenewReceiveSession" class="px-2.5 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-semibold text-xs hover:bg-indigo-100 transition-colors">
+                <span>↺</span><span>Renovar QR</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" id="btnOpenLocalTransfer" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold">Sin internet: recibir por Wi-Fi local</button>
+        <!-- Bandeja de Archivos Recibidos -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>📥</span><span>Bandeja de Archivos Recibidos (<span id="inboxCountBadge">0</span>)</span>
+            </h4>
+            <button type="button" id="btnClearQrInbox" class="text-xs text-red-500 hover:underline">Vaciar bandeja</button>
+          </div>
+          <div id="qrInboxList" class="space-y-2 max-h-96 overflow-y-auto p-1">
+            <p class="text-xs text-center text-slate-400 py-6">Esperando que el cliente envíe archivos...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0">
+        <button type="button" data-close-modal="receiveFromPhoneModal" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL 2: ENTREGA DIGITAL DIRECTA POR QR
+       ============================================================ -->
+  <div id="digitalDeliveryModal" role="dialog" aria-modal="true" aria-labelledby="deliveryModalTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-lg">📥</div>
+          <div>
+            <h3 id="deliveryModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Entrega Digital al Cliente</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Genera un enlace temporal o QR para que el cliente descargue sus fotos</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="digitalDeliveryModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
+        <details open class="rounded-2xl border border-emerald-200 dark:border-emerald-800 p-3"><summary class="font-bold cursor-pointer mb-3">Resumen de la entrega</summary><div id="deliveryReview"></div></details>
+        <!-- Selector de qué entregar -->
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+          <p class="font-bold text-slate-800 dark:text-slate-200">1. Selecciona los archivos a entregar:</p>
+          <div class="space-y-1.5">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="checkDeliverPdfSheet" checked class="rounded accent-emerald-600">
+              <span>📄 Hoja Completa de Impresión (PDF a 300 DPI)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="checkDeliverFrontJpg" checked class="rounded accent-emerald-600">
+              <span>🖼️ Frente en Alta Resolución (Recorte individual)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="checkDeliverBackJpg" class="rounded accent-emerald-600">
+              <span>🖼️ Reverso en Alta Resolución (Si aplica)</span>
+            </label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="checkDeliverPage3"><span>Página 3 individual</span></label><label class="flex items-center gap-2"><input type="checkbox" id="checkDeliverPage4"><span>Página 4 individual</span></label>
+          </div>
+        </div>
+
+        <!-- Optimización digital -->
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+          <p class="font-bold text-slate-800 dark:text-slate-200">2. Optimización para Trámites Digitales:</p>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label for="selectDeliveryFormat" class="block text-[11px] text-slate-500 mb-0.5">Formato</label>
+              <select id="selectDeliveryFormat" class="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-medium">
+                <option value="jpg">JPG (Estándar)</option>
+                <option value="png">PNG (sin compresión adicional)</option>
+                <option value="pdf">PDF (Documento)</option>
+              </select>
+            </div>
+            <div>
+              <label for="selectDeliveryMaxPx" class="block text-[11px] text-slate-500 mb-0.5">Dimensión máx.</label>
+              <select id="selectDeliveryMaxPx" class="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-medium">
+                <option value="original">Original (Máxima)</option>
+                <option value="1920" selected>Full HD (1920 px)</option>
+                <option value="1200">Visa / Web (1200 px)</option>
+                <option value="600">OACI (600 px)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" id="btnGenerateDeliveryQr" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2">
+          <span>⚡</span><span>Generar Código QR de Descarga</span>
+        </button>
+
+        <label class="block text-xs font-semibold">Peso máximo de cada archivo (según el portal del trámite)<select id="selectDeliveryMaxBytes" class="block w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"><option value="0">Sin límite adicional</option><option value="2000000">Menos de 2 MB</option><option value="1000000">Menos de 1 MB</option><option value="500000">Menos de 500 KB</option><option value="250000">Menos de 250 KB</option></select></label><p class="text-xs text-slate-500">Se conserva el original. Si un PDF de hoja completa supera el límite, se avisará para cambiar la selección. Comprueba los requisitos del trámite.</p>
+        <!-- Contenedor del QR de Entrega -->
+        <div id="deliveryQrResultBox" class="hidden flex flex-col items-center gap-3 p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-center">
+          <div class="bg-white p-2 rounded-2xl shadow-sm border border-emerald-200">
+            <canvas id="canvasDeliveryQr" class="w-56 h-56 max-w-full rounded-lg"></canvas>
+          </div>
+          <p class="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">Pide al cliente escanear este QR para descargar sus archivos directamente en su celular.</p>
+          <div class="flex items-center gap-2">
+            <button type="button" id="btnCopyDeliveryUrl" class="px-3 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 font-semibold text-xs hover:bg-emerald-50">
+              📋 Copiar Enlace
+            </button>
+            <button type="button" id="btnShareDeliveryWhatsapp" class="px-3 py-2 rounded-xl bg-emerald-700 text-white font-semibold text-xs">Compartir por WhatsApp</button>
+            <button type="button" id="btnRevokeDeliverySession" class="px-3 py-1.5 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 font-semibold text-xs hover:bg-red-100">
+              🔒 Revocar Enlace
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0">
+        <button type="button" data-close-modal="digitalDeliveryModal" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL 3: FICHA OFICIAL DE REQUISITOS DEL TRÁMITE
+       ============================================================ -->
+  <div id="formatRequirementsModal" role="dialog" aria-modal="true" aria-labelledby="formatReqTitle" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-lg">📋</div>
+          <div>
+            <h3 id="formatReqTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ficha Oficial de Trámite</h3>
+            <p id="formatReqSubtitle" class="text-[11px] text-slate-500 dark:text-slate-400">Comprueba los requisitos vigentes del trámite</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="formatRequirementsModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold px-2" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1.5">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-mono" id="reqFormatName">DNI / INE / Licencia</p>
+          <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-mono">
+            <span>Dimensiones:</span>
+            <strong id="reqDimensionsMm" class="text-slate-900 dark:text-white font-bold">85.60 × 53.98 mm</strong>
+          </div>
+          <p class="text-[11px] text-slate-400">Referencia: <span id="reqOfficialSource" class="font-semibold text-slate-700 dark:text-slate-300">ISO/IEC 7810 ID-1 • INE México</span> • Revisión: <span id="reqReviewDate" class="font-mono">Octubre 2026</span></p>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1">
+          <p class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><span>🖨️</span><span>Requisitos Físicos de Impresión</span></p>
+          <p id="reqPhysicalText" class="text-slate-600 dark:text-slate-300">Impresión en tarjeta o papel de alta densidad al 100% de escala sin ajuste automático.</p>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1">
+          <p class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><span>💾</span><span>Requisitos Digitales</span></p>
+          <p id="reqDigitalText" class="text-slate-600 dark:text-slate-300">Resolución mínima 300 DPI sin distorsión óptica ni compresión agresiva.</p>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 space-y-1">
+          <p class="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5"><span>⚖️</span><span>Restricciones Éticas y Normativas</span></p>
+          <p id="reqRestrictionsText" class="text-amber-800 dark:text-amber-300">Prohibido alterar fisonomía, rasgos, vestimenta reglamentaria o aplicar filtros que modifiquen la identidad de la persona.</p>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0">
+        <button type="button" data-close-modal="formatRequirementsModal" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors">
+          Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
        BARRA FLOTANTE HUD ERGONÓMICA (Acceso Rápido y Calibración 1:1)
        ============================================================ -->
   <aside id="floatingHudBar" class="hud-bar flex items-center gap-1.5 sm:gap-2 shadow-2xl" aria-label="Acciones rápidas">
     <div class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/80 text-[11px] font-mono">
       <span class="w-2 h-2 rounded-full bg-emerald-400 calibration-pulse"></span>
-      <span class="font-bold text-emerald-400">1:1 EXACTO</span>
+      <span class="font-bold text-emerald-400">VERIFICA ESCALA</span>
       <span class="text-slate-500">•</span>
-      <span class="text-slate-300">A4 300 DPI</span>
+      <span class="text-slate-300">Prueba de impresión</span>
     </div>
 
-    <button type="button" id="hudBtnAutoEnhance" class="px-3 py-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs transition-all flex items-center gap-1 shadow-md hover:scale-105 active:scale-95" title="Auto-Ajuste Mágico 1:1 (Luz, Nitidez y Encuadre)">
+    <button type="button" id="hudBtnNewProject" class="px-2.5 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-all flex items-center gap-1 border border-slate-700" title="Nuevo Trabajo (Limpiar lienzo)">
       <span>✨</span>
-      <span class="hidden sm:inline">Auto-Ajuste 1:1</span>
+      <span class="hidden sm:inline">Nuevo</span>
+    </button>
+
+    <button type="button" id="hudBtnAutoEnhance" class="px-3 py-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs transition-all flex items-center gap-1 shadow-md hover:scale-105 active:scale-95" title="Centrar y encajar las caras activas sin girarlas ni cambiar su color">
+      <span>✨</span>
+      <span class="hidden sm:inline">Encajar caras</span>
     </button>
 
     <button type="button" id="hudBtnPrintDirect" class="px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all flex items-center gap-1 shadow-md hover:scale-105 active:scale-95" title="Imprimir Directo al 100% (Escala Real)">
       <span>🖨️</span>
-      <span class="hidden sm:inline">Imprimir 100%</span>
+      <span class="hidden sm:inline">Imprimir</span>
     </button>
 
-    <button type="button" id="hudBtnDownloadPdf" class="px-2.5 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-all flex items-center gap-1 border border-slate-700" title="Descargar archivo PDF A4 listo para imprimir">
+    <button type="button" id="hudBtnDownloadPdf" class="px-2.5 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-all flex items-center gap-1 border border-slate-700" title="Descargar PDF con el papel y la escala seleccionados">
       <span>📄</span>
       <span class="hidden sm:inline">PDF</span>
     </button>
@@ -1981,12 +2842,36 @@
   <!-- ============================================================
        SCRIPTS MODULARES (100% Offline y Producción Firebase)
        ============================================================ -->
+  <script src="js/diagnostics.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="vendor/qrcode.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/firebase-transfer.js"></script>
+  <script src="js/qr-sync.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/draft-store.js"></script>
   <script src="js/storage.js"></script>
+  <script src="js/crop-warp.js"></script>
+  <script src="js/scan-assist.js"></script>
+  <script src="js/asset-review.js"></script>
   <script src="js/engine.js"></script>
+  <script src="js/layout-engine.js"></script>
   <script src="js/pdf.js"></script>
   <script src="js/export.js"></script>
+  <script src="js/delivery-options.js"></script>
+  <script src="js/local-ocr.js"></script>
+  <script src="js/duplex-assistant.js"></script>
+  <script src="vendor/jsqr.js"></script>
+  <script src="js/local-transfer.js"></script>
+  <script src="js/local-transfer-ui.js"></script>
+  <script src="js/operations.js"></script>
+  <script src="js/output-review.js"></script>
+  <script src="js/receive-workflow.js"></script>
+  <script src="js/workflow-guide.js"></script>
+  <script src="js/counter-flow.js"></script>
+  <script src="js/document-job.js"></script>
+  <script src="js/digital-workflow.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

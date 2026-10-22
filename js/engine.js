@@ -22,65 +22,30 @@ function getSlotFriendlyName(side) {
   return 'Página';
 }
 
-function handleCameraClick(side) {
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (isMobile || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    triggerNativeUpload(side, true);
-  } else {
-    openLiveCamera(side);
-  }
-}
-
-async function openLiveCamera(side) {
+function handleCameraClick(side) { openLiveCamera(side); }
+function openLiveCamera(side) {
   state.activeCameraSide = side;
-  const titleEl = $('cameraModalTitle');
-  if (titleEl) titleEl.textContent = 'Cámara en Vivo — ' + getSlotFriendlyName(side);
-  const video = $('liveVideo');
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    triggerNativeUpload(side, true);
-    return;
-  }
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: state.facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
-      audio: false
-    });
-    state.cameraStream = stream;
-    video.srcObject = stream;
-    openModal('liveCameraModal');
-  } catch (err) {
-    showToast('Usando cámara nativa del sistema...', 'info');
-    triggerNativeUpload(side, true);
-  }
+  if (!window.RealScanCapture) { triggerNativeUpload(side, true); return; }
+  const job = state._jobRevision || 0;
+  RealScanCapture.open({
+    photoMode: state.activeCategory === 'photos',
+    targetRatio: getActiveSpec().widthMm / getActiveSpec().heightMm,
+    onNative: () => triggerNativeUpload(side, true),
+    onError: error => showToast(error.message || 'No se pudo cargar la captura.', 'error'),
+    onAccept: async dataUrl => {
+      if ((state._jobRevision || 0) !== job) return;
+      processRawDataUrl(dataUrl, side, true);
+      if (!await waitForProcessingComplete(15000)) return;
+      showToast('Foto lista. Revisa el recorte y el tamaño antes de imprimir.', 'success');
+    }
+  });
 }
-
-async function switchCameraFacing() {
-  state.facingMode = (state.facingMode === 'environment') ? 'user' : 'environment';
-  if (state.cameraStream) state.cameraStream.getTracks().forEach(function(t){ t.stop(); });
-  openLiveCamera(state.activeCameraSide);
-}
-
-function captureLivePhoto() {
-  const video = $('liveVideo');
-  if (!video.videoWidth) return;
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-  const side = state.activeCameraSide;
-  closeLiveCamera();
-  processRawDataUrl(dataUrl, side);
-  showToast('¡Foto capturada para ' + getSlotFriendlyName(side) + '!', 'success');
-}
-
+function switchCameraFacing() { openLiveCamera(state.activeCameraSide); }
+function captureLivePhoto() { /* Capture is managed by the shared assisted camera. */ }
 function closeLiveCamera() {
+  window.RealScanCapture?.close();
+  if (state.cameraStream) { state.cameraStream.getTracks().forEach(t => t.stop()); state.cameraStream = null; }
   closeModal('liveCameraModal');
-  if (state.cameraStream) {
-    state.cameraStream.getTracks().forEach(function(t){ t.stop(); });
-    state.cameraStream = null;
-  }
 }
 
 function triggerNativeUpload(side, isCamera) {
@@ -98,25 +63,81 @@ function triggerNativeUpload(side, isCamera) {
 function handleImageFile(event, side) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
-  loadBlobIntoSide(file, side);
+  loadBlobIntoSide(file, side, {review:true}).catch(e=>showToast(e.message, 'error'));
 }
+function handleDragOver(event){event.preventDefault();event.currentTarget.classList.add('ring-2');}
+function handleDragLeave(event){event.currentTarget.classList.remove('ring-2');}
+function handleDrop(event,side){event.preventDefault();event.stopPropagation();event.currentTarget.classList.remove('ring-2');const file=event.dataTransfer?.files?.[0];if(file)loadBlobIntoSide(file,side,{review:true});}
 
-async function loadBlobIntoSide(blob, side) {
-  const isPdf = blob.type === 'application/pdf' || (blob.name && blob.name.toLowerCase().endsWith('.pdf'));
-  if (isPdf) { await handlePdfFile(blob, side); return; }
-  const reader = new FileReader();
-  reader.onload = function(e) { processRawDataUrl(e.target.result, side); };
-  reader.readAsDataURL(blob);
+function beginSlotRequest(side) {
+  const slot=state.images[side];if(!slot)throw Error('Destino no válido.');
+  slot._requestVersion=(slot._requestVersion||0)+1;slot._reading=true;
+  window.RealScanWorkflow?.update();
+  return {side,slot,version:slot._requestVersion,job:state._jobRevision||0};
 }
+function slotRequestCurrent(request) {
+  return request && request.job===(state._jobRevision||0) && state.images[request.side]===request.slot && request.slot._requestVersion===request.version;
+}
+function finishSlotRequest(request) {if(slotRequestCurrent(request)){request.slot._reading=false;window.RealScanWorkflow?.update();}}
 
-async function handlePdfFile(file, targetSide) {
-  if (!window.pdfjsLib) { showToast('Cargando motor PDF, reintenta en un segundo...', 'warning'); return; }
+async function loadBlobIntoSide(blob, side, options = {}) {
+  const request=beginSlotRequest(side);
   try {
+    if (!blob || !blob.size || blob.size > 30*1024*1024) throw Error('Selecciona un archivo válido de hasta 30 MB.');
+    if (blob.type === 'application/pdf' || /\.pdf$/i.test(blob.name || '')) {await handlePdfFile(blob,side,null,request);return slotRequestCurrent(request);}
+    if (/\.hei[cf]$/i.test(blob.name || '')) throw Error('Exporta la imagen HEIC como JPG o PNG desde tu teléfono.');
+    const dataUrl = await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('No se pudo leer el archivo.'));reader.readAsDataURL(blob);});
+    if(!slotRequestCurrent(request))return false;
+    const reviewed=options.review ? await RealScanReview.open({dataUrl,name:blob.name,photoMode:state.activeCategory==='photos'}) : dataUrl;
+    if(!reviewed||!slotRequestCurrent(request))return false;
+    const result=await window.handleLoadedFile(side,reviewed,blob.name,null,{request,preserveFrame:!!options.review});
+    if(result?.loaded&&slotRequestCurrent(request))state.images[side].rawOriginalSrc=dataUrl;
+    return !!result?.loaded;
+  } catch(e) {if(slotRequestCurrent(request))showToast(e.message || 'No se pudo procesar el archivo.', 'error');return false;}
+  finally {finishSlotRequest(request);}
+}
+
+// Función global para inyectar archivos cargados (usada por sincronización QR)
+window.handleLoadedFile = async function(side, dataUrl, name, onAssigned, options = {}) {
+  if (!state.images[side] || typeof dataUrl !== 'string') throw Error('Destino o archivo no válido.');
+  const request=options.request||beginSlotRequest(side);
+  try {
+  if(!slotRequestCurrent(request))return {cancelled:true};
+  const blob = await (await fetch(dataUrl)).blob();
+  if(!slotRequestCurrent(request))return {cancelled:true};
+  if (blob.type === 'application/pdf') return await handlePdfFile(new File([blob],name||'documento.pdf',{type:blob.type}),side,onAssigned,request);
+  if (!blob.type.startsWith('image/')) throw Error('El archivo no es una imagen o PDF.');
+  const probe = new Image();probe.src=dataUrl;await probe.decode();
+  if(!slotRequestCurrent(request))return {cancelled:true};
+  if(probe.naturalWidth*probe.naturalHeight>60000000)throw Error('La imagen supera 60 megapíxeles. Reduce su resolución antes de cargarla.');
+  finishSlotRequest(request);
+  processRawDataUrl(dataUrl,side,!!options.preserveFrame,request);
+  if (!await waitForProcessingComplete(15000)) throw Error('La imagen no terminó de procesarse.');
+  if(!slotRequestCurrent(request))return {cancelled:true};
+  onAssigned?.(side);
+  return {loaded:true};
+  } finally {finishSlotRequest(request);}
+};
+
+async function handlePdfFile(file, targetSide, onAssigned, request = beginSlotRequest(targetSide)) {
+  let task=null, retained=false;
+  try {
+    if (!window.pdfjsLib) throw Error('No se pudo cargar el lector PDF. Recarga la aplicación.');
     showToast('Procesando PDF escaneado...', 'info');
     const arrayBuffer = await file.arrayBuffer();
-    const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    if(!slotRequestCurrent(request))return {cancelled:true};
+    task = pdfjsLib.getDocument({ data: arrayBuffer, isEvalSupported: false, cMapUrl:'vendor/cmaps/', cMapPacked:true, standardFontDataUrl:'vendor/standard_fonts/', wasmUrl:'vendor/wasm/' });
+    const pdfDoc = await task.promise;
+    if(!slotRequestCurrent(request))return {cancelled:true};
+    if (pdfDoc.numPages > 40) throw Error('El PDF supera 40 páginas. Divide el documento antes de cargarlo.');
 
-    if (pdfDoc.numPages >= 2 && state.printMode !== 'single') {
+    if (pdfDoc.numPages >= 2) {
+      if (typeof openPdfPageSelector === 'function') {
+        finishSlotRequest(request);
+        retained=true;
+        await openPdfPageSelector(pdfDoc, targetSide, onAssigned,()=>task.destroy?.());
+        return {pendingSelection:true};
+      }
       const numToLoad = Math.min(pdfDoc.numPages, 4);
       if (typeof setDocumentPages === 'function' && numToLoad > 2) {
         setDocumentPages(numToLoad);
@@ -125,21 +146,35 @@ async function handlePdfFile(file, targetSide) {
       for (let i = 1; i <= numToLoad; i++) {
         const page = await pdfDoc.getPage(i);
         const dataUrl = await renderPdfPageToDataUrl(page);
-        processRawDataUrl(dataUrl, slots[i - 1]);
+        if(!slotRequestCurrent(request))return {cancelled:true};
+        processRawDataUrl(dataUrl, slots[i - 1],true,slots[i - 1]===targetSide?request:null);
       }
       showToast('¡PDF de ' + numToLoad + ' páginas detectado y cargado con éxito!', 'success');
     } else {
       const p = await pdfDoc.getPage(1);
-      processRawDataUrl(await renderPdfPageToDataUrl(p), targetSide);
+      const data=await renderPdfPageToDataUrl(p);
+      if(!slotRequestCurrent(request))return {cancelled:true};
+      finishSlotRequest(request);
+      processRawDataUrl(data, targetSide,true,request);
+      if (!await waitForProcessingComplete()) throw Error('El PDF aún se está procesando.');
+      if(!slotRequestCurrent(request))return {cancelled:true};
+      onAssigned?.(targetSide);
       showToast('¡PDF cargado en ' + getSlotFriendlyName(targetSide) + '!', 'success');
     }
   } catch (err) {
-    showToast('No se pudo leer el PDF. Asegúrate de que no tenga contraseña.', 'warning');
-  }
+    if(!slotRequestCurrent(request))return {cancelled:true};
+    throw Error(err.message?.includes('40 páginas') ? err.message : 'No se pudo abrir el PDF. Comprueba que sea válido y no tenga contraseña.');
+  } finally {finishSlotRequest(request);if(!retained)await Promise.resolve(task?.destroy?.()).catch(()=>{});}
+}
+
+function getSafePdfViewport(page, requestedScale, maxDimension = 4000) {
+  const natural = page.getViewport({scale:1});
+  if(!Number.isFinite(natural.width) || !Number.isFinite(natural.height) || natural.width<=0 || natural.height<=0) throw Error('La página PDF tiene medidas inválidas.');
+  return page.getViewport({scale:Math.min(requestedScale,maxDimension/Math.max(natural.width,natural.height))});
 }
 
 async function renderPdfPageToDataUrl(page) {
-  const viewport = page.getViewport({ scale: 3.0 });
+  const viewport = getSafePdfViewport(page, 3.0);
   const canvas = document.createElement('canvas');
   canvas.width = viewport.width;
   canvas.height = viewport.height;
@@ -289,60 +324,26 @@ function toggleAutoCrop(side) {
 }
 
 function autoFitSlotToCard(side) {
-  const imgData = state.images[side];
-  if (!imgData.originalSrc) {
-    showToast('Primero captura o sube una imagen en esta ranura.', 'warning');
-    return;
-  }
+  // A repeatable operation: never crop the original or increase zoom per click.
+  setFitMode(side, 'fit');
+}
 
-  // 1. Si existe versión recortada pero no está activa, aplicarla
-  if (imgData.croppedSrc && !imgData.isCropApplied) {
-    imgData.isCropApplied = true;
-    imgData.originalSrc = imgData.croppedSrc;
-    imgData.fitMode = 'cover';
-    const btn = $('btnToggleCrop' + getSlotIdSuffix(side));
-    if (btn) btn.textContent = '✂️ Recorte Auto';
-    setZoomScale(side, 1.0);
-    imgData.panX = 0;
-    imgData.panY = 0;
-    renderProcessedImage(side);
-    showToast('¡Ajuste 1:1 aplicado! Documento ampliado para rellenar la ranura exacta.', 'success');
-  } else if (!imgData.croppedSrc && imgData.rawOriginalSrc) {
-    const tempImg = new Image();
-    tempImg.onload = function() {
-      const cropped = detectAndCropCard(tempImg);
-      if (cropped) {
-        imgData.croppedSrc = cropped;
-        imgData.isCropApplied = true;
-        imgData.originalSrc = cropped;
-        imgData.naturalWidth = tempImg.naturalWidth;
-        imgData.naturalHeight = tempImg.naturalHeight;
-        imgData.fitMode = 'cover';
-        setZoomScale(side, 1.0);
-      } else {
-        // Si la foto no tiene bordes detectables pero el DNI es pequeño, ampliarlo un paso (+25%)
-        let nextZ = parseFloat(((imgData.zoom || 1.0) + 0.25).toFixed(2));
-        setZoomScale(side, nextZ);
-      }
-      imgData.panX = 0;
-      imgData.panY = 0;
-      renderProcessedImage(side);
-      showToast('⚡ ¡DNI ajustado (' + (imgData.zoom || 1.0) + 'x) a tamaño real 1:1! Arrastra sobre la vista previa para centrarlo.', 'success');
-    };
-    tempImg.src = imgData.rawOriginalSrc;
-    return;
-  } else {
-    // Si ya está activo o recortado, ampliar incrementalmente (+25%) con cada clic para fotos pequeñas
-    let currentZ = imgData.zoom || 1.0;
-    if (currentZ >= 2.5) {
-      currentZ = 1.0;
-      showToast('🔄 Zoom restablecido a 1.0x (Tamaño estándar).', 'info');
-    } else {
-      currentZ = parseFloat((currentZ + 0.25).toFixed(2));
-      showToast('🔍 DNI ampliado a ' + currentZ + 'x para llenar la ranura real (85.6 × 54.0 mm).', 'success');
+let _lastContinuousSnapshotTime = 0;
+let _lastContinuousSlot = null;
+let _lastContinuousType = null;
+
+function recordContinuousSnapshot(side, imgData, type) {
+  const now = Date.now();
+  if (_lastContinuousSlot !== side || _lastContinuousType !== type || (now - _lastContinuousSnapshotTime > 500)) {
+    if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+      RealScanEditor.recordSnapshot(side, imgData);
+    } else if (typeof window !== 'undefined' && window.RealScanEditor && window.RealScanEditor.recordSnapshot) {
+      window.RealScanEditor.recordSnapshot(side, imgData);
     }
-    setZoomScale(side, currentZ);
   }
+  _lastContinuousSnapshotTime = now;
+  _lastContinuousSlot = side;
+  _lastContinuousType = type;
 }
 
 function setZoomScale(side, targetZoom) {
@@ -352,7 +353,10 @@ function setZoomScale(side, targetZoom) {
     return;
   }
   const z = parseFloat(Math.max(0.20, Math.min(3.50, targetZoom)).toFixed(2));
-  imgData.zoom = z;
+  if (imgData.zoom !== z) {
+    recordContinuousSnapshot(side, imgData, 'zoom');
+    imgData.zoom = z;
+  }
   const suffix = getSlotIdSuffix(side);
 
   const label = $('zoomLabel' + suffix);
@@ -373,8 +377,19 @@ function setFitMode(side, mode) {
     showToast('Carga primero una foto para cambiar el modo de ajuste.', 'warning');
     return;
   }
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+    RealScanEditor.recordSnapshot(side, imgData);
+  } else if (typeof window !== 'undefined' && window.RealScanEditor && window.RealScanEditor.recordSnapshot) {
+    window.RealScanEditor.recordSnapshot(side, imgData);
+  }
+  if (!['fit','cover'].includes(mode)) return;
   imgData.fitMode = mode;
+  imgData.zoom = 1; imgData.panX = 0; imgData.panY = 0;
+  window.RealScanDiagnostics?.record('image.fit','info',{fitMode:mode});
   const suffix = getSlotIdSuffix(side);
+  if ($('zoomLabel' + suffix)) $('zoomLabel' + suffix).textContent = '1.0x';
+  if ($('zoomSlider' + suffix)) $('zoomSlider' + suffix).value = 100;
+  if ($('zoomPercent' + suffix)) $('zoomPercent' + suffix).textContent = '100%';
 
   const btnFit = $('btnFitMode' + suffix);
   const btnCover = $('btnCoverMode' + suffix);
@@ -415,7 +430,9 @@ function inspectSlotImage(side, img) {
   const h = img.naturalHeight || 0;
   if (w === 0 || h === 0) return;
 
-  const isPortraitImg = h > w;
+  const rotated = (state.images[side]?.rotation || 0) % 180 !== 0;
+  const imageW = rotated ? h : w, imageH = rotated ? w : h;
+  const isPortraitImg = imageH > imageW;
   const spec = getActiveSpec();
   const isPortraitSpec = spec.heightMm > spec.widthMm;
 
@@ -424,17 +441,21 @@ function inspectSlotImage(side, img) {
   const actionsEl = $('inspectorActions' + suffix);
 
   let advice = '';
-  let sub = `${w} × ${h} px • ${w >= 1200 ? '✅ 300 DPI Óptimo' : '⚠️ Resolución Estándar'}`;
+  const estimatedDpi = Math.round(Math.min(imageW/spec.widthMm,imageH/spec.heightMm)*25.4);
+  let sub = `${w} × ${h} px · ${estimatedDpi} ppp estimados para este tamaño · Revisa la nitidez`;
   let actionHtml = '';
 
-  if (isPortraitImg !== isPortraitSpec) {
+  if (isPortraitImg !== isPortraitSpec && state.activeCategory === 'photos') {
+    advice = 'Foto y marco tienen distinta orientación. Se conserva la foto completa.';
+    actionHtml = `<button type="button" class="btn-inspect-fit px-2 py-1 rounded bg-slate-800 text-white text-xs" data-side="${side}">Encajar sin recortar</button>`;
+  } else if (isPortraitImg !== isPortraitSpec) {
     advice = '💡 Foto vertical detectada en ranura horizontal:';
     actionHtml = `<button type="button" class="btn-inspect-rotate px-2 py-0.5 rounded bg-indigo-600 text-white font-bold text-[10px] hover:bg-indigo-700 transition-colors shadow-sm" data-side="${side}">🔄 Girar 90°</button>`;
   } else if (w > 2000 || h > 2000) {
     advice = '💡 Foto amplia de alta resolución:';
     actionHtml = `<button type="button" class="btn-inspect-fit px-2 py-0.5 rounded bg-slate-800 dark:bg-slate-700 text-white font-bold text-[10px] hover:bg-slate-900 transition-colors shadow-sm" data-side="${side}">📐 Encajar Todo</button>`;
   } else {
-    advice = '✅ Documento listo con escala 1:1 verificada';
+    advice = 'Imagen cargada. Revisa el encuadre antes de imprimir.';
   }
 
   if (textEl) textEl.textContent = advice;
@@ -453,7 +474,9 @@ function clearSlot(side) {
   state.images[side] = {
     rawOriginalSrc: null,
     croppedSrc: null,
-    isCropApplied: true,
+    isCropApplied: false,
+    cropData: null,
+    warpQuad: null,
     originalSrc: null,
     processedDataUrl: null,
     naturalWidth: 0,
@@ -489,6 +512,12 @@ function clearSlot(side) {
   const banner = $('inspectorBanner' + suffix);
   if (banner) banner.classList.add('hidden');
 
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.clearHistory) {
+    RealScanEditor.clearHistory(side);
+  } else if (typeof window !== 'undefined' && window.RealScanEditor && window.RealScanEditor.clearHistory) {
+    window.RealScanEditor.clearHistory(side);
+  }
+
   updateSidePreview(side);
   showToast('Foto eliminada de ' + getSlotFriendlyName(side) + '. Ranura lista para nueva captura o archivo.', 'info');
 }
@@ -496,12 +525,36 @@ function clearSlot(side) {
 /* ============================================================
    PROCESAMIENTO DE IMAGEN Y ROTACIÓN INTELIGENTE
    ============================================================ */
-function processRawDataUrl(rawSrc, side) {
+function processRawDataUrl(rawSrc, side, preserveFrame = false, request = null) {
+  if(request && !slotRequestCurrent(request))return;
+  if(!request){state.images[side]._requestVersion=(state.images[side]._requestVersion||0)+1;state.images[side]._reading=false;}
+  request=request||{side,slot:state.images[side],version:state.images[side]._requestVersion,job:state._jobRevision||0};
+  const startRevision = state._jobRevision || 0;
+  const slot = state.images[side];
+  const loadVersion = (slot._loadVersion || 0) + 1; slot._loadVersion = loadVersion;
+  const settle = function(){if(startRevision === (state._jobRevision || 0)) state._processingPending = Math.max(0, (state._processingPending || 1) - 1);};
+  state._processingPending = (state._processingPending || 0) + 1;
   const img = new Image();
   img.onload = function() {
+    if (!slotRequestCurrent(request) || startRevision !== (state._jobRevision || 0) || state.images[side] !== slot || slot._loadVersion !== loadVersion) {
+      settle();
+      return;
+    }
     state.images[side].rawOriginalSrc = rawSrc;
+    state.images[side].croppedSrc = null;
+    state.images[side].cropData = null;
+    state.images[side].perspectiveQuad = null;
+    state.images[side].warpQuad = null;
+    state.images[side].isCropApplied = false;
+    window.RealScanEditor?.clearHistory?.(side);
+    if(getActiveSpec().noRetouch){state.images[side].filter='color';state.images[side].brightness=0;state.images[side].contrast=0;}
+    state._previewEditEnabled = false;
+    state._previewDragging = false;
+    state._previewDragSide = null;
+    state.images[side].panX = 0;
+    state.images[side].panY = 0;
     state.images[side].zoom = 1.0;
-    state.images[side].fitMode = 'cover';
+    state.images[side].fitMode = preserveFrame || state.activeCategory === 'photos' ? 'fit' : 'cover';
     state.images[side].showMmGrid = false;
     const suffix = getSlotIdSuffix(side);
     const label = $('zoomLabel' + suffix);
@@ -531,7 +584,7 @@ function processRawDataUrl(rawSrc, side) {
       }
     }
 
-    const croppedData = detectAndCropCard(img);
+    const croppedData = preserveFrame || state.activeCategory === 'photos' ? null : detectAndCropCard(img);
     const toggleBtn = $('btnToggleCrop' + suffix);
 
     if (croppedData) {
@@ -542,6 +595,10 @@ function processRawDataUrl(rawSrc, side) {
 
       const ci = new Image();
       ci.onload = function() {
+        if (!slotRequestCurrent(request) || startRevision !== (state._jobRevision || 0) || state.images[side] !== slot || slot._loadVersion !== loadVersion) {
+          settle();
+          return;
+        }
         state.images[side].naturalWidth = ci.naturalWidth;
         state.images[side].naturalHeight = ci.naturalHeight;
         const spec = getActiveSpec();
@@ -549,8 +606,12 @@ function processRawDataUrl(rawSrc, side) {
         const imgIsPortrait = ci.naturalHeight > ci.naturalWidth;
         state.images[side].rotation = (specIsPortrait === imgIsPortrait) ? 0 : 90;
         inspectSlotImage(side, ci);
+        settle();
         renderProcessedImage(side);
         showToast('✂️ ¡Bordes blancos eliminados automáticamente! Escala 1:1 real.', 'success');
+      };
+      ci.onerror = function() {
+        settle();
       };
       ci.src = croppedData;
       return;
@@ -564,15 +625,22 @@ function processRawDataUrl(rawSrc, side) {
     const spec = getActiveSpec();
     const specIsPortrait = spec.heightMm > spec.widthMm;
     const imgIsPortrait = img.naturalHeight > img.naturalWidth;
-    state.images[side].rotation = (specIsPortrait === imgIsPortrait) ? 0 : 90;
+    state.images[side].rotation = preserveFrame || state.activeCategory === 'photos' ? 0 : ((specIsPortrait === imgIsPortrait) ? 0 : 90);
     inspectSlotImage(side, img);
+    settle();
     renderProcessedImage(side);
+  };
+  img.onerror = function() {
+    settle();
   };
   img.src = rawSrc;
 }
 
 function rotateImage(side) {
   if (!state.images[side].originalSrc) return;
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+    RealScanEditor.recordSnapshot(side, state.images[side]);
+  }
   state.images[side].rotation = (state.images[side].rotation + 90) % 360;
   renderProcessedImage(side);
 }
@@ -590,8 +658,16 @@ function adjustZoom(side, delta) {
 function renderProcessedImage(side) {
   const imgData = state.images[side];
   if (!imgData.originalSrc) return;
+  const startRevision = state._jobRevision || 0;
+  const renderVersion = (imgData._renderVersion || 0) + 1; imgData._renderVersion = renderVersion;
+  const settle = function(){if(startRevision === (state._jobRevision || 0)) state._processingPending = Math.max(0, (state._processingPending || 1) - 1);};
+  state._processingPending = (state._processingPending || 0) + 1;
   const img = new Image();
   img.onload = function() {
+    if (startRevision !== (state._jobRevision || 0) || state.images[side] !== imgData || imgData._renderVersion !== renderVersion) {
+      settle();
+      return;
+    }
     const rotation = imgData.rotation || 0;
     const zoom = imgData.zoom || 1.0;
     const panX = imgData.panX || 0;
@@ -602,8 +678,9 @@ function renderProcessedImage(side) {
 
     let outW = Math.round(spec.widthMm / 25.4 * window.TARGET_DPI);
     let outH = Math.round(spec.heightMm / 25.4 * window.TARGET_DPI);
-    if (outW > window.MAX_OUT_PX) { const r = window.MAX_OUT_PX / outW; outW = window.MAX_OUT_PX; outH = Math.round(outH * r); }
-    if (outH > window.MAX_OUT_PX) { const r = window.MAX_OUT_PX / outH; outH = window.MAX_OUT_PX; outW = Math.round(outW * r); }
+    const renderLimit = state._previewDragging && state._previewDragSide===side ? Math.min(1200,window.MAX_OUT_PX) : window.MAX_OUT_PX;
+    if (outW > renderLimit) { const r = renderLimit / outW; outW = renderLimit; outH = Math.round(outH * r); }
+    if (outH > renderLimit) { const r = renderLimit / outH; outH = renderLimit; outW = Math.round(outW * r); }
 
     const canvas = document.createElement('canvas');
     canvas.width = outW;
@@ -644,18 +721,6 @@ function renderProcessedImage(side) {
     ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
     ctx.restore();
 
-    // Trazar línea de corte elíptica punteada oficial
-    if (spec.isOval) {
-      ctx.save();
-      ctx.setLineDash([14, 10]);
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = Math.max(2, Math.round(outW * 0.005));
-      ctx.beginPath();
-      ctx.ellipse(outW / 2, outH / 2, outW / 2 - 3, outH / 2 - 3, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    }
-
     // Filtros de Escáner y Blanco y Negro
     if (filter === 'bw' || filter === 'scanner') {
       try {
@@ -681,44 +746,22 @@ function renderProcessedImage(side) {
       } catch(e) {}
     }
 
-    // Regla Milimétrica Superpuesta Opcional (Virtual mm Grid)
-    if (imgData.showMmGrid) {
-      try {
-        ctx.save();
-        const mmPx = window.TARGET_DPI / 25.4;
-        ctx.strokeStyle = 'rgba(79, 70, 229, 0.22)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        for (let x = 0; x <= outW; x += mmPx * 5) {
-          ctx.moveTo(x, 0); ctx.lineTo(x, outH);
-        }
-        for (let y = 0; y <= outH; y += mmPx * 5) {
-          ctx.moveTo(0, y); ctx.lineTo(outW, y);
-        }
-        ctx.stroke();
-
-        ctx.strokeStyle = 'rgba(79, 70, 229, 0.45)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        for (let x = 0; x <= outW; x += mmPx * 10) {
-          ctx.moveTo(x, 0); ctx.lineTo(x, outH);
-        }
-        for (let y = 0; y <= outH; y += mmPx * 10) {
-          ctx.moveTo(0, y); ctx.lineTo(outW, y);
-        }
-        ctx.stroke();
-        ctx.restore();
-      } catch(e) {}
-    }
-
     imgData.processedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    settle();
     updateSidePreview(side);
+  };
+  img.onerror = function() {
+    settle();
   };
   img.src = imgData.originalSrc;
 }
 
 function setFilter(side, filter) {
+  if (getActiveSpec().noRetouch && filter !== 'color') {showToast('Este perfil requiere una fotografía en color sin filtros.', 'warning');return;}
   if (!state.images[side].originalSrc) return;
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+    RealScanEditor.recordSnapshot(side, state.images[side]);
+  }
   state.images[side].filter = filter;
   renderProcessedImage(side);
   const names = { color: 'Color original', bw: 'Blanco y Negro oficial', scanner: 'Escáner / Fotocopia nítida' };
@@ -727,6 +770,7 @@ function setFilter(side, filter) {
 
 function adjustPan(side, dx, dy) {
   if (!state.images[side].originalSrc) return;
+  recordContinuousSnapshot(side, state.images[side], 'pan');
   state.images[side].panX = Math.max(-50, Math.min(50, (state.images[side].panX || 0) + dx));
   state.images[side].panY = Math.max(-50, Math.min(50, (state.images[side].panY || 0) + dy));
   renderProcessedImage(side);
@@ -734,6 +778,11 @@ function adjustPan(side, dx, dy) {
 
 function resetPan(side) {
   if (!state.images[side].originalSrc) return;
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+    RealScanEditor.recordSnapshot(side, state.images[side]);
+  } else if (typeof window !== 'undefined' && window.RealScanEditor && window.RealScanEditor.recordSnapshot) {
+    window.RealScanEditor.recordSnapshot(side, state.images[side]);
+  }
   state.images[side].panX = 0;
   state.images[side].panY = 0;
   renderProcessedImage(side);
@@ -744,11 +793,13 @@ function resetPan(side) {
    CORRECTOR RÁPIDO DE ILUMINACIÓN Y CONTRASTE (+15% / -15%)
    ============================================================ */
 function adjustSlotLight(side, type, delta) {
+  if (getActiveSpec().noRetouch) {showToast('Este perfil requiere conservar la apariencia original.', 'warning');return;}
   const imgData = state.images[side];
   if (!imgData || !imgData.originalSrc) {
     showToast('Carga primero una foto para ajustar la luz y sombra.', 'warning');
     return;
   }
+  recordContinuousSnapshot(side, imgData, type);
   if (type === 'brightness') {
     imgData.brightness = Math.max(-60, Math.min(60, (imgData.brightness || 0) + delta));
     const sign = imgData.brightness > 0 ? '+' : '';
@@ -764,6 +815,11 @@ function adjustSlotLight(side, type, delta) {
 function resetSlotLight(side) {
   const imgData = state.images[side];
   if (!imgData) return;
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) {
+    RealScanEditor.recordSnapshot(side, imgData);
+  } else if (typeof window !== 'undefined' && window.RealScanEditor && window.RealScanEditor.recordSnapshot) {
+    window.RealScanEditor.recordSnapshot(side, imgData);
+  }
   imgData.brightness = 0;
   imgData.contrast = 0;
   renderProcessedImage(side);
@@ -790,12 +846,17 @@ function updateSidePreview(side) {
   const tools = $('tools' + suffix);
   const badge = $('badgeStatus' + suffix);
   const btnDelete = $('btnDelete' + suffix);
+  const manualCrop=$('btnToggleCrop'+suffix);
+  if(manualCrop)manualCrop.classList.toggle('hidden',!imgData?.originalSrc);
+  for(const [prefix,mode]of [['btnFitMode','fit'],['btnCoverMode','cover']]){
+    const control=$(prefix+suffix);if(control){control.classList.toggle('is-active',imgData?.fitMode===mode);control.setAttribute('aria-pressed',String(imgData?.fitMode===mode));}
+  }
 
   if (imgData && imgData.processedDataUrl) {
     if (previewImg) {
       previewImg.src = imgData.processedDataUrl;
       previewImg.classList.remove('hidden');
-      previewImg.className = 'w-full h-full object-cover rounded-sm';
+      previewImg.className = 'w-full h-full object-contain rounded-sm';
     }
     if (placeholder) placeholder.classList.add('hidden');
     if (tools) tools.classList.remove('hidden');
@@ -814,7 +875,9 @@ function updateSidePreview(side) {
     const oaciOverlay = $('oaciGuide' + suffix);
     if (oaciOverlay) oaciOverlay.classList.toggle('hidden', !imgData.showOaciGuide);
 
-    if (typeof updateUI === 'function') updateUI();
+    if (state._previewDragging) {
+      document.querySelectorAll('[data-preview-slot="'+side+'"] > img').forEach(image=>{image.src=imgData.processedDataUrl;});
+    } else if (typeof updateUI === 'function') updateUI();
   } else {
     if (previewImg) {
       previewImg.src = '';
@@ -834,6 +897,7 @@ function updateSidePreview(side) {
 
     if (typeof updateUI === 'function') updateUI();
   }
+  if (typeof saveActiveDraft === 'function') saveActiveDraft();
 }
 
 /* ============================================================
@@ -850,8 +914,7 @@ async function pasteFromClipboard(side) {
       for (const type of item.types) {
         if (type.startsWith('image/')) {
           const blob = await item.getType(type);
-          loadBlobIntoSide(blob, side);
-          showToast('¡Imagen pegada desde el portapapeles con éxito!', 'success');
+          if(await loadBlobIntoSide(blob, side,{review:true}))showToast('Imagen revisada y cargada.','success');
           return;
         }
       }
@@ -875,8 +938,7 @@ document.addEventListener('paste', function(e) {
       else if (pageCount >= 2 && !state.images.back.processedDataUrl) target = 'back';
       else if (pageCount >= 3 && !state.images.page3.processedDataUrl) target = 'page3';
       else if (pageCount >= 4 && !state.images.page4.processedDataUrl) target = 'page4';
-      loadBlobIntoSide(blob, target);
-      showToast('¡Imagen pegada con éxito en ' + getSlotFriendlyName(target) + '!', 'success');
+      loadBlobIntoSide(blob, target,{review:true});
       e.preventDefault();
       break;
     }
@@ -887,36 +949,28 @@ document.addEventListener('paste', function(e) {
    AUTO-AJUSTE MÁGICO 1:1 (Luz, Nitidez, Encuadre y Milímetros)
    ============================================================ */
 function autoEnhanceActiveSlots() {
-  const activeSlots = ['front', 'back', 'page3', 'page4'].slice(0, state.documentPageCount || 2);
-  let enhancedCount = 0;
-
-  activeSlots.forEach(function(side) {
-    const imgData = state.images[side];
-    if (imgData && imgData.originalSrc) {
-      // 1. Resetear paneo y centrar milimétricamente
-      imgData.panX = 0;
-      imgData.panY = 0;
-      imgData.zoom = 1.0;
-      imgData.rotation = 0;
-      imgData.isCropApplied = true;
-
-      // 2. Si es documento oficial y está en color, aplicar escaneo de alta nitidez
-      if (state.activeCategory === 'docs' && imgData.filter === 'color') {
-        imgData.filter = 'scanner';
-      }
-
-      renderProcessedImage(side);
-      enhancedCount++;
-    }
-  });
-
-  if (enhancedCount > 0) {
-    showToast('✨ Auto-Ajuste Mágico 1:1 aplicado en ' + enhancedCount + ' cara(s): luz optimizada, textos nítidos y escala calibrada.', 'success');
-    if (typeof logActivity === 'function') {
-      logActivity('Auto-Ajuste Mágico 1:1', enhancedCount + ' caras optimizadas automáticamente');
-    }
-  } else {
-    showToast('Carga primero una foto o escaneo para aplicar el Auto-Ajuste Mágico.', 'warning');
-  }
+  const activeSlots = state.activeCategory==='photos' ? (state.mixTwoPhotos?['front','back']:['front']) : ['front','back','page3','page4'].slice(0,state.documentPageCount||2);
+  let count=0;
+  for(const side of activeSlots)if(state.images[side]?.originalSrc){setFitMode(side,'fit');count++;}
+  showToast(count ? count+' cara(s) centradas y encajadas. Se conservan orientación, color y original.' : 'Carga una imagen antes de encajar las caras.',count?'success':'warning');
 }
 
+function waitForProcessingComplete(timeoutMs) {
+  timeoutMs = timeoutMs || 15000;
+  return new Promise(function(resolve) {
+    const start = Date.now();
+    function check() {
+      if ((!state._processingPending || state._processingPending <= 0) && !state._previewDragging && !Object.values(state.images||{}).some(image=>image?._reading)) return resolve(true);
+      if (Date.now() - start > timeoutMs) {showToast('El procesamiento aún no termina. Espera y vuelve a intentar.', 'error');return resolve(false);}
+      setTimeout(check, 30);
+    }
+    check();
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.waitForProcessingComplete = waitForProcessingComplete;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports.waitForProcessingComplete = waitForProcessingComplete;
+}

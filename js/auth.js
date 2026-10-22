@@ -20,10 +20,10 @@ function getAuthData() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.users) && parsed.users.length > 0) {
-        // Auto-migración si algún usuario tiene el PIN viejo de 2026
+        // Auto-migración si algún usuario tiene el PIN viejo de 2026 o sin hash
         let migrated = false;
         parsed.users.forEach(function(u) {
-          if (u.passwordHash === '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab' || (u.username === 'admin' && !u.passwordHash)) {
+          if (!u.passwordHash) {
             u.passwordHash = window.DEFAULT_PIN_HASH;
             migrated = true;
           }
@@ -40,7 +40,7 @@ function getAuthData() {
       const old = JSON.parse(oldRaw);
       const migrated = {
         users: [
-          { username: old.username || window.DEFAULT_USER, passwordHash: (old.passwordHash && old.passwordHash !== '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab') ? old.passwordHash : window.DEFAULT_PIN_HASH, role: 'admin' }
+          { username: old.username || window.DEFAULT_USER, passwordHash: old.passwordHash || window.DEFAULT_PIN_HASH, role: 'admin' }
         ],
         currentUsername: old.username || window.DEFAULT_USER,
         sessionToken: old.sessionToken || null,
@@ -52,7 +52,7 @@ function getAuthData() {
   } catch(e) {}
   return {
     users: [
-      { username: window.DEFAULT_USER, passwordHash: window.DEFAULT_PIN_HASH, role: 'admin' }
+      { username: window.DEFAULT_USER, passwordHash: window.DEFAULT_PIN_HASH, role: 'admin', mustChangePassword: true }
     ],
     currentUsername: window.DEFAULT_USER,
     sessionToken: null,
@@ -169,14 +169,63 @@ function clearAuditLog() {
 }
 
 /* ============================================================
-   Gestión de Usuarios y Roles
+   Gestión de Usuarios, Roles y Permisos
    ============================================================ */
+function getCurrentUserRole() {
+  const auth = getAuthData();
+  const currentName = (auth.currentUsername || window.DEFAULT_USER || '').toLowerCase();
+  const found = auth.users.find(function(u) {
+    return u.username.toLowerCase() === currentName;
+  });
+  return found ? (found.role || 'operador') : 'operador';
+}
+
+function isCurrentUserAdmin() {
+  return getCurrentUserRole() === 'admin';
+}
+
 function renderUsersList() {
   const container = $('usersListContainer');
   const badge = $('usersCounterBadge');
   if (!container) return;
   const auth = getAuthData();
+  const isAdmin = isCurrentUserAdmin();
+
   if (badge) badge.textContent = auth.users.length + (auth.users.length === 1 ? ' usuario' : ' usuarios');
+
+  // Reflejar permisos en el formulario de creación de usuario
+  const formAdd = $('formAddUser');
+  const btnAdd = $('btnAddUserSubmit');
+  const roleSelect = $('selectAddUserRole');
+  const nameInput = $('inputAddUserName');
+  const passInput = $('inputAddUserPass');
+
+  if (formAdd) {
+    let permNotice = $('addUserPermissionNotice');
+    if (!isAdmin) {
+      if (btnAdd) btnAdd.disabled = true;
+      if (roleSelect) roleSelect.disabled = true;
+      if (nameInput) nameInput.disabled = true;
+      if (passInput) passInput.disabled = true;
+      if (!permNotice) {
+        permNotice = document.createElement('p');
+        permNotice.id = 'addUserPermissionNotice';
+        permNotice.className = 'text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-1 bg-amber-50 dark:bg-amber-950/40 p-1.5 rounded-lg border border-amber-200 dark:border-amber-800';
+        permNotice.textContent = '🔒 Modo Operador: solo los administradores tienen permiso para crear o eliminar usuarios.';
+        formAdd.appendChild(permNotice);
+      }
+    } else {
+      if (btnAdd) btnAdd.disabled = false;
+      if (roleSelect) roleSelect.disabled = false;
+      if (nameInput) nameInput.disabled = false;
+      if (passInput) passInput.disabled = false;
+      if (permNotice && permNotice.parentNode) {
+        permNotice.parentNode.removeChild(permNotice);
+      }
+    }
+  }
+
+  const adminCount = auth.users.filter(function(u) { return u.role === 'admin'; }).length;
 
   let html = '';
   auth.users.forEach(function(u) {
@@ -198,25 +247,42 @@ function renderUsersList() {
         '</div>' +
       '</div>';
 
-    if (!isCurrent && auth.users.length > 1) {
-      html += '<button type="button" class="btn-delete-user px-2 py-1 rounded-lg text-[11px] font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900/60 transition-colors" data-delete-user="' + escapeHtml(u.username) + '" title="Eliminar usuario">🗑️ Eliminar</button>';
+    // Botón de eliminar solo visible y habilitado si el usuario activo es admin
+    if (isAdmin && !isCurrent && auth.users.length > 1) {
+      const isSoleAdmin = (u.role === 'admin' && adminCount <= 1);
+      if (isSoleAdmin) {
+        html += '<span class="text-[10px] text-amber-500 font-medium" title="No se puede eliminar el único administrador">Único Admin</span>';
+      } else {
+        html += '<button type="button" class="btn-delete-user px-2 py-1 rounded-lg text-[11px] font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900/60 transition-colors" data-delete-user="' + escapeHtml(u.username) + '" title="Eliminar usuario">🗑️ Eliminar</button>';
+      }
+    } else if (isCurrent) {
+      html += '<span class="text-[10px] text-slate-400 italic">Sesión activa</span>';
     } else {
-      html += '<span class="text-[10px] text-slate-400 italic">Activo</span>';
+      html += '<span class="text-[10px] text-slate-400 italic">Protegido</span>';
     }
     html += '</div>';
   });
 
   container.innerHTML = html;
 
-  container.querySelectorAll('.btn-delete-user').forEach(function(btn) {
-    on(btn, 'click', function() {
-      handleDeleteUser(btn.getAttribute('data-delete-user'));
+  if (isAdmin) {
+    container.querySelectorAll('.btn-delete-user').forEach(function(btn) {
+      on(btn, 'click', function() {
+        handleDeleteUser(btn.getAttribute('data-delete-user'));
+      });
     });
-  });
+  }
 }
 
 async function handleAddUser(e) {
   if (e) e.preventDefault();
+
+  if (!isCurrentUserAdmin()) {
+    showToast('Acceso denegado: solo administradores pueden crear usuarios', 'error');
+    if (typeof alert === 'function') alert('Operación no permitida: solo los administradores tienen permiso para registrar nuevos usuarios.');
+    return;
+  }
+
   const userNameInput = $('inputAddUserName');
   const userPassInput = $('inputAddUserPass');
   const userRoleSelect = $('selectAddUserRole');
@@ -256,9 +322,35 @@ async function handleAddUser(e) {
 
 function handleDeleteUser(usernameToDelete) {
   if (!usernameToDelete) return;
-  if (!confirm('¿Estás seguro de que deseas eliminar al usuario "' + usernameToDelete + '"?')) return;
+
+  if (!isCurrentUserAdmin()) {
+    showToast('Acceso denegado: solo administradores pueden eliminar usuarios', 'error');
+    if (typeof alert === 'function') alert('Operación no permitida: solo los administradores tienen permiso para eliminar usuarios.');
+    return;
+  }
 
   const auth = getAuthData();
+  const targetUser = auth.users.find(function(u) {
+    return u.username.toLowerCase() === usernameToDelete.toLowerCase();
+  });
+
+  if (!targetUser) {
+    showToast('El usuario no existe', 'warning');
+    return;
+  }
+
+  // Protección de continuidad: al menos un administrador activo
+  if (targetUser.role === 'admin') {
+    const adminCount = auth.users.filter(function(u) { return u.role === 'admin'; }).length;
+    if (adminCount <= 1) {
+      showToast('No se puede eliminar al único administrador del sistema', 'error');
+      if (typeof alert === 'function') alert('Operación bloqueada: debe existir al menos un administrador activo en el sistema para garantizar el acceso.');
+      return;
+    }
+  }
+
+  if (typeof confirm === 'function' && !confirm('¿Estás seguro de que deseas eliminar al usuario "' + usernameToDelete + '"?')) return;
+
   auth.users = auth.users.filter(function(u) {
     return u.username.toLowerCase() !== usernameToDelete.toLowerCase();
   });
@@ -285,6 +377,7 @@ function checkAuthSession() {
     overlay.classList.add('hidden');
     document.body.classList.remove('modal-open');
   } else {
+    if (typeof closeAllModals === 'function') closeAllModals();
     overlay.classList.remove('hidden');
     document.body.classList.add('modal-open');
     const userInput = $('loginUserInput');
@@ -311,24 +404,11 @@ async function handleLoginSubmit(e) {
 
   const auth = getAuthData();
   const passHash = await computeSha256(pass);
-  const isMaster1313 = (pass === '1313' || passHash === window.DEFAULT_PIN_HASH);
-
-  let matched = auth.users.find(function(u) {
-    return u.username.toLowerCase() === user.toLowerCase() && (u.passwordHash === passHash || (isMaster1313 && (u.role === 'admin' || u.username === 'admin')));
+  const matched = auth.users.find(function(u) {
+    return u.username.toLowerCase() === user.toLowerCase() && u.passwordHash === passHash;
   });
 
-  if (!matched && (user.toLowerCase() === 'admin' || user.toLowerCase() === 'paco') && isMaster1313) {
-    matched = auth.users.find(function(u) { return u.username.toLowerCase() === 'admin'; });
-    if (!matched) {
-      matched = { username: 'admin', passwordHash: window.DEFAULT_PIN_HASH, role: 'admin' };
-      auth.users.unshift(matched);
-    }
-  }
-
   if (matched) {
-    if (isMaster1313 && matched.passwordHash !== window.DEFAULT_PIN_HASH) {
-      matched.passwordHash = window.DEFAULT_PIN_HASH;
-    }
     auth.currentUsername = matched.username;
     auth.sessionToken = 'token_' + Date.now() + '_' + Math.random().toString(36).substring(2);
     auth.sessionExpiry = remember ? (Date.now() + 30 * 24 * 60 * 60 * 1000) : (Date.now() + 12 * 60 * 60 * 1000);
@@ -344,6 +424,10 @@ async function handleLoginSubmit(e) {
 
     logActivity('Inicio de Sesión', 'Acceso correcto con usuario: ' + matched.username + ' (' + matched.role + ')');
     showToast('¡Bienvenido al sistema, ' + matched.username + '!', 'success');
+
+    if (matched.mustChangePassword === true) {
+      showToast('⚠️ Clave inicial en uso. Por seguridad, cámbiala en Ajustes.', 'warning');
+    }
   } else {
     if (errorBox) {
       errorBox.textContent = 'Usuario o contraseña/PIN incorrectos';
@@ -394,7 +478,7 @@ async function handleUpdateCredentials(e) {
     return u.username.toLowerCase() === (auth.currentUsername || window.DEFAULT_USER).toLowerCase();
   });
 
-  const isAuthorized = activeUser && (currentPass === '1313' || currentPass === '2026' || currentHash === activeUser.passwordHash || currentHash === window.DEFAULT_PIN_HASH);
+  const isAuthorized = activeUser && (currentHash === activeUser.passwordHash);
   if (!isAuthorized) {
     showAlert('La contraseña actual es incorrecta', false);
     return;
@@ -402,6 +486,7 @@ async function handleUpdateCredentials(e) {
 
   const newHash = await computeSha256(newPass);
   activeUser.passwordHash = newHash;
+  activeUser.mustChangePassword = false;
   saveAuthData(auth);
 
   $('inputCurrentPass').value = '';
@@ -418,7 +503,16 @@ function openSettingsModal() {
   const labelUser = $('labelPassChangeUser');
   if (labelUser) labelUser.textContent = auth.currentUsername || window.DEFAULT_USER;
   const alertBox = $('credsAlertMsg');
-  if (alertBox) alertBox.classList.add('hidden');
+  const activeUser = auth.users.find(function(u) { return u.username.toLowerCase() === (auth.currentUsername || window.DEFAULT_USER).toLowerCase(); });
+  if (alertBox) {
+    if (activeUser && activeUser.mustChangePassword) {
+      alertBox.textContent = '⚠️ Estás usando la clave inicial. Por seguridad, cámbiala ahora.';
+      alertBox.className = 'p-2 rounded-xl text-center font-semibold text-xs bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-200 border border-amber-200';
+      alertBox.classList.remove('hidden');
+    } else {
+      alertBox.classList.add('hidden');
+    }
+  }
   renderUsersList();
   switchSettingsTab('creds');
   renderAuditLogs();
@@ -426,8 +520,8 @@ function openSettingsModal() {
 }
 
 function switchSettingsTab(tabKey) {
-  const tabs = { creds: $('tabContentCreds'), log: $('tabContentLog'), cloud: $('tabContentCloud') };
-  const btns = { creds: $('tabBtnCreds'), log: $('tabBtnLog'), cloud: $('tabBtnCloud') };
+  const tabs = { creds: $('tabContentCreds'), log: $('tabContentLog'), storage: $('tabContentStorage'), audio: $('tabContentAudio'), cloud: $('tabContentCloud') };
+  const btns = { creds: $('tabBtnCreds'), log: $('tabBtnLog'), storage: $('tabBtnStorage'), audio: $('tabBtnAudio'), cloud: $('tabBtnCloud') };
   Object.keys(tabs).forEach(function(k) {
     if (tabs[k]) {
       if (k === tabKey) tabs[k].classList.remove('hidden'); else tabs[k].classList.add('hidden');
@@ -436,8 +530,20 @@ function switchSettingsTab(tabKey) {
       if (k === tabKey) btns[k].classList.add('is-active'); else btns[k].classList.remove('is-active');
     }
   });
-  if (tabKey === 'log') renderAuditLogs();
+  if (tabKey === 'log') { renderAuditLogs(); window.RealScanDiagnostics?.render(); }
   if (tabKey === 'creds') renderUsersList();
+  if (tabKey === 'storage' && typeof updateStorageTelemetryUI === 'function') updateStorageTelemetryUI();
+  if (tabKey === 'audio') {
+    const chk = $('checkAudioEnabled');
+    const rng = $('rangeAudioVolume');
+    const lbl = $('labelAudioVolume');
+    if (chk && window.state) chk.checked = !!window.state.audioFeedbackEnabled;
+    if (rng && window.state) {
+      const volPct = Math.round((Number.isFinite(window.state.audioVolume) ? window.state.audioVolume : 0.7) * 100);
+      rng.value = volPct;
+      if (lbl) lbl.textContent = volPct + '%';
+    }
+  }
 }
 
 function toggleLoginPasswordVisibility() {
@@ -450,5 +556,28 @@ function toggleLoginPasswordVisibility() {
     input.type = 'password';
     if ($('btnToggleLoginPass')) $('btnToggleLoginPass').textContent = '👁️';
   }
+}
+
+if (typeof window !== 'undefined') {
+  window.getCurrentUserRole = getCurrentUserRole;
+  window.isCurrentUserAdmin = isCurrentUserAdmin;
+  window.handleAddUser = handleAddUser;
+  window.handleDeleteUser = handleDeleteUser;
+  window.renderUsersList = renderUsersList;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    computeSha256,
+    getAuthData,
+    saveAuthData,
+    getCurrentUserRole,
+    isCurrentUserAdmin,
+    handleAddUser,
+    handleDeleteUser,
+    renderUsersList,
+    handleLoginSubmit,
+    handleLogout
+  };
 }
 

@@ -1,97 +1,12 @@
-/* ============================================================
-   RealScan Pro — Service Worker (Modo Offline-First Calibrado)
-   Desarrollado por Paco Iglesias • Escala 1:1
-   ============================================================ */
-
-const CACHE_NAME = 'realscan-cache-v3.2.0';
-const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './css/styles.css',
-  './js/config.js',
-  './js/engine.js',
-  './js/pdf.js',
-  './js/export.js',
-  './js/app.js',
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.warn('[RealScan SW] Pre-caching parcial completado:', err);
-      });
-    }).then(() => self.skipWaiting())
-  );
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-
-  // Si incluye nocache, saltar caché completamente para pruebas inmediatas
-  if (req.url.includes('nocache')) {
-    event.respondWith(fetch(req));
-    return;
-  }
-
-  // Para navegación HTML principal: Red primero con fallback a caché
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req).then((networkResp) => {
-        if (networkResp && networkResp.status === 200) {
-          const respToCache = networkResp.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, respToCache));
-        }
-        return networkResp;
-      }).catch(() => caches.match('./index.html') || caches.match('./'))
-    );
-    return;
-  }
-
-  // Para el resto de activos estáticos: Caché primero con actualización en fondo
-  event.respondWith(
-    caches.match(req).then((cachedResp) => {
-      if (cachedResp) {
-        fetch(req).then((networkResp) => {
-          if (networkResp && networkResp.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, networkResp));
-          }
-        }).catch(() => {});
-        return cachedResp;
-      }
-
-      return fetch(req).then((networkResp) => {
-        if (!networkResp || networkResp.status !== 200) {
-          return networkResp;
-        }
-        const respToCache = networkResp.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(req, respToCache);
-        });
-        return networkResp;
-      });
-    })
-  );
+const CACHE_NAME='__BUILD_VERSION__';
+const CORE_ASSETS=__CORE_ASSETS__;
+self.addEventListener('install',event=>event.waitUntil((async()=>{const cache=await caches.open(CACHE_NAME);await cache.addAll(CORE_ASSETS);await self.skipWaiting();})()));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{for(const key of await caches.keys())if(key.startsWith('realscan-')&&key!==CACHE_NAME)await caches.delete(key);await self.clients.claim();})()));
+self.addEventListener('fetch',event=>{
+ const request=event.request,url=new URL(request.url);
+ if(request.method!=='GET'||url.origin!==self.location.origin)return;
+ if(request.mode==='navigate'){
+  event.respondWith((async()=>{const cache=await caches.open(CACHE_NAME);try{const response=await fetch(request);if(response.ok){await cache.put(url.pathname,response.clone());if(url.pathname==='/'||url.pathname==='/index.html'){await cache.put('/index.html',response.clone());await cache.put('/',response.clone());}}return response;}catch(e){const match=await cache.match(url.pathname)||((url.pathname==='/'||url.pathname==='/index.html')?await cache.match('/index.html'):null);return match||new Response('Esta página necesita conexión. Vuelve al inicio para trabajar sin internet.',{status:503,headers:{'Content-Type':'text/plain;charset=utf-8'}});}})());return;
+ }
+ event.respondWith((async()=>{const cached=await caches.match(request);if(cached)return cached;const response=await fetch(request);if(response.ok&&url.pathname.includes("/vendor/ocr/")){const cache=await caches.open(CACHE_NAME);await cache.put(request,response.clone());}return response;})());
 });

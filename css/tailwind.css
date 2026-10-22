@@ -1,0 +1,6 @@
+@import "tailwindcss" source(none);
+@config "../tailwind.config.cjs";
+@source "../index.html";
+@source "../phone-upload.html";
+@source "../phone-download.html";
+@source "../js";
