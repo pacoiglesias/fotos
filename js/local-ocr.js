@@ -51,6 +51,7 @@
   }
   async function run() {
     if (busy) return;
+    if(root.RealScanSearchable?.busy){document.getElementById("ocrStatus").textContent="Espera a que termine el PDF con texto o cancélalo desde el documento.";return;}
     const $ = (id) => document.getElementById(id), source = externalSource || root.state?.images[$("ocrSide").value]?.originalSrc;
     if (!source) {
       $("ocrStatus").textContent = "Carga una imagen en la cara seleccionada.";

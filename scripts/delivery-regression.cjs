@@ -39,7 +39,7 @@ let browser, server;
       return c.toDataURL("image/jpeg");
     });
   });
-  for (const [i, side] of ["Front", "Back"].entries()) await page.locator("#fileInput" + side).setInputFiles({ name: "synthetic-" + side + ".jpg", mimeType: "image/jpeg", buffer: Buffer.from(samples[i].split(",")[1], "base64") });
+  for (const [i, side] of ["Front", "Back"].entries()) { await page.locator("#fileInput" + side).setInputFiles({ name: "synthetic-" + side + ".jpg", mimeType: "image/jpeg", buffer: Buffer.from(samples[i].split(",")[1], "base64") }); await page.locator(".asset-review [data-review=confirm]").click(); }
   await page.waitForFunction(() => !!state.images.front.processedDataUrl && !!state.images.back.processedDataUrl && state._processingPending === 0);
   const phoneContext = await browser.newContext({ serviceWorkers: "block" }), phone = await phoneContext.newPage();
   phone.on("pageerror", (e) => errors.push(e.message));

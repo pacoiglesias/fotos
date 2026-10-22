@@ -17,7 +17,7 @@ for (const dir of ["js", "scripts", "src"])
       stdio: "inherit",
     });
   }
-for (const file of ["index.html", "phone-upload.html", "phone-download.html"]) {
+for (const file of ["index.html", "phone-upload.html", "phone-download.html", "phone-local.html", "mobile-scan.html"]) {
   const source = fs.readFileSync(file, "utf8");
   assert(
     !/https:\/\/(cdn\.tailwindcss|cdnjs\.cloudflare)/.test(source),

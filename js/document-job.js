@@ -4,6 +4,7 @@
   const MAX_PAGES=40,MAX_BYTES=80*1024*1024,MAX_EDGE=3508;
   const $=id=>document.getElementById(id);
   let active=false,pages=[],originals=[],selected=0,epoch=0,busy=false,task=null,saveTimer=null,saveChain=Promise.resolve(),connection=null,recovery=null;
+  let searchable=false,ocrLanguage='spa';
   let options={paper:'a4',orientation:'auto',margin:8,quality:'high'};
   function say(message,error=false){if($('docStatus')){$('docStatus').textContent=message;$('docStatus').dataset.error=String(error);}}
   function id(){return crypto.randomUUID();}
@@ -40,6 +41,7 @@
     },350);
   }
   function reset(clearDraft=false){
+    root.RealScanSearchable?.cancel();searchable=false;ocrLanguage='spa';
     epoch++;busy=false;clearTimeout(saveTimer);root.RealScanReview?.cancel();root.RealScanCapture?.close();task?.destroy?.();task=null;pages=[];originals=[];selected=0;deactivate();
     if($('docDeliveryBox'))$('docDeliveryBox').hidden=true;
     if($('docPrintLink')){const link=$('docPrintLink');link.hidden=true;if(link.dataset.objectUrl)URL.revokeObjectURL(link.dataset.objectUrl);delete link.dataset.objectUrl;}
@@ -114,7 +116,8 @@
   function move(index,step){if(busy||index+step<0||index+step>=pages.length)return;[pages[index],pages[index+step]]=[pages[index+step],pages[index]];selected=index+step;persist();render();}
   async function makePdf(){
     if(!status().ready)throw Error('Revisa y confirma todas las páginas antes de preparar la entrega.');
-    const revision=epoch,snapshot=pages.map(p=>({...p})),settings={...options};let pdf;
+    const revision=epoch,snapshot=pages.map(p=>({...p})),settings={...options},withText=searchable,language=ocrLanguage;let pdf;
+    const build=async addText=>{
     for(let n=0;n<snapshot.length;n++){
       if(revision!==epoch)throw Error('El trabajo cambió. Prepara otra entrega.');
       const page=snapshot[n],g=geometry(page,settings),landscape=g.paperWidth>g.paperHeight;
@@ -123,8 +126,13 @@
       const img=await image(page.data);if(revision!==epoch)throw Error('El trabajo cambió.');
       const canvas=document.createElement('canvas'),max=settings.quality==='light'?1600:MAX_EDGE,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
       canvas.width=Math.round(img.naturalWidth*scale);canvas.height=Math.round(img.naturalHeight*scale);const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
-      pdf.addImage(canvas.toDataURL('image/jpeg',settings.quality==='light'?.82:.96),'JPEG',g.x,g.y,g.width,g.height);canvas.width=canvas.height=1;
-    }return pdf;
+      pdf.addImage(canvas.toDataURL('image/jpeg',settings.quality==='light'?.82:.96),'JPEG',g.x,g.y,g.width,g.height);if(addText)await addText(pdf,canvas,g);canvas.width=canvas.height=1;
+    }return pdf;};
+    if(!withText)return build();
+    let currentPage=1;
+    const result=await RealScanSearchable.run(language,p=>{if(p.page)currentPage=p.page;say('PDF con texto · página '+currentPage+' de '+snapshot.length+' · '+Math.round((p.progress||0)*100)+' %');},build,()=>revision===epoch);
+    if(result.summary.some(p=>!p.words)&&!confirm('Hay páginas sin texto reconocible. ¿Guardar el PDF con sus imágenes y el texto de las demás páginas?'))throw Error('Entrega cancelada. Las imágenes se conservan.');
+    return result.result;
   }
   function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
   async function output(kind){
@@ -169,6 +177,7 @@
     const memMB = ((sizeOf(pages, originals) || 0) / (1024 * 1024)).toFixed(1);
     $('docSummary').textContent = pages.length + ' página(s) · ' + pages.filter(p => p.reviewed).length + ' revisada(s) · ' + memMB + ' MB en memoria (máximo 80 MB / 40 págs)';
     if (parseFloat(memMB) > 60 && !busy) say('Trabajo grande (' + memMB + ' MB). Respalda el documento y divide los trabajos largos; la calidad Ligera reduce el PDF de salida, no el borrador.', false);
+    if($('docSearchable'))$('docSearchable').checked=searchable;if($('docOcrLanguage'))$('docOcrLanguage').value=ocrLanguage;
     $('docPaper').value=options.paper;$('docOrientation').value=options.orientation;$('docMargin').value=options.margin;$('docQuality').value=options.quality;
     for(const control of $('documentWorkspace').querySelectorAll('button,input,select'))if(!control.hasAttribute('data-page-action'))control.disabled=busy;
     $('docCancel').disabled=false;$('docCancel').hidden=!busy;
@@ -192,15 +201,16 @@
   document.addEventListener('DOMContentLoaded',()=>{
     const area=document.createElement('section');area.id='documentWorkspace';area.hidden=true;area.className='document-workspace';area.innerHTML=`<div class="document-heading"><div><p class="counter-kicker">DOCUMENTO COMPLETO</p><h2>De la primera página a la entrega</h2><p id="docSummary"></p></div><div class="document-actions"><button type="button" id="docImport">＋ Añadir archivos</button><button type="button" id="docCamera">Escanear otra página</button><button type="button" id="docReceive">Recibir por QR</button><button type="button" id="docCancel" hidden>Cancelar proceso</button></div></div>
       <p class="counter-help">Arrastra JPG, PNG, WebP o PDF. Importa hasta 40 páginas; cada PDF se convierte en imágenes para poder revisarlo. El original permanece disponible. No se infieren las medidas físicas de una fotografía: el documento se encaja sin deformarlo en el papel elegido.</p>
-      <div class="document-grid"><div><div id="docPages" class="document-pages" aria-label="Páginas en orden de entrega"></div><details><summary>Archivos originales</summary><div id="docOriginals" class="document-originals"></div></details></div><div class="document-output"><h3>Preparar salida</h3><div class="document-options"><label>Papel<select id="docPaper"><option value="a4">A4</option><option value="letter">Carta</option><option value="oficio">Oficio México</option><option value="legal">Legal USA</option></select></label><label>Orientación<select id="docOrientation"><option value="auto">Según cada página</option><option value="portrait">Vertical</option><option value="landscape">Horizontal</option></select></label><label>Margen (mm)<input id="docMargin" type="number" min="0" max="25" step="1" value="8"></label><label>Calidad del PDF<select id="docQuality"><option value="high">Alta · hasta 3508 px</option><option value="light">Ligera · hasta 1600 px</option></select></label></div><div id="docPreview" class="document-preview"></div><p id="docGeometry" class="counter-help"></p><p class="counter-help">Confirma cada página en «Revisar» antes de preparar el PDF. Para imprimir, abre el PDF y usa 100 % en la impresora. Un archivo ligero puede perder detalle: revisa textos pequeños.</p><div class="document-actions"><button type="button" id="docPdf">Descargar PDF completo</button><button type="button" id="docPrint">Preparar impresión</button><button type="button" id="docQr">Generar QR del PDF</button></div><a id="docPrintLink" class="document-link" target="_blank" rel="noopener" hidden>Abrir PDF para imprimir</a><div id="docDeliveryBox" hidden><canvas id="docDeliveryQr" class="counter-qr"></canvas><button type="button" id="docShowQr">Ver entrega vigente</button><button type="button" id="docWhatsapp">Compartir enlace por WhatsApp</button></div><div class="document-actions"><button type="button" id="docBackup">Respaldar documento</button><button type="button" id="docRestore">Abrir respaldo</button></div></div></div>
+      <div class="document-grid"><div><div id="docPages" class="document-pages" aria-label="Páginas en orden de entrega"></div><details><summary>Archivos originales</summary><div id="docOriginals" class="document-originals"></div></details></div><div class="document-output"><h3>Preparar salida</h3><div class="document-options"><label>Papel<select id="docPaper"><option value="a4">A4</option><option value="letter">Carta</option><option value="oficio">Oficio México</option><option value="legal">Legal USA</option></select></label><label>Orientación<select id="docOrientation"><option value="auto">Según cada página</option><option value="portrait">Vertical</option><option value="landscape">Horizontal</option></select></label><label>Margen (mm)<input id="docMargin" type="number" min="0" max="25" step="1" value="8"></label><label>Calidad del PDF<select id="docQuality"><option value="high">Alta · hasta 3508 px</option><option value="light">Ligera · hasta 1600 px</option></select></label></div><label class="counter-check"><input id="docSearchable" type="checkbox"><span>Añadir texto buscable al PDF (OCR local)</span></label><label class="counter-field">Idioma del texto<select id="docOcrLanguage"><option value="spa">Español</option><option value="eng">Inglés</option><option value="spa+eng">Español e inglés</option></select></label><p class="counter-help">La imagen no cambia. El texto es automático: revisa nombres y números. Prepara los idiomas antes de trabajar sin internet.</p><div id="docPreview" class="document-preview"></div><p id="docGeometry" class="counter-help"></p><p class="counter-help">Confirma cada página en «Revisar» antes de preparar el PDF. Para imprimir, abre el PDF y usa 100 % en la impresora. Un archivo ligero puede perder detalle: revisa textos pequeños.</p><div class="document-actions"><button type="button" id="docPdf">Descargar PDF completo</button><button type="button" id="docPrint">Preparar impresión</button><button type="button" id="docQr">Generar QR del PDF</button></div><a id="docPrintLink" class="document-link" target="_blank" rel="noopener" hidden>Abrir PDF para imprimir</a><div id="docDeliveryBox" hidden><canvas id="docDeliveryQr" class="counter-qr"></canvas><button type="button" id="docShowQr">Ver entrega vigente</button><button type="button" id="docWhatsapp">Compartir enlace por WhatsApp</button></div><div class="document-actions"><button type="button" id="docBackup">Respaldar documento</button><button type="button" id="docRestore">Abrir respaldo</button></div></div></div>
       <p id="docStatus" class="document-status" role="status"></p><p id="docDraft" class="counter-help">El borrador se guarda en este dispositivo.</p><input id="docFiles" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple hidden><input id="docNativeCamera" type="file" accept="image/*" capture="environment" hidden><input id="docBackupFile" type="file" accept=".realscan" hidden>`;
     $('workflowGuide').after(area);
     const banner=document.createElement('aside');banner.id='docRecovery';banner.className='document-recovery';banner.hidden=true;banner.innerHTML='<p>Hay un documento de varias páginas pendiente en este dispositivo.</p><button type="button" id="docRecover">Recuperar documento</button><button type="button" id="docDiscard">Descartar este borrador</button>';$('counterService').after(banner);
     $('docImport').onclick=()=>$('docFiles').click();$('docFiles').onchange=e=>{const files=[...e.target.files];e.target.value='';addFiles(files);};
     $('docCamera').onclick=()=>{if(busy)return;const revision=epoch;RealScanCapture.open({photoMode:false,onNative:()=>$('docNativeCamera').click(),onAccept:async data=>{if(revision!==epoch)return;const blob=await(await fetch(data)).blob();const before=pages.length;if(await addFiles([new File([blob],'Captura.jpg',{type:blob.type})])&&pages.length===before+1){pages[before].reviewed=true;persist();render();}}});};
     $('docNativeCamera').onchange=e=>{const files=[...e.target.files];e.target.value='';addFiles(files);};$('docReceive').onclick=()=>$('btnOpenReceiveModal').click();
-    $('docCancel').onclick=()=>{epoch++;task?.destroy?.();task=null;busy=false;render();say('Proceso cancelado. Las páginas anteriores se conservan.');};
+    $('docCancel').onclick=()=>{root.RealScanSearchable?.cancel();epoch++;task?.destroy?.();task=null;busy=false;render();say('Proceso cancelado. Las páginas anteriores se conservan.');};
     for(const [control,key]of [['docPaper','paper'],['docOrientation','orientation'],['docMargin','margin'],['docQuality','quality']])$(control).onchange=()=>{options[key]=key==='margin'?Math.max(0,Math.min(25,Number($(control).value)||0)):$(control).value;persist();render();};
+    $('docSearchable').onchange=()=>{searchable=$('docSearchable').checked;persist();render();};$('docOcrLanguage').onchange=()=>{ocrLanguage=$('docOcrLanguage').value;persist();render();};
     $('docPdf').onclick=()=>output('pdf');$('docPrint').onclick=()=>output('print');$('docQr').onclick=()=>output('qr');$('docBackup').onclick=backup;$('docRestore').onclick=()=>$('docBackupFile').click();$('docBackupFile').onchange=e=>{const file=e.target.files[0];e.target.value='';restoreFile(file);};
     $('docShowQr').onclick=()=>$('counterShowDelivery').click();$('docWhatsapp').onclick=()=>shareDeliveryWhatsapp();
     area.addEventListener('dragover',e=>{e.preventDefault();});area.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();addFiles([...e.dataTransfer.files]);});

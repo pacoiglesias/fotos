@@ -2040,7 +2040,7 @@
       <div class="text-xs text-slate-600 dark:text-slate-300 space-y-3 leading-relaxed">
         <p>Abre la dirección web de RealScan en el navegador. Usa siempre el mismo dominio para conservar el acceso a tus trabajos guardados en este equipo.</p>
         <p><strong>Computadora y Android:</strong> pulsa «Instalar App». Si el navegador permite instalarla, aparecerá su ventana de instalación. También puedes buscar la opción de instalación en el menú del navegador.</p>
-        <p><strong>iPhone y iPad:</strong> abre la web en Safari, pulsa Compartir y busca «Agregar a pantalla de inicio». Activa «Abrir como app» si aparece y pulsa Agregar. Abre después el icono RealScan y permite la cámara.</p>
+        <p><a href="mobile-scan.html" class="text-indigo-600 underline font-bold">Escanear y guardar directamente en este móvil</a></p><button type="button" id="prepareMainOffline" class="p-3 rounded-xl bg-indigo-600 text-white">Preparar app y OCR sin conexión</button><p id="mainOfflineStatus" role="status"></p><p><strong>iPhone y iPad:</strong> abre la web en Safari, pulsa Compartir y busca «Agregar a pantalla de inicio». Activa «Abrir como app» si aparece y pulsa Agregar. Abre después el icono RealScan y permite la cámara.</p>
         <p>Si ya está instalada o tu navegador no ofrece instalación, puedes seguir usando la web. No necesitas enviar ni abrir el archivo index.html.</p>
         <p>La edición puede usarse sin conexión una vez preparados sus recursos. Recibir y entregar por QR requiere internet. Comprueba la captura, descarga e impresión con tu dispositivo.</p>
       </div>
@@ -2862,6 +2862,8 @@
   <script src="js/export.js"></script>
   <script src="js/delivery-options.js"></script>
   <script src="js/local-ocr.js"></script>
+  <script src="js/searchable-pdf.js"></script>
+  <script src="js/offline-setup.js"></script>
   <script src="js/duplex-assistant.js"></script>
   <script src="vendor/jsqr.js"></script>
   <script src="js/local-transfer.js"></script>
@@ -2871,6 +2873,7 @@
   <script src="js/receive-workflow.js"></script>
   <script src="js/workflow-guide.js"></script>
   <script src="js/counter-flow.js"></script>
+  <script src="js/mobile-entry.js"></script>
   <script src="js/document-job.js"></script>
   <script src="js/digital-workflow.js"></script>
   <script src="js/app.js"></script>

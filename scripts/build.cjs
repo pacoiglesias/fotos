@@ -22,12 +22,14 @@ function copy(src, dst) {
     "phone-upload.html",
     "phone-download.html",
     "phone-local.html",
+    "mobile-scan.html",
     "manifest.json",
   ])
     copy(path.join(root, file), path.join(dist, file));
   copy(path.join(root, "js"), path.join(dist, "js"));
   copy(path.join(root, "css/styles.css"), path.join(dist, "css/styles.css"));
   copy(path.join(root, "css/scan-assist.css"), path.join(dist, "css/scan-assist.css"));
+  copy(path.join(root, "css/mobile-scan.css"), path.join(dist, "css/mobile-scan.css"));
   const manifest = JSON.parse(
     fs.readFileSync(path.join(root, "manifest.json")),
   );

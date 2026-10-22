@@ -13,6 +13,8 @@ try {
     "capture-regression",
     "iphone-capture-regression",
     "document-regression",
+    "mobile-local-regression",
+    "mobile-webkit-regression",
     "practical-regression",
     ...(process.env.REALSCAN_TEST_RELAY === "1" ? ["delivery-regression"] : []),
     "upgrade-regression",

@@ -33,5 +33,18 @@
       "purpose": "any maskable"
     }
   ],
-  "id": "./"
+  "id": "./",
+  "shortcuts": [
+    {
+      "name": "Escanear en este móvil",
+      "short_name": "Escanear",
+      "url": "./mobile-scan.html",
+      "icons": [
+        {
+          "src": "assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
 }
