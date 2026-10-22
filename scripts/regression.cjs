@@ -566,6 +566,7 @@ let browser;
       () => !document.getElementById("btnSendFiles").disabled,
     );
     await phone.locator("#btnSendFiles").click();
+    await phone.locator(".asset-review [data-review=confirm]").click();
     await phone.waitForFunction(
       () => !document.getElementById("successBox").classList.contains("hidden"),
       {},
@@ -590,6 +591,7 @@ let browser;
       () => !document.getElementById("btnSendFiles").disabled,
     );
     await phone.locator("#btnSendFiles").click();
+    await phone.locator(".asset-review [data-review=confirm]").click();
     await phone.waitForFunction(
       () => !document.getElementById("successBox").classList.contains("hidden"),
     );
@@ -615,6 +617,7 @@ let browser;
     await phone.locator('#fileInput').setInputFiles({name:'second-session.jpg',mimeType:'image/jpeg',buffer:Buffer.from(samples.back.split(',')[1],'base64')});
     await phone.waitForFunction(() => !document.getElementById('btnSendFiles').disabled);
     await phone.locator('#btnSendFiles').click();
+    await phone.locator('.asset-review [data-review=confirm]').click();
     await phone.waitForFunction(() => !document.getElementById('successBox').classList.contains('hidden'), {}, {timeout:40000});
     assert.equal(await page.evaluate(() => RealScanQrSync.getInboxFiles()[0]?.name), 'second-session.jpg');
     await page.evaluate(() => RealScanQrSync.revokeReceiveSession());

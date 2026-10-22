@@ -18,7 +18,7 @@
       });
       // A presentation hint only; the secret and all server authorization remain unchanged.
       if(typeof receive?.url==='string'){
-        try {const url=new URL(receive.url,location.href),hint=new URLSearchParams(url.hash.slice(1));hint.set('mode',global.state?.activeCategory==='photos'?'photo':'document');url.hash=hint.toString();receive.url=url.href;}catch{}
+        try {const url=new URL(receive.url,location.href),hint=new URLSearchParams(url.hash.slice(1));hint.set('mode',(!global.RealScanDocuments?.status().active && global.state?.activeCategory==='photos')?'photo':'document');url.hash=hint.toString();receive.url=url.href;}catch{}
       }
       return receive;
     },
@@ -57,7 +57,7 @@
     },
     async assignFileToSlot(id, side, options = {}) {
       if (!["front", "back", "page3", "page4"].includes(side)) return false;
-      if(global.state?.activeCategory==='photos') {
+      if((!global.RealScanDocuments?.status().active && global.state?.activeCategory==='photos')) {
         const used=new Set(global.RealScanLayout.computeDocumentLayout(global.state).pages.flatMap(page=>page.placements.map(piece=>piece.slot)));
         if(!used.has(side)){global.showToast?.('Ese destino no forma parte de la planilla. Activa la segunda persona y sus copias si la necesitas.','warning');return false;}
       }
@@ -68,7 +68,7 @@
       if(['page3','page4'].includes(side)&&typeof setDocumentPages==='function')setDocumentPages(Math.max(global.state?.documentPageCount||2,side==='page4'?4:3));
       file.assigning=true;notify();
       try {
-        const job=global.state?._jobRevision||0,mode=global.state?.activeCategory==='photos'?'photo':'document';
+        const job=global.state?._jobRevision||0,mode=(!global.RealScanDocuments?.status().active && global.state?.activeCategory==='photos')?'photo':'document';
         if(options.review&&file.type.startsWith('image/')&&file.reviewMode!==mode){
           const reviewed=await global.RealScanReview.open({dataUrl:file.editedDataUrl||file.dataUrl,name:file.name,photoMode:mode==='photo'});
           if(!reviewed||job!==(global.state?._jobRevision||0)||!inbox.includes(file))return false;
@@ -100,7 +100,7 @@
     editReceivedFile(id) {
       const file=inbox.find(f=>f.id===id);if(!file||file.type==='application/pdf')return;
       const revision=global.state?._jobRevision||0;
-      const mode=global.state?.activeCategory==='photos'?'photo':'document';
+      const mode=(!global.RealScanDocuments?.status().active && global.state?.activeCategory==='photos')?'photo':'document';
       global.RealScanCapture.open({sourceDataUrl:file.dataUrl,photoMode:mode==='photo',onAccept:result=>{if((global.state?._jobRevision||0)!==revision||!inbox.includes(file))return;file.editedDataUrl=result;file.reviewMode=mode;file.assignedTo=null;notify();}});
     },
     restoreReceivedFile(id) {const file=inbox.find(f=>f.id===id);if(file){file.editedDataUrl=null;file.reviewMode=null;file.assignedTo=null;notify();}},

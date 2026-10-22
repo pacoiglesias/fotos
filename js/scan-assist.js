@@ -102,7 +102,7 @@
       <ol class="scan-steps" aria-label="Progreso de captura"><li data-phase="capture">1 · Capturar</li><li data-phase="review">2 · Revisar</li><li data-phase="confirm">3 · Confirmar</li></ol>
       <label class="scan-format">Forma del documento <select aria-label="Forma del documento"><option value="auto">Automática / Otro documento</option><option value="card">Tarjeta (INE / licencia)</option><option value="a4">Hoja A4</option><option value="letter">Hoja Carta</option></select></label>
       <label class="scan-filter">Aspecto <select aria-label="Aspecto de la imagen"><option value="color">Color original</option><option value="gray">Escala de grises</option><option value="document">Documento contrastado</option></select></label>
-      <div class="scan-stage"><video autoplay playsinline muted></video><canvas class="scan-still" hidden></canvas><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="scan-shade" fill-rule="evenodd"/><polygon/></svg><div class="scan-corners" hidden></div></div>
+      <div class="scan-preview-area"><div class="scan-stage"><video autoplay playsinline webkit-playsinline muted></video><canvas class="scan-still" hidden></canvas><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="scan-shade" fill-rule="evenodd"/><polygon/></svg><div class="scan-corners" hidden></div></div></div>
       <p class="scan-status" role="status" aria-live="polite">Preparando la cámara…</p><p class="scan-help">Apoya el documento plano, deja sus cuatro bordes visibles y evita sombras. Las medidas reales se eligen en el mostrador.</p>
       <div class="scan-quality" aria-label="Calidad estimada"><span data-quality="light">Luz: revisando</span><span data-quality="sharp">Nitidez: revisando</span><span data-quality="steady">Encuadre: revisando</span></div>
       <p class="scan-focus-info">El control de enfoque depende de la cámara y del navegador.</p>
@@ -110,11 +110,29 @@
       <div class="scan-actions"><button type="button" data-act="capture">Tomar foto</button><button type="button" data-act="focus">Reintentar enfoque</button><button type="button" data-act="switch">Cambiar cámara</button><button type="button" data-act="torch" hidden>Linterna</button><button type="button" data-act="native">Cámara del teléfono</button>
       <button type="button" data-act="left" hidden>Girar izquierda</button><button type="button" data-act="right" hidden>Girar derecha</button><button type="button" data-act="reset" hidden>Restaurar original</button><button type="button" data-act="confirm" hidden>Usar esta imagen</button><button type="button" data-act="edit" hidden>Volver a ajustar</button>
       <button type="button" data-act="retry" hidden>Repetir</button><button type="button" data-act="original" hidden>Usar completa</button><button type="button" data-act="accept" hidden>Enderezar y usar</button></div>`;
+    const settings = document.createElement('details');
+    settings.className = 'scan-settings';
+    settings.innerHTML = '<summary>Opciones de captura y ayuda</summary><div class="scan-settings-content"></div>';
+    for (const selector of ['.scan-format','.scan-filter','.scan-help','.scan-focus-info','.scan-auto']) settings.lastElementChild.append(dialog.querySelector(selector));
+    dialog.querySelector('.scan-actions').before(settings);
     document.body.append(dialog);
     const oldOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';
     const $ = (s) => dialog.querySelector(s), video = $("video"), canvas = $("canvas"), svg = $("svg"), poly = $("polygon"), handles = $(".scan-corners"), status = $(".scan-status"), stage = $(".scan-stage");
     const format = $(".scan-format select"), filter = $(".scan-filter select");
+    const magnifier = document.createElement('canvas');
+    magnifier.className = 'scan-magnifier'; magnifier.width = magnifier.height = 160; magnifier.hidden = true;
+    magnifier.setAttribute('aria-hidden','true'); $('.scan-preview-area').append(magnifier);
+    let magnifierTimer;
+    function magnify(point) {
+      if (!captured || disposed) return;
+      clearTimeout(magnifierTimer);
+      const ctx = magnifier.getContext('2d'), span = Math.max(60, Math.min(canvas.width,canvas.height)*.12);
+      ctx.fillStyle='#020617';ctx.fillRect(0,0,160,160);
+      ctx.drawImage(canvas,point.x*canvas.width-span/2,point.y*canvas.height-span/2,span,span,0,0,160,160);
+      ctx.strokeStyle='#34d399';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(66,80);ctx.lineTo(94,80);ctx.moveTo(80,66);ctx.lineTo(80,94);ctx.stroke();
+      magnifier.style.left=point.x<.5?'auto':'8px';magnifier.style.right=point.x<.5?'8px':'auto';magnifier.hidden=false;
+    }
     if (Number.isFinite(options.targetRatio) && options.targetRatio > 0) {
       const option = document.createElement("option");
       option.value = "target";
@@ -144,14 +162,35 @@
     let focusBusy = false, focusRequest = 0;
     function fitStage() {
       if(disposed)return;
+      dialog.style.setProperty('--scan-height', (root.visualViewport?.height || innerHeight) + 'px');
+      dialog.style.setProperty('--scan-top', (root.visualViewport?.offsetTop || 0) + 'px');
       const source = captured ? canvas : video;
       const w = captured ? canvas.width : video.videoWidth, h = captured ? canvas.height : video.videoHeight;
       if(!w || !h)return;
-      const availableHeight = Math.max(180,(root.visualViewport?.height || innerHeight)*0.48);
-      stage.style.width = Math.max(1,Math.min(dialog.clientWidth-24,availableHeight*w/h))+'px';
+      const area = $('.scan-preview-area');
+      const scale = Math.min(Math.max(1,area.clientWidth-16)/w,Math.max(1,area.clientHeight-16)/h);
+      stage.style.width = (w*scale)+'px';
+      stage.style.height = (h*scale)+'px';
       stage.style.aspectRatio = w+'/'+h;
       source.style.aspectRatio = w+'/'+h;
       paint();
+    }
+    const stageObserver = new ResizeObserver(fitStage);
+    stageObserver.observe($('.scan-preview-area'));
+    settings.addEventListener('toggle',fitStage);
+    video.addEventListener('loadedmetadata',fitStage);
+    video.addEventListener('resize',fitStage);
+    function bounded(promise, milliseconds, message) {
+      let timeout;
+      return Promise.race([promise,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error(message)),milliseconds);})]).finally(()=>clearTimeout(timeout));
+    }
+    async function readyFrame(r) {
+      const deadline=Date.now()+8000;
+      while(!disposed && r===revision && Date.now()<deadline) {
+        if(video.readyState>=2 && video.videoWidth>0 && video.videoHeight>0)return;
+        await new Promise(resolve=>setTimeout(resolve,80));
+      }
+      throw Error('La cámara no está entregando imagen.');
     }
     async function requestFocus() {
       const track = stream?.getVideoTracks()[0], r = revision;
@@ -174,11 +213,11 @@
     function showQuality(a) {
       if(!a)return;
       const light=a.brightness>=55&&a.brightness<=235, sharp=a.sharpness>=35;
-      for(const [name,ok,text]of [['light',light,light?'Luz adecuada':a.brightness<55?'Falta luz':'Posibles reflejos'],['sharp',sharp,sharp?'Nitidez estimada adecuada':'Posible desenfoque'],['steady',options.photoMode?sharp:stableFrames>=3,options.photoMode?'Fotografía completa':!quad?'Busca los cuatro bordes':stableFrames>=3?'Documento estable':'Mantén quieto · '+Math.min(3,stableFrames)+'/3']]){
+      for(const [name,ok,text]of [['light',light,light?'Luz adecuada':a.brightness<55?'Falta luz':'Posibles reflejos'],['sharp',sharp,sharp?'Nitidez estimada adecuada':'Posible desenfoque'],['steady',options.photoMode?sharp:stableFrames>=3,options.photoMode?'Fotografía completa':captured?(quad?'Revisa los bordes propuestos':'Ajusta las esquinas'):!quad?'Busca los cuatro bordes':stableFrames>=3?'Documento estable':'Mantén quieto · '+Math.min(3,stableFrames)+'/3']]){
         const element=$('[data-quality="'+name+'"]');element.textContent=text;element.dataset.ok=String(ok);
       }
     }
-    root.addEventListener('resize',fitStage);root.visualViewport?.addEventListener('resize',fitStage);
+    root.addEventListener('resize',fitStage);root.visualViewport?.addEventListener('resize',fitStage);root.visualViewport?.addEventListener('scroll',fitStage);
     function stop() {
       focusRequest++;focusBusy=false;
       clearTimeout(timer);
@@ -192,14 +231,21 @@
       disposed = true;
       revision++;
       stop();
-      root.removeEventListener('resize',fitStage);root.visualViewport?.removeEventListener('resize',fitStage);
+      clearTimeout(magnifierTimer);
+      root.removeEventListener('resize',fitStage);root.visualViewport?.removeEventListener('resize',fitStage);root.visualViewport?.removeEventListener('scroll',fitStage);stageObserver.disconnect();
       dialog.close();
       dialog.remove();
       document.documentElement.style.overflow = oldOverflow;
       if (current === controller) current = null;
       root.RealScanDiagnostics?.record("camera.close");
     }
-    const controller = { close: finish };
+    const controller = { close: finish, suspend() {
+      if(disposed || captured)return;
+      revision++;stop();busy=false;btn('capture').disabled=true;
+      btn('retry').hidden=false;btn('retry').textContent='Reanudar cámara';
+      status.textContent='Cámara en pausa. Toca Reanudar cámara para continuar.';
+      root.RealScanDiagnostics?.record('camera.suspended');
+    } };
     current = controller;
     dialog.addEventListener("cancel", (e) => {
       e.preventDefault();
@@ -262,6 +308,10 @@
     }
     async function start() {
       phase('capture');
+      settings.open=false;btn('retry').textContent='Repetir';
+      for(const a of ['left','right','reset','confirm','edit'])btn(a).hidden=true;
+      $('.scan-format').hidden=!!options.photoMode;
+      $('.scan-filter').hidden=!!options.photoMode;
       svg.toggleAttribute('hidden',!!options.photoMode);
       const r = ++revision;
       stop();
@@ -282,14 +332,17 @@
       status.textContent = "Preparando la cámara…";
       try {
         if (!navigator.mediaDevices?.getUserMedia) throw Error("unsupported");
-        const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing }, width: { ideal: 2560 }, height: { ideal: 1920 } }, audio: false });
+        const portrait = innerWidth < innerHeight;
+        const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing }, width: { ideal: portrait ? 1920 : 2560 }, height: { ideal: portrait ? 2560 : 1920 } }, audio: false });
         if (disposed || r !== revision) {
           s.getTracks().forEach((t) => t.stop());
           return;
         }
         stream = s;
         video.srcObject = s;
-        await video.play();
+        video.muted=true;video.playsInline=true;
+        await bounded(video.play(),8000,"No se pudo iniciar el visor.");
+        await readyFrame(r);
         if (disposed || r !== revision) return;
         const track = s.getVideoTracks()[0];
         let caps = {};
@@ -306,15 +359,16 @@
         btn("capture").disabled = false;
         root.RealScanDiagnostics?.record('camera.ready','info',{widthPx:video.videoWidth,heightPx:video.videoHeight});
         live();
-      } catch {
+      } catch (error) {
         if (disposed || r !== revision) return;
         stop();
-        root.RealScanDiagnostics?.record("camera.failed", "warning");
-        status.textContent = "No se pudo abrir la cámara. Permite el acceso o usa «Cámara del teléfono».";
+        root.RealScanDiagnostics?.record("camera.failed", "warning", {code:error?.name,errorType:error?.name});
+        btn('retry').hidden=false;btn('retry').textContent='Reintentar cámara';
+        status.textContent = error?.name==='NotAllowedError' ? "No se pudo abrir la cámara. Permite su acceso en Safari o usa «Cámara del teléfono»." : "No se pudo abrir la cámara. Cierra otras aplicaciones que la usen, reintenta o usa «Cámara del teléfono».";
       }
     }
     async function take(supplied = null) {
-      if (busy || !supplied && !video.videoWidth) return;
+      if (busy || !supplied && (!video.videoWidth || video.readyState<2 || !stream)) return;
       busy = true;
       btn("capture").disabled = true;
       clearTimeout(timer);
@@ -323,7 +377,7 @@
         let photo = null;
         const track = stream?.getVideoTracks()[0];
         if (!supplied && root.ImageCapture && track) try {
-          const blob = await new ImageCapture(track).takePhoto();
+          const blob = await bounded(new ImageCapture(track).takePhoto(),3500,"Captura nativa sin respuesta");
           photo = await createImageBitmap(blob);
         } catch {
         }
@@ -339,6 +393,7 @@
         $(".scan-auto").hidden = true;
         captured = canvas.toDataURL("image/jpeg", 0.96);
         phase('review');
+        settings.open=false;
         if (!originalData) originalData = captured;
         pendingResult = null;
         svg.toggleAttribute('hidden',!!options.photoMode);
@@ -370,11 +425,14 @@
           function move(x, y) {
             quad[i] = { x: Math.max(0, Math.min(1, x)), y: Math.max(0, Math.min(1, y)) };
             paint();
+            magnify(quad[i]);
           }
           b.onpointerdown = (e) => {
             e.preventDefault();
             b.setPointerCapture(e.pointerId);
+            magnify(quad[i]);
           };
+          b.onpointerup = b.onpointercancel = () => { magnifier.hidden=true; };
           b.onpointermove = (e) => {
             if (!b.hasPointerCapture(e.pointerId)) return;
             const box = handles.getBoundingClientRect();
@@ -385,6 +443,7 @@
             if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
               e.preventDefault();
               move(quad[i].x + (e.key === "ArrowLeft" ? -d : e.key === "ArrowRight" ? d : 0), quad[i].y + (e.key === "ArrowUp" ? -d : e.key === "ArrowDown" ? d : 0));
+              magnifierTimer=setTimeout(()=>{magnifier.hidden=true;},1200);
             }
           };
           handles.append(b);
@@ -401,6 +460,7 @@
     }
     async function accept(crop) {
       if (busy || !captured) return;
+      magnifier.hidden=true;
       busy = true;
       btn("accept").disabled = btn("original").disabled = true;
       try {
@@ -545,6 +605,7 @@
       }
     };
     dialog.showModal();
+    fitStage();
     if (options.sourceDataUrl) {
       btn("capture").hidden = btn("switch").hidden = btn("native").hidden = btn("focus").hidden = true;
       loadImage(options.sourceDataUrl).catch(() => {
@@ -554,7 +615,7 @@
     return controller;
   }
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) close();
+    if (document.hidden) current?.suspend();
   });
   root.addEventListener("pagehide", close);
   root.RealScanCapture = { open, close, analyze, validQuad };

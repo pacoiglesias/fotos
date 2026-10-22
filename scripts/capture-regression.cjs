@@ -93,6 +93,7 @@ function cameraFixture() {
   await page.locator(".scan-dialog [data-act=capture]").waitFor();
   await page.waitForFunction(() => !document.querySelector(".scan-dialog [data-act=capture]").disabled);
   assert(await page.evaluate(() => __constraints.some((c) => c.advanced[0].focusMode === "continuous")));
+  await page.locator(".scan-settings summary").click();
   await page.selectOption(".scan-format select", "card");
   await page.locator(".scan-dialog [data-act=torch]").click();
   assert(await page.evaluate(() => __constraints.some((c) => c.advanced[0].torch === true)));
@@ -170,6 +171,7 @@ function cameraFixture() {
   await phone.goto("http://127.0.0.1:5521/phone-upload.html");
   await phone.locator("#btnSmartScan").click();
   await phone.waitForFunction(() => !document.querySelector(".scan-dialog [data-act=capture]").disabled);
+  await phone.locator(".scan-settings summary").click();
   await phone.selectOption(".scan-format select", "a4");
   await phone.locator(".scan-dialog [data-act=capture]").click();
   await phone.locator(".scan-corner").first().waitFor();

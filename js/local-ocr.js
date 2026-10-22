@@ -59,34 +59,54 @@
     busy = true;
     $("ocrRun").disabled = true;
     const revision = ++epoch, job = state._jobRevision || 0;
+    let owned = null, timeout = null, stage = 'image';
     try {
-      $("ocrStatus").textContent = "Preparando reconocimiento local…";
+      $("ocrStatus").textContent = "Preparando imagen para leer el texto…";
+      const image = new Image(); image.src = source; await image.decode();
+      if (revision !== epoch) return;
+      const scale = Math.min(1, 2600 / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext('2d'); context.fillStyle = 'white';
+      context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      stage = 'resources';
+      $("ocrStatus").textContent = "Preparando lector e idioma. La primera vez puede tardar…";
       if (!root.Tesseract) await new Promise((resolve, reject) => {
         const script = document.createElement("script");
         script.src = "vendor/ocr/tesseract.min.js";
-        script.onload = resolve;
-        script.onerror = reject;
+        const timer = setTimeout(() => { script.remove(); reject(Error('resources')); }, 20000);
+        script.onload = () => { clearTimeout(timer); resolve(); };
+        script.onerror = () => { clearTimeout(timer); script.remove(); reject(Error('resources')); };
         document.head.append(script);
       });
       if (revision !== epoch) return;
-      const w = await Tesseract.createWorker($("ocrLanguage").value, 1, { workerPath: new URL("vendor/ocr/worker.min.js", location.href).href, corePath: new URL("vendor/ocr/core/", location.href).href, langPath: new URL("vendor/ocr/lang/", location.href).href, workerBlobURL: false, logger: (m) => {
+      const pending = Tesseract.createWorker($("ocrLanguage").value, 1, { workerPath: new URL("vendor/ocr/worker.min.js", location.href).href, corePath: new URL("vendor/ocr/core/", location.href).href, langPath: new URL("vendor/ocr/lang/", location.href).href, workerBlobURL: false, errorHandler: () => {}, logger: (m) => {
         if (revision === epoch) $("ocrStatus").textContent = "Reconociendo en este equipo… " + Math.round((m.progress || 0) * 100) + " %";
       } });
+      pending.then(w => { if (revision !== epoch || stage === 'expired') w.terminate().catch(() => {}); }, () => {});
+      const w = await Promise.race([pending, new Promise((_, reject) => { timeout = setTimeout(() => { stage = 'expired'; reject(Error('resources')); }, 60000); })]);
+      clearTimeout(timeout); owned = w;
       if (revision !== epoch) {
         await w.terminate();
         return;
       }
       worker = w;
-      const result = await w.recognize(source);
+      stage = 'recognition';
+      const result = await Promise.race([w.recognize(canvas), new Promise((_, reject) => { timeout = setTimeout(() => reject(Error('timeout')), 90000); })]);
       if (revision !== epoch || job !== (state._jobRevision || 0)) return;
       $("ocrText").value = result.data.text;
-      $("ocrStatus").textContent = "Texto listo para revisar. Confianza estimada: " + Math.round(result.data.confidence) + " %. Comprueba los datos contra la imagen.";
+      $("ocrStatus").textContent = result.data.text.trim() ? "Texto listo para revisar. Confianza estimada: " + Math.round(result.data.confidence) + " %. Comprueba los datos contra la imagen." : "No se encontró texto legible. Endereza la página, mejora la luz y vuelve a intentar.";
+      root.RealScanDiagnostics?.record('ocr.completed', 'info', {language: $("ocrLanguage").value, confidence: Math.round(result.data.confidence)});
     } catch {
-      if (revision === epoch) $("ocrStatus").textContent = "No se pudo completar el OCR. Comprueba conexión para preparar sus recursos o prueba una imagen más nítida.";
-    } finally {
       if (revision === epoch) {
-        await worker?.terminate().catch(() => {
-        });
+        $("ocrStatus").textContent = stage === 'image' ? "No se pudo leer la imagen. Vuelve a cargarla; el original se conserva." : stage === 'resources' || stage === 'expired' ? "No se pudo cargar el lector o su idioma. Comprueba internet y pulsa Extraer texto para reintentar." : "El lector no pudo terminar. Prueba una página más nítida; la imagen se conserva.";
+        root.RealScanDiagnostics?.record('ocr.failed', 'error', {stage});
+      }
+    } finally {
+      clearTimeout(timeout);
+      await owned?.terminate().catch(() => {});
+      if (revision === epoch) {
         worker = null;
         busy = false;
         $("ocrRun").disabled = false;
