@@ -161,8 +161,9 @@
     catch(e){if(revision===epoch)say(e.message||'No se pudo restaurar. El documento actual se conserva.',true);}finally{if(revision===epoch){busy=false;render();}}
   }
   function render(){
-    if(!$('documentWorkspace'))return;$('documentWorkspace').hidden=!active;
-    $('docSummary').textContent=pages.length+' página(s) · '+pages.filter(p=>p.reviewed).length+' revisada(s) · máximo 40';
+    const memMB = ((sizeOf(pages, originals) || 0) / (1024 * 1024)).toFixed(1);
+    $('docSummary').textContent = pages.length + ' página(s) · ' + pages.filter(p => p.reviewed).length + ' revisada(s) · ' + memMB + ' MB en memoria (máximo 80 MB / 40 págs)';
+    if (parseFloat(memMB) > 60 && options.quality !== 'light') say('Uso alto de memoria (' + memMB + ' MB). Se recomienda seleccionar Calidad Ligera para asegurar un rendimiento óptimo.', false);
     $('docPaper').value=options.paper;$('docOrientation').value=options.orientation;$('docMargin').value=options.margin;$('docQuality').value=options.quality;
     for(const control of $('documentWorkspace').querySelectorAll('button,input,select'))if(!control.hasAttribute('data-page-action'))control.disabled=busy;
     $('docCancel').disabled=false;$('docCancel').hidden=!busy;

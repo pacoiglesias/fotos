@@ -52,7 +52,7 @@ function getAuthData() {
   } catch(e) {}
   return {
     users: [
-      { username: window.DEFAULT_USER, passwordHash: window.DEFAULT_PIN_HASH, role: 'admin' }
+      { username: window.DEFAULT_USER, passwordHash: window.DEFAULT_PIN_HASH, role: 'admin', mustChangePassword: true }
     ],
     currentUsername: window.DEFAULT_USER,
     sessionToken: null,
@@ -424,6 +424,10 @@ async function handleLoginSubmit(e) {
 
     logActivity('Inicio de Sesión', 'Acceso correcto con usuario: ' + matched.username + ' (' + matched.role + ')');
     showToast('¡Bienvenido al sistema, ' + matched.username + '!', 'success');
+
+    if (matched.mustChangePassword === true) {
+      showToast('⚠️ Clave inicial en uso. Por seguridad, cámbiala en Ajustes.', 'warning');
+    }
   } else {
     if (errorBox) {
       errorBox.textContent = 'Usuario o contraseña/PIN incorrectos';
@@ -482,6 +486,7 @@ async function handleUpdateCredentials(e) {
 
   const newHash = await computeSha256(newPass);
   activeUser.passwordHash = newHash;
+  activeUser.mustChangePassword = false;
   saveAuthData(auth);
 
   $('inputCurrentPass').value = '';
@@ -498,7 +503,16 @@ function openSettingsModal() {
   const labelUser = $('labelPassChangeUser');
   if (labelUser) labelUser.textContent = auth.currentUsername || window.DEFAULT_USER;
   const alertBox = $('credsAlertMsg');
-  if (alertBox) alertBox.classList.add('hidden');
+  const activeUser = auth.users.find(function(u) { return u.username.toLowerCase() === (auth.currentUsername || window.DEFAULT_USER).toLowerCase(); });
+  if (alertBox) {
+    if (activeUser && activeUser.mustChangePassword) {
+      alertBox.textContent = '⚠️ Estás usando la clave inicial. Por seguridad, cámbiala ahora.';
+      alertBox.className = 'p-2 rounded-xl text-center font-semibold text-xs bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-200 border border-amber-200';
+      alertBox.classList.remove('hidden');
+    } else {
+      alertBox.classList.add('hidden');
+    }
+  }
   renderUsersList();
   switchSettingsTab('creds');
   renderAuditLogs();
