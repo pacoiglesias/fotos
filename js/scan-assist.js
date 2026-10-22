@@ -103,7 +103,7 @@
       <label class="scan-format">Forma del documento <select aria-label="Forma del documento"><option value="auto">Automática / Otro documento</option><option value="card">Tarjeta (INE / licencia)</option><option value="a4">Hoja A4</option><option value="letter">Hoja Carta</option></select></label>
       <label class="scan-filter">Aspecto <select aria-label="Aspecto de la imagen"><option value="color">Color original</option><option value="gray">Escala de grises</option><option value="document">Documento contrastado</option></select></label>
       <div class="scan-preview-area"><div class="scan-stage"><video autoplay playsinline webkit-playsinline muted></video><canvas class="scan-still" hidden></canvas><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="scan-shade" fill-rule="evenodd"/><polygon/></svg><div class="scan-corners" hidden></div></div></div>
-      <p class="scan-status" role="status" aria-live="polite">Preparando la cámara…</p><p class="scan-help">Apoya el documento plano, deja sus cuatro bordes visibles y evita sombras. Las medidas reales se eligen en el mostrador.</p>
+      <p class="scan-status" role="status" aria-live="polite">Preparando la cámara…</p><p class="scan-help">Apoya el documento plano, deja sus cuatro bordes visibles y evita sombras. Elige el tamaño de salida. Para obtener más detalle, puedes usar Cámara del teléfono.</p>
       <div class="scan-quality" aria-label="Calidad estimada"><span data-quality="light">Luz: revisando</span><span data-quality="sharp">Nitidez: revisando</span><span data-quality="steady">Encuadre: revisando</span></div>
       <p class="scan-focus-info">El control de enfoque depende de la cámara y del navegador.</p>
       <label class="scan-auto"><input type="checkbox"> Capturar al mantener el documento estable</label>
@@ -385,7 +385,7 @@
           photo?.close();
           return;
         }
-        const source = supplied || photo || video, sw = source.naturalWidth || source.width || video.videoWidth, sh = source.naturalHeight || source.height || video.videoHeight, scale = Math.min(1, 3e3 / Math.max(sw, sh));
+        const source = supplied || photo || video, sw = source.naturalWidth || source.width || video.videoWidth, sh = source.naturalHeight || source.height || video.videoHeight, scale = Math.min(1, 4096 / Math.max(sw, sh));
         canvas.width = Math.round(sw * scale);
         canvas.height = Math.round(sh * scale);
         canvas.getContext("2d").drawImage(source, 0, 0, canvas.width, canvas.height);
@@ -480,7 +480,7 @@
             if (w / h > ratio) h = w / ratio;
             else w = h * ratio;
           }
-          const limit = Math.min(1, 2400 / Math.max(w, h));
+          const limit = Math.min(1, 3508 / Math.max(w, h));
           result = root.RealScanEditor.warpPerspective(image, q, Math.max(1, Math.round(w * limit)), Math.max(1, Math.round(h * limit)));
           if (!result) throw Error("No se pudo enderezar. Ajusta las esquinas o usa la foto completa.");
         }
