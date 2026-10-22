@@ -115,6 +115,7 @@
     settings.innerHTML = '<summary>Opciones de captura y ayuda</summary><div class="scan-settings-content"></div>';
     for (const selector of ['.scan-format','.scan-filter','.scan-help','.scan-focus-info','.scan-auto']) settings.lastElementChild.append(dialog.querySelector(selector));
     dialog.querySelector('.scan-actions').before(settings);
+    const guidance = document.createElement('p');guidance.className='scan-guidance';guidance.textContent=options.photoMode?'Coloca el rostro centrado y busca luz uniforme. Revisa el enfoque antes de confirmar.':'Documento plano, cuatro bordes visibles y sin reflejos. Tras capturar, ajusta las esquinas antes de confirmar.';dialog.querySelector('.scan-preview-area').before(guidance);
     document.body.append(dialog);
     const oldOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';

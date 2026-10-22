@@ -57,6 +57,7 @@
     note.className = "output-review-note";
     note.textContent = delivery ? "Comprueba las caras seleccionadas y el formato antes de generar el enlace. Las medidas f\xEDsicas se conservan en el PDF; los archivos de imagen se entregan en p\xEDxeles." : "Comprueba recortes y copias. En la impresora selecciona \xABTama\xF1o real / 100 %\xBB, sin ajustar a p\xE1gina. " + ((Number(state.outputScalePercent) || 100) !== 100 ? "Atenci\xF3n: has aplicado una escala de " + state.outputScalePercent + " % dentro del proyecto." : "");
     target.append(note);
+    const checklist=document.createElement('ul');checklist.className='operator-checklist';checklist.setAttribute('aria-label','Revisión del operador');for(const value of ['Todas las caras necesarias y en el orden correcto','Orientación correcta y bordes completos','Texto o rostro nítido al ampliar la imagen']){const li=document.createElement('li');li.textContent=value;checklist.append(li);}target.append(checklist);
   }
   window.updateDeliveryReview = () => render($("deliveryReview"), true);
   window.showPrintReview = (callback) => {

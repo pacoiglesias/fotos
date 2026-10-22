@@ -22,13 +22,13 @@
     $('counterDeliver').textContent = output === 'print' ? 'Revisar impresión' : 'Preparar entrega digital';
   }
   function rootDigitalUpdate(){window.RealScanDigital?.render();window.RealScanWorkflow?.update();}
-  function openNewService() {
+  function openNewService(kind = 'id', source = 'choose') {
     if (starting) return;
     const delivery = activeDelivery();
     $('newKeepDeliveryRow').hidden = !delivery;
     $('newKeepDelivery').checked = true;
-    $('newServiceKind').value = 'id';
-    $('newServiceSource').value = 'choose';
+    $('newServiceKind').value = ['id','photos','multi','document','custom','repeat'].includes(kind) ? kind : 'id';
+    $('newServiceSource').value = ['choose','qr','camera','file'].includes(source) ? source : 'choose';
     $('newServiceOutput').value = 'both';
     $('newServiceConfirm').checked = !Object.values(state.images).some(i=>i.originalSrc || i._reading) && !RealScanQrSync.getInboxFiles().length && !window.RealScanDocuments?.status().count;
     $('newServiceError').textContent = '';

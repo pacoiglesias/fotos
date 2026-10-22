@@ -9,6 +9,7 @@ try {
     "mobile-workflow-regression",
     "functional-audit-regression",
     "counter-regression",
+    "journey-regression",
     "navigation-regression",
     "capture-regression",
     "iphone-capture-regression",

@@ -177,7 +177,7 @@
     const memMB = ((sizeOf(pages, originals) || 0) / (1024 * 1024)).toFixed(1);
     $('docSummary').textContent = pages.length + ' página(s) · ' + pages.filter(p => p.reviewed).length + ' revisada(s) · ' + memMB + ' MB en memoria (máximo 80 MB / 40 págs)';
     if (parseFloat(memMB) > 60 && !busy) say('Trabajo grande (' + memMB + ' MB). Respalda el documento y divide los trabajos largos; la calidad Ligera reduce el PDF de salida, no el borrador.', false);
-    if($('docSearchable'))$('docSearchable').checked=searchable;if($('docOcrLanguage'))$('docOcrLanguage').value=ocrLanguage;
+    if($('docSearchable'))$('docSearchable').checked=searchable;if($('docOcrLanguage')){$('docOcrLanguage').value=ocrLanguage;$('docOcrLanguage').parentElement.hidden=!searchable;}
     $('docPaper').value=options.paper;$('docOrientation').value=options.orientation;$('docMargin').value=options.margin;$('docQuality').value=options.quality;
     for(const control of $('documentWorkspace').querySelectorAll('button,input,select'))if(!control.hasAttribute('data-page-action'))control.disabled=busy;
     $('docCancel').disabled=false;$('docCancel').hidden=!busy;
