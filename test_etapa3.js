@@ -37,6 +37,9 @@ global.$ = (id) => ({
   id,
   setAttribute: (k, v) => { global.$[k] = v; },
   getAttribute: (k) => global.$[k],
+  addEventListener: () => {},
+  removeEventListener: () => {},
+  style: {},
   classList: {
     toggle: (c, v) => {},
     contains: (c) => false
@@ -59,16 +62,20 @@ const context = {
   state: global.state,
   $: global.$,
   $$: global.$$,
+  on: (el, ev, fn) => { if (el && typeof el.addEventListener === 'function') el.addEventListener(ev, fn); },
   showToast: global.showToast,
   savePreferences: global.savePreferences,
   updateUI: global.updateUI,
   switchCategory: global.switchCategory,
   selectFormat: global.selectFormat,
   setPrintMode: global.setPrintMode,
-  parseInt: parseInt
+  parseInt: parseInt,
+  localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} }
 };
 vm.createContext(context);
-vm.runInContext(appCode.slice(0, appCode.indexOf('/* ============================================================\n   CATEGORÍAS / MODOS / FORMATOS')), context);
+const cut = appCode.indexOf('PANEL COLAPSABLE');
+const end = cut !== -1 ? appCode.lastIndexOf('/*', cut) : -1;
+vm.runInContext(end !== -1 ? appCode.slice(0, end) : appCode, context);
 
 context.switchIntent('id');
 assert.strictEqual(state.activeCategory, 'docs', 'Intención ID debe activar categoría docs');
