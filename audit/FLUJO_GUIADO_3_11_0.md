@@ -24,3 +24,9 @@ Las listas de revisión ayudan al operador; no certifican automáticamente nitid
 El error de Paperless por idiomas eng/spa sigue necesitando revisar la instalación que procesa sus documentos. La capa de texto de RealScan no instala dependencias en Paperless. No se ha modificado ese servidor.
 
 Los documentos de clientes no se incluyen en el respaldo del programa. El borrador local debe acompañarse de una copia descargada en Archivos; el navegador puede liberar almacenamiento. El QR en nube necesita internet.
+
+## Parche 3.11.1 — vista previa después de confirmar
+
+El usuario señaló que, después de «Usar esta imagen», no veía el resultado en el documento. El flujo anterior añadía una miniatura de 85 × 100 px más abajo de la pantalla, sin llevar al usuario hasta ella. Se cambia por una imagen proporcionada de 220 px de alto y desplazamiento a la captura confirmada. Pulsarla o usar «Ver imagen» abre un visor con el archivo confirmado, ampliación, volver al documento y ajuste reversible. Se comprueba el mismo origen de imagen entre tarjeta y visor, cancelación sin cambios y geometría en móvil, tableta y PC.
+
+La prueba completa detectó además una notificación de bucle de ResizeObserver en WebKit. Diferir ResizeObserver no bastó en la primera repetición. Se sustituye la observación del área redimensionada por observación de cambios de controles y eventos de pantalla/vídeo; se programa un solo ajuste por cuadro, se redondean dimensiones y se cancela al cerrar. No se oculta el error en la prueba: se exige que la lista de errores permanezca vacía.

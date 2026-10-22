@@ -171,17 +171,24 @@
       const area = $('.scan-preview-area');
       const padding = captured ? 48 : 16;
       const scale = Math.min(Math.max(1,area.clientWidth-padding)/w,Math.max(1,area.clientHeight-padding)/h);
-      stage.style.width = (w*scale)+'px';
-      stage.style.height = (h*scale)+'px';
+      stage.style.width = Math.floor(w*scale)+'px';
+      stage.style.height = Math.floor(h*scale)+'px';
       stage.style.aspectRatio = w+'/'+h;
       source.style.aspectRatio = w+'/'+h;
       paint();
     }
-    const stageObserver = new ResizeObserver(fitStage);
-    stageObserver.observe($('.scan-preview-area'));
-    settings.addEventListener('toggle',fitStage);
-    video.addEventListener('loadedmetadata',fitStage);
-    video.addEventListener('resize',fitStage);
+    let fitFrame = 0;
+    function scheduleFit() {
+      if (!fitFrame && !disposed) fitFrame = requestAnimationFrame(() => { fitFrame=0;fitStage(); });
+    }
+    // Observe controls that change the available space, never the box we resize.
+    const stageObserver = new MutationObserver(scheduleFit);
+    stageObserver.observe(status,{childList:true,subtree:true,characterData:true});
+    stageObserver.observe($('.scan-actions'),{subtree:true,attributes:true,attributeFilter:['hidden']});
+    stageObserver.observe($('.scan-quality'),{childList:true,subtree:true,characterData:true});
+    settings.addEventListener('toggle',scheduleFit);
+    video.addEventListener('loadedmetadata',scheduleFit);
+    video.addEventListener('resize',scheduleFit);
     function bounded(promise, milliseconds, message) {
       let timeout;
       return Promise.race([promise,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error(message)),milliseconds);})]).finally(()=>clearTimeout(timeout));
@@ -219,7 +226,7 @@
         const element=$('[data-quality="'+name+'"]');element.textContent=text;element.dataset.ok=String(ok);
       }
     }
-    root.addEventListener('resize',fitStage);root.visualViewport?.addEventListener('resize',fitStage);root.visualViewport?.addEventListener('scroll',fitStage);
+    root.addEventListener('resize',scheduleFit);root.visualViewport?.addEventListener('resize',scheduleFit);root.visualViewport?.addEventListener('scroll',scheduleFit);
     function stop() {
       focusRequest++;focusBusy=false;
       clearTimeout(timer);
@@ -231,10 +238,11 @@
     function finish() {
       if (disposed) return;
       disposed = true;
+      cancelAnimationFrame(fitFrame);
       revision++;
       stop();
       clearTimeout(magnifierTimer);
-      root.removeEventListener('resize',fitStage);root.visualViewport?.removeEventListener('resize',fitStage);root.visualViewport?.removeEventListener('scroll',fitStage);stageObserver.disconnect();
+      root.removeEventListener('resize',scheduleFit);root.visualViewport?.removeEventListener('resize',scheduleFit);root.visualViewport?.removeEventListener('scroll',scheduleFit);stageObserver.disconnect();
       dialog.close();
       dialog.remove();
       document.documentElement.style.overflow = oldOverflow;
