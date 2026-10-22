@@ -268,7 +268,7 @@
 .scan-actions [data-act=capture],.scan-actions [data-act=confirm]{flex-basis:100%;min-height:48px;}
 .scan-dialog[data-phase=confirm] .scan-settings{display:none;}
 @media(max-width:700px),(max-height:540px){
- .scan-dialog[open]{position:fixed;inset:var(--scan-top,0px) 0 auto;margin:0;width:100%;max-width:none;height:var(--scan-height,100dvh);border:0;border-radius:0;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));gap:6px;}
+ .scan-dialog[open]{position:fixed;inset:var(--scan-top,0px) 0 auto;margin:0;width:100%;max-width:none;height:min(var(--scan-height,100dvh),100dvh);max-height:100dvh;border:0;border-radius:0;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));gap:6px;}
  .scan-head strong{font-size:1rem;}.scan-head small{font-size:.65rem;}.scan-steps li{font-size:.68rem;}
 }
 @media(orientation:landscape) and (max-height:540px){

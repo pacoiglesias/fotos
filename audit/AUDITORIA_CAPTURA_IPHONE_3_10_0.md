@@ -2,6 +2,26 @@
 
 Fecha: 22 de octubre de 2026. Base revisada: 8ee2612. Se conservan los cambios de autenticación y el indicador de memoria del usuario.
 
+## Resumen para seguimiento
+
+| Antes / necesidad | Mejora de esta entrega | Comprobación |
+|---|---|---|
+| Cámara a media pantalla o imagen deformada | Visor completo, proporción uniforme, límites de altura y zonas seguras | Captura/revisión en vertical, horizontal y pantalla pequeña; Chromium y WebKit |
+| Ajustar esquinas con el dedo era difícil | Lupa y espacio para mantener accesibles los controles | Arrastre/teclado y comprobación visual |
+| Pérdida innecesaria de detalle al enderezar | Hasta 3508 px en documento enderezado, captura hasta 4096 px | Imagen sintética de alta resolución |
+| Documento completo se activaba pero no aparecía | Restaurada la visibilidad del panel | Nuevo servicio y PDF de seis páginas |
+| Páginas borradas reaparecían | Se guarda también el borrador vacío | Recargar y comprobar que no regresan |
+| Se ofrecía un PDF preparado antes de editar | Se invalida la impresión y vista de entrega anterior | Girar una página y verificar retirada del enlace |
+| QR de documento abría modo foto | Se considera el servicio de documento activo | Cambiar de Fotos a Documento completo y leer el modo del QR |
+| Faltaba escanear y guardar directamente en el teléfono | Escáner móvil con borrador local y PDF sin mostrador | Captura/galería, restauración, borrado y descarga |
+| DNI necesitaba medidas reales | PDF de 85,6 × 53,98 mm por cara; A4/Carta y fotos con medidas propias | Lectura de medidas del archivo exportado |
+| Faltaba buscar/seleccionar texto dentro del PDF | OCR opcional con capa invisible y fuente incluida | Extraer palabras/acentos y comparar píxeles visibles |
+| Dependencia de internet para preparar OCR | Descarga explícita de lector e idiomas de esta versión | Desconectar, recargar y usar OCR en frío |
+| Faltaba diagnóstico del escáner local | Registro descargable y borrable sin fotos ni texto reconocido | Verificación de privacidad y conservación de capturas |
+| Diferencia de pantalla pequeña en WebKit/Linux durante CI | Altura acotada a 100dvh y verificación relativa al viewport visible | Prueba automatizada en GitHub y prueba local |
+
+La lista distingue cambios implementados de validación física. La validación de cada commit está en GitHub Actions; la auditoría completa local y las evidencias están en `.audit/`. El acta final de publicación y respaldo se guarda en `backups/ESTADO_ULTIMA_PUBLICACION.md`, junto con el manifiesto de la versión. No se considera publicada una versión sólo por estar confirmada en Git.
+
 ## Fallos encontrados y correcciones
 
 - El visor estaba limitado al 48 % de la altura y la revisión tenía otro límite de ancho que alteraba sus proporciones. Ahora se calcula dentro del espacio realmente disponible, con pantalla completa móvil, zonas seguras y distribución horizontal.
