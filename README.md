@@ -81,7 +81,9 @@ El respaldo JSON admite hasta 50 MB tanto al exportar como al importar. Se recha
 
 ## Publicación coordinada
 
-Ejecuta npm run publish desde la raíz con los cambios confirmados en Git. Verifica, construye y publica ambos sitios; luego exige que las cuatro direcciones de Firebase respondan con el mismo commit y huella de contenido. Todos los accesos de despliegue .bat y .ps1 usan este flujo. Si falla uno de los sitios, el proceso devuelve error y debe repetirse para completar la actualización; no existe una transacción de publicación entre proyectos.
+En Windows, abre **subir_a_firebase.bat** con doble clic. Comprueba tu acceso actual, descarga una copia limpia del commit auditado de la **3.17.0**, instala dependencias y Chromium/WebKit, y ejecuta la verificación y publicación en ambos sitios. Conserva tu carpeta actual y los cambios locales; publica la versión auditada de GitHub. La ventana permanece abierta y muestra dónde guardó el registro. Los otros BAT de despliegue usan este mismo lanzador. Consulta [el procedimiento de Windows](audit/PUBLICACION_WINDOWS_3_17_0.md).
+
+Para publicar desde un checkout propio limpio, ejecuta `npm run publish` con los cambios confirmados en Git. Si falla uno de los sitios, devuelve error y debe repetirse para completar la actualización; no existe una transacción de publicación entre proyectos.
 
 - Proyecto fotos-cobertores-pro, sitio fotos-cobertores-pro: https://fotos-cobertores-pro.web.app y https://fotos-cobertores-pro.firebaseapp.com.
 - Proyecto cobertores-web, únicamente sitio fotos-cobertores: https://fotos-cobertores.web.app y https://fotos-cobertores.firebaseapp.com. Su configuración está en firebase.secondary.json; no se modifica el sitio principal cobertores-web.
@@ -137,4 +139,4 @@ Guía del trabajo en tres pasos con acciones contextuales, avisos de escala y ca
 
 Abre **Firebase-Acceso.bat** con doble clic. Elige **1** para comprobar la sesión en los dos proyectos de RealScan; si funciona, no necesitas volver a identificarte. La opción **2** renueva el acceso en el navegador y la **3** permite completar un código manual manteniendo abierta la misma ventana. Usa la cuenta que administra los proyectos. El asistente utiliza la herramienta oficial de Firebase, conserva la ventana para leer errores y no publica ni elimina archivos. No copies contraseñas al asistente ni reutilices códigos anteriores. Para comprobarlo sin menú: `Firebase-Acceso.bat -Action Check`.
 
-`autenticar_y_desplegar.bat` comprueba primero el acceso; si falla, ofrece el menú y vuelve a comprobarlo antes de continuar. Después conserva el flujo de verificación y publicación existente.
+`autenticar_y_desplegar.bat` ejecuta el mismo proceso que `subir_a_firebase.bat`. Reutiliza tu sesión y comprueba el acceso a los dos proyectos antes de continuar. Si falla, muestra el error para distinguir problemas de conexión, sesión o permisos. Si necesitas renovar la sesión, usa `Firebase-Acceso.bat` y vuelve a abrir el BAT de publicación.

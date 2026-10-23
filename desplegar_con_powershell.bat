@@ -1,4 +1,4 @@
 @echo off
-cd /d "%~dp0"
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0desplegar.ps1"
+setlocal EnableExtensions DisableDelayedExpansion
+call "%~dp0subir_a_firebase.bat"
 exit /b %errorlevel%

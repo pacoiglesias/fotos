@@ -2,8 +2,9 @@
 param([ValidateSet('Menu', 'Check', 'Local', 'Remote')][string]$Action = 'Menu')
 
 $ErrorActionPreference = 'Stop'
+$installedFirebase = Get-Command firebase.cmd -ErrorAction SilentlyContinue
 $npxCommand = Get-Command npx.cmd -ErrorAction SilentlyContinue
-if (-not $npxCommand) {
+if (-not $installedFirebase -and -not $npxCommand) {
     Write-Host 'Falta Node.js con npm. Instala la version LTS desde https://nodejs.org y vuelve a abrir el BAT.' -ForegroundColor Yellow
     exit 1
 }
@@ -11,15 +12,19 @@ Set-Location -LiteralPath (Split-Path -Parent $PSScriptRoot)
 
 function Initialize-FirebaseCli {
     Write-Host 'Comprobando la herramienta oficial de Firebase...'
+    if ($installedFirebase) {
+        Write-Host 'Se usara Firebase CLI instalado y la sesion existente.' -ForegroundColor DarkCyan
+        return $true
+    }
     # Prefer the installed npm cache; a temporary registry failure need not block login.
     $previousPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        $versionOutput = @(& $npxCommand.Source --offline --yes firebase-tools@latest --version 2>&1)
+        $versionOutput = @(& $npxCommand.Source --offline --yes firebase-tools@15.26.0 --version 2>&1)
         $cliExit = $LASTEXITCODE
         if ($cliExit -ne 0) {
             Write-Host 'Se necesita descargar la herramienta oficial. Comprueba tu conexion a internet.' -ForegroundColor Yellow
-            $versionOutput = @(& $npxCommand.Source --yes firebase-tools@latest --version 2>&1)
+            $versionOutput = @(& $npxCommand.Source --yes firebase-tools@15.26.0 --version 2>&1)
             $cliExit = $LASTEXITCODE
         }
     } finally { $ErrorActionPreference = $previousPreference }
@@ -37,7 +42,11 @@ function Invoke-FirebaseCli {
     $previousPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        & $npxCommand.Source --offline --yes firebase-tools@latest @CliArguments | Out-Host
+        if ($installedFirebase) {
+            & $installedFirebase.Source @CliArguments | Out-Host
+        } else {
+            & $npxCommand.Source --offline --yes firebase-tools@15.26.0 @CliArguments | Out-Host
+        }
         return [int]$LASTEXITCODE
     } finally { $ErrorActionPreference = $previousPreference }
 }

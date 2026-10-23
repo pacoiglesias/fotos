@@ -1,10 +1,23 @@
 @echo off
-setlocal
+setlocal EnableExtensions DisableDelayedExpansion
 cd /d "%~dp0"
-echo RealScan - Verificar y publicar en ambos sitios Firebase
-call npm.cmd ci
-if errorlevel 1 exit /b 1
-call npx.cmd playwright install chromium
-if errorlevel 1 exit /b 1
-call npm.cmd run publish
-exit /b %errorlevel%
+title RealScan 3.17 - Compilar y publicar
+echo RealScan 3.17 - Build, pruebas y publicacion en ambos sitios
+echo.
+where powershell.exe >nul 2>&1
+if errorlevel 1 (
+  echo ERROR: no se encontro Windows PowerShell.
+  pause
+  exit /b 1
+)
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0desplegar.ps1"
+set "deployResult=%errorlevel%"
+echo.
+if "%deployResult%"=="0" (
+  echo PUBLICACION VERIFICADA. La version 3.17 esta en ambos sitios.
+) else (
+  echo PUBLICACION INCOMPLETA. Revisa el error y el registro indicado arriba.
+)
+echo.
+pause
+exit /b %deployResult%
