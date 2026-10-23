@@ -12,6 +12,15 @@
     burdeos: 'Burdeos',
     oceano: 'Océano'
   };
+  // Acento de cada tema: también tiñe la barra de estado del móvil
+  // (meta theme-color) para que la PWA instalada se vea de una pieza.
+  const ACCENTS = {
+    indigo: '#4f46e5',
+    esmeralda: '#059669',
+    grafito: '#475569',
+    burdeos: '#be123c',
+    oceano: '#0284c7'
+  };
   function current() {
     try { return localStorage.getItem(KEY) || 'indigo'; } catch (e) { return 'indigo'; }
   }
@@ -19,6 +28,12 @@
     const t = THEMES[name] ? name : 'indigo';
     if (t === 'indigo') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme', t);
+    // En modo oscuro manda el fondo oscuro en la barra de estado; en
+    // claro, el acento del tema elegido.
+    const meta = document.getElementById('metaThemeColor');
+    if (meta && !document.documentElement.classList.contains('dark')) {
+      meta.setAttribute('content', ACCENTS[t]);
+    }
     document.querySelectorAll('[data-theme-pick]').forEach(function (btn) {
       btn.setAttribute('aria-pressed', btn.getAttribute('data-theme-pick') === t ? 'true' : 'false');
     });
