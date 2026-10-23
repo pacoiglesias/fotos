@@ -164,12 +164,14 @@
       overlay.innerHTML = '<p class="text-white/80 text-sm font-semibold">Muestra esta foto al cliente para su aprobación</p><div id="clientApprovalSheet" class="client-approval-sheet w-full max-w-2xl max-h-[70vh] overflow-hidden flex items-start justify-center"></div><div class="flex flex-wrap gap-3 justify-center"><button type="button" id="btnClientRepeat" class="px-6 py-4 rounded-2xl bg-white/10 text-white border border-white/40 text-base font-bold min-h-[56px]">↺ Repetir foto</button><button type="button" id="btnClientApprove" class="px-6 py-4 rounded-2xl bg-emerald-500 text-white text-base font-black min-h-[56px]">✓ Aprobada</button></div>';
       document.body.append(overlay);
       overlay.querySelector("#btnClientApprove").addEventListener("click", () => {
+        window.RealScanStudio?.markApproved();
         closeModal("clientApproval");
         if (window.RealScanPolish) window.RealScanPolish.successCheck("Foto aprobada por el cliente");
       });
       overlay.querySelector("#btnClientRepeat").addEventListener("click", () => {
         closeModal("clientApproval");
         closeModal("outputReviewModal");
+        window.RealScanWorkflow?.moveTo(2, 'front');
         const card = document.querySelector('[id^="slotCard"], .slot-card, [data-slot-card]');
         const target = card || $("slotThumbWrapFront");
         if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -178,12 +180,17 @@
     }
     const holder = overlay.querySelector("#clientApprovalSheet");
     holder.replaceChildren();
-    const sheet = document.querySelector("#printSheetPreview svg") || document.querySelector(".a4-sheet");
-    if (sheet) {
-      const clone = sheet.cloneNode(true);
-      clone.removeAttribute("id");
-      clone.querySelectorAll("[id]").forEach(node => node.removeAttribute("id"));
-      holder.append(clone);
+    const sheets = Array.from(document.querySelectorAll("#printSheetPreview svg"));
+    const sheet = document.querySelector(".a4-sheet");
+    if (sheets.length || sheet) {
+      for (const [index, original] of (sheets.length ? sheets : [sheet]).entries()) {
+        const figure = document.createElement('figure'), clone = original.cloneNode(true);
+        clone.removeAttribute("id");
+        clone.querySelectorAll("[id]").forEach(node => node.removeAttribute("id"));
+        figure.append(clone);
+        if(sheets.length>1){const caption=document.createElement('figcaption');caption.textContent='Hoja '+(index+1)+' de '+sheets.length;figure.append(caption);}
+        holder.append(figure);
+      }
     } else if (state.images.front && state.images.front.processedDataUrl) {
       const img = document.createElement("img");
       img.src = state.images.front.processedDataUrl;

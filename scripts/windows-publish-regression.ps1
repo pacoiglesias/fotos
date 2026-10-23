@@ -29,8 +29,9 @@ if ($Scenario) {
         if ($args[0] -eq 'clone') {
             $fixture = $args[$args.Count - 1]
             New-Item -ItemType Directory -Path $fixture | Out-Null
-            [IO.File]::WriteAllText((Join-Path $fixture 'package.json'), '{"version":"3.17.0"}')
+            [IO.File]::WriteAllText((Join-Path $fixture 'package.json'), '{"version":"3.20.0"}')
         }
+        if ($args[0] -eq 'ls-remote') { '8b4d9c4782afa0f0f3f3a924841cd7371a4d4a5b' + "`t" + $args[$args.Count - 1] }
         if ($args[0] -eq 'rev-parse') {
             if ($global:publishTestScenario -eq 'wrong-commit') { '0000000000000000000000000000000000000000' }
             else { '8b4d9c4782afa0f0f3f3a924841cd7371a4d4a5b' }

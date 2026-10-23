@@ -35,6 +35,7 @@ function copy(src, dst) {
   // de pulido) se enlaza desde index.html: debe copiarse o dist la pide
   // en 404 y los AÑADIDOS 11/12 no se aplican en producción.
   copy(path.join(root, "css/polish.css"), path.join(dist, "css/polish.css"));
+  copy(path.join(root, "css/studio.css"), path.join(dist, "css/studio.css"));
   const manifest = JSON.parse(
     fs.readFileSync(path.join(root, "manifest.json")),
   );

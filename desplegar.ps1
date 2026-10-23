@@ -2,13 +2,15 @@ param([switch]$PrepararAccesos)
 # Publish the audited application even when this folder has old Git metadata.
 # A new checkout preserves all local files and gives the build its true source SHA.
 $ErrorActionPreference = 'Stop'
-$releaseVersion = '3.17.0'
-$releaseCommit = '8b4d9c4782afa0f0f3f3a924841cd7371a4d4a5b'
+$releaseVersion = '3.20.0'
+$releaseBranch = 'release/3.20.0'
+$releaseRef = 'refs/heads/' + $releaseBranch
+$releaseCommit = $null
 $originalLocation = Get-Location
 $auditRoot = Join-Path $PSScriptRoot '.audit'
 $publicationId = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [Guid]::NewGuid().ToString('N').Substring(0,8)
-$releaseRoot = Join-Path $auditRoot ('publicacion-317-' + $publicationId)
-$releaseLog = Join-Path $auditRoot ('publicacion-317-' + $publicationId + '.log')
+$releaseRoot = Join-Path $auditRoot ('publicacion-320-' + $publicationId)
+$releaseLog = Join-Path $auditRoot ('publicacion-320-' + $publicationId + '.log')
 $transcribing = $false
 $originalPath = $env:PATH
 $result = 1
@@ -94,7 +96,14 @@ try {
         }
     }
     Write-Host "[2/5] Descargando la version auditada $releaseVersion. Tu carpeta actual se conserva." -ForegroundColor Cyan
-    Invoke-ReleaseStep 'git.exe' @('clone','--single-branch','--branch','release/3.17.0','https://github.com/pacoiglesias/fotos.git',$releaseRoot)
+    $releaseHeadOutput = @(& git.exe ls-remote --exit-code 'https://github.com/pacoiglesias/fotos.git' $releaseRef)
+    $releaseHeadExit = $LASTEXITCODE
+    $releaseHead = ([string]($releaseHeadOutput | Select-Object -Last 1)).Trim()
+    if ($releaseHeadExit -ne 0 -or $releaseHead -notmatch ('^(?<sha>[0-9a-f]{40})\s+' + [regex]::Escape($releaseRef) + '$')) {
+        throw 'No se pudo resolver la version 3.20. Comprueba la conexion y que la rama release/3.20.0 este publicada.'
+    }
+    $releaseCommit = $Matches.sha
+    Invoke-ReleaseStep 'git.exe' @('clone','--single-branch','--branch',$releaseBranch,'https://github.com/pacoiglesias/fotos.git',$releaseRoot)
     Set-Location -LiteralPath $releaseRoot
     Invoke-ReleaseStep 'git.exe' @('checkout','--detach',$releaseCommit)
     $actualCommit = (& git.exe rev-parse HEAD).Trim()

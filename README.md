@@ -1,6 +1,8 @@
-# RealScan Pro 3.17
+# RealScan Pro 3.20
 
 Edición y composición de documentos y fotografías para mostrador. Desarrollado por Paco Iglesias.
+
+La 3.20 incorpora el estudio visual: tarjetas de servicios, hoja en vivo, herramientas de edición junto a la vista previa, comparación original/resultado, formatos frecuentes guardados sin fotografías y revisión del cliente de todas las hojas. Los ajustes avanzados conservan las funciones existentes. Consulta [los cambios y la validación](audit/ESTUDIO_3_20_0.md).
 
 Sitio configurado: https://fotos-cobertores-pro.web.app
 
@@ -83,7 +85,7 @@ El respaldo JSON admite hasta 50 MB tanto al exportar como al importar. Se recha
 
 ## Publicación coordinada
 
-En Windows, abre **subir_a_firebase.bat** con doble clic. Comprueba tu acceso actual, descarga una copia limpia del commit auditado de la **3.17.0**, instala dependencias y Chromium/WebKit, y ejecuta la verificación y publicación en ambos sitios. Conserva tu carpeta actual y los cambios locales; publica la versión auditada de GitHub. La ventana permanece abierta y muestra dónde guardó el registro. Los otros BAT de despliegue usan este mismo lanzador. Consulta [el procedimiento de Windows](audit/PUBLICACION_WINDOWS_3_17_0.md).
+En Windows, abre **subir_a_firebase.bat** con doble clic. Comprueba tu acceso actual, resuelve y descarga la **3.20.0** desde `release/3.20.0`, instala dependencias y Chromium/WebKit, y ejecuta la verificación y publicación en ambos sitios. Conserva tu carpeta actual y los cambios locales; publica la versión de GitHub con el commit resuelto. La ventana permanece abierta y muestra dónde guardó el registro. Los otros BAT de despliegue usan este mismo lanzador. Consulta [el procedimiento de la 3.20](audit/ESTUDIO_3_20_0.md).
 
 Para publicar desde un checkout propio limpio, ejecuta `npm run publish` con los cambios confirmados en Git. Si falla uno de los sitios, devuelve error y debe repetirse para completar la actualización; no existe una transacción de publicación entre proyectos.
 

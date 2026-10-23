@@ -33,6 +33,11 @@ jobs:
             dist/
             .audit/print-usability/results.json
             .audit/print-usability/review-*.png
+            .audit/studio-320/results.json
+            .audit/studio-320/home-desktop.png
+            .audit/studio-320/workspace-1440.png
+            .audit/studio-320/workspace-390.png
+            .audit/studio-320/workspace-dark.png
             .audit/repair-evidence/regression.json
           if-no-files-found: warn
           retention-days: 14
