@@ -1,15 +1,50 @@
 {
-  "hosting": {
-    "site": "fotos-cobertores-pro",
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      ".firebaserc",
-      "**/.*",
-      "**/node_modules/**",
-      "*.bat",
-      "*.ps1",
-      "*.md"
-    ]
+  "hosting": [
+    {
+      "site": "fotos-cobertores-pro",
+      "public": "dist",
+      "ignore": [
+        "**/.*"
+      ],
+      "headers": [
+        {
+          "source": "**",
+          "headers": [
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "no-referrer"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "Content-Security-Policy",
+              "value": "default-src 'self'; script-src 'self' 'sha256-opedjnt46Ne40unmRqR2mFRrY+fW/iaR1eB52DP855U=' 'sha256-BX1KwWNGbrh8q3JJvnYZHiDSrMW2v/HRM8YbPn8Knag=' 'wasm-unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; worker-src 'self' blob:; frame-src 'self' blob:; media-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+            }
+          ]
+        }
+      ],
+      "predeploy": [
+        "npm run check",
+        "npm run build"
+      ]
+    }
+  ],
+  "database": {
+    "rules": "database.rules.json"
+  },
+  "auth": {
+    "providers": {
+      "anonymous": true
+    }
   }
 }

@@ -1,0 +1,6 @@
+# RealScan Pro es una herramienta de trabajo local del mostrador.
+# No necesita indexarse: se permite el acceso a la página de entrada
+# y se protege el resto de rutas de trabajo.
+User-agent: *
+Allow: /$
+Disallow: /
