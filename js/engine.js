@@ -421,6 +421,99 @@ function toggleMmGrid(side) {
   showToast(imgData.showMmGrid ? '📏 Regla milimétrica superpuesta activada.' : 'Regla superpuesta desactivada.', 'info');
 }
 
+
+/* Análisis de reflejos y sombras (AÑADIDO 9.1): trabaja sobre una reducción
+   de la imagen capturada. Reflejo: una celda de la rejilla 3×3 con una
+   fracción alta de píxeles quemados (luminancia >= 248) que contrasta con el
+   resto (para no confundirlo con un papel blanco bien iluminado). Sombra
+   dura: una celda muy oscura en una imagen globalmente clara. */
+function analyzeGlareShadow(img) {
+  const result = { glareZone: null, shadow: false };
+  try {
+    const iw = img.naturalWidth || 0, ih = img.naturalHeight || 0;
+    if (!iw || !ih) return result;
+    const scale = Math.min(1, 360 / iw);
+    const w = Math.max(30, Math.round(iw * scale)), h = Math.max(30, Math.round(ih * scale));
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const cx = cv.getContext('2d', { willReadFrequently: true });
+    cx.drawImage(img, 0, 0, w, h);
+    const data = cx.getImageData(0, 0, w, h).data;
+    const cells = [];
+    for (let gy = 0; gy < 3; gy++) for (let gx = 0; gx < 3; gx++) {
+      let sum = 0, clipped = 0, count = 0;
+      const x0 = Math.floor(gx * w / 3), x1 = Math.floor((gx + 1) * w / 3);
+      const y0 = Math.floor(gy * h / 3), y1 = Math.floor((gy + 1) * h / 3);
+      for (let y = y0; y < y1; y += 2) for (let x = x0; x < x1; x += 2) {
+        const i = (y * w + x) * 4;
+        const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        sum += lum; if (lum >= 248) clipped++;
+        count++;
+      }
+      cells.push({ gx: gx, gy: gy, mean: count ? sum / count : 0, clip: count ? clipped / count : 0 });
+    }
+    const globalMean = cells.reduce(function(a, c) { return a + c.mean; }, 0) / 9;
+    const zones = [['la esquina superior izquierda', 'la parte superior', 'la esquina superior derecha'], ['el lado izquierdo', 'el centro', 'el lado derecho'], ['la esquina inferior izquierda', 'la parte inferior', 'la esquina inferior derecha']];
+    let worst = null;
+    cells.forEach(function(c) { if (c.clip >= 0.38 && (!worst || c.clip > worst.clip)) worst = c; });
+    if (worst) {
+      const othersMean = Math.max.apply(null, cells.filter(function(c) { return c !== worst; }).map(function(c) { return c.mean; }));
+      if (othersMean <= 218) result.glareZone = zones[worst.gy][worst.gx];
+    }
+    if (cells.some(function(c) { return c.mean <= 52; }) && globalMean >= 125) result.shadow = true;
+  } catch (e) { /* el análisis nunca bloquea el flujo */ }
+  return result;
+}
+
+/* Fondo blanco automático (AÑADIDO 10.1): sustituye por blanco el fondo
+   conectado a los bordes cuyo color se parece al color dominante del marco
+   exterior (inundación desde los bordes con tolerancia). Pensado para fotos
+   oficiales contra pared o fondo uniforme; la foto original no se toca y el
+   operador puede desactivarlo y comparar manteniendo pulsada la miniatura. */
+function applyWhiteBackground(ctx, W, H) {
+  const imgPixels = ctx.getImageData(0, 0, W, H);
+  const d = imgPixels.data;
+  const step = Math.max(1, Math.floor(Math.min(W, H) / 60));
+  let sr = 0, sg = 0, sb = 0, n = 0;
+  for (let x = 0; x < W; x += step) {
+    let i = x * 4; sr += d[i]; sg += d[i + 1]; sb += d[i + 2]; n++;
+    i = ((H - 1) * W + x) * 4; sr += d[i]; sg += d[i + 1]; sb += d[i + 2]; n++;
+  }
+  for (let y = 0; y < H; y += step) {
+    let i = (y * W) * 4; sr += d[i]; sg += d[i + 1]; sb += d[i + 2]; n++;
+    i = (y * W + W - 1) * 4; sr += d[i]; sg += d[i + 1]; sb += d[i + 2]; n++;
+  }
+  const refR = sr / n, refG = sg / n, refB = sb / n;
+  const TOL2 = 34 * 34 * 3;
+  const visited = new Uint8Array(W * H);
+  const stack = [];
+  function pushPx(p) { if (!visited[p]) { visited[p] = 1; stack.push(p); } }
+  for (let x = 0; x < W; x++) { pushPx(x); pushPx((H - 1) * W + x); }
+  for (let y = 0; y < H; y++) { pushPx(y * W); pushPx(y * W + W - 1); }
+  while (stack.length) {
+    const p = stack.pop();
+    const i = p * 4;
+    const dr = d[i] - refR, dg = d[i + 1] - refG, db = d[i + 2] - refB;
+    if ((dr * dr + dg * dg + db * db) > TOL2) continue;
+    d[i] = 255; d[i + 1] = 255; d[i + 2] = 255;
+    const x = p % W, y = (p / W) | 0;
+    if (x > 0) pushPx(p - 1);
+    if (x < W - 1) pushPx(p + 1);
+    if (y > 0) pushPx(p - W);
+    if (y < H - 1) pushPx(p + W);
+  }
+  ctx.putImageData(imgPixels, 0, 0);
+}
+
+function toggleWhiteBackground(side) {
+  const imgData = state.images[side];
+  if (!imgData || !imgData.originalSrc) { showToast('Primero captura o sube la foto.', 'warning'); return; }
+  if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) RealScanEditor.recordSnapshot(side, imgData);
+  imgData.whiteBg = !imgData.whiteBg;
+  renderProcessedImage(side);
+  showToast(imgData.whiteBg ? '⬜ Fondo blanco aplicado. Mantén pulsada la miniatura para comparar con la original.' : 'Fondo original restaurado.', 'info');
+  if (typeof scheduleSaveDraft === 'function') scheduleSaveDraft();
+}
+
 function inspectSlotImage(side, img) {
   const suffix = getSlotIdSuffix(side);
   const banner = $('inspectorBanner' + suffix);
@@ -468,6 +561,24 @@ function inspectSlotImage(side, img) {
     if (fitBtn) fitBtn.addEventListener('click', () => setFitMode(side, 'fit'));
   }
   banner.classList.remove('hidden');
+
+  // Semáforo de calidad (AÑADIDO 4.1) con reflejos y sombras (AÑADIDO 9.1):
+  // visible siempre bajo la miniatura, sin abrir desplegables.
+  try {
+    const flags = analyzeGlareShadow(img);
+    if (state.images[side]) state.images[side].qualityFlags = flags;
+    const strip = $('qualityStrip' + suffix);
+    if (strip) {
+      let level = estimatedDpi >= 300 ? 'good' : (estimatedDpi >= 150 ? 'warn' : 'bad');
+      const sizeTxt = (spec.widthMm / 10).toFixed(1).replace('.0', '') + ' × ' + (spec.heightMm / 10).toFixed(1).replace('.0', '') + ' cm';
+      let reason = level === 'good' ? 'Nítida para este tamaño' : (level === 'warn' ? 'Resolución justa para ' + sizeTxt : 'Saldrá borrosa a ' + sizeTxt + ': resolución baja');
+      if (flags.glareZone) { reason += ' · Hay reflejo en ' + flags.glareZone + ': inclina un poco el teléfono'; if (level === 'good') level = 'warn'; }
+      if (flags.shadow) { reason += ' · Sombra fuerte sobre el documento: cambia la luz de lado'; if (level === 'good') level = 'warn'; }
+      const conf = { good: ['🟢', 'border-emerald-300 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:border-emerald-800 dark:text-emerald-100'], warn: ['🟡', 'border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:border-amber-800 dark:text-amber-100'], bad: ['🔴', 'border-red-300 bg-red-50 text-red-900 dark:bg-red-950/50 dark:border-red-800 dark:text-red-100'] }[level];
+      strip.className = 'mt-2 px-2.5 py-2 rounded-xl border text-[11px] font-semibold flex items-center gap-2 ' + conf[1];
+      strip.textContent = conf[0] + ' ' + estimatedDpi + ' ppp · ' + reason;
+    }
+  } catch (e) { /* el semáforo nunca bloquea el flujo */ }
 }
 
 function clearSlot(side) {
@@ -479,6 +590,8 @@ function clearSlot(side) {
     warpQuad: null,
     originalSrc: null,
     processedDataUrl: null,
+    whiteBg: false,
+    qualityFlags: null,
     naturalWidth: 0,
     naturalHeight: 0,
     rotation: 0,
@@ -787,6 +900,11 @@ function renderProcessedImage(side) {
       } catch(e) {}
     }
 
+    // Fondo blanco oficial (AÑADIDO 10.1), tras los filtros de color
+    if (imgData.whiteBg) {
+      try { applyWhiteBackground(ctx, outW, outH); } catch(e) {}
+    }
+
     imgData.processedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
     settle();
     updateSidePreview(side);
@@ -929,6 +1047,7 @@ function updateSidePreview(side) {
       const partsImg = [];
       if (imgData.filter === 'bw') partsImg.push('B/N');
       else if (imgData.filter === 'scanner') partsImg.push('Escáner');
+      if (imgData.whiteBg) partsImg.push('Fondo blanco');
       if (imgData.brightness || imgData.contrast) partsImg.push('Luz ajustada');
       hintImg.textContent = partsImg.length ? '· ' + partsImg.join(' · ') : '';
     }
@@ -960,6 +1079,8 @@ function updateSidePreview(side) {
     const thumbWrapEmpty = $('slotThumbWrap' + suffix);
     if (thumbImgEmpty) thumbImgEmpty.removeAttribute('src');
     if (thumbWrapEmpty) thumbWrapEmpty.classList.add('hidden');
+    const stripEmpty = $('qualityStrip' + suffix);
+    if (stripEmpty) stripEmpty.classList.add('hidden');
     if (placeholder) placeholder.classList.remove('hidden');
     if (tools) tools.classList.add('hidden');
     if (btnDelete) btnDelete.classList.add('hidden');

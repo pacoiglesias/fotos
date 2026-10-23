@@ -1,3 +1,49 @@
+/* Folio y marca en las entregas digitales (AÑADIDO 10.4, v3.13.0).
+   Cada entrega digital lleva un folio correlativo del negocio y, si está
+   configurada en Ajustes, la marca de la tienda en el pie de la HOJA —
+   nunca sobre el documento oficial—. El folio queda en la bitácora y en
+   el trabajo del historial asociado. */
+window.RealScanFolio = (function() {
+  const SEQ_KEY = 'realscan_folio_seq_v1';
+  const BRAND_KEY = 'realscan_shop_brand_v1';
+  function peekNext() { try { return parseInt(localStorage.getItem(SEQ_KEY) || '1', 10) || 1; } catch (e) { return 1; } }
+  function format(n) { return 'F-' + String(n).padStart(6, '0'); }
+  function brand() { try { return (localStorage.getItem(BRAND_KEY) || '').trim(); } catch (e) { return ''; } }
+  function assign() {
+    const n = peekNext();
+    try { localStorage.setItem(SEQ_KEY, String(n + 1)); } catch (e) {}
+    const folio = format(n);
+    if (typeof logActivity === 'function') logActivity('Entrega digital', 'Folio ' + folio + (brand() ? ' · ' + brand() : ''));
+    try {
+      const id = (typeof state !== 'undefined') ? state._lastSavedScanId : null;
+      if (id && typeof window.updateScanRecord === 'function') {
+        window.updateScanRecord(id, { lastFolio: folio }).then(function() { if (typeof renderHistoryUI === 'function') renderHistoryUI(); });
+      }
+    } catch (e) {}
+    return folio;
+  }
+  function stampOnPdf(doc) {
+    if (!doc || typeof doc.internal === 'undefined') return null;
+    const folio = assign();
+    try {
+      const pages = doc.getNumberOfPages ? doc.getNumberOfPages() : 1;
+      const shop = brand();
+      for (let i = 1; i <= pages; i++) {
+        doc.setPage(i);
+        const size = doc.internal.pageSize;
+        const w = size.getWidth ? size.getWidth() : size.width;
+        const h = size.getHeight ? size.getHeight() : size.height;
+        doc.setFontSize(6.5);
+        doc.setTextColor(130, 130, 130);
+        doc.text('Folio ' + folio + ' · RealScan Pro', 8, h - 4);
+        if (shop) doc.text(shop, w - 8, h - 4, { align: 'right' });
+      }
+    } catch (e) {}
+    return folio;
+  }
+  return { peek: function() { return format(peekNext()); }, format: format, brand: brand, assign: assign, stampOnPdf: stampOnPdf };
+})();
+
 /* ============================================================
    RealScan Pro — Módulo de Exportación, Impresión Directa e Imagen
    Desarrollado por Paco Iglesias • Escala 1:1 Físicamente Calibrada
@@ -100,6 +146,7 @@ async function handleExportPDF(tryShare, reviewed) {
   if (typeof ensureJsPdf === 'function') await ensureJsPdf();
   const doc = generatePdfDoc();
   if (!doc) return;
+  if (window.RealScanFolio) window.RealScanFolio.stampOnPdf(doc);
   const spec = getActiveSpec();
   const customName = (state.documentCustomTitle || '').trim().replace(/[^a-zA-Z0-9_\-]/g, '_');
   const baseName = customName ? customName : ('RealScan_' + spec.fileName);
@@ -312,6 +359,24 @@ function renderPageToCanvas(page, layout, loadedImages) {
     ctx.fillText('RealScan por Paco Iglesias | Formato: ' + layout.spec.name + ' • Hoja: ' + paper.name + ' (300 DPI)', sheetW / 2, rulerY + 130);
     ctx.restore();
   }
+
+  // Folio y marca en el pie de la hoja (AÑADIDO 10.4): franja inferior de
+  // la HOJA, nunca sobre el documento.
+  try {
+    if (window.RealScanFolio) {
+      const folioTxt = window.RealScanFolio.assign();
+      const brandTxt = window.RealScanFolio.brand();
+      const stripH = Math.max(20, Math.round(canvas.height * 0.014));
+      const c2 = canvas.getContext('2d');
+      c2.fillStyle = '#ffffff';
+      c2.fillRect(0, canvas.height - stripH, canvas.width, stripH);
+      c2.fillStyle = '#666666';
+      c2.font = Math.round(stripH * 0.52) + 'px sans-serif';
+      c2.textBaseline = 'middle';
+      c2.fillText('Folio ' + folioTxt + ' · RealScan Pro', 12, canvas.height - stripH / 2);
+      if (brandTxt) { const tw = c2.measureText(brandTxt).width; c2.fillText(brandTxt, canvas.width - tw - 12, canvas.height - stripH / 2); }
+    }
+  } catch (e) {}
 
   return canvas;
 }
