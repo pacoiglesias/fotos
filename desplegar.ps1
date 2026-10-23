@@ -33,8 +33,14 @@ try {
             throw "Falta $program. Instala Git y Node.js 24 desde git-scm.com y nodejs.org; despues abre de nuevo el BAT."
         }
     }
-    $nodeVersion = & node.exe -p 'process.versions.node.split(".")[0]'
-    if ($LASTEXITCODE -ne 0 -or [int]$nodeVersion -lt 24) { throw 'Se requiere Node.js 24 o posterior.' }
+    $nodeVersionOutput = @(& node.exe --version)
+    $nodeVersionExit = $LASTEXITCODE
+    $nodeVersion = ([string]($nodeVersionOutput | Select-Object -Last 1)).Trim()
+    if ($nodeVersionExit -ne 0 -or $nodeVersion -notmatch '^v(?<major>[0-9]+)\.') {
+        throw "No se pudo leer la version de Node.js: $nodeVersion"
+    }
+    if ([int]$Matches.major -lt 24) { throw "Se requiere Node.js 24 o posterior. Version detectada: $nodeVersion" }
+    Write-Host "Node.js $nodeVersion compatible." -ForegroundColor DarkCyan
 
     # Use the installed CLI and its existing login. Only install if it is absent.
     if (-not (Get-Command firebase.cmd -ErrorAction SilentlyContinue)) {

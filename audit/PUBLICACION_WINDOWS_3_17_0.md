@@ -27,7 +27,10 @@ Cada intento guarda un registro `.audit/publicacion-317-*.log`. Si el segundo
 sitio falla despues de actualizarse el primero, el intento se considera
 incompleto; ejecutar de nuevo el BAT completa la misma version en ambos.
 
-Validacion local: sintaxis PowerShell y ejecucion con comandos simulados en
-cinco escenarios: exito, acceso denegado, commit incorrecto, instalacion fallida
-y publicacion fallida. Los errores interrumpen el proceso y producen salida
-distinta de cero. Estas pruebas no realizan despliegues reales.
+Validacion: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File
+scripts/windows-publish-regression.ps1`. Ejecuta el publicador aislado con Node
+real y Windows PowerShell; simula Git, Firebase, npm y Playwright. Comprueba
+exito, acceso denegado, commit incorrecto, instalacion fallida, publicacion
+fallida y rechazo de Node antiguo. Los errores interrumpen el proceso y producen
+salida distinta de cero. Se ejecuta tambien en GitHub Actions sobre Windows.
+Estas pruebas no realizan despliegues reales.
