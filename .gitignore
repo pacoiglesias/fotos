@@ -4,3 +4,13 @@ node_modules/
 .DS_Store
 Thumbs.db
 .audit/
+
+dist/
+
+backups/
+
+# External recon and audit artifacts
+apps-*
+provi-*
+auditoria-seguridad-*.md
+tools/

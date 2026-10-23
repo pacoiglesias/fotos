@@ -1,0 +1,62 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "transfers": {
+      "$owner": {
+        "$kind": {
+          ".write": "auth != null && auth.uid === $owner",
+          ".validate": "($kind === 'receive' || $kind === 'delivery') && newData.hasChildren(['token','sessions'])",
+          "token": {
+            ".validate": "newData.isString() && newData.val().matches(/^[a-f0-9]{64}$/)"
+          },
+          "sessions": {
+            "$token": {
+              ".read": "auth != null && (auth.uid === $owner || (data.exists() && now < data.child('expiresAt').val()))",
+              ".validate": "$token === newData.parent().parent().child('token').val() && newData.hasChildren(['ownerUid','kind','createdAt','expiresAt']) && newData.child('ownerUid').val() === $owner && newData.child('kind').val() === $kind && newData.child('expiresAt').isNumber() && newData.child('createdAt').isNumber() && newData.child('expiresAt').val() > newData.child('createdAt').val() && newData.child('expiresAt').val() <= newData.child('createdAt').val() + 900000",
+              "ownerUid": { ".validate": "newData.val() === $owner" },
+              "kind": { ".validate": "newData.val() === $kind" },
+              "createdAt": {
+                ".validate": "newData.isNumber() && (data.exists() ? newData.val() === data.val() : newData.val() <= now && newData.val() >= now - 30000)"
+              },
+              "expiresAt": {
+                ".validate": "newData.isNumber() && (!data.exists() || newData.val() === data.val())"
+              },
+              "files": {
+                "$file": {
+                  ".write": "auth != null && $kind === 'receive' && !data.exists() && newData.exists() && now < root.child('transfers').child($owner).child($kind).child('sessions').child($token).child('expiresAt').val() && newData.child('senderUid').val() === auth.uid && newData.child('accepted').val() === false",
+                  ".validate": "$file.matches(/^[0-7]$/) && newData.hasChildren(['name','type','dataUrl','size','senderUid','createdAt','accepted','hash'])",
+                  "name": {
+                    ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 180"
+                  },
+                  "type": {
+                    ".validate": "newData.val() === 'image/jpeg' || newData.val() === 'image/png' || newData.val() === 'image/webp' || newData.val() === 'application/pdf'"
+                  },
+                  "dataUrl": {
+                    ".validate": "newData.isString() && newData.val().length <= 8388700 && newData.val().beginsWith('data:' + newData.parent().child('type').val() + ';base64,')"
+                  },
+                  "size": {
+                    ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 6291456"
+                  },
+                  "hash": {
+                    ".validate": "newData.isString() && newData.val().matches(/^[a-f0-9]{64}$/)"
+                  },
+                  "senderUid": {
+                    ".validate": "newData.isString() && (data.exists() ? newData.val() === data.val() : newData.val() === auth.uid)"
+                  },
+                  "createdAt": {
+                    ".validate": "newData.isNumber() && (data.exists() ? newData.val() === data.val() : newData.val() <= now && newData.val() >= now - 30000)"
+                  },
+                  "accepted": { ".validate": "newData.isBoolean()" },
+                  "$other": { ".validate": false }
+                }
+              },
+              "$other": { ".validate": false }
+            }
+          },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}

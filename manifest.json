@@ -1,7 +1,7 @@
 {
   "name": "RealScan — Impresión 1:1 Oficial",
   "short_name": "RealScan",
-  "description": "Impresión de Documentos y Fotos a Tamaño Real (1:1 Calibrado a 300 DPI) en 1 Hoja A4, Carta u Oficio",
+  "description": "Fotos, escaneo de documentos y entrega digital con revisión antes de imprimir o compartir.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -15,16 +15,36 @@
   ],
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "assets/icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "id": "./",
+  "shortcuts": [
+    {
+      "name": "Escanear en este móvil",
+      "short_name": "Escanear",
+      "url": "./mobile-scan.html",
+      "icons": [
+        {
+          "src": "assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

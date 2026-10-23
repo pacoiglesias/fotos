@@ -1,59 +1,134 @@
-# 📸 RealScan Pro — Impresión de Documentos y Fotos a Escala Real (1:1) en Hoja A4
+# RealScan Pro 3.4
 
-> **Desarrollado por:** Paco Iglesias  
-> **Producción:** [https://fotos-cobertores-pro.web.app](https://fotos-cobertores-pro.web.app) / [https://fotos-cobertores-pro.firebaseapp.com](https://fotos-cobertores-pro.firebaseapp.com)  
-> **Dominio Objetivo:** `fotos.cobertores.com`  
+Edición y composición de documentos y fotografías para mostrador. Desarrollado por Paco Iglesias.
 
----
+Sitio configurado: https://fotos-cobertores-pro.web.app
 
-## 🚀 Características Principales
+## Uso diario
 
-1. **Escala 1:1 Milimétrica Garantizada**:
-   - Calibrado físico exacto a **300 DPI** para evitar deformaciones y garantizar tamaños de documento oficiales.
-   - Regla de calibración de 5 cm incluida en la hoja para verificar la escala física impresa con una regla real.
+1. Elige identificación, fotografía, páginas de documento o una medida personalizada.
+2. Carga imágenes o PDF, usa cámara o portapapeles, o pulsa **Recibir Celular** para generar un QR temporal.
+3. Revisa orientación, recorte y calidad. En un PDF multipágina, selecciona la página y su destino; se admiten hasta cuatro caras en una composición.
+4. Selecciona papel, copias, marcas y escala. El modo de dos personas conserva cantidades independientes.
+5. Comprueba la vista previa y exporta PDF/JPG, imprime o prepara una entrega digital.
 
-2. **Formatos Oficiales y Personalizados**:
-   - **Documentos e Identificaciones**: DNI / INE / Licencias (85.6 × 53.98 mm), Pasaporte Abierto (176 × 125 mm), Pasaporte Cerrado (125 × 88 mm), Documento A6 (148 × 105 mm).
-   - **Fotografía de Estudio**: Tamaño Infantil (2.5 × 3.0 cm), Credencial (3.5 × 5.0 cm), Pasaporte Internacional (3.5 × 4.5 cm / 5.0 × 5.0 cm), Título Profesional (6.0 × 9.0 cm).
-   - **Medidas Personalizadas**: En centímetros (cm) o milímetros (mm) con presets rápidos.
+El 100% conserva las medidas elegidas en el archivo. La impresora debe usar **tamaño real / escala 100%**, sin ajustar a página. Imprime y mide la regla de 5 cm y una tarjeta de prueba antes de prestar el servicio: el programa no puede verificar físicamente el papel, los márgenes ni el controlador de la impresora.
 
-3. **Modos de Imposición y Eficiencia**:
-   - **Anverso + Reverso** en la misma hoja A4 para credenciales y documentos.
-   - **Fotos Múltiples**: De 2 hasta 36 fotos por hoja A4 para no desperdiciar papel.
-   - **👥 Modo 2 Personas / 2 Fotos (50% / 50%)**: Distribuye fotos de dos personas distintas en una sola hoja A4 con etiquetas de corte individuales.
+Las guías milimétricas y faciales son ayudas de edición; no se incrustan en las imágenes exportadas. Las marcas de corte se controlan por separado.
 
-4. **Herramientas de Procesamiento Integradas**:
-   - **Filtros Oficiales**: Color original, Blanco y Negro Oficial (SEP, Cartilla, Títulos), y Modo Escáner de alto contraste.
-   - **Centrado Manual & Drag-to-Pan**: Botonera de micropasos y arrastre táctil / ratón.
-   - **Guía Biométrica OACI / ICAO**: Silueta de verificación facial en tiempo real.
-   - **Detección Automática de Bordes**: Recorte inteligente de fondo.
+## Recepción y entrega por QR
 
-5. **Exportación Flexible**:
-   - **Impresión Directa (1 Clic)** al 100% de escala.
-   - **Descarga PDF A4 (1:1)**.
-   - **Descarga Imagen A4 300 DPI** (2480 × 3508 px en JPG).
+Ahora usan Firebase Realtime Database y autenticación anónima; funcionan con navegadores independientes conectados a internet. No dependen de compartir Wi-Fi ni de `localStorage`.
 
-6. **Seguridad y Auditoría**:
-   - Acceso protegido por pantalla de bloqueo con clave hasheada en **SHA-256**.
-   - Gestión de credenciales (Usuario y PIN) en el panel de Ajustes.
-   - **Bitácora de Auditoría (Log)** con exportación a CSV para control de impresiones y accesos.
+- Mantén abierto y conectado el mostrador. El teléfono solo indica éxito cuando recibe confirmación del puesto.
+- Enlaces con secreto aleatorio de 256 bits y duración de 15 minutos; la base no permite enumerar sesiones.
+- Hasta 8 archivos de 6 MB por sesión. Las fotos recibidas desde teléfono se orientan, se convierten a JPG de hasta 3000 px y se eliminan sus metadatos de ubicación. Un PDF debe estar dentro del límite antes de enviarlo.
+- El editor admite PDF de hasta 40 páginas para selección, con resolución de renderizado limitada para proteger la memoria; la composición final admite hasta cuatro caras.
+- Los reintentos del mismo contenido no duplican la bandeja. Las sesiones caducadas y revocadas son rechazadas también por las reglas del servidor.
+- Los archivos de transferencia se eliminan al revocar/renovar la sesión y al detectarse la desconexión del mostrador; el enlace deja de permitir acceso a clientes a los 15 minutos incluso si el temporizador del navegador se retrasa. No es almacenamiento permanente ni respaldo.
+- Revocar un enlace impide nuevas descargas; no borra copias que el cliente ya guardó.
 
----
+El historial y los borradores son locales al navegador. La transferencia QR utiliza almacenamiento temporal en Firebase. El PIN local evita operaciones accidentales en el puesto; no sustituye autenticación remota de empleados.
 
-## 🛠️ Despliegue en Firebase Hosting
+## Fotografías y perfiles
 
-Para desplegar actualizaciones a producción:
-```bash
-subir_a_firebase.bat
-```
-O manualmente:
-```bash
-firebase deploy --only hosting:fotos-cobertores-pro
+Se incluyen plantillas de medidas. Los perfiles con una fuente comprobada muestran su enlace; el resto se identifica como orientativo. Verifica el trámite concreto. Las ayudas faciales no certifican identidad, encuadre biométrico ni aceptación por una autoridad.
+
+El perfil Visa USA limita la foto digital a JPG y a sus dimensiones/peso configurados; impide filtros y ajustes de apariencia. La hoja para impresión puede entregarse como PDF separado. Los formatos y resoluciones elegidos se aplican a los archivos generados.
+
+## Compilar y comprobar
+
+Requiere Node.js 24 y npm. Las versiones están fijadas en `package-lock.json`.
+
+```sh
+npm ci
+npx playwright install chromium
+npm run verify
 ```
 
----
+`verify` comprueba sintaxis, crea `dist/`, prueba autenticación local, abre la aplicación compilada en Chromium y ejecuta las doce suites. Las pruebas de navegador generan evidencia nueva vinculada a la versión del build.
 
-## 🔒 Acceso Inicial
-- **Usuario:** `admin`
-- En el primer ingreso el sistema te pedirá cambiar la clave inicial de inmediato.  
-*(Modificable en la interfaz dentro de ⚠️ Ajustes → Credenciales)*
+Para probar además la transferencia real, establece `REALSCAN_TEST_RELAY=1` antes de `npm run verify`. `npm run test:rules` comprueba las reglas desplegadas con cuentas anónimas desechables y registros sintéticos; requiere conexión y el proyecto configurado. Nunca usa documentos de clientes.
+
+## Publicar
+
+Firebase CLI probado: 15.26.0. Proyecto: `fotos-cobertores-pro`.
+
+```sh
+firebase hosting:channel:deploy revision --expires 7d --project fotos-cobertores-pro
+firebase deploy --only hosting --project fotos-cobertores-pro
+```
+
+Hosting publica exclusivamente `dist/`. Sus pasos previos verifican sintaxis y reconstruyen la distribución. No publiques directamente la raíz del repositorio. Cambios en reglas o proveedores se revisan y despliegan por separado con `firebase deploy --only auth,database`.
+
+La edición y exportación local funcionan sin conexión después de instalarse completamente la caché de la aplicación. Recepción y entrega QR requieren internet. Las dependencias de edición, PDF, QR y estilos se distribuyen localmente.
+
+## Validación
+
+Consulta [VALIDACION_MEJORAS.md](VALIDACION_MEJORAS.md) y [audit/REPARACION_3_4.md](audit/REPARACION_3_4.md). La aprobación de pruebas de software no sustituye las pruebas físicas con teléfono, cámara e impresora del negocio.
+
+## Cierre diario y recuperación
+
+El panel «Cierre diario y prueba de impresión» permite descargar el historial, verificar todas las imágenes del archivo sin importar nada y generar una hoja de prueba independiente del trabajo actual. Elige A4, Carta, Oficio México o Legal USA; la referencia incluye regla de 50 mm, tarjeta de 85.60 × 53.98 mm y foto de 35 × 45 mm. La impresora debe configurarse al 100 % y las medidas comprobarse físicamente.
+
+El respaldo JSON admite hasta 50 MB tanto al exportar como al importar. Se rechazan imágenes dañadas, direcciones blob no portables y páginas duplicadas. La importación es una única transacción: un error cancela todos los trabajos de esa importación y conserva los existentes. El verificador no escribe en el historial. Guarda primero el trabajo activo; los borradores, las preferencias, las credenciales y las sesiones QR no se incluyen. El navegador no puede confirmar que hayas conservado la descarga en otra unidad.
+
+## Publicación coordinada
+
+Ejecuta npm run publish desde la raíz con los cambios confirmados en Git. Verifica, construye y publica ambos sitios; luego exige que las cuatro direcciones de Firebase respondan con el mismo commit y huella de contenido. Todos los accesos de despliegue .bat y .ps1 usan este flujo. Si falla uno de los sitios, el proceso devuelve error y debe repetirse para completar la actualización; no existe una transacción de publicación entre proyectos.
+
+- Proyecto fotos-cobertores-pro, sitio fotos-cobertores-pro: https://fotos-cobertores-pro.web.app y https://fotos-cobertores-pro.firebaseapp.com.
+- Proyecto cobertores-web, únicamente sitio fotos-cobertores: https://fotos-cobertores.web.app y https://fotos-cobertores.firebaseapp.com. Su configuración está en firebase.secondary.json; no se modifica el sitio principal cobertores-web.
+- fotos.cobertores.com ya está asociado al segundo sitio. Queda pendiente que su propietario configure el DNS en Hostinger y Firebase valide su certificado; no se declara operativo antes de esa validación.
+
+Los historiales y preferencias pertenecen al origen del navegador: cambiar de dominio no traslada automáticamente los trabajos. Exporta e importa el respaldo si necesitas moverlos. Las transferencias QR de ambos sitios utilizan el mismo backend Firebase y la URL del origen que crea la sesión.
+
+## Configuración pública de Firebase
+
+La clave de js/firebase-config.js identifica la aplicación web y debe ser pública para funcionar en el navegador. No es una clave administrativa ni una cuenta de servicio. Se restringió en Google Cloud a identitytoolkit.googleapis.com y securetoken.googleapis.com, las dos API que necesita este cliente. Los documentos están protegidos por autenticación, enlaces aleatorios temporales y reglas del servidor; ocultar la configuración no sustituye estos controles. Referencia: https://firebase.google.com/docs/projects/api-keys. No introduzcas credenciales administrativas ni tokens privados en el repositorio.
+
+## Operación profesional y recuperación 3.6.0
+
+Se corrigen el límite de localStorage del borrador y el ajuste que podía forzar la proporción de una fotografía. Se amplían la cámara y galería con captura automática opcional, vista previa confirmada, giro, filtros y restauración. La bandeja QR permite revisar, editar, descargar originales y asignar páginas sin otro recorte automático.
+
+La entrega incorpora límite de peso y enlace preparado para WhatsApp. Desde la zona de impresión se abren **OCR local** y **Asistente doble cara**. En recepción aparece **Sin internet: recibir por Wi-Fi local**, con emparejamiento WebRTC de dos QR. El modo local requiere páginas preparadas en ambos navegadores y una red sin aislamiento de clientes.
+
+Prueba dedicada: `npm run test:practical`. [Registro completo de mejoras, correcciones, pruebas y límites](audit/MEJORAS_Y_CORRECCIONES_3_6_0.md).
+
+## Captura asistida y revisión visual 3.5.0
+
+En el teléfono, pulsa **Encuadrar y escanear documento**. Usa un fondo que contraste, deja visibles los cuatro bordes y toma la foto. Revisa la propuesta y mueve las esquinas antes de **Enderezar y usar**; también puedes repetir o conservar la foto completa. La captura se envía sólo al pulsar **Enviar archivos al mostrador**. La cámara del mostrador utiliza el mismo asistente; los perfiles de fotografías conservan la imagen completa.
+
+Antes de imprimir aparece un resumen de miniaturas, medidas, papel y contenido. La entrega digital también muestra un resumen que refleja los formatos y archivos seleccionados. Sigue siendo necesario elegir el formato físico correcto y usar escala 100 % en la impresora.
+
+Prueba dedicada: `npm run test:capture`. Alcance, resultados esperados y límites prácticos: [auditoría 3.5.0](audit/CAPTURA_ASISTIDA_3_5_0.md).
+
+## Reparación de navegación 3.4.1
+
+Se corrigió el bloqueo que aparecía al renovar el QR y cerrar recepción: una ventana repetida en la pila de foco dejaba el fondo inactivo. Las aperturas ahora son únicas, se restaura la interactividad al cerrar y el foco de ventanas superpuestas sigue el orden real. La conexión de recepción muestra progreso, admite cerrar mientras espera, evita solicitudes duplicadas y conserva la sesión y su bandeja al reabrir; Renovar QR crea otra sesión. Cuenta/admin abre ajustes e Instalar App ofrece ayuda cuando no hay una solicitud nativa disponible.
+
+En Cuenta y ajustes → Auditoría → Diagnóstico de funcionamiento puedes descargar un JSON técnico. El diagnóstico conserva como máximo 200 eventos durante 14 días en ese navegador. Incluye códigos de error admitidos, archivo de programa y línea cuando están disponibles; nunca incorpora textos libres de excepciones, fotos, nombres de documentos, contraseñas ni enlaces QR. Si el almacenamiento no está disponible, funciona temporalmente en memoria. No se envía automáticamente a ningún servicio. La bitácora de actividad anterior sigue siendo independiente del diagnóstico técnico.
+
+Para cerrar ventanas y recuperar controles sin recargar ni borrar el trabajo: Esc para la ventana activa; Alt + Mayús + R para todas las ventanas. También está disponible el botón Recuperar controles en Auditoría. Estos controles no ocultan ni eluden la pantalla de acceso.
+
+La verificación incluye ahora npm run test:navigation: acceso por formulario, renovaciones, cierre, ventanas PDF superpuestas, conexiones lentas y fallidas, instalación aceptada/cancelada/fallida, diagnóstico y privacidad, límites de almacenamiento y recuperación respetando el acceso.
+
+Para comprobar la entrega completa contra Firebase: npm run test:delivery. Genera QR desde los controles, los decodifica y descarga frente, reverso y hoja en un navegador independiente, probando JPG, PNG y PDF y revocación. Sólo usa archivos sintéticos. Se incluye al ejecutar verify con REALSCAN_TEST_RELAY=1. REALSCAN_SMOKE_URL permite repetirla sobre el sitio publicado.
+
+## Guías y ajuste proporcional 3.6.1
+
+Guías coherentes en pantalla, PDF e imagen; ajuste completo centrado sin estirar; distribución de fotos dentro de los márgenes y diagnóstico compartible con ajustes técnicos sin imágenes. Véanse [auditoría](audit/GUIAS_Y_AJUSTE_3_6_1.md) y [prompt de mantenimiento](audit/PROMPT_AUTOMEJORA_REALSCAN.md).
+
+## Captura y flujo móvil 3.7.0
+
+Vista previa bloqueada por defecto, ajuste táctil explícito, fotografías completas sin giro automático, modo Documento/Fotografía en recepción QR y cámara renovada con revisión de calidad y reintento de enfoque cuando el navegador lo admite. Diagnóstico descargable también desde el móvil. [Auditoría del flujo móvil](audit/FLUJO_MOVIL_Y_CAPTURA_3_7_0.md).
+
+## Auditoría funcional 3.7.1
+
+Guía del trabajo en tres pasos con acciones contextuales, avisos de escala y cara pendiente, navegación accesible y textos más claros. Recorte sin acciones duplicadas, ajuste repetible, protección de archivos y PDF pendientes, restauración móvil y encabezados coherentes entre vista previa y exportación. [Hallazgos y correcciones](audit/AUDITORIA_FUNCIONAL_3_7_1.md).
+
+## Acceso sencillo a Firebase en Windows
+
+Abre **Firebase-Acceso.bat** con doble clic. Elige **1** para comprobar la sesión en los dos proyectos de RealScan; si funciona, no necesitas volver a identificarte. La opción **2** renueva el acceso en el navegador y la **3** permite completar un código manual manteniendo abierta la misma ventana. Usa la cuenta que administra los proyectos. El asistente utiliza la herramienta oficial de Firebase, conserva la ventana para leer errores y no publica ni elimina archivos. No copies contraseñas al asistente ni reutilices códigos anteriores. Para comprobarlo sin menú: `Firebase-Acceso.bat -Action Check`.
+
+`autenticar_y_desplegar.bat` comprueba primero el acceso; si falla, ofrece el menú y vuelve a comprobarlo antes de continuar. Después conserva el flujo de verificación y publicación existente.
