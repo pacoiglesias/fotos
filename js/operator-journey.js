@@ -55,8 +55,12 @@
     for (const [label,action] of [['Cámara',()=>{if(RealScanDocuments.status().active)$('docCamera').click();else{const side=RealScanWorkflow.describe().missing[0]||RealScanWorkflow.describe().wanted[0]||'front';RealScanWorkflow.moveTo(2,side);document.querySelector('[data-camera="'+side+'"]')?.click();}}],['Archivo / USB',()=>{if(RealScanDocuments.status().active)$('docImport').click();else{const side=RealScanWorkflow.describe().missing[0]||'front';RealScanWorkflow.moveTo(2,side);$({front:'fileInputFront',back:'fileInputBack',page3:'fileInputPage3',page4:'fileInputPage4'}[side])?.click();}}],['Desde otro celular',()=>$('btnOpenReceiveModal').click()]]) panel.querySelector('#operatorReceiveActions').append(button(label,action));
     $('counterService').after(panel);
     // Less frequently used settings stay accessible through an explicit disclosure.
-    const more = document.createElement('details'); more.className = 'operator-advanced'; more.innerHTML = '<summary>Otros formatos: identificación, pasaporte y medida personalizada</summary>';
-    $('serviceFormats').before(more); more.append($('serviceFormats')); more.open = true;
+    const more = document.createElement('details'); more.className = 'operator-advanced'; more.innerHTML = '<summary><span>Otros formatos: identificación, pasaporte y medida personalizada</span><span class="operator-advanced-chevron" aria-hidden="true">▾</span></summary>';
+    $('serviceFormats').before(more); more.append($('serviceFormats'));
+    // Recogido por defecto en pantallas estrechas (v3.14.0): la vista inicial
+    // muestra primero el servicio actual y las tres acciones principales, sin
+    // scroll eterno. En pantallas anchas queda desplegado como hasta ahora.
+    more.open = window.matchMedia('(min-width: 1024px)').matches;
     more.addEventListener('toggle',()=>{more.dataset.expanded=String(more.open);});
     update();
     document.addEventListener('click',()=>requestAnimationFrame(update));

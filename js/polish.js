@@ -105,6 +105,41 @@
     try { return !!localStorage.getItem(WELCOME_KEY); } catch (e) { return true; }
   }
 
+  /* ---------- Copia en la nube: pasos de activación (v3.14.0) ----------
+     La activación se hace una sola vez en la consola de Firebase; la app
+     la resume en una lista breve en vez de llevar a un callejón sin salida. */
+  function showCloudSteps() {
+    let overlay = document.getElementById('cloudStepsModal');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'cloudStepsModal';
+      overlay.className = 'hidden counter-overlay';
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-labelledby', 'cloudStepsTitle');
+      overlay.innerHTML = '<div class="counter-dialog">' +
+        '<div class="counter-dialog-heading"><div><p class="counter-kicker">COPIA EN LA NUBE</p><h2 id="cloudStepsTitle">Activar la copia en la nube</h2></div>' +
+        '<button type="button" data-close-modal="cloudStepsModal" aria-label="Cerrar">×</button></div>' +
+        '<p class="counter-help">La activación se hace una sola vez desde la consola de Firebase del proyecto. Después, vincular este equipo lleva un solo toque.</p>' +
+        '<ol class="cloud-steps-list">' +
+        '<li>En la consola de Firebase del proyecto «fotos-cobertores-pro», crea el depósito de <strong>Storage</strong> si aún no existe.</li>' +
+        '<li>Publica las reglas de <strong>Realtime Database</strong> y de <strong>Storage</strong> incluidas en el proyecto.</li>' +
+        '<li>En <strong>Authentication</strong>, activa el acceso con correo y contraseña.</li>' +
+        '<li>Vuelve a esta app, abre <strong>Ajustes → Copia en la nube</strong> y pulsa «Vincular / Sincronizar ahora».</li>' +
+        '</ol>' +
+        '<div class="counter-dialog-actions"><button type="button" data-close-modal="cloudStepsModal" class="counter-secondary">Cerrar</button>' +
+        '<button type="button" id="cloudStepsOpenSettings" class="counter-primary">Abrir ajustes</button></div></div>';
+      document.body.append(overlay);
+      overlay.querySelector('#cloudStepsOpenSettings').addEventListener('click', function () {
+        if (typeof closeModal === 'function') closeModal('cloudStepsModal');
+        const b = document.querySelector('button[title*="Ajustes"]');
+        if (b) b.click();
+        else if (typeof openModal === 'function') openModal('settingsModal');
+      });
+    }
+    if (typeof openModal === 'function') openModal('cloudStepsModal');
+    else overlay.classList.remove('hidden');
+  }
+
   /* ---------- 12.6 Panel «Hoy» ---------- */
   function scrollToId(id) {
     const el = document.getElementById(id);
@@ -130,7 +165,7 @@
       }
       const profiles = window.RealScanPrinterProfiles;
       if (profiles && !profiles.getActive()) rows.push({ icon: '📏', text: 'Tu impresora no tiene perfil de calibración: la escala 1:1 puede variar.', btn: 'Calibrar', act: function () { scrollToId('dailyCare'); } });
-      if (window.RealScanCloudSync && !window.RealScanCloudSync.isLinked()) rows.push({ icon: '☁️', text: 'La copia en la nube está sin vincular: tus trabajos viven solo en este equipo.', btn: 'Vincular', act: function () { const b = document.querySelector('button[title*="Ajustes"]'); if (b) b.click(); else if (typeof openModal === 'function') openModal('settingsModal'); } });
+      if (window.RealScanCloudSync && !window.RealScanCloudSync.isLinked()) rows.push({ compact: true, icon: '☁️', text: 'Nube sin vincular · Los trabajos se guardan solo en este equipo.', btn: 'Cómo activarla', act: showCloudSteps });
     } catch (e) {}
     if (!rows.length) return;
     const panel = document.createElement('section');
@@ -153,20 +188,35 @@
     panel.append(header);
     rows.forEach(function (row) {
       const line = document.createElement('div');
-      line.className = 'flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 px-3 py-2.5';
       const span = document.createElement('span');
-      span.className = 'text-xs font-semibold text-slate-700 dark:text-slate-200 flex-1 min-w-[210px]';
-      span.textContent = row.icon + ' ' + row.text;
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold min-h-[44px]';
       btn.textContent = row.btn;
       btn.addEventListener('click', row.act);
+      if (row.compact) {
+        // Estado compacto (v3.14.0): una línea discreta, sin ocupar el
+        // mejor sitio de la pantalla ni competir con las acciones.
+        line.className = 'flex flex-wrap items-center gap-x-2 gap-y-1 px-1 py-1';
+        span.className = 'text-xs font-medium text-slate-500 dark:text-slate-400 flex-1 min-w-[200px]';
+        btn.className = 'px-2 py-1.5 rounded-lg text-xs font-bold text-indigo-700 dark:text-indigo-300 underline decoration-indigo-300 dark:decoration-indigo-700 underline-offset-2 min-h-[36px]';
+      } else {
+        line.className = 'flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 px-3 py-2.5';
+        span.className = 'text-xs font-semibold text-slate-700 dark:text-slate-200 flex-1 min-w-[210px]';
+        btn.className = 'px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold min-h-[44px]';
+      }
+      span.textContent = row.icon + ' ' + row.text;
       line.append(span, btn);
       panel.append(line);
     });
+    // v3.14.0: el panel «Hoy» va DESPUÉS del bloque principal de trabajo
+    // (servicio actual + siguiente paso), no en el mejor sitio de la
+    // pantalla inicial. Son avisos del día, no la acción principal.
+    const journey = document.getElementById('operatorJourney');
+    const counter = document.getElementById('counterService');
     const bar = document.getElementById('guidedStepsBar');
-    if (bar && bar.parentNode) bar.parentNode.insertBefore(panel, bar.nextSibling);
+    if (journey && journey.parentNode) journey.parentNode.insertBefore(panel, journey.nextSibling);
+    else if (counter && counter.parentNode) counter.parentNode.insertBefore(panel, counter.nextSibling);
+    else if (bar && bar.parentNode) bar.parentNode.insertBefore(panel, bar.nextSibling);
     else { const care = document.getElementById('dailyCare'); if (care && care.parentNode) care.parentNode.insertBefore(panel, care); }
   }
 
@@ -214,7 +264,25 @@
     if (t) recordFormatUse(t.getAttribute('data-format') || t.getAttribute('data-quick-format'));
   }, true);
 
+  /* ---------- La barra flotante nunca tapa los pasos (v3.14.0) ----------
+     La barra de acciones rápidas (visible en el paso de impresión) se
+     retira cuando los pasos del recorrido entran en la franja inferior
+     de la pantalla, para no cubrirlos en ningún estado. */
+  function guardHudOverlap(tries) {
+    const hud = document.getElementById('floatingHudBar');
+    const nav = document.querySelector('#operatorJourney nav');
+    if (!hud) return;
+    if (!nav) { if ((tries || 0) < 10) setTimeout(function () { guardHudOverlap((tries || 0) + 1); }, 500); return; }
+    if (!('IntersectionObserver' in window)) return;
+    hud.classList.add('hud-guarded');
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { hud.classList.toggle('hud-yield', e.isIntersecting); });
+    }, { rootMargin: '-86% 0px 0px 0px', threshold: 0 });
+    io.observe(nav);
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
+    guardHudOverlap(0);
     const welcomeBtn = document.getElementById('btnShowWelcome');
     if (welcomeBtn) welcomeBtn.addEventListener('click', showWelcome);
     const themeName = document.getElementById('themeCurrentName');

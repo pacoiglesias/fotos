@@ -120,3 +120,161 @@ button, a, summary, select, label, [role="button"] { touch-action: manipulation;
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   v3.14.0 — Simplicidad visual y acabado profesional
+   Criterio aplicado en toda la pasada: un solo lenguaje de
+   diseño (radio 16 en los bloques principales, la sombra media
+   del sistema, el color de acento del tema como único color de
+   marca), jerarquía clara con la siguiente acción obvia, y
+   estados de control inconfundibles. Profesional = sobrio:
+   sin degradados de juguete ni un color por tarjeta.
+   ============================================================ */
+
+/* La cabecera y la barra de pasos vuelven a fijarse al hacer
+   scroll: «overflow-x: clip» no crea contenedor de scroll (a
+   diferencia de «hidden») y por tanto no rompe position:sticky.
+   Sin soporte, se mantiene el comportamiento anterior. */
+@supports (overflow: clip) {
+  html, body { overflow-x: clip; }
+  main.overflow-x-hidden { overflow-x: clip; }
+}
+
+/* Ningún destino de scroll queda tapado: arriba, cabecera +
+   barra de pasos (altura publicada por guided-steps.js); abajo,
+   la barra flotante de acciones con su área segura. */
+html {
+  scroll-padding-top: var(--rs-sticky-offset, 96px);
+  scroll-padding-bottom: calc(88px + env(safe-area-inset-bottom));
+}
+
+/* Bloques de la pantalla inicial con el lenguaje común. */
+.counter-service, .operator-journey, .workflow-guide {
+  border-radius: 16px;
+  box-shadow: var(--rs-shadow-md);
+}
+.workflow-guide { background: #fff; border-color: #e2e8f0; }
+.dark .workflow-guide { background: #0f172a; border-color: #1e293b; }
+
+/* Selector de intenciones: el acento del tema en fichas y
+   etiquetas, sin un color distinto por tarjeta. */
+.intent-card > span:first-child {
+  background-color: var(--rs-accent-soft);
+  color: var(--rs-accent-text);
+}
+.dark .intent-card > span:first-child {
+  background-color: color-mix(in srgb, var(--rs-accent) 24%, transparent);
+  color: color-mix(in srgb, var(--rs-accent) 60%, #fff);
+}
+.intent-card span.font-mono {
+  background-color: var(--rs-accent-soft);
+  color: var(--rs-accent-text);
+}
+.dark .intent-card span.font-mono {
+  background-color: color-mix(in srgb, var(--rs-accent) 24%, transparent);
+  color: color-mix(in srgb, var(--rs-accent) 60%, #fff);
+}
+
+/* Estados de botón inconfundibles: el secundario activo es una
+   superficie blanca con borde y sombra (se puede tocar); el
+   deshabilitado es gris plano, sin sombra y con cursor de no
+   permitido. Nunca dos grises parecidos. */
+.counter-secondary:not(:disabled),
+.counter-header-more:not(:disabled) {
+  background: #fff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  box-shadow: var(--rs-shadow-sm);
+}
+.dark .counter-secondary:not(:disabled),
+.dark .counter-header-more:not(:disabled) {
+  background: #1e293b;
+  color: #f1f5f9;
+  border-color: #475569;
+}
+.counter-service button:disabled,
+.counter-dialog button:disabled,
+.operator-journey button:disabled {
+  opacity: 1;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.dark .counter-service button:disabled,
+.dark .counter-dialog button:disabled,
+.dark .operator-journey button:disabled {
+  background: #1e293b;
+  color: #64748b;
+  border-color: #334155;
+}
+
+/* «Otros formatos» como tarjeta desplegable, con el mismo
+   patrón visual que los acordeones de ranura (slot-acc). */
+.operator-advanced {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--rs-shadow-md);
+  overflow: hidden;
+}
+.operator-advanced > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  list-style: none;
+}
+.operator-advanced > summary::-webkit-details-marker { display: none; }
+.operator-advanced-chevron {
+  margin-left: auto;
+  color: #94a3b8;
+  transition: transform 0.15s ease;
+}
+.operator-advanced[open] .operator-advanced-chevron { transform: rotate(180deg); }
+.operator-advanced > section {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.dark .operator-advanced { background: #0f172a; border-color: #1e293b; }
+.dark .operator-advanced > summary { color: #e2e8f0; }
+.dark .operator-advanced > section { border-top-color: #1e293b; }
+
+/* La barra flotante de acciones se retira cuando los pasos del
+   recorrido entran en su franja (guardia en js/polish.js). */
+.hud-bar.hud-guarded { transition: transform 0.25s ease, opacity 0.25s ease; }
+.hud-bar.hud-yield {
+  transform: translate(-50%, 230%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Lista de pasos de activación de la nube (panel «Hoy»). */
+.cloud-steps-list {
+  list-style: decimal;
+  padding-left: 20px;
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #334155;
+}
+.cloud-steps-list li { margin: 6px 0; }
+.dark .cloud-steps-list { color: #cbd5e1; }
+
+/* Cabecera compacta en móvil: las cuatro acciones en una sola
+   fila de iconos (el nombre accesible se conserva) en vez de una
+   rejilla de dos filas que empujaba todo el contenido. */
+@media (max-width: 639px) {
+  header > div > div:last-child { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  header #btnOpenReceiveModal > span:last-child,
+  header #btnOpenDeliveryModal > span:last-child,
+  header #btnNewProject > span:last-child { display: none !important; }
+}
