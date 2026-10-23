@@ -1,3 +1,4 @@
+param([switch]$PrepararAccesos)
 # Publish the audited application even when this folder has old Git metadata.
 # A new checkout preserves all local files and gives the build its true source SHA.
 $ErrorActionPreference = 'Stop'
@@ -42,6 +43,26 @@ try {
     if ([int]$Matches.major -lt 24) { throw "Se requiere Node.js 24 o posterior. Version detectada: $nodeVersion" }
     Write-Host "Node.js $nodeVersion compatible." -ForegroundColor DarkCyan
 
+    if ($PrepararAccesos) {
+        Write-Host 'GIT: comprobando conexion con el repositorio de RealScan.' -ForegroundColor Cyan
+        Invoke-ReleaseStep 'git.exe' @('ls-remote','--exit-code','https://github.com/pacoiglesias/fotos.git','refs/heads/main')
+        Write-Host 'GITHUB: preparando el acceso de pacoiglesias con Git Credential Manager.' -ForegroundColor Cyan
+        Invoke-ReleaseStep 'git.exe' @('credential-manager','--version')
+        Invoke-ReleaseStep 'git.exe' @('credential-manager','configure')
+        $githubAccounts = @(& git.exe credential-manager github list)
+        if ($LASTEXITCODE -ne 0) { throw 'No se pudieron consultar las cuentas de GitHub. Comprueba Git Credential Manager.' }
+        $githubAccounts = @($githubAccounts | ForEach-Object { ([string]$_).Trim() })
+        if ($githubAccounts -notcontains 'pacoiglesias') {
+            Write-Host 'Completa el acceso de GitHub en el navegador que se abrira.' -ForegroundColor Yellow
+            Invoke-ReleaseStep 'git.exe' @('credential-manager','github','login','--username','pacoiglesias','--browser')
+            $githubAccounts = @(& git.exe credential-manager github list)
+            if ($LASTEXITCODE -ne 0 -or @($githubAccounts | ForEach-Object { ([string]$_).Trim() }) -notcontains 'pacoiglesias') {
+                throw 'GitHub no guardo la cuenta pacoiglesias. Vuelve a ejecutar autenticar_y_desplegar.bat.'
+            }
+        }
+        Write-Host 'Cuenta GitHub guardada. Se conserva el historial y los archivos de tu carpeta.' -ForegroundColor Green
+    }
+
     # Use the installed CLI and its existing login. Only install if it is absent.
     if (-not (Get-Command firebase.cmd -ErrorAction SilentlyContinue)) {
         $cliRoot = Join-Path $auditRoot 'firebase-cli'
@@ -56,7 +77,20 @@ try {
     foreach ($project in @('fotos-cobertores-pro','cobertores-web')) {
         & firebase.cmd hosting:sites:list --project $project | Out-Host
         if ($LASTEXITCODE -ne 0) {
-            throw "No se pudo comprobar el acceso a $project. Revisa la conexion y los permisos. Si la sesion caduco, abre Firebase-Acceso.bat y vuelve a ejecutar este BAT."
+            if (-not $PrepararAccesos) {
+                throw "No se pudo comprobar el acceso a $project. Revisa la conexion y los permisos. Para preparar los accesos abre autenticar_y_desplegar.bat."
+            }
+            Write-Host 'No se pudo confirmar el acceso a Firebase. Si tienes conexion, puedes renovar tu sesion.' -ForegroundColor Yellow
+            Write-Host '1. Acceso con navegador'
+            Write-Host '2. Acceso con codigo manual'
+            Write-Host '0. Salir para revisar la conexion o los permisos'
+            $authChoice = Read-Host 'Elige una opcion [1]'
+            if ($authChoice -notin @('','1','2')) { throw 'Preparacion cancelada. No se ha publicado nada en este intento.' }
+            $authAction = 'Local'
+            if ($authChoice -eq '2') { $authAction = 'Remote' }
+            & (Join-Path $PSScriptRoot 'scripts\firebase-access.ps1') -Action $authAction
+            if ($LASTEXITCODE -ne 0) { throw 'No se pudo completar el acceso a Firebase.' }
+            Invoke-ReleaseStep 'firebase.cmd' @('hosting:sites:list','--project',$project)
         }
     }
     Write-Host "[2/5] Descargando la version auditada $releaseVersion. Tu carpeta actual se conserva." -ForegroundColor Cyan

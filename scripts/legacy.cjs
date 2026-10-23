@@ -1,8 +1,11 @@
 const fs = require("fs"),
-  cp = require("child_process");
+  cp = require("child_process"),
+  assert = require("assert");
 const results = [];
-for (const file of fs.readdirSync(".").filter((x) => /^test_.*\.js$/.test(x))) {
-  const result = cp.spawnSync(process.execPath, [file], {
+const testFiles = fs.readdirSync("tests").filter((x) => /^test_.*\.js$/.test(x));
+assert(testFiles.length > 0, "No se encontraron pruebas en tests/");
+for (const file of testFiles) {
+  const result = cp.spawnSync(process.execPath, ["tests/" + file], {
     encoding: "utf8",
     timeout: 120000,
   });

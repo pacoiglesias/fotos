@@ -58,6 +58,8 @@ Para probar además la transferencia real, establece `REALSCAN_TEST_RELAY=1` ant
 
 ## Publicar
 
+Las suites `test_entrega*`, `test_etapa*` y `test_maestro_integral.js` están agrupadas en `tests/`. Se ejecutan con `npm run test:legacy` o dentro de `npm run verify`; no se incluyen en la distribución que se publica.
+
 Firebase CLI probado: 15.26.0. Proyecto: `fotos-cobertores-pro`.
 
 ```sh
@@ -139,4 +141,4 @@ Guía del trabajo en tres pasos con acciones contextuales, avisos de escala y ca
 
 Abre **Firebase-Acceso.bat** con doble clic. Elige **1** para comprobar la sesión en los dos proyectos de RealScan; si funciona, no necesitas volver a identificarte. La opción **2** renueva el acceso en el navegador y la **3** permite completar un código manual manteniendo abierta la misma ventana. Usa la cuenta que administra los proyectos. El asistente utiliza la herramienta oficial de Firebase, conserva la ventana para leer errores y no publica ni elimina archivos. No copies contraseñas al asistente ni reutilices códigos anteriores. Para comprobarlo sin menú: `Firebase-Acceso.bat -Action Check`.
 
-`autenticar_y_desplegar.bat` ejecuta el mismo proceso que `subir_a_firebase.bat`. Reutiliza tu sesión y comprueba el acceso a los dos proyectos antes de continuar. Si falla, muestra el error para distinguir problemas de conexión, sesión o permisos. Si necesitas renovar la sesión, usa `Firebase-Acceso.bat` y vuelve a abrir el BAT de publicación.
+`autenticar_y_desplegar.bat` prepara el acceso y después ejecuta el mismo publicador. Comprueba Git y la conexión al repositorio, configura Git Credential Manager y abre el acceso de GitHub en el navegador si no está guardada la cuenta `pacoiglesias`. Comprueba Firebase y, si hace falta renovar la sesión, permite elegir navegador o código manual desde la misma ventana. Conserva los archivos y el historial de tu carpeta. El push del código se realiza por separado; este BAT descarga y publica la versión auditada de GitHub.

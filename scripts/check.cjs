@@ -9,7 +9,7 @@ for (const file of [
   "manifest.json",
 ])
   JSON.parse(fs.readFileSync(file, "utf8"));
-for (const dir of ["js", "scripts", "src"])
+for (const dir of ["js", "scripts", "src", "tests"])
   for (const f of fs
     .readdirSync(dir)
     .filter((x) => /\.(js|cjs|mjs)$/.test(x))) {

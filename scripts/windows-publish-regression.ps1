@@ -5,6 +5,7 @@ if ($Scenario) {
     # Keep Node real so Windows PowerShell argument handling is also exercised.
     $global:publishTestScenario = $Scenario
     $global:publishTestTrace = $Trace
+    $global:publishTestGithubLoggedIn = $false
     function global:Write-PublishTrace {
         param([string]$Value)
         [IO.File]::AppendAllText($global:publishTestTrace, $Value + [Environment]::NewLine)
@@ -20,6 +21,11 @@ if ($Scenario) {
     function global:git.exe {
         Write-PublishTrace ('git ' + ($args -join ' '))
         $global:LASTEXITCODE = 0
+        if ($args[0] -eq 'credential-manager') {
+            if ($args[1] -eq '--version') { '2.9.1' }
+            if ($args[1] -eq 'github' -and $args[2] -eq 'login') { $global:publishTestGithubLoggedIn = $true }
+            if ($args[1] -eq 'github' -and $args[2] -eq 'list' -and $global:publishTestGithubLoggedIn) { 'pacoiglesias' }
+        }
         if ($args[0] -eq 'clone') {
             $fixture = $args[$args.Count - 1]
             New-Item -ItemType Directory -Path $fixture | Out-Null
@@ -37,7 +43,8 @@ if ($Scenario) {
         if ($args[0] -eq 'run' -and $global:publishTestScenario -eq 'publish-failure') { $global:LASTEXITCODE = 9 }
     }
     function global:npx.cmd { Write-PublishTrace ('npx ' + ($args -join ' ')); $global:LASTEXITCODE = 0 }
-    & $Publisher
+    if ($Scenario -eq 'prepare-access') { & $Publisher -PrepararAccesos }
+    else { & $Publisher }
     exit $LASTEXITCODE
 }
 
@@ -53,7 +60,7 @@ foreach ($file in @($testPublisher, (Join-Path $PSScriptRoot 'firebase-access.ps
     [System.Management.Automation.Language.Parser]::ParseFile($file, [ref]$parseTokens, [ref]$parseErrors) | Out-Null
     if ($parseErrors.Count) { throw ($parseErrors | Out-String) }
 }
-foreach ($case in @('success','auth-failure','wrong-commit','install-failure','publish-failure','old-node')) {
+foreach ($case in @('success','prepare-access','auth-failure','wrong-commit','install-failure','publish-failure','old-node')) {
     $caseTrace = Join-Path $testRoot ($case + '.trace')
     $caseOutput = Join-Path $testRoot ($case + '.output')
     & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $PSCommandPath -Scenario $case -Publisher $testPublisher -Trace $caseTrace *> $caseOutput
@@ -61,9 +68,12 @@ foreach ($case in @('success','auth-failure','wrong-commit','install-failure','p
     $caseText = Get-Content -LiteralPath $caseOutput -Raw
     $traceText = ''
     if (Test-Path -LiteralPath $caseTrace) { $traceText = Get-Content -LiteralPath $caseTrace -Raw }
-    if ($case -eq 'success') {
+    if ($case -in @('success','prepare-access')) {
         if ($caseExit -ne 0 -or $traceText -notmatch 'npx playwright install chromium webkit' -or $traceText -notmatch 'npm run publish' -or $caseText -notmatch 'Node.js v24\..+ compatible') {
             throw "Fallo en $case. Salida: $caseText"
+        }
+        if ($case -eq 'prepare-access' -and ($traceText -notmatch 'git credential-manager configure' -or $traceText -notmatch 'git credential-manager github login --username pacoiglesias --browser')) {
+            throw 'No se preparo el acceso GitHub con el navegador.'
         }
     } else {
         if ($caseExit -eq 0) { throw "El error de $case no se propago." }

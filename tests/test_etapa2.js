@@ -1,3 +1,4 @@
+const projectRoot = require('path').resolve(__dirname, '..');
 // test_etapa2.js — Verificación de Seguridad, Proyecto v2, Restauración y Sanitización
 const fs = require('fs');
 const vm = require('vm');

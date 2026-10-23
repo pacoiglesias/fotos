@@ -10,7 +10,9 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0desplegar.ps1"
+set "prepareAccess="
+if /I "%~1"=="-PrepararAccesos" set "prepareAccess=-PrepararAccesos"
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0desplegar.ps1" %prepareAccess%
 set "deployResult=%errorlevel%"
 echo.
 if "%deployResult%"=="0" (

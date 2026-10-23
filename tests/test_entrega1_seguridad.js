@@ -1,3 +1,4 @@
+const projectRoot = require('path').resolve(__dirname, '..');
 /* ============================================================
    RealScan Pro — Suite de Regresión: Entrega 1
    Integridad de Exportación, Validación Geométrica y Seguridad
@@ -11,11 +12,11 @@ const vm = require('vm');
 console.log('🧪 Iniciando Suite de Regresión: Entrega 1...');
 
 // Cargar scripts requeridos
-const configCode = fs.readFileSync(path.join(__dirname, 'js', 'config.js'), 'utf-8');
-const layoutCode = fs.readFileSync(path.join(__dirname, 'js', 'layout-engine.js'), 'utf-8');
-const storageCode = fs.readFileSync(path.join(__dirname, 'js', 'storage.js'), 'utf-8');
-const authCode = fs.readFileSync(path.join(__dirname, 'js', 'auth.js'), 'utf-8');
-const exportCode = fs.readFileSync(path.join(__dirname, 'js', 'export.js'), 'utf-8');
+const configCode = fs.readFileSync(path.join(projectRoot, 'js', 'config.js'), 'utf-8');
+const layoutCode = fs.readFileSync(path.join(projectRoot, 'js', 'layout-engine.js'), 'utf-8');
+const storageCode = fs.readFileSync(path.join(projectRoot, 'js', 'storage.js'), 'utf-8');
+const authCode = fs.readFileSync(path.join(projectRoot, 'js', 'auth.js'), 'utf-8');
+const exportCode = fs.readFileSync(path.join(projectRoot, 'js', 'export.js'), 'utf-8');
 
 function createSandbox() {
   const store = {};

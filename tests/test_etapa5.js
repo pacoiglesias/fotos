@@ -1,3 +1,4 @@
+const projectRoot = require('path').resolve(__dirname, '..');
 /**
  * Suite de Verificación Integral - Etapa 5 (Recuperación y Productividad)
  * Valida:
@@ -122,7 +123,7 @@ function createBrowserSandbox() {
 
 async function runTests() {
   console.log('🧪 Iniciando Suite de Verificación Etapa 5 (Recuperación y Productividad)...');
-  const code = fs.readFileSync(path.join(__dirname, 'js/storage.js'), 'utf8');
+  const code = fs.readFileSync(path.join(projectRoot, 'js/storage.js'), 'utf8');
 
   // TEST 1: M-27 Auto-guardado y recuperación de borrador
   {

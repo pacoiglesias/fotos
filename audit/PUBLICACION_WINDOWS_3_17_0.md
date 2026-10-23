@@ -1,14 +1,17 @@
 # Publicacion de RealScan 3.17 desde Windows
 
-Abre `subir_a_firebase.bat` con doble clic. `autenticar_y_desplegar.bat` y
-`desplegar_con_powershell.bat` ejecutan el mismo proceso y conservan su codigo
-de salida. La ventana queda abierta al terminar, tanto si hay exito como error.
+Abre `subir_a_firebase.bat` con doble clic para publicar con tu sesion actual.
+Para preparar tambien los accesos, abre `autenticar_y_desplegar.bat`: comprueba
+Git y la conexion al repositorio; configura Git Credential Manager y, si no
+encuentra la cuenta pacoiglesias, abre el acceso de GitHub en el navegador.
+Si Firebase requiere renovar la sesion, ofrece navegador o codigo manual.
+Los BAT conservan su codigo de salida y dejan la ventana abierta al terminar.
 
 El proceso usa Git y Node.js 24 o posterior. Reutiliza Firebase CLI instalado y
 su sesion actual; solo instala la CLI 15.26.0 en `.audit/firebase-cli` si falta.
 Comprueba acceso a ambos proyectos antes de descargar las dependencias.
-Si el acceso falla, muestra el error y se detiene. Para renovar la sesion,
-abre `Firebase-Acceso.bat`; el publicador no fuerza un nuevo inicio de sesion.
+Si el acceso falla, muestra el error; el modo de preparacion permite renovar
+la sesion. Tambien puedes usar `Firebase-Acceso.bat` de forma independiente.
 
 Para evitar que el Git local antiguo bloquee la entrega, descarga una copia
 nueva de la aplicacion auditada 3.17.0, commit
@@ -31,6 +34,6 @@ Validacion: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File
 scripts/windows-publish-regression.ps1`. Ejecuta el publicador aislado con Node
 real y Windows PowerShell; simula Git, Firebase, npm y Playwright. Comprueba
 exito, acceso denegado, commit incorrecto, instalacion fallida, publicacion
-fallida y rechazo de Node antiguo. Los errores interrumpen el proceso y producen
+fallida, preparacion de GitHub y rechazo de Node antiguo. Los errores interrumpen el proceso y producen
 salida distinta de cero. Se ejecuta tambien en GitHub Actions sobre Windows.
 Estas pruebas no realizan despliegues reales.
