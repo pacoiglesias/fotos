@@ -50,6 +50,7 @@ function getDB() {
    ============================================================ */
 function prepareWorkspaceForJobSwitch(options) {
   options = options || {};
+  window.RealScanPrint?.clear();
   window.RealScanReview?.cancel();
   const documentCleanup=window.RealScanDocuments?.reset(!!options.clearDraft);
   window.RealScanP2P?.close();window.RealScanOcr?.cancel(true);
@@ -1607,7 +1608,7 @@ function runPreflightChecks() {
 
   requiredSlots.forEach(function(side) {
     const imgData = state.images && state.images[side];
-    const hasImage = !!(imgData && (imgData.processedDataUrl || imgData.originalSrc));
+    const hasImage = !!imgData?.processedDataUrl;
     if (hasImage) {
       loadedCount++;
       const minDpiPixels = Math.round((Math.min(spec.widthMm, spec.heightMm) / 25.4) * 150);
@@ -1626,7 +1627,7 @@ function runPreflightChecks() {
 
   // Si ninguna cara está cargada en todo el documento
   const totalAnyLoaded = Object.keys(state.images || {}).filter(function(k) {
-    return !!(state.images[k] && (state.images[k].processedDataUrl || state.images[k].originalSrc));
+    return !!state.images[k]?.processedDataUrl;
   }).length;
 
   if (totalAnyLoaded === 0) {

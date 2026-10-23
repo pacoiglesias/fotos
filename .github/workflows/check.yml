@@ -14,3 +14,15 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run verify
+      - name: Save compiled release and audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: realscan-build-and-audit
+          path: |
+            dist/
+            .audit/print-usability/results.json
+            .audit/print-usability/review-*.png
+            .audit/repair-evidence/regression.json
+          if-no-files-found: warn
+          retention-days: 14

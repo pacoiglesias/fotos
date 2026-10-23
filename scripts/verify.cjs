@@ -6,6 +6,7 @@ try {
     "auth-regression",
     "regression",
     "photo-layout-regression",
+    "print-usability-regression",
     "mobile-workflow-regression",
     "functional-audit-regression",
     "counter-regression",

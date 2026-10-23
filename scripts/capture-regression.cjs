@@ -122,7 +122,7 @@ function cameraFixture() {
   await page.locator("#outputReviewModal").waitFor({ state: "visible" });
   assert((await page.locator("#printReview").innerText()).includes("85.6"));
   assert.equal(await page.evaluate(() => [...document.querySelectorAll("#printReview img")].filter(i => !i.closest(".output-review-sheet")).length), 1);
-  assert(await page.evaluate(() => !!document.querySelector("#printReview .output-review-sheet .a4-sheet")), "La revisión previa debe mostrar la vista previa de la hoja");
+  await page.locator("#printSheetPreview svg").first().waitFor(); assert(await page.evaluate(() => !!document.querySelector("#printSheetPreview svg")), "La revisión muestra la hoja exacta preparada para imprimir");
   await page.locator("#outputReviewModal").screenshot({path:path.join(out,"print-review.png")});
   await page.locator("#outputReviewModal [data-close-modal]").click();
   await page.locator("#btnOpenDeliveryModal").click();

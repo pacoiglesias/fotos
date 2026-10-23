@@ -201,40 +201,4 @@ async function downloadPdf() {
   showToast('✅ PDF descargado (' + filename + '). Recuerda imprimir al 100% de escala.', 'success');
 }
 
-async function printDirectFromBrowser() {
-  if (typeof ensureJsPdf === 'function') await ensureJsPdf();
-  const doc = generatePdfDoc();
-  if (!doc) return;
-  try {
-    const blob = doc.output('blob');
-    const blobUrl = URL.createObjectURL(blob);
-    let printFrame = document.getElementById('realscan_print_iframe');
-    if (!printFrame) {
-      printFrame = document.createElement('iframe');
-      printFrame.id = 'realscan_print_iframe';
-      printFrame.style.position = 'fixed';
-      printFrame.style.right = '0';
-      printFrame.style.bottom = '0';
-      printFrame.style.width = '0';
-      printFrame.style.height = '0';
-      printFrame.style.border = '0';
-      document.body.appendChild(printFrame);
-    }
-    printFrame.src = blobUrl;
-    printFrame.onload = function() {
-      setTimeout(function() {
-        try {
-          printFrame.contentWindow.focus();
-          printFrame.contentWindow.print();
-        } catch(e) {
-          applyPrintPageStyle();
-          window.print();
-        }
-      }, 350);
-    };
-    showToast('🖨️ Abriendo cuadro de impresión a escala 1:1 real...', 'info');
-  } catch (err) {
-    applyPrintPageStyle();
-    window.print();
-  }
-}
+async function printDirectFromBrowser() { return handlePrintDirect(); }

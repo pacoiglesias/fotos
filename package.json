@@ -1,6 +1,6 @@
 {
   "name": "realscan",
-  "version": "3.16.0",
+  "version": "3.17.0",
   "private": true,
   "scripts": {
     "build": "node scripts/build.cjs",
@@ -14,7 +14,8 @@
     "test:navigation": "node scripts/navigation-regression.cjs",
     "test:delivery": "node scripts/delivery-regression.cjs",
     "test:capture": "node scripts/capture-regression.cjs",
-    "test:practical": "node scripts/practical-regression.cjs"
+    "test:practical": "node scripts/practical-regression.cjs",
+    "test:print": "node scripts/print-usability-regression.cjs"
   },
   "dependencies": {
     "@firebase/app": "0.16.3",

@@ -7,7 +7,7 @@
     const layout = RealScanLayout.computeDocumentLayout(state), spec = getActiveSpec(), facts = document.createElement("div");
     facts.className = "output-review-facts";
     const scale = (Number(state.outputScalePercent) || 100) / 100;
-    const pairs = [["Tama\xF1o de cada pieza", (spec.widthMm * scale).toFixed(2) + " \xD7 " + (spec.heightMm * scale).toFixed(2) + " mm"], ["Papel y hojas", layout.paper.shortName + " \xB7 " + layout.pages.length + " hoja(s)"], ["Contenido", layout.summary || spec.shortName], ["Destino", delivery ? "Descarga privada por QR" : (mode === "pdf" ? "Descarga de PDF a escala real" : "Impresora \xB7 PDF a escala real")]];
+    const pairs = [["Tama\xF1o de cada pieza", (spec.widthMm * scale).toFixed(2) + " \xD7 " + (spec.heightMm * scale).toFixed(2) + " mm"], ["Papel y hojas", layout.paper.shortName + " \xB7 " + layout.pages.length + " hoja(s)"], ["Contenido", layout.summary || spec.shortName], ["Destino", delivery ? "Descarga privada por QR" : (mode === "pdf" ? "Descarga de PDF a escala real" : "Impresora · Hoja a tamaño real")]];
     pairs.push(['Guías de corte',layout.includeCutMarks ? 'Visibles en la hoja' : 'Sin marcas'], ['Acabado',layout.isCleanSheet ? 'Hoja limpia' : 'Con anotaciones activas']);
     if (!delivery) {
       if (state.activeCategory === 'photos') {
@@ -36,7 +36,7 @@
     if (!delivery) {
       // Vista previa de la hoja tal como saldrá (clon a escala de la hoja real).
       const sheet = document.querySelector('.a4-sheet');
-      if (sheet) {
+      if (sheet && !window.RealScanPrint) {
         const sheetWrap = document.createElement('div');
         sheetWrap.className = 'output-review-sheet';
         const clone = sheet.cloneNode(true);
@@ -164,11 +164,11 @@
       overlay.innerHTML = '<p class="text-white/80 text-sm font-semibold">Muestra esta foto al cliente para su aprobación</p><div id="clientApprovalSheet" class="client-approval-sheet w-full max-w-2xl max-h-[70vh] overflow-hidden flex items-start justify-center"></div><div class="flex flex-wrap gap-3 justify-center"><button type="button" id="btnClientRepeat" class="px-6 py-4 rounded-2xl bg-white/10 text-white border border-white/40 text-base font-bold min-h-[56px]">↺ Repetir foto</button><button type="button" id="btnClientApprove" class="px-6 py-4 rounded-2xl bg-emerald-500 text-white text-base font-black min-h-[56px]">✓ Aprobada</button></div>';
       document.body.append(overlay);
       overlay.querySelector("#btnClientApprove").addEventListener("click", () => {
-        overlay.classList.add("hidden");
+        closeModal("clientApproval");
         if (window.RealScanPolish) window.RealScanPolish.successCheck("Foto aprobada por el cliente");
       });
       overlay.querySelector("#btnClientRepeat").addEventListener("click", () => {
-        overlay.classList.add("hidden");
+        closeModal("clientApproval");
         closeModal("outputReviewModal");
         const card = document.querySelector('[id^="slotCard"], .slot-card, [data-slot-card]');
         const target = card || $("slotThumbWrapFront");
@@ -178,7 +178,7 @@
     }
     const holder = overlay.querySelector("#clientApprovalSheet");
     holder.replaceChildren();
-    const sheet = document.querySelector(".a4-sheet");
+    const sheet = document.querySelector("#printSheetPreview svg") || document.querySelector(".a4-sheet");
     if (sheet) {
       const clone = sheet.cloneNode(true);
       clone.removeAttribute("id");
@@ -191,7 +191,7 @@
       img.className = "max-h-[70vh] w-auto rounded-xl";
       holder.append(img);
     }
-    overlay.classList.remove("hidden");
+    openModal("clientApproval");
   }
   function preparePassportSheet(count) {
     if (typeof state === "undefined" || state.activeCategory !== "photos") return;

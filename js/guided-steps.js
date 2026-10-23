@@ -17,6 +17,8 @@
     try { return sessionStorage.getItem(FORMAT_PICKED_KEY) === '1'; } catch (e) { return false; }
   }
   function computeStep() {
+    const documentJob=window.RealScanDocuments?.status();
+    if(documentJob?.active)return {current:documentJob.ready?3:2,loaded:!!documentJob.count,ready:documentJob.ready};
     const images = (window.state && state.images) || {};
     const loaded = Object.keys(images).some(function (k) { return !!(images[k] && images[k].processedDataUrl); });
     let ready = loaded;
@@ -31,6 +33,10 @@
     return { current: 3, loaded: loaded, ready: ready };
   }
   function goStep(step) {
+    if(step===2 && window.RealScanDocuments?.status().active){RealScanJourney.go('review');return;}
+    if(step===2 && window.RealScanWorkflow){const work=RealScanWorkflow.describe();RealScanWorkflow.moveTo(2,work.missing[0]||work.wanted[0]);return;}
+    if(step===3 && window.RealScanJourney){RealScanJourney.go('deliver');return;}
+    if(step===1 && typeof setMobileStep==='function')setMobileStep(1);
     let target = null;
     if (step === 1) {
       target = document.querySelector('[data-format-wrap="' + (state.activeCategory || 'docs') + '"]') ||
@@ -61,6 +67,7 @@
     signature = sig;
     bar.querySelectorAll('[data-guided-step]').forEach(function (btn) {
       const step = Number(btn.getAttribute('data-guided-step'));
+      btn.disabled=step===3&&!info.ready;
       const isCurrent = step === info.current;
       const isDone = step < info.current || (step === 3 && info.ready && info.current === 3);
       btn.setAttribute('aria-current', isCurrent ? 'step' : 'false');
@@ -73,7 +80,7 @@
             : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400');
       const label = btn.querySelector('.guided-step-label');
       if (label) {
-        const base = { 1: 'Tipo', 2: 'Fotos', 3: 'Imprimir / Entregar' }[step];
+        const base = { 1: 'Elegir', 2: 'Cargar', 3: 'Revisar / Imprimir' }[step];
         label.textContent = (isDone && !isCurrent ? '✓ ' : step + ' · ') + base;
       }
     });
@@ -128,6 +135,7 @@
     }, true);
     setInterval(render, 1500);
     render();
+    window.RealScanGuided={render};
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

@@ -187,71 +187,16 @@ async function handleExportPDF(tryShare, reviewed) {
  * Genera el PDF con las medidas físicas 1:1 y dispara la ventana de impresión
  */
 async function handlePrintDirect(reviewed = false) {
-  if (typeof waitForProcessingComplete === 'function') {
-    if (!await waitForProcessingComplete()) return;
-  }
-  if (reviewed !== true && typeof showPrintReview === 'function') return showPrintReview(() => handlePrintDirect(true));
-  // Verificación de Pre-Vuelo Estricta (M-31)
-  if (typeof runPreflightChecks === 'function') {
-    const preflight = runPreflightChecks();
-    if (!preflight.valid) {
-      const fatalErrors = preflight.issues.filter(x => x.type === 'error' && x.code !== 'MISSING_SLOT');
-      if (fatalErrors.length > 0) {
-        const errorMsg = fatalErrors.map(x => x.message).join('\n');
-        if (typeof showToast === 'function') showToast(errorMsg, 'error');
-        alert(errorMsg);
-        return;
-      }
-      const missingSlotErrors = preflight.issues.filter(x => x.type === 'error' && x.code === 'MISSING_SLOT');
-      if (missingSlotErrors.length > 0) {
-        const missingMsg = missingSlotErrors.map(x => x.message).join('\n') +
-          '\n\n¿Deseas imprimir ÚNICAMENTE las caras disponibles (dejando el espacio vacío sin inventar contenido) o cancelar para cargar la imagen faltante?';
-        if (!(await showConfirmDialog(missingMsg, { title: 'Faltan caras por cargar', confirmText: 'Imprimir así' }))) return;
-      }
-    }
-    const warnings = preflight.issues.filter(x => x.type === 'warning');
-    if (warnings.length > 0) {
-      const warnMsg = warnings.map(x => x.message).join('\n') + '\n\n¿Deseas continuar con la impresión?';
-      if (!(await showConfirmDialog(warnMsg, { title: 'Advertencias de impresión', confirmText: 'Continuar' }))) return;
-    }
-  }
-
-  if (typeof ensureJsPdf === 'function') await ensureJsPdf();
-  const doc = generatePdfDoc();
-  if (!doc) return;
-
-  const spec = getActiveSpec();
-  if (typeof logActivity === 'function') {
-    logActivity('Impresión Directa 1:1', (state.activeCategory === 'photos' ? state.photoCopies + ' fotos' : spec.name));
-  }
-  showToast('Preparando impresión... Elige ESCALA 100% en el diálogo.', 'info');
-
-  let blobUrl;
+  if (state._processingPending) showToast('Terminando la imagen antes de imprimir…', 'info');
+  if (!await waitForProcessingComplete()) return;
+  if (reviewed !== true || !RealScanPrint.isPrepared()) return showPrintReview(() => handlePrintDirect(true));
+  const fatal = runPreflightChecks().issues.filter(i => i.type === 'error' && i.code !== 'MISSING_SLOT');
+  if (fatal.length) { showToast(fatal.map(i => i.message).join(' '), 'error'); return; }
   try {
-    blobUrl = doc.output('bloburl');
-  } catch (e) {
-    blobUrl = URL.createObjectURL(doc.output('blob'));
-  }
-
-  const iframe = document.createElement('iframe');
-  iframe.setAttribute('aria-hidden', 'true');
-  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
-  iframe.src = blobUrl;
-  iframe.onload = function() {
-    try {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-    } catch (e) {
-      window.open(blobUrl, '_blank');
-    }
-    setTimeout(function() {
-      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-      if (typeof blobUrl === 'string' && blobUrl.indexOf('blob:') === 0) {
-        setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 60000);
-      }
-    }, 90000);
-  };
-  document.body.appendChild(iframe);
+    showToast('Abriendo impresión. Selecciona el papel indicado y Tamaño real / 100 %.', 'info');
+    await RealScanPrint.print();
+    if (typeof logActivity === 'function') logActivity('Abrir impresión', getActiveSpec().name);
+  } catch (error) { showToast(error.message + ' Puedes descargar la hoja PDF como alternativa.', 'error'); }
 }
 
 /**

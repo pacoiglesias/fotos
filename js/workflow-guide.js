@@ -59,6 +59,8 @@
       button.setAttribute('aria-current', active ? 'step' : 'false');
       button.dataset.complete = String(step === 1 || step === 2 && work.ready);
     });
+    window.RealScanJourney?.update();
+    window.RealScanGuided?.render();
   }
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('workflowNext').addEventListener('click', () => {

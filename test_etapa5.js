@@ -252,6 +252,7 @@ async function runTests() {
     sb.state.printMode = 'single';
     sb.state.documentPageCount = 1;
     sb.state.images.front.originalSrc = 'data:image/png;base64,AAA';
+    sb.state.images.front.processedDataUrl = 'data:image/png;base64,AAA';
     sb.state.images.front.naturalWidth = 120;
     sb.state.images.front.naturalHeight = 90;
     chk = sb.runPreflightChecks();

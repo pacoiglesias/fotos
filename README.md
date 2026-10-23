@@ -1,10 +1,16 @@
-# RealScan Pro 3.4
+# RealScan Pro 3.17
 
 Edición y composición de documentos y fotografías para mostrador. Desarrollado por Paco Iglesias.
 
 Sitio configurado: https://fotos-cobertores-pro.web.app
 
 ## Uso diario
+
+La versión 3.17 parte de la 3.16.0 y conserva su modo mostrador, seguridad, fondo con IA, sincronización, perfiles de impresora y entrega digital. Reúne los accesos a identificación, fotografías y documentos; mantiene una sola barra de pasos visible y muestra las imágenes listas o pendientes. Papel, tamaño, copias y caras se ajustan desde el panel principal.
+
+La revisión de impresión prepara la hoja directamente con la geometría milimétrica y el perfil activo, sin generar un PDF ni cargar un visor oculto. La misma hoja se muestra antes de habilitar **Imprimir**. Cambiar el perfil o las 4/6 fotos de pasaporte actualiza la preparación. **Guardar PDF**, aprobación del cliente y WhatsApp siguen disponibles. La impresora debe utilizar el papel seleccionado y escala 100 %.
+
+Prueba específica: `npm run test:print`. Alcance y límites de la validación: [auditoría 3.17](audit/INTERFAZ_E_IMPRESION_3_17_0.md).
 
 1. Elige identificación, fotografía, páginas de documento o una medida personalizada.
 2. Carga imágenes o PDF, usa cámara o portapapeles, o pulsa **Recibir Celular** para generar un QR temporal.

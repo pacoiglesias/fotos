@@ -214,7 +214,9 @@
     const journey = document.getElementById('operatorJourney');
     const counter = document.getElementById('counterService');
     const bar = document.getElementById('guidedStepsBar');
-    if (journey && journey.parentNode) journey.parentNode.insertBefore(panel, journey.nextSibling);
+    const daily=document.getElementById('dailyCare');
+    if(daily&&daily.parentNode)daily.before(panel);
+    else if (journey && journey.parentNode) journey.parentNode.insertBefore(panel, journey.nextSibling);
     else if (counter && counter.parentNode) counter.parentNode.insertBefore(panel, counter.nextSibling);
     else if (bar && bar.parentNode) bar.parentNode.insertBefore(panel, bar.nextSibling);
     else { const care = document.getElementById('dailyCare'); if (care && care.parentNode) care.parentNode.insertBefore(panel, care); }
