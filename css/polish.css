@@ -1,0 +1,60 @@
+/* RealScan — Temas de color, refresco visual y micro-animaciones
+   (AÑADIDOS 11 y 12, v3.13.0).
+   - Los temas recolorean SOLO el acento de la app (índigo por defecto) con
+     variables CSS y sobreescrituras acotadas de las utilidades de acento.
+   - Los estados (Listo, errores, semáforo de calidad) usan icono + texto +
+     su propio color fijo: nunca dependen del color del tema.
+   - El modo oscuro de la app (clase .dark) es independiente del tema.
+   - Las animaciones solo corren si el sistema NO pide reducir movimiento. */
+
+:root {
+  --rs-accent: #4f46e5;
+  --rs-accent-strong: #4338ca;
+  --rs-accent-text: #4338ca;
+  --rs-accent-soft: #eef2ff;
+  --rs-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+html[data-theme="esmeralda"] { --rs-accent: #059669; --rs-accent-strong: #047857; --rs-accent-text: #047857; --rs-accent-soft: #ecfdf5; }
+html[data-theme="grafito"]    { --rs-accent: #475569; --rs-accent-strong: #334155; --rs-accent-text: #334155; --rs-accent-soft: #f1f5f9; }
+html[data-theme="burdeos"]    { --rs-accent: #be123c; --rs-accent-strong: #9f1239; --rs-accent-text: #9f1239; --rs-accent-soft: #fff1f2; }
+html[data-theme="oceano"]     { --rs-accent: #0284c7; --rs-accent-strong: #0369a1; --rs-accent-text: #0369a1; --rs-accent-soft: #f0f9ff; }
+
+/* Utilidades de acento (Tailwind) apuntando a las variables del tema */
+html[data-theme] .bg-indigo-600 { background-color: var(--rs-accent) !important; }
+html[data-theme] .bg-indigo-700 { background-color: var(--rs-accent-strong) !important; }
+html[data-theme] .hover\:bg-indigo-700:hover { background-color: var(--rs-accent-strong) !important; }
+html[data-theme] .hover\:bg-indigo-600:hover { background-color: var(--rs-accent) !important; }
+html[data-theme] .text-indigo-600, html[data-theme] .text-indigo-700 { color: var(--rs-accent-text) !important; }
+html[data-theme] .border-indigo-300, html[data-theme] .border-indigo-500, html[data-theme] .border-indigo-600 { border-color: var(--rs-accent) !important; }
+html[data-theme] .bg-indigo-50, html[data-theme] .bg-indigo-100 { background-color: var(--rs-accent-soft) !important; }
+html[data-theme] .accent-indigo-600 { accent-color: var(--rs-accent) !important; }
+html[data-theme] .ring-indigo-500, html[data-theme] .focus\:ring-indigo-500:focus { --tw-ring-color: var(--rs-accent) !important; }
+html[data-theme] .from-indigo-600 { --tw-gradient-from: var(--rs-accent) var(--tw-gradient-via-position, ) var(--tw-gradient-to-position, ) !important; }
+
+/* Refresco visual: texto más limpio, tarjetas con sombra suave, aire */
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+section.rounded-2xl, .a4-sheet { box-shadow: var(--rs-shadow); }
+button { transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.08s ease; }
+button:active { transform: scale(0.98); }
+:focus-visible { outline: 2px solid var(--rs-accent); outline-offset: 2px; }
+
+/* Muestras del selector de tema (Ajustes) */
+.rs-theme-swatch { width: 44px; height: 44px; border-radius: 9999px; border: 3px solid transparent; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.65), 0 2px 8px rgba(15,23,42,0.18); cursor: pointer; }
+.rs-theme-swatch[aria-pressed="true"] { border-color: var(--rs-accent-text); }
+
+/* Marca de éxito animada (guardar / imprimir / entregar) */
+#rsSuccessCheck { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+#rsSuccessCheck .rs-check-card { background: rgba(255,255,255,0.96); border-radius: 20px; padding: 22px 26px; box-shadow: 0 18px 50px rgba(15,23,42,0.25); text-align: center; max-width: 78vw; }
+.dark #rsSuccessCheck .rs-check-card { background: rgba(15,23,42,0.96); color: #f8fafc; }
+#rsSuccessCheck .rs-check-msg { font-weight: 700; font-size: 14px; margin-top: 8px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  [role="dialog"]:not(.hidden) > div { animation: rs-in 0.18s ease-out; }
+  @keyframes rs-in { from { opacity: 0; transform: translateY(6px) scale(0.99); } to { opacity: 1; transform: none; } }
+  #guidedStepsBar .guided-step { transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease; }
+  .rs-check-pop { animation: rs-pop 0.35s ease-out; }
+  @keyframes rs-pop { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+  .rs-check-circle { stroke-dasharray: 166; stroke-dashoffset: 166; animation: rs-dash 0.5s ease forwards; }
+  .rs-check-mark { stroke-dasharray: 48; stroke-dashoffset: 48; animation: rs-dash 0.3s 0.35s ease forwards; }
+  @keyframes rs-dash { to { stroke-dashoffset: 0; } }
+}

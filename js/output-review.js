@@ -118,18 +118,105 @@
       modal.setAttribute("role", "dialog");
       modal.setAttribute("aria-modal", "true");
       modal.setAttribute("aria-labelledby", "outputReviewTitle");
-      modal.innerHTML = '<div class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto space-y-4"><h2 id="outputReviewTitle" class="text-lg font-bold">Revisa antes de imprimir</h2><div id="printReview"></div><div class="flex flex-wrap gap-3"><button type="button" data-close-modal="outputReviewModal" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800">Volver a corregir</button><button type="button" id="confirmPrintReview" class="px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold min-h-[44px]">Continuar a imprimir</button></div></div>';
+      modal.innerHTML = '<div class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto space-y-4"><h2 id="outputReviewTitle" class="text-lg font-bold">Revisa antes de imprimir</h2><div id="printReview"></div><div id="reviewPassportRow" class="hidden flex flex-wrap items-center gap-2"><span class="text-xs font-bold flex-1 min-w-[150px]">🪪 Hoja de fotos tamaño pasaporte (35 × 45 mm), escala real:</span><button type="button" data-passport-count="4" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-xs font-bold min-h-[44px]">Hoja de 4</button><button type="button" data-passport-count="6" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-xs font-bold min-h-[44px]">Hoja de 6</button></div><div class="flex flex-wrap gap-3"><button type="button" data-close-modal="outputReviewModal" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800">Volver a corregir</button><button type="button" id="confirmPrintReview" class="px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold min-h-[44px]">Continuar a imprimir</button></div><div class="flex flex-wrap gap-3"><button type="button" id="btnReviewClient" class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-bold min-h-[44px]">👀 Mostrar al cliente</button><button type="button" id="btnReviewWhatsapp" class="px-4 py-2.5 rounded-xl border border-emerald-500 text-emerald-700 dark:text-emerald-300 text-xs font-bold min-h-[44px]">📲 Enviar por WhatsApp</button></div></div>';
       document.body.append(modal);
+      wireReviewExtras(modal);
     }
+    reviewMode = opts.mode || null;
     $("outputReviewTitle").textContent = opts.title || "Revisa antes de imprimir";
     $("confirmPrintReview").textContent = opts.confirmLabel || "Continuar a imprimir";
     render($("printReview"), false, opts.mode);
+    const passportRow = $("reviewPassportRow");
+    if (passportRow) passportRow.classList.toggle("hidden", state.activeCategory !== "photos");
+    if (passportRow) passportRow.classList.toggle("flex", state.activeCategory === "photos");
     $("confirmPrintReview").onclick = () => {
+      if (window.RealScanPolish) window.RealScanPolish.successCheck(opts.mode === "pdf" ? "Revisión completada: generando el PDF" : "Revisión completada");
       closeModal("outputReviewModal");
       callback();
     };
     openModal("outputReviewModal");
   };
+
+  /* Extras v3.13.0: WhatsApp (9.3), aprobación del cliente (10.3) y hoja de
+     fotos tamaño pasaporte (9.4). */
+  let reviewMode = null;
+  function wireReviewExtras(modal) {
+    modal.querySelector("#btnReviewWhatsapp").addEventListener("click", () => {
+      closeModal("outputReviewModal");
+      if (window.RealScanShare) window.RealScanShare.shareCurrentJob();
+    });
+    modal.querySelector("#btnReviewClient").addEventListener("click", showClientApproval);
+    modal.querySelectorAll("[data-passport-count]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        preparePassportSheet(parseInt(btn.getAttribute("data-passport-count"), 10) || 6);
+        render($("printReview"), false, reviewMode);
+      });
+    });
+  }
+  function showClientApproval() {
+    let overlay = $("clientApproval");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "clientApproval";
+      overlay.className = "hidden fixed inset-0 z-[70] bg-slate-950 flex flex-col items-center justify-center p-4 gap-4";
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-modal", "true");
+      overlay.innerHTML = '<p class="text-white/80 text-sm font-semibold">Muestra esta foto al cliente para su aprobación</p><div id="clientApprovalSheet" class="client-approval-sheet w-full max-w-2xl max-h-[70vh] overflow-hidden flex items-start justify-center"></div><div class="flex flex-wrap gap-3 justify-center"><button type="button" id="btnClientRepeat" class="px-6 py-4 rounded-2xl bg-white/10 text-white border border-white/40 text-base font-bold min-h-[56px]">↺ Repetir foto</button><button type="button" id="btnClientApprove" class="px-6 py-4 rounded-2xl bg-emerald-500 text-white text-base font-black min-h-[56px]">✓ Aprobada</button></div>';
+      document.body.append(overlay);
+      overlay.querySelector("#btnClientApprove").addEventListener("click", () => {
+        overlay.classList.add("hidden");
+        if (window.RealScanPolish) window.RealScanPolish.successCheck("Foto aprobada por el cliente");
+      });
+      overlay.querySelector("#btnClientRepeat").addEventListener("click", () => {
+        overlay.classList.add("hidden");
+        closeModal("outputReviewModal");
+        const card = document.querySelector('[id^="slotCard"], .slot-card, [data-slot-card]');
+        const target = card || $("slotThumbWrapFront");
+        if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (typeof showToast === "function") showToast("Repite la foto: ajusta luz y encuadre y vuelve a capturar.", "info");
+      });
+    }
+    const holder = overlay.querySelector("#clientApprovalSheet");
+    holder.replaceChildren();
+    const sheet = document.querySelector(".a4-sheet");
+    if (sheet) {
+      const clone = sheet.cloneNode(true);
+      clone.removeAttribute("id");
+      clone.querySelectorAll("[id]").forEach(node => node.removeAttribute("id"));
+      holder.append(clone);
+    } else if (state.images.front && state.images.front.processedDataUrl) {
+      const img = document.createElement("img");
+      img.src = state.images.front.processedDataUrl;
+      img.alt = "Foto para aprobación del cliente";
+      img.className = "max-h-[70vh] w-auto rounded-xl";
+      holder.append(img);
+    }
+    overlay.classList.remove("hidden");
+  }
+  function preparePassportSheet(count) {
+    if (typeof state === "undefined" || state.activeCategory !== "photos") return;
+    if (state.format !== "photo_passport") {
+      const btn = document.querySelector('[data-quick-format="photo_passport"], [data-format="photo_passport"]');
+      if (btn) btn.click();
+    }
+    const spec = (typeof getActiveSpec === "function") ? getActiveSpec() : null;
+    if (!spec || Math.abs(spec.widthMm - 35) > 0.6 || Math.abs(spec.heightMm - 45) > 0.6) {
+      state.format = "custom";
+      state.customWidth = 3.5;
+      state.customHeight = 4.5;
+      state.customUnit = "cm";
+    }
+    state.mixTwoPhotos = false;
+    state.photoCopies = count;
+    state.photoCopiesPersonA = count;
+    state.photoCopiesPersonB = 0;
+    state.includeCutMarks = true;
+    if (typeof updateUI === "function") updateUI();
+    if (typeof scheduleSaveDraft === "function") scheduleSaveDraft();
+    if (typeof showToast === "function") showToast("🪪 Hoja de pasaporte preparada: " + count + " fotos de 35 × 45 mm a escala real, con guías de corte.", "success");
+  }
+  window.preparePassportSheet = preparePassportSheet;
+  window.showClientApproval = showClientApproval;
   document.addEventListener("DOMContentLoaded", () => {
     for (const id of ["checkDeliverPdfSheet", "checkDeliverFrontJpg", "checkDeliverBackJpg", "selectDeliveryFormat", "selectDeliveryMaxPx", "selectDeliveryMaxBytes"]) $(id)?.addEventListener("change", window.updateDeliveryReview);
   });

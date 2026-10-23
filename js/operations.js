@@ -167,6 +167,61 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (err) { status.textContent = 'No se pudo verificar: ' + err.message; }
     finally { input.value = ''; button.disabled = false; }
   });
+  // Recordatorio de respaldo (AÑADIDO 6): discreto, descartable y con el
+  // umbral configurable. El respaldo cifrado es la copia completa; el
+  // archivado a Paperless y la nube son complementos distintos.
+  const LAST_BACKUP_KEY = 'realscan_last_backup_at_v1';
+  const DISMISS_KEY = 'realscan_backup_reminder_dismissed_at_v1';
+  const DAYS_KEY = 'realscan_backup_reminder_days_v1';
+  function reminderThreshold() {
+    const sel = document.getElementById('backupReminderDays');
+    const v = parseInt((sel && sel.value) || (function() { try { return localStorage.getItem(DAYS_KEY); } catch (e) { return null; } })() || '7', 10);
+    return [3, 7, 14, 30].includes(v) ? v : 7;
+  }
+  async function renderBackupReminder() {
+    const info = document.getElementById('lastBackupInfo');
+    const banner = document.getElementById('backupReminderBanner');
+    if (!info) return;
+    let last = 0;
+    try { last = parseInt(localStorage.getItem(LAST_BACKUP_KEY) || '0', 10) || 0; } catch (e) {}
+    const days = reminderThreshold();
+    if (!last) info.textContent = 'Último respaldo: nunca. Tu historial vive solo en este equipo.';
+    else {
+      const d = Math.floor((Date.now() - last) / 86400000);
+      info.textContent = 'Último respaldo: ' + (d <= 0 ? 'hoy' : (d === 1 ? 'ayer' : 'hace ' + d + ' días')) + ' (' + new Date(last).toLocaleDateString('es-ES') + ').';
+    }
+    let count = 0;
+    try { if (typeof getAllScansFromStorage === 'function') count = (await getAllScansFromStorage()).length; } catch (e) {}
+    let dismissedAt = 0;
+    try { dismissedAt = parseInt(localStorage.getItem(DISMISS_KEY) || '0', 10) || 0; } catch (e) {}
+    const due = count > 0 && (!last || (Date.now() - last) >= days * 86400000);
+    const recentlyDismissed = !!dismissedAt && (Date.now() - dismissedAt) < days * 86400000;
+    if (banner) banner.classList.toggle('hidden', !(due && !recentlyDismissed));
+  }
+  window.RealScanBackupReminder = { render: renderBackupReminder };
+  const daysSel = document.getElementById('backupReminderDays');
+  if (daysSel) {
+    try { daysSel.value = localStorage.getItem(DAYS_KEY) || '7'; } catch (e) {}
+    daysSel.addEventListener('change', function() { try { localStorage.setItem(DAYS_KEY, daysSel.value); } catch (e) {} renderBackupReminder(); });
+  }
+  const backupNowBtn = document.getElementById('btnBackupNowReminder');
+  if (backupNowBtn) backupNowBtn.addEventListener('click', function() { const b = document.getElementById('dailyBackup'); if (b) b.click(); });
+  const dismissBackupBtn = document.getElementById('btnDismissBackupReminder');
+  if (dismissBackupBtn) dismissBackupBtn.addEventListener('click', function() { try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch (e) {} renderBackupReminder(); });
+  renderBackupReminder();
+
+  // Marca del negocio y próximo folio (AÑADIDO 10.4)
+  const brandInput = document.getElementById('shopBrandInput');
+  if (brandInput) {
+    try { brandInput.value = localStorage.getItem('realscan_shop_brand_v1') || ''; } catch (e) {}
+    brandInput.addEventListener('change', function() {
+      try { localStorage.setItem('realscan_shop_brand_v1', brandInput.value.trim()); } catch (e) {}
+      showToast('🏷️ Nombre del negocio guardado: aparecerá en el pie de tus entregas digitales.', 'success');
+    });
+  }
+  const folioLabel = document.getElementById('folioNextLabel');
+  if (folioLabel && window.RealScanFolio) folioLabel.textContent = window.RealScanFolio.peek();
+
   document.getElementById('dailyCalibration').addEventListener('click', async function() {
     try {
       if (typeof ensureJsPdf === 'function') await ensureJsPdf();

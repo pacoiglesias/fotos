@@ -30,6 +30,24 @@
       count++;
     }
     const brightness = light / count, sharpness = lap2 / count - (lap / count) ** 2;
+    // Reflejo en vivo (AÑADIDO 12.7, extensión del detector 9.1): celda 3×3
+    // con muchos píxeles quemados que contrasta con el resto de la escena.
+    let glareZone = null;
+    {
+      const cells = [];
+      for (let gy = 0; gy < 3; gy++) for (let gx = 0; gx < 3; gx++) {
+        let sum = 0, clipped = 0, n = 0;
+        const x0 = Math.floor(gx * w / 3), x1 = Math.floor((gx + 1) * w / 3), y0 = Math.floor(gy * h / 3), y1 = Math.floor((gy + 1) * h / 3);
+        for (let y = y0; y < y1; y += 2) for (let x = x0; x < x1; x += 2) { const v = gray[y * w + x]; sum += v; if (v >= 248) clipped++; n++; }
+        cells.push({ gx: gx, gy: gy, mean: n ? sum / n : 0, clip: n ? clipped / n : 0 });
+      }
+      let worst = null;
+      cells.forEach(function(c) { if (c.clip >= 0.38 && (!worst || c.clip > worst.clip)) worst = c; });
+      if (worst) {
+        const others = Math.max.apply(null, cells.filter(function(c) { return c !== worst; }).map(function(c) { return c.mean; }));
+        if (others <= 218) glareZone = [["la esquina superior izquierda", "la parte superior", "la esquina superior derecha"], ["el lado izquierdo", "el centro", "el lado derecho"], ["la esquina inferior izquierda", "la parte inferior", "la esquina inferior derecha"]][worst.gy][worst.gx];
+      }
+    }
     const bg = [0, 1, 2].map((ch) => {
       const values = [];
       for (let x = 0; x < w; x += 6) {
@@ -85,8 +103,8 @@
       }
     }
     const quad = best?.map((p2) => ({ x: p2.x / w, y: p2.y / h })) || null;
-    let message = brightness < 55 ? "Añade luz sin reflejos." : brightness > 235 ? "Evita la luz directa y los reflejos." : sharpness < 35 ? "Mantén el teléfono quieto y deja que enfoque." : quad ? "Bordes encontrados. Revisa las cuatro esquinas al capturar." : "Deja un margen y usa un fondo que contraste con la página.";
-    return { quad, brightness, sharpness, message, coverage:quad?area(quad):0 };
+    let message = glareZone ? "Reflejo detectado en " + glareZone + ": inclina un poco el teléfono." : brightness < 55 ? "Añade luz sin reflejos." : brightness > 235 ? "Evita la luz directa y los reflejos." : sharpness < 35 ? "Mantén el teléfono quieto y deja que enfoque." : quad ? "Bordes encontrados. Revisa las cuatro esquinas al capturar." : "Deja un margen y usa un fondo que contraste con la página.";
+    return { quad, brightness, sharpness, message, glareZone, coverage:quad?area(quad):0 };
   }
   let current = null;
   function close() {
@@ -237,6 +255,7 @@
       for(const [name,ok,text]of [['light',light,light?'Luz adecuada':a.brightness<55?'Falta luz':'Posibles reflejos'],['sharp',sharp,sharp?'Nitidez estimada adecuada':'Posible desenfoque'],['steady',options.photoMode?sharp:stableFrames>=3,options.photoMode?'Fotografía completa':captured?(quad?'Revisa los bordes propuestos':'Ajusta las esquinas'):!quad?'Busca los cuatro bordes':stableFrames>=3?'Documento estable':'Mantén quieto · '+Math.min(3,stableFrames)+'/3']]){
         const element=$('[data-quality="'+name+'"]');element.textContent=text;element.dataset.ok=String(ok);
       }
+      if(a.glareZone){const lightEl=$('[data-quality="light"]');if(lightEl){lightEl.textContent='Reflejo detectado: inclina el teléfono';lightEl.dataset.ok='false';}}
     }
     root.addEventListener('resize',scheduleFit);root.visualViewport?.addEventListener('resize',scheduleFit);root.visualViewport?.addEventListener('scroll',scheduleFit);
     function stop() {
