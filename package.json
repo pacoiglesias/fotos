@@ -1,6 +1,6 @@
 {
   "name": "realscan",
-  "version": "3.14.0",
+  "version": "3.16.0",
   "private": true,
   "scripts": {
     "build": "node scripts/build.cjs",
@@ -20,6 +20,7 @@
     "@firebase/app": "0.16.3",
     "@firebase/auth": "1.13.7",
     "@firebase/database": "1.1.5",
+    "@mediapipe/tasks-vision": "0.10.14",
     "@tesseract.js-data/eng": "1.0.0",
     "@tesseract.js-data/spa": "1.0.0",
     "jspdf": "4.2.1",

@@ -34,7 +34,10 @@
     }
     $('operatorNextTitle').textContent = busy ? 'Preparando tu trabajo…' : !count ? 'Recibe el documento o la fotografía' : !ready ? 'Completa y revisa las capturas' : 'Comprueba el resultado y entrega';
     $('operatorNextHint').textContent = doc?.active ? doc.reviewed+' de '+doc.count+' páginas revisadas. Confirma cada página; después elige PDF, impresión o QR.' : !ready ? 'Puedes usar la cámara, abrir un archivo o recibir desde otro celular. El trabajo actual se conserva.' : 'Revisa orientación, bordes, caras y medidas. El texto OCR y la aceptación de una foto oficial requieren revisión humana.';
-    $('operatorReceiveActions').hidden = !!count && ready;
+    // v3.16.0: las formas de recibir (Cámara / Archivo / otro celular) quedan
+    // SIEMPRE visibles: capturar es la acción principal del mostrador y no
+    // debe desaparecer cuando el trabajo ya está listo (añadir una página o
+    // una foto más es también trabajo de todos los días).
     $('operatorReceiveActions').querySelectorAll('button').forEach(b=>b.disabled=busy);
     $('operatorNext').disabled = busy;
     $('operatorNext').textContent = !count ? 'Elegir cómo recibir' : !ready ? 'Revisar lo que falta' : 'Revisar entrega';
@@ -48,20 +51,31 @@
     }
     $('counterService').append(quick);
     const panel = document.createElement('section'); panel.id = 'operatorJourney'; panel.className = 'operator-journey'; panel.setAttribute('aria-label','Recorrido del servicio');
-    panel.innerHTML = '<nav aria-label="Recibir, revisar, ajustar y entregar"></nav><div class="operator-next"><div><p class="counter-kicker">SIGUIENTE PASO</p><h2 id="operatorNextTitle"></h2><p id="operatorNextHint" class="counter-help"></p></div><button id="operatorNext" type="button" class="counter-primary"></button></div><div id="operatorReceiveActions" class="operator-receive" aria-label="Formas de recibir"></div>';
+    // v3.16.0: la fila de recepción (Cámara / Archivo / otro celular) va
+    // ANTES del bloque «Siguiente paso»: capturar es la acción principal
+    // del mostrador y debe quedar en la primera pantalla del teléfono,
+    // sin scroll. El bloque de orientación queda justo debajo.
+    panel.innerHTML = '<nav aria-label="Recibir, revisar, ajustar y entregar"></nav><div id="operatorReceiveActions" class="operator-receive" aria-label="Formas de recibir"></div><div class="operator-next"><div><p class="counter-kicker">SIGUIENTE PASO</p><h2 id="operatorNextTitle"></h2><p id="operatorNextHint" class="counter-help"></p></div><button id="operatorNext" type="button" class="counter-primary"></button></div>';
     for (const [i,step,label] of [[1,'receive','Recibir'],[2,'review','Revisar'],[3,'adjust','Ajustar'],[4,'deliver','Entregar']]) {
       const b = button(i+' · '+label,()=>go(step)); b.dataset.journey = step; panel.querySelector('nav').append(b);
     }
-    for (const [label,action] of [['Cámara',()=>{if(RealScanDocuments.status().active)$('docCamera').click();else{const side=RealScanWorkflow.describe().missing[0]||RealScanWorkflow.describe().wanted[0]||'front';RealScanWorkflow.moveTo(2,side);document.querySelector('[data-camera="'+side+'"]')?.click();}}],['Archivo / USB',()=>{if(RealScanDocuments.status().active)$('docImport').click();else{const side=RealScanWorkflow.describe().missing[0]||'front';RealScanWorkflow.moveTo(2,side);$({front:'fileInputFront',back:'fileInputBack',page3:'fileInputPage3',page4:'fileInputPage4'}[side])?.click();}}],['Desde otro celular',()=>$('btnOpenReceiveModal').click()]]) panel.querySelector('#operatorReceiveActions').append(button(label,action));
+    for (const [label,action] of [['Cámara',()=>{if(RealScanDocuments.status().active)$('docCamera').click();else{const side=RealScanWorkflow.describe().missing[0]||RealScanWorkflow.describe().wanted[0]||'front';RealScanWorkflow.moveTo(2,side);document.querySelector('[data-camera="'+side+'"]')?.click();}}],['Archivo / USB',()=>{if(RealScanDocuments.status().active)$('docImport').click();else{const side=RealScanWorkflow.describe().missing[0]||'front';RealScanWorkflow.moveTo(2,side);$({front:'fileInputFront',back:'fileInputBack',page3:'fileInputPage3',page4:'fileInputPage4'}[side])?.click();}}],['Desde otro celular',()=>$('btnOpenReceiveModal').click()]]) { const b = button(label,action); if (label === 'Cámara') b.className = 'counter-primary'; panel.querySelector('#operatorReceiveActions').append(b); }
     $('counterService').after(panel);
-    // Less frequently used settings stay accessible through an explicit disclosure.
-    const more = document.createElement('details'); more.className = 'operator-advanced'; more.innerHTML = '<summary><span>Otros formatos: identificación, pasaporte y medida personalizada</span><span class="operator-advanced-chevron" aria-hidden="true">▾</span></summary>';
-    $('serviceFormats').before(more); more.append($('serviceFormats'));
-    // Recogido por defecto en pantallas estrechas (v3.14.0): la vista inicial
-    // muestra primero el servicio actual y las tres acciones principales, sin
-    // scroll eterno. En pantallas anchas queda desplegado como hasta ahora.
-    more.open = window.matchMedia('(min-width: 1024px)').matches;
-    more.addEventListener('toggle',()=>{more.dataset.expanded=String(more.open);});
+    // v3.16.0: las tarjetas «Comenzar por tarea» salen de la tarjeta del
+    // servicio actual y quedan DESPUÉS del recorrido. Tal como estaban
+    // (tres tarjetas apiladas dentro de «Servicio actual») empujaban la
+    // captura y el siguiente paso fuera de la primera pantalla del
+    // teléfono: primero manda el servicio en curso y su siguiente paso;
+    // empezar otro servicio por tarea sigue a un toque, justo debajo.
+    if (quick && quick.parentElement) panel.after(quick);
+    // v3.16.0 (criterio de Paco: la app debe ser práctica y funcional por
+    // encima de lo visual): los formatos del servicio quedan DIRECTOS en
+    // la pantalla de inicio, sin menú desplegable. La v3.14.0 envolvió
+    // #serviceFormats en un <details> «Otros formatos» recogido en móvil,
+    // y el formato de todos los días (identificaciones) costaba dos toques
+    // y scroll antes de poder elegirse. Ahora la sección queda en su sitio,
+    // visible y a un toque; lo menos frecuente sigue agrupado más abajo en
+    // el paso 1 (modos de hoja y categorías), como siempre.
     update();
     document.addEventListener('click',()=>requestAnimationFrame(update));
     document.addEventListener('change',()=>requestAnimationFrame(update));

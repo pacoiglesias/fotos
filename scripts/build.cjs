@@ -62,6 +62,27 @@ function copy(src, dst) {
     path.join(root, "node_modules/jszip/dist/jszip.min.js"),
     path.join(vendor, "jszip.min.js"),
   );
+  // Fondo blanco con IA en el dispositivo: bundle ES de MediaPipe Tasks
+  // Vision, su WASM (variantes SIMD y sin SIMD; FilesetResolver elige) y
+  // el modelo selfie_segmenter float16. El modelo no viene en ningún
+  // paquete npm: vive como asset fuente en assets/models/ (descargado de
+  // storage.googleapis.com/mediapipe-models) y se copia aquí para que el
+  // build funcione sin red más allá de npm ci. Todo queda fuera del
+  // precaché inicial (ver filtro de CORE_ASSETS): se carga diferido con
+  // js/segment-loader.js y el SW lo cachea bajo demanda.
+  copy(
+    path.join(root, "node_modules/@mediapipe/tasks-vision/vision_bundle.mjs"),
+    path.join(vendor, "segment/vision_bundle.mjs"),
+  );
+  for (const file of fs.readdirSync(path.join(root, "node_modules/@mediapipe/tasks-vision/wasm")))
+    copy(
+      path.join(root, "node_modules/@mediapipe/tasks-vision/wasm", file),
+      path.join(vendor, "segment/wasm", file),
+    );
+  copy(
+    path.join(root, "assets/models/selfie_segmenter.tflite"),
+    path.join(vendor, "segment/selfie_segmenter.tflite"),
+  );
   for (const name of ["pdf.mjs", "pdf.worker.mjs"])
     copy(
       path.join(root, "node_modules/pdfjs-dist/legacy/build", name),
@@ -141,6 +162,7 @@ function copy(src, dst) {
       !f.startsWith("vendor/ocr/") &&
       !f.startsWith("vendor/cmaps/") &&
       !f.startsWith("vendor/wasm/") &&
+      !f.startsWith("vendor/segment/") &&
       f !== "vendor/jspdf.umd.min.js" &&
       f !== "vendor/jszip.min.js" &&
       f !== "vendor/jsqr.js"

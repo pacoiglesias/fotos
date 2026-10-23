@@ -134,7 +134,7 @@
   async function storageUpload(path, blob) {
     const token = await ensureToken();
     if (!token) throw new Error('Sin sesión de nube.');
-    const res = await fetch('https://firebasestorage.googleapis.com/upload/storage/v1/b/' + encodeURIComponent(bucketName()) + '/o?uploadType=media&name=' + encodeURIComponent(path), {
+    const res = await fetch('https://firebasestorage.googleapis.com/v0/b/' + encodeURIComponent(bucketName()) + '/o?uploadType=media&name=' + encodeURIComponent(path), {
       method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': blob.type || 'image/jpeg' }, body: blob
     });
     if (!res.ok) throw new Error('Storage HTTP ' + res.status + ' (¿está creado el bucket en la consola?)');

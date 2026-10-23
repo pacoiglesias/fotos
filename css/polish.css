@@ -278,3 +278,97 @@ html {
   header #btnOpenDeliveryModal > span:last-child,
   header #btnNewProject > span:last-child { display: none !important; }
 }
+
+/* ============================================================
+   Revisión 6 (pieza C) — Modo mostrador
+   Activado por js/counter-mode.js con data-counter="on" en
+   <html> (localStorage realscan_mostrador). Vive en polish.css
+   porque build.cjs ya copia este archivo a dist y ya está
+   enlazado y precacheado: no hace falta tocar el build.
+   No cambia acentos (var(--rs-accent) intacta) ni el modo
+   oscuro: solo escala la letra, endurece textos/bordes/fondos
+   en claro Y en oscuro, engorda el foco y sube los objetivos
+   táctiles principales a 48 px.
+   ============================================================ */
+
+/* Interruptor de Ajustes (junto al selector de temas) */
+.rs-counter-switch {
+  position: relative; flex: none; width: 56px; height: 32px; min-height: 32px;
+  border-radius: 9999px; border: 2px solid #94a3b8; background: #e2e8f0;
+  cursor: pointer; padding: 0;
+}
+.rs-counter-switch::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px;
+  border-radius: 9999px; background: #fff; box-shadow: 0 1px 4px rgba(15,23,42,0.35);
+  transition: transform 0.15s ease;
+}
+.rs-counter-switch[aria-pressed="true"] { background: var(--rs-accent); border-color: var(--rs-accent-strong); }
+.rs-counter-switch[aria-pressed="true"]::after { transform: translateX(24px); }
+.dark .rs-counter-switch { background: #334155; border-color: #64748b; }
+
+/* Escala tipográfica ~120%: la raíz en rem escala de golpe
+   todas las utilidades Tailwind basadas en rem. */
+html[data-counter="on"] { font-size: 120%; }
+html[data-counter="on"] body { line-height: 1.6; }
+/* Los tamaños arbitrarios en px no siguen a la raíz: se suben a mano. */
+html[data-counter="on"] [class~="text-[10px]"] { font-size: 12.5px !important; }
+html[data-counter="on"] [class~="text-[11px]"] { font-size: 13.5px !important; }
+
+/* Contraste alto en claro: textos secundarios dejan de ser
+   grises lavados y los bordes/fondos se separan de verdad. */
+html[data-counter="on"]:not(.dark) body { color: #020617; }
+html[data-counter="on"]:not(.dark) .text-slate-400 { color: #475569 !important; }
+html[data-counter="on"]:not(.dark) .text-slate-500 { color: #334155 !important; }
+html[data-counter="on"]:not(.dark) .text-slate-600 { color: #1e293b !important; }
+html[data-counter="on"]:not(.dark) .text-slate-700,
+html[data-counter="on"]:not(.dark) .text-slate-800,
+html[data-counter="on"]:not(.dark) .text-slate-900 { color: #020617 !important; }
+html[data-counter="on"]:not(.dark) .border-slate-100,
+html[data-counter="on"]:not(.dark) .border-slate-200,
+html[data-counter="on"]:not(.dark) .border-slate-300 { border-color: #64748b !important; }
+html[data-counter="on"]:not(.dark) .bg-slate-50 { background-color: #e2e8f0 !important; }
+html[data-counter="on"]:not(.dark) .bg-white { background-color: #ffffff !important; }
+
+/* Contraste alto en oscuro: textos más claros sobre fondo
+   oscuro y bordes visibles (el atributo data-counter convive
+   con la clase .dark en el mismo <html>). */
+html.dark[data-counter="on"] body { color: #f8fafc; }
+html.dark[data-counter="on"] [class~="dark:text-slate-300"],
+html.dark[data-counter="on"] [class~="dark:text-slate-400"] { color: #e2e8f0 !important; }
+html.dark[data-counter="on"] [class~="dark:border-slate-600"],
+html.dark[data-counter="on"] [class~="dark:border-slate-700"],
+html.dark[data-counter="on"] [class~="dark:border-slate-800"] { border-color: #94a3b8 !important; }
+html.dark[data-counter="on"] [class~="dark:bg-slate-800"],
+html.dark[data-counter="on"] [class~="dark:bg-slate-900"] { background-color: #1e293b !important; }
+
+/* Foco inconfundible con luz fuerte. */
+html[data-counter="on"] :focus-visible { outline-width: 4px; outline-offset: 3px; }
+html[data-counter="on"] input:focus, html[data-counter="on"] select:focus,
+html[data-counter="on"] textarea:focus { outline: 3px solid var(--rs-accent); outline-offset: 1px; }
+
+/* Objetivos táctiles principales ≥ 48 px. */
+html[data-counter="on"] button,
+html[data-counter="on"] select,
+html[data-counter="on"] a[role="button"],
+html[data-counter="on"] summary { min-height: 48px; }
+html[data-counter="on"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]) { min-height: 48px; }
+html[data-counter="on"] .rs-theme-swatch { width: 48px; height: 48px; }
+html[data-counter="on"] .rs-counter-switch { height: 48px; }
+html[data-counter="on"] .rs-counter-switch::after { top: 9px; }
+
+/* Aviso persistente de actualización (pieza D, js/pwa-update.js) */
+#pwaUpdateBanner {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 95;
+  display: flex; align-items: center; gap: 12px;
+  max-width: min(92vw, 520px); padding: 10px 14px; border-radius: 14px;
+  background: #0f172a; color: #f8fafc; border: 1px solid #334155;
+  box-shadow: var(--rs-shadow-lg); font-size: 14px; font-weight: 600;
+}
+#pwaUpdateBanner[hidden] { display: none; }
+#pwaUpdateBanner button {
+  flex: none; min-height: 44px; padding: 8px 16px; border-radius: 10px;
+  background: var(--rs-accent); color: #fff; font-weight: 800; cursor: pointer; border: 0;
+}
+html[data-counter="on"] #pwaUpdateBanner { font-size: 16px; }
+html[data-counter="on"] #pwaUpdateBanner button { min-height: 48px; }
