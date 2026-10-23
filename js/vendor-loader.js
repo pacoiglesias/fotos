@@ -1,8 +1,9 @@
 /* ============================================================
    RealScan Pro — Carga diferida de librerías pesadas
-   jsPDF y JSZip ya no se descargan en la primera carga: se inyectan
-   la primera vez que una función los necesita (exportar, imprimir,
-   respaldo ZIP). El service worker los cachea en ese primer uso,
+   jsPDF, JSZip y el lector jsQR (v3.13.1) ya no se descargan en la
+   primera carga: se inyectan la primera vez que una función los
+   necesita (exportar, imprimir, respaldo ZIP, leer un QR de
+   emparejamiento). El service worker los cachea en ese primer uso,
    así que después también funcionan sin conexión.
    ============================================================ */
 (function () {
@@ -30,5 +31,10 @@
   window.ensureJSZip = function () {
     if (window.JSZip) return Promise.resolve(true);
     return ensureVendorScript('vendor/jszip.min.js', function () { return !!window.JSZip; });
+  };
+
+  window.ensureJsQR = function () {
+    if (window.jsQR) return Promise.resolve(true);
+    return ensureVendorScript('vendor/jsqr.js', function () { return typeof window.jsQR === 'function'; });
   };
 })();

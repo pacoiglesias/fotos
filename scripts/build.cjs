@@ -31,6 +31,10 @@ function copy(src, dst) {
   copy(path.join(root, "css/styles.css"), path.join(dist, "css/styles.css"));
   copy(path.join(root, "css/scan-assist.css"), path.join(dist, "css/scan-assist.css"));
   copy(path.join(root, "css/mobile-scan.css"), path.join(dist, "css/mobile-scan.css"));
+  // v3.13.1: polish.css (temas, foco visible, micro-animaciones y la capa
+  // de pulido) se enlaza desde index.html: debe copiarse o dist la pide
+  // en 404 y los AÑADIDOS 11/12 no se aplican en producción.
+  copy(path.join(root, "css/polish.css"), path.join(dist, "css/polish.css"));
   const manifest = JSON.parse(
     fs.readFileSync(path.join(root, "manifest.json")),
   );
@@ -129,10 +133,17 @@ function copy(src, dst) {
     // fuentes estándar (16 ficheros, 816 KB): la app expone pdfjsLib desde
     // el arranque, dibuja PDFs con esas fuentes e incrusta LiberationSans
     // en los PDF buscables, también sin conexión.
+    // v3.13.1: tampoco se precargan las librerías de carga diferida de
+    // vendor-loader.js (jsPDF 420 KB, JSZip 98 KB y el lector jsQR 257 KB;
+    // −775 KB de instalación): se descargan la primera vez que una función
+    // las necesita y el SW las cachea en ese primer uso, igual que el OCR.
     .replace("__CORE_ASSETS__", JSON.stringify(files.filter(f =>
       !f.startsWith("vendor/ocr/") &&
       !f.startsWith("vendor/cmaps/") &&
-      !f.startsWith("vendor/wasm/")
+      !f.startsWith("vendor/wasm/") &&
+      f !== "vendor/jspdf.umd.min.js" &&
+      f !== "vendor/jszip.min.js" &&
+      f !== "vendor/jsqr.js"
     ).map((f) => "./" + f)));
   const sourceCommit = cp
     .execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })

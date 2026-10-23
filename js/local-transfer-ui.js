@@ -60,6 +60,13 @@
   }
   async function scan() {
     stopCamera();
+    if (typeof window.jsQR !== "function") {
+      const loaded = window.ensureJsQR ? await window.ensureJsQR() : false;
+      if (!loaded) {
+        document.getElementById("localTransferStatus").textContent = "No se pudo cargar el lector de códigos QR. Comprueba la conexión la primera vez o pega el código de respuesta.";
+        return;
+      }
+    }
     try {
       let read = function() {
         if (!camera) return;

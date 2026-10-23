@@ -58,3 +58,65 @@ button:active { transform: scale(0.98); }
   .rs-check-mark { stroke-dasharray: 48; stroke-dashoffset: 48; animation: rs-dash 0.3s 0.35s ease forwards; }
   @keyframes rs-dash { to { stroke-dashoffset: 0; } }
 }
+
+/* ============================================================
+   v3.13.1 — Pulido visual, operativo e iPhone
+   - Escala de sombras única para tarjetas, paneles y modales en
+     los 5 temas; ritmo tipográfico (titulares con balance y
+     tracking uniforme) y estados de control consistentes.
+   - Arranque sin destello blanco: el fondo del documento ya es el
+     de la app antes del primer pintado, también en modo oscuro.
+   - iPhone: alturas con dvh (sin saltos por la barra de Safari),
+     barra de pasos y contenido respetando el área segura en la
+     PWA instalada, toque sin retardos ni zooms accidentales,
+     campos sin el zoom automático de iOS al enfocar, objetivos
+     ≥44 px en el historial táctil y listas largas fluidas con
+     content-visibility. Solo transform/opacity en animaciones.
+   ============================================================ */
+:root {
+  --rs-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --rs-shadow-md: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --rs-shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.16);
+}
+html { background-color: #f8fafc; }
+html.dark { background-color: #020617; }
+h1, h2, h3 { letter-spacing: -0.015em; }
+h2, h3 { text-wrap: balance; }
+section.rounded-2xl, .a4-sheet { box-shadow: var(--rs-shadow-md); }
+[role="dialog"][class*="fixed"] > div { box-shadow: var(--rs-shadow-lg); }
+#rsSuccessCheck .rs-check-card { border: 1px solid rgba(15, 23, 42, 0.06); }
+button:disabled, [role="button"][aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+input:focus, select:focus, textarea:focus { border-color: var(--rs-accent); }
+#guidedStepsBar { top: env(safe-area-inset-top); }
+#historyItemsContainer > * { content-visibility: auto; contain-intrinsic-size: auto 140px; }
+[role="dialog"] [class*="overflow-y-auto"], [role="dialog"] [class*="overflow-auto"] { overscroll-behavior: contain; }
+
+button, a, summary, select, label, [role="button"] { touch-action: manipulation; }
+
+@supports (min-height: 100dvh) {
+  body.min-h-screen { min-height: 100dvh; }
+  [class~="max-h-[60vh]"] { max-height: 60dvh; }
+  [class~="max-h-[62vh]"] { max-height: 62dvh; }
+  [class~="max-h-[90vh]"] { max-height: 90dvh; }
+  [class~="max-h-[92vh]"] { max-height: 92dvh; }
+  [class~="max-h-[95vh]"] { max-height: 95dvh; }
+}
+
+@media (display-mode: standalone) {
+  body { padding-top: env(safe-area-inset-top); }
+}
+
+@media (pointer: coarse) {
+  #historyItemsContainer button { min-height: 44px; }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select, textarea { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
