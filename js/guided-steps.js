@@ -105,6 +105,21 @@
     else if (document.querySelector('main')) document.querySelector('main').prepend(bar);
     else document.body.prepend(bar);
 
+    // v3.14.0: la barra se pega JUSTO debajo de la cabecera fija, nunca
+    // encima de ella, y publica la altura total (cabecera + barra) como
+    // --rs-sticky-offset para que ningún destino de scroll quede tapado.
+    function placeBar() {
+      const header = document.querySelector('header');
+      const hh = header ? Math.round(header.getBoundingClientRect().height) : 0;
+      bar.style.top = 'calc(env(safe-area-inset-top) + ' + hh + 'px)';
+      const total = hh + bar.offsetHeight + 12;
+      document.documentElement.style.setProperty('--rs-sticky-offset', total + 'px');
+    }
+    placeBar();
+    window.addEventListener('resize', placeBar);
+    setTimeout(placeBar, 300);
+    setTimeout(placeBar, 1200);
+
     document.addEventListener('click', function (e) {
       if (e.target.closest && e.target.closest('.format-btn')) {
         try { sessionStorage.setItem(FORMAT_PICKED_KEY, '1'); } catch (err) {}
