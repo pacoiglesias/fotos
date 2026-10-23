@@ -10,4 +10,4 @@ self.addEventListener('fetch',event=>{
  }
  event.respondWith((async()=>{const cached=await caches.match(request);if(cached)return cached;try{const response=await fetch(request);if(response.ok&&url.pathname.includes("/vendor/")){const cache=await caches.open(CACHE_NAME);await cache.put(request,response.clone());}return response;}catch{return new Response('Este recurso no está preparado para usarse sin conexión.',{status:503,headers:{'Content-Type':'text/plain;charset=utf-8'}});}})());
 });
-self.addEventListener('message',event=>{if(event.data?.type==='REALSCAN_CACHE_INFO')event.ports[0]?.postMessage({name:CACHE_NAME});});
+self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING'){event.waitUntil(self.skipWaiting());return;}if(event.data?.type==='REALSCAN_CACHE_INFO')event.ports[0]?.postMessage({name:CACHE_NAME});});

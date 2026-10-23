@@ -177,6 +177,8 @@ async function saveScanToStorage(customTitle, retentionDays) {
           panX: imgData.panX || 0,
           panY: imgData.panY || 0,
           whiteBg: !!imgData.whiteBg,
+          whiteBgAiSrc: imgData.whiteBgAiSrc || null,
+          whiteBgAiFor: imgData.whiteBgAiFor || null,
           naturalWidth: imgData.naturalWidth || 0,
           naturalHeight: imgData.naturalHeight || 0
         });
@@ -471,6 +473,8 @@ async function restoreScanToApp(id) {
             state.images[slot].processedDataUrl = p.dataUrl || p.originalSrc;
             state.images[slot].filter = p.filter || 'color';
             state.images[slot].whiteBg = !!p.whiteBg;
+            state.images[slot].whiteBgAiSrc = p.whiteBgAiSrc || null;
+            state.images[slot].whiteBgAiFor = p.whiteBgAiFor || null;
             state.images[slot].rotation = p.rotation || 0;
             state.images[slot].zoom = p.zoom || 1.0;
             state.images[slot].fitMode = p.fitMode || 'cover';
@@ -1118,6 +1122,8 @@ async function importScansFromJson(file) {
             dataUrl: p.dataUrl,
             filter: isV2 ? (p.filter || 'color') : 'color',
             whiteBg: !!p.whiteBg,
+            whiteBgAiSrc: (isV2 && p.whiteBgAiSrc) ? p.whiteBgAiSrc : null,
+            whiteBgAiFor: (isV2 && p.whiteBgAiFor) ? p.whiteBgAiFor : null,
             rotation: isV2 ? (p.rotation || 0) : 0,
             zoom: isV2 ? (p.zoom || 1.0) : 1.0,
             fitMode: p.fitMode || 'cover',
@@ -1182,6 +1188,9 @@ function snapshotActiveDraft() {
             cropData: imgData.cropData || null,
             warpQuad: imgData.warpQuad || null,
             processedDataUrl: imgData.processedDataUrl,
+            whiteBg: !!imgData.whiteBg,
+            whiteBgAiSrc: imgData.whiteBgAiSrc || null,
+            whiteBgAiFor: imgData.whiteBgAiFor || null,
             naturalWidth: imgData.naturalWidth,
             naturalHeight: imgData.naturalHeight,
             rotation: imgData.rotation,

@@ -504,13 +504,52 @@ function applyWhiteBackground(ctx, W, H) {
   ctx.putImageData(imgPixels, 0, 0);
 }
 
-function toggleWhiteBackground(side) {
+/* Fondo blanco: primero intenta la segmentación de persona con IA en el
+   dispositivo (js/segment-loader.js, MediaPipe servido desde el propio
+   dist). Si la IA no está disponible, falla o tarda demasiado, se usa el
+   respaldo por inundación de applyWhiteBackground sin cambiar la UX. La
+   foto original nunca se toca: el resultado IA queda en whiteBgAiSrc,
+   ligado a la foto exacta que lo generó (whiteBgAiFor), y el pipeline de
+   render lo usa como base mientras whiteBg esté activo. */
+const WHITE_BG_AI_TIMEOUT_MS = 30000;
+async function toggleWhiteBackground(side) {
   const imgData = state.images[side];
   if (!imgData || !imgData.originalSrc) { showToast('Primero captura o sube la foto.', 'warning'); return; }
   if (typeof RealScanEditor !== 'undefined' && RealScanEditor.recordSnapshot) RealScanEditor.recordSnapshot(side, imgData);
   imgData.whiteBg = !imgData.whiteBg;
+  // Cualquier pulsación nueva invalida una preparación IA en curso.
+  const request = (imgData._whiteBgAiRequest || 0) + 1;
+  imgData._whiteBgAiRequest = request;
+  if (!imgData.whiteBg) {
+    renderProcessedImage(side);
+    showToast('Fondo original restaurado.', 'info');
+    if (typeof scheduleSaveDraft === 'function') scheduleSaveDraft();
+    return;
+  }
+  const sourceAtStart = imgData.originalSrc;
+  let usedAi = !!(imgData.whiteBgAiSrc && imgData.whiteBgAiFor === sourceAtStart);
+  if (!usedAi && typeof window !== 'undefined' && typeof window.createAiWhiteBackground === 'function') {
+    showToast('Preparando fondo con IA…', 'info');
+    try {
+      const timeout = new Promise(function (_, reject) {
+        setTimeout(function () { reject(new Error('La IA tardó demasiado.')); }, WHITE_BG_AI_TIMEOUT_MS);
+      });
+      const aiSrc = await Promise.race([window.createAiWhiteBackground(sourceAtStart), timeout]);
+      // Si mientras tanto se desactivó, se cambió la foto o llegó otra
+      // pulsación, el resultado ya no corresponde: se descarta.
+      if (aiSrc && state.images[side] === imgData && imgData.whiteBg &&
+          imgData._whiteBgAiRequest === request && imgData.originalSrc === sourceAtStart) {
+        imgData.whiteBgAiSrc = aiSrc;
+        imgData.whiteBgAiFor = sourceAtStart;
+        usedAi = true;
+      }
+    } catch (e) { /* respaldo por inundación, sin romper el flujo */ }
+    if (state.images[side] !== imgData || !imgData.whiteBg || imgData._whiteBgAiRequest !== request) return;
+  }
   renderProcessedImage(side);
-  showToast(imgData.whiteBg ? '⬜ Fondo blanco aplicado. Mantén pulsada la miniatura para comparar con la original.' : 'Fondo original restaurado.', 'info');
+  showToast(usedAi
+    ? '⬜ Fondo blanco con IA aplicado. Mantén pulsada la miniatura para comparar con la original.'
+    : '⬜ Fondo blanco aplicado. Mantén pulsada la miniatura para comparar con la original.', 'info');
   if (typeof scheduleSaveDraft === 'function') scheduleSaveDraft();
 }
 
@@ -591,6 +630,8 @@ function clearSlot(side) {
     originalSrc: null,
     processedDataUrl: null,
     whiteBg: false,
+    whiteBgAiSrc: null,
+    whiteBgAiFor: null,
     qualityFlags: null,
     naturalWidth: 0,
     naturalHeight: 0,
@@ -703,6 +744,8 @@ function processRawDataUrl(rawSrc, side, preserveFrame = false, request = null) 
     if (croppedData) {
       state.images[side].croppedSrc = croppedData;
       state.images[side].isCropApplied = true;
+      state.images[side].whiteBgAiSrc = null;
+      state.images[side].whiteBgAiFor = null;
       state.images[side].originalSrc = croppedData;
       if (toggleBtn) toggleBtn.classList.remove('hidden');
 
@@ -730,6 +773,8 @@ function processRawDataUrl(rawSrc, side, preserveFrame = false, request = null) 
       return;
     }
 
+    state.images[side].whiteBgAiSrc = null;
+    state.images[side].whiteBgAiFor = null;
     state.images[side].originalSrc = rawSrc;
     state.images[side].naturalWidth = img.naturalWidth;
     state.images[side].naturalHeight = img.naturalHeight;
@@ -771,6 +816,8 @@ function adjustZoom(side, delta) {
 function renderProcessedImage(side) {
   const imgData = state.images[side];
   if (!imgData.originalSrc) return;
+  // Base IA solo si corresponde a la foto original actual de la ranura.
+  const useAiBase = !!(imgData.whiteBg && imgData.whiteBgAiSrc && imgData.whiteBgAiFor === imgData.originalSrc);
   const startRevision = state._jobRevision || 0;
   const renderVersion = (imgData._renderVersion || 0) + 1; imgData._renderVersion = renderVersion;
   const settle = function(){if(startRevision === (state._jobRevision || 0)) state._processingPending = Math.max(0, (state._processingPending || 1) - 1);};
@@ -900,8 +947,11 @@ function renderProcessedImage(side) {
       } catch(e) {}
     }
 
-    // Fondo blanco oficial (AÑADIDO 10.1), tras los filtros de color
-    if (imgData.whiteBg) {
+    // Fondo blanco oficial (AÑADIDO 10.1), tras los filtros de color.
+    // Si hay resultado de IA para esta foto exacta ya viene compuesto
+    // sobre blanco desde la base (img.src), así que la inundación solo
+    // actúa como respaldo cuando no hay IA.
+    if (imgData.whiteBg && !useAiBase) {
       try { applyWhiteBackground(ctx, outW, outH); } catch(e) {}
     }
 
@@ -912,7 +962,7 @@ function renderProcessedImage(side) {
   img.onerror = function() {
     settle();
   };
-  img.src = imgData.originalSrc;
+  img.src = useAiBase ? imgData.whiteBgAiSrc : imgData.originalSrc;
 }
 
 function setFilter(side, filter) {

@@ -3312,15 +3312,12 @@ window.updateStorageTelemetryUI = updateStorageTelemetryUI;
 let deferredInstallPrompt = null;
 
 function setupPwaSupport() {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('sw.js').then(function(reg) {
-        console.log('[RealScan] Service Worker registrado exitosamente:', reg.scope);
-      }).catch(function(err) {
-        window.RealScanDiagnostics?.record('pwa.worker_failed','warning',{errorType:err.name,code:err.code});
-      });
-    });
-  }
+  // El registro y la actualización del service worker viven SOLO en
+  // js/pwa-update.js (window.RealScanPwaUpdate): aquí no se registra
+  // nada para no duplicar la vía. Este bloque solo gestiona el aviso
+  // de instalación de la PWA. Al abrir Ajustes/arrancar se pide una
+  // comprobación de actualización por esa vía única.
+  if (window.RealScanPwaUpdate) window.RealScanPwaUpdate.checkNow();
 
   const button = $('btnInstallPwa');
   if (button) button.onclick = async function() {
