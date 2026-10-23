@@ -462,6 +462,20 @@ async function restoreScanToApp(id) {
   }
 }
 
+/* Repetir un trabajo del historial como uno NUEVO (v3.12.0): mismo tipo de
+   documento, caras y ajustes, listo para imprimir/entregar sin recapturar.
+   El registro original del historial queda intacto; al guardar se crea otro. */
+async function repeatScanAsNewJob(id) {
+  await restoreScanToApp(id);
+  state._jobRevision = (state._jobRevision || 0) + 1;
+  if (typeof saveActiveDraft === 'function') saveActiveDraft();
+  if (typeof logActivity === 'function') logActivity('Repetir Trabajo', 'Trabajo del historial repetido como nuevo (id origen: ' + id + ')');
+  showToast('🔁 Trabajo repetido como nuevo: mismo tipo, caras y ajustes. Listo para imprimir o entregar.', 'success');
+  const anchor = document.getElementById('dropzoneFront');
+  if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+window.repeatScanAsNewJob = repeatScanAsNewJob;
+
 /* Actualizar contador visual en la cabecera y en el panel visible */
 async function updateHistoryBadge() {
   try {
@@ -541,9 +555,12 @@ async function renderSavedScansDashboard() {
           <div class="mt-1">${expireTag}</div>
         </div>
       </div>
-      <div class="grid grid-cols-4 gap-1 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+      <div class="grid grid-cols-5 gap-1 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
         <button type="button" class="btn-dash-restore py-1 px-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/70 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-bold flex items-center justify-center gap-1 transition-colors" data-id="${safeId}" title="Cargar este documento en el lienzo de trabajo">
           <span>🔄</span><span class="hidden sm:inline">Cargar</span>
+        </button>
+        <button type="button" class="btn-dash-repeat py-1 px-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/70 dark:hover:bg-emerald-900 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center gap-1 transition-colors" data-id="${safeId}" title="Repetir este trabajo como uno nuevo, listo para imprimir">
+          <span>🔁</span><span class="hidden sm:inline">Repetir</span>
         </button>
         <button type="button" class="btn-dash-pdf py-1 px-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold flex items-center justify-center gap-1 transition-colors" data-id="${safeId}" title="Descargar PDF 1:1 directo">
           <span>📄</span><span class="hidden sm:inline">PDF</span>
@@ -583,6 +600,12 @@ async function renderSavedScansDashboard() {
     });
   });
 
+  grid.querySelectorAll('.btn-dash-repeat').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      await repeatScanAsNewJob(btn.getAttribute('data-id'));
+    });
+  });
+
   grid.querySelectorAll('.btn-dash-pdf').forEach(function(btn) {
     btn.addEventListener('click', async function() {
       await restoreScanToApp(btn.getAttribute('data-id'));
@@ -599,7 +622,7 @@ async function renderSavedScansDashboard() {
 
   grid.querySelectorAll('.btn-dash-delete').forEach(function(btn) {
     btn.addEventListener('click', async function() {
-      if (confirm('¿Deseas eliminar este escaneo guardado?')) {
+      if (await showConfirmDialog('¿Deseas eliminar este escaneo guardado?', { danger: true, confirmText: 'Eliminar' })) {
         await deleteScanFromStorage(btn.getAttribute('data-id'));
         renderSavedScansDashboard();
         renderHistoryUI();
@@ -699,6 +722,10 @@ async function renderHistoryUI(filterQuery) {
           <span>🔄</span>
           <span>Cargar</span>
         </button>
+        <button type="button" class="btn-repeat-scan px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/70 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 font-semibold text-xs transition-colors flex items-center gap-1" data-id="${safeId}" title="Repetir este trabajo como uno nuevo, listo para imprimir">
+          <span>🔁</span>
+          <span>Repetir</span>
+        </button>
         <button type="button" class="btn-delete-scan p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white hover:bg-red-50 dark:bg-slate-800 dark:hover:bg-red-950/60 text-slate-600 hover:text-red-600 dark:text-slate-300 dark:hover:text-red-400 text-xs transition-colors" data-id="${safeId}" title="Eliminar este escaneo">
           🗑️
         </button>
@@ -737,9 +764,15 @@ async function renderHistoryUI(filterQuery) {
     });
   });
 
+  container.querySelectorAll('.btn-repeat-scan').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      await repeatScanAsNewJob(btn.getAttribute('data-id'));
+    });
+  });
+
   container.querySelectorAll('.btn-delete-scan').forEach(function(btn) {
     btn.addEventListener('click', async function() {
-      if (confirm('¿Deseas eliminar este escaneo del historial?')) {
+      if (await showConfirmDialog('¿Deseas eliminar este escaneo del historial?', { danger: true, confirmText: 'Eliminar' })) {
         await deleteScanFromStorage(btn.getAttribute('data-id'));
         renderHistoryUI();
       }
@@ -757,6 +790,7 @@ async function exportScanAsZip(id) {
       return;
     }
 
+    if (!window.JSZip && typeof ensureJSZip === 'function') await ensureJSZip();
     if (!window.JSZip) {
       showToast('Descargando imágenes individuales...', 'info');
       scan.pages.forEach(function(p, i) {
@@ -814,7 +848,8 @@ async function exportScanAsZip(id) {
 }
 
 /* Exportar todo el historial en formato JSON */
-async function exportAllScansAsJson() {
+async function exportAllScansAsJson(options) {
+  const opts = options || {};
   try {
     const scans = await getAllScansFromStorage();
     if (scans.length === 0) {
@@ -832,12 +867,33 @@ async function exportAllScansAsJson() {
       scans: scans
     };
 
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    let fileBody = JSON.stringify(payload, null, 2);
+    let fileName = 'RealScan_Respaldo_Historial_' + new Date().toISOString().slice(0, 10) + '.json';
+    let encrypted = false;
+    if (opts.encrypt) {
+      if (!window.RealScanBackupCrypto) throw new Error('El módulo de cifrado no está disponible.');
+      const password = await window.RealScanBackupCrypto.promptBackupPassword({
+        title: '🔒 Respaldo cifrado con contraseña',
+        message: 'El respaldo incluye documentos de clientes. Elige una contraseña: sin ella el archivo NO se podrá restaurar. No se guarda en ningún sitio; apúntala aparte.',
+        confirm: true,
+        confirmText: 'Cifrar y descargar'
+      });
+      if (!password) {
+        showToast('Exportación cancelada.', 'info');
+        return;
+      }
+      const envelope = await window.RealScanBackupCrypto.encryptText(fileBody, password);
+      fileBody = JSON.stringify(envelope, null, 2);
+      fileName = 'RealScan_Respaldo_Cifrado_' + new Date().toISOString().slice(0, 10) + '.json';
+      encrypted = true;
+    }
+
+    const blob = new Blob([fileBody], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     if (blob.size > BACKUP_MAX_BYTES) { URL.revokeObjectURL(url); throw new Error('El historial supera 50 MB. Exporta los trabajos individualmente desde el historial.'); }
-    a.download = 'RealScan_Respaldo_Historial_' + new Date().toISOString().slice(0, 10) + '.json';
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
     setTimeout(function() {
@@ -846,10 +902,12 @@ async function exportAllScansAsJson() {
     }, 2000);
 
     if (typeof logActivity === 'function') {
-      logActivity('Respaldo de Historial', 'Exportación JSON de ' + scans.length + ' escaneos');
+      logActivity(encrypted ? 'Respaldo de Historial Cifrado' : 'Respaldo de Historial', 'Exportación JSON de ' + scans.length + ' escaneos' + (encrypted ? ' (AES-GCM)' : ''));
     }
-    showToast('Descarga del respaldo solicitada. Verifica el archivo y guárdalo en otra unidad.', 'success');
-    return { count: scans.length, bytes: blob.size };
+    showToast(encrypted
+      ? 'Respaldo CIFRADO descargado. Guarda la contraseña: sin ella no se puede restaurar.'
+      : 'Descarga del respaldo solicitada. Verifica el archivo y guárdalo en otra unidad.', 'success');
+    return { count: scans.length, bytes: blob.size, encrypted: encrypted };
   } catch (err) {
     showToast('Error exportando respaldo JSON: ' + err.message, 'warning');
   }
@@ -872,6 +930,27 @@ async function importScansFromJson(file) {
     } catch (parseErr) {
       showToast('El archivo no tiene un formato JSON válido.', 'warning');
       return;
+    }
+
+    // Respaldo cifrado (AES-GCM): pedir la contraseña y descifrar antes de validar.
+    if (window.RealScanBackupCrypto && window.RealScanBackupCrypto.isEncryptedBackupObject(data)) {
+      const password = await window.RealScanBackupCrypto.promptBackupPassword({
+        title: '🔒 Respaldo cifrado',
+        message: 'Este respaldo está cifrado con contraseña. Ingrésala para restaurarlo.',
+        confirm: false,
+        confirmText: 'Descifrar y restaurar'
+      });
+      if (!password) {
+        showToast('Restauración cancelada.', 'info');
+        return;
+      }
+      try {
+        const plain = await window.RealScanBackupCrypto.decryptText(data, password);
+        data = JSON.parse(plain);
+      } catch (decErr) {
+        showToast(decErr.message || 'No se pudo descifrar el respaldo.', 'warning');
+        return;
+      }
     }
 
     const items = Array.isArray(data) ? data : (data && Array.isArray(data.scans) ? data.scans : null);
@@ -1341,8 +1420,8 @@ window.renderUserPresetsUI = renderUserPresetsUI;
 /* ============================================================
    NUEVO TRABAJO / RESET CON CONFIRMACIÓN (M-28)
    ============================================================ */
-function resetWorkspaceToNewProject() {
-  if (confirm('¿Comenzar un Nuevo Trabajo? Se limpiarán las fotos actuales del lienzo. Asegúrate de haber guardado o impreso tu documento si lo necesitas.')) {
+async function resetWorkspaceToNewProject() {
+  if (await showConfirmDialog('¿Comenzar un Nuevo Trabajo? Se limpiarán las fotos actuales del lienzo. Asegúrate de haber guardado o impreso tu documento si lo necesitas.', { title: 'Nuevo trabajo', confirmText: 'Comenzar' })) {
     prepareWorkspaceForJobSwitch({ clearDraft: true, keepTitle: false });
     if (typeof updatePreviewAnnotations === 'function') updatePreviewAnnotations();
     if (typeof updateUI === 'function') updateUI();

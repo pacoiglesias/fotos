@@ -65,9 +65,17 @@ vm.runInNewContext(fs.readFileSync('js/storage.js', 'utf8'), sandbox);
 async function runTests() {
   console.log('--- TEST 1: Seguridad de Autenticación y Eliminación de Bypass Maestro ---');
   {
-    const initialAuth = sandbox.getAuthData();
-    assert(initialAuth.users.length > 0, 'Debe inicializar al menos 1 usuario');
+    // v3.12.0: ya NO existe credencial por defecto. Una instalación nueva
+    // nace sin usuarios y la app exige crear la cuenta de administrador.
+    const freshAuth = sandbox.getAuthData();
+    assert(freshAuth.users.length === 0, 'Instalación nueva: no debe existir ningún usuario por defecto');
+    assert(freshAuth.needsSetup === true, 'Instalación nueva: debe marcarse needsSetup para exigir el alta inicial');
+
+    // Alta inicial: se crea el administrador con la contraseña elegida
+    const initialAuth = await sandbox.createInitialAdmin('admin', 'MiClaveSegura2026!');
+    assert(initialAuth.users.length === 1, 'Tras el alta inicial debe existir 1 usuario');
     assert(initialAuth.users[0].username === 'admin', 'Usuario inicial debe ser admin');
+    assert(initialAuth.users[0].mustChangePassword === false, 'La clave elegida en el alta no debe exigir cambio');
 
     // Cambiar contraseña a "MiClaveSegura2026!"
     const newPass = 'MiClaveSegura2026!';

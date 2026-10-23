@@ -129,7 +129,13 @@ function generatePdfDoc() {
     }
 
     // 2. Elementos colocados en la página (sin inventar caras faltantes)
-    page.placements.forEach(function(item) {
+    // Perfil de calibración de impresora: corrige la geometría del documento
+    // (escala y desplazamiento) para la impresora elegida como activa.
+    const profileTransform = (window.RealScanPrinterProfiles && typeof window.RealScanPrinterProfiles.getTransform === 'function')
+      ? window.RealScanPrinterProfiles.getTransform()
+      : null;
+    page.placements.forEach(function(rawItem) {
+      const item = profileTransform ? profileTransform(rawItem) : rawItem;
       const imgData = (state.images[item.slot] && state.images[item.slot].processedDataUrl)
         ? state.images[item.slot].processedDataUrl
         : null;
@@ -166,7 +172,25 @@ function generatePdfDoc() {
   return doc;
 }
 
-function downloadPdf() {
+/* Ruta de respaldo window.print(): fija el tamaño de página y márgenes cero
+   con una regla @page dinámica para no perder la escala 1:1 del papel activo. */
+function applyPrintPageStyle() {
+  try {
+    const paper = (typeof getActivePaperSpec === 'function')
+      ? getActivePaperSpec()
+      : { widthMm: 210, heightMm: 297 };
+    let styleEl = document.getElementById('realscan-print-page');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'realscan-print-page';
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = '@page { size: ' + paper.widthMm + 'mm ' + paper.heightMm + 'mm; margin: 0; }';
+  } catch (e) {}
+}
+
+async function downloadPdf() {
+  if (typeof ensureJsPdf === 'function') await ensureJsPdf();
   const doc = generatePdfDoc();
   if (!doc) return;
   const spec = getActiveSpec();
@@ -176,7 +200,8 @@ function downloadPdf() {
   showToast('✅ PDF descargado (' + filename + '). Recuerda imprimir al 100% de escala.', 'success');
 }
 
-function printDirectFromBrowser() {
+async function printDirectFromBrowser() {
+  if (typeof ensureJsPdf === 'function') await ensureJsPdf();
   const doc = generatePdfDoc();
   if (!doc) return;
   try {
@@ -201,12 +226,14 @@ function printDirectFromBrowser() {
           printFrame.contentWindow.focus();
           printFrame.contentWindow.print();
         } catch(e) {
+          applyPrintPageStyle();
           window.print();
         }
       }, 350);
     };
     showToast('🖨️ Abriendo cuadro de impresión a escala 1:1 real...', 'info');
   } catch (err) {
+    applyPrintPageStyle();
     window.print();
   }
 }

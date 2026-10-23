@@ -734,12 +734,53 @@ function renderProcessedImage(side) {
             d[i] = lum; d[i+1] = lum; d[i+2] = lum;
           }
         } else if (filter === 'scanner') {
-          for (let i = 0; i < d.length; i += 4) {
-            let lum = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-            if (lum > 185) lum = 255;
-            else if (lum < 115) lum = Math.max(0, lum * 0.72);
-            else lum = ((lum - 115) / (185 - 115)) * 255;
-            d[i] = lum; d[i+1] = lum; d[i+2] = lum;
+          // Nivel «escáner» (v3.12.0): corrección de campo plano. Se estima el
+          // fondo (papel + sombras + viñeta) con una versión muy reducida y
+          // suavizada de la imagen, y la luminancia se divide entre ese fondo:
+          // el papel queda blanco uniforme sin sombras y el texto se refuerza
+          // con un umbral suave. Sustituye al umbral fijo anterior, que dejaba
+          // las sombras como manchas grises.
+          const W = imgPixels.width, H = imgPixels.height;
+          const bwS = Math.max(8, Math.round(W / 24)), bhS = Math.max(8, Math.round(H / 24));
+          const bgRaw = new Float32Array(bwS * bhS);
+          for (let by = 0; by < bhS; by++) {
+            for (let bx = 0; bx < bwS; bx++) {
+              let sum = 0, count = 0;
+              const x0 = Math.floor(bx * W / bwS), x1 = Math.max(x0 + 1, Math.floor((bx + 1) * W / bwS));
+              const y0 = Math.floor(by * H / bhS), y1 = Math.max(y0 + 1, Math.floor((by + 1) * H / bhS));
+              for (let yy = y0; yy < y1; yy += 2) {
+                for (let xx = x0; xx < x1; xx += 2) {
+                  const idx = (yy * W + xx) * 4;
+                  sum += 0.299 * d[idx] + 0.587 * d[idx + 1] + 0.114 * d[idx + 2];
+                  count++;
+                }
+              }
+              bgRaw[by * bwS + bx] = count ? sum / count : 255;
+            }
+          }
+          const bg = new Float32Array(bwS * bhS);
+          for (let by = 0; by < bhS; by++) {
+            for (let bx = 0; bx < bwS; bx++) {
+              let sum = 0, count = 0;
+              for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+                const nx = bx + dx, ny = by + dy;
+                if (nx >= 0 && ny >= 0 && nx < bwS && ny < bhS) { sum += bgRaw[ny * bwS + nx]; count++; }
+              }
+              bg[by * bwS + bx] = sum / count;
+            }
+          }
+          for (let y = 0; y < H; y++) {
+            const gy = Math.min(bhS - 1, Math.floor(y * bhS / H));
+            for (let x = 0; x < W; x++) {
+              const gx = Math.min(bwS - 1, Math.floor(x * bwS / W));
+              const i = (y * W + x) * 4;
+              let lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+              lum = lum * (255 / Math.max(60, bg[gy * bwS + gx]));
+              if (lum > 232) lum = 255;
+              else if (lum < 118) lum = Math.max(0, lum * 0.68);
+              else lum = ((lum - 118) / (232 - 118)) * 255;
+              d[i] = lum; d[i + 1] = lum; d[i + 2] = lum;
+            }
           }
         }
         ctx.putImageData(imgPixels, 0, 0);
@@ -858,6 +899,12 @@ function updateSidePreview(side) {
       previewImg.classList.remove('hidden');
       previewImg.className = 'w-full h-full object-contain rounded-sm';
     }
+    // Miniatura dentro de la propia tarjeta del slot: la foto se ve donde se
+    // trabaja en cuanto se captura y tras cada ajuste (rotar, recorte, zoom).
+    const thumbImg = $('slotThumb' + suffix);
+    const thumbWrap = $('slotThumbWrap' + suffix);
+    if (thumbImg && thumbImg.getAttribute('src') !== imgData.processedDataUrl) thumbImg.src = imgData.processedDataUrl;
+    if (thumbWrap) thumbWrap.classList.remove('hidden');
     if (placeholder) placeholder.classList.add('hidden');
     if (tools) tools.classList.remove('hidden');
     if (btnDelete) btnDelete.classList.remove('hidden');
@@ -865,6 +912,32 @@ function updateSidePreview(side) {
     if (badge) {
       badge.textContent = 'Listo';
       badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200';
+    }
+
+    // Pistas en los encabezados de los desplegables: si un ajuste está activo
+    // dentro de una sección cerrada, el encabezado lo anuncia (p. ej.
+    // «Mejoras de imagen · B/N») para que no quede escondido.
+    const hintFit = $('accHintFit' + suffix);
+    if (hintFit) {
+      const partsFit = [];
+      if (imgData.zoom && Math.abs(imgData.zoom - 1) > 0.001) partsFit.push(Math.round(imgData.zoom * 100) + '%');
+      if (imgData.fitMode === 'fit') partsFit.push('Encajar');
+      hintFit.textContent = partsFit.length ? '· ' + partsFit.join(' · ') : '';
+    }
+    const hintImg = $('accHintImg' + suffix);
+    if (hintImg) {
+      const partsImg = [];
+      if (imgData.filter === 'bw') partsImg.push('B/N');
+      else if (imgData.filter === 'scanner') partsImg.push('Escáner');
+      if (imgData.brightness || imgData.contrast) partsImg.push('Luz ajustada');
+      hintImg.textContent = partsImg.length ? '· ' + partsImg.join(' · ') : '';
+    }
+    const hintTools = $('accHintTools' + suffix);
+    if (hintTools) {
+      const partsTools = [];
+      if (imgData.rotation) partsTools.push('Girada ' + imgData.rotation + '°');
+      if (imgData.isCropApplied && imgData.croppedSrc) partsTools.push('Recortada');
+      hintTools.textContent = partsTools.length ? '· ' + partsTools.join(' · ') : '';
     }
 
     $$('[data-filter^="' + side + ':"]').forEach(function(b) {
@@ -883,6 +956,10 @@ function updateSidePreview(side) {
       previewImg.src = '';
       previewImg.classList.add('hidden');
     }
+    const thumbImgEmpty = $('slotThumb' + suffix);
+    const thumbWrapEmpty = $('slotThumbWrap' + suffix);
+    if (thumbImgEmpty) thumbImgEmpty.removeAttribute('src');
+    if (thumbWrapEmpty) thumbWrapEmpty.classList.add('hidden');
     if (placeholder) placeholder.classList.remove('hidden');
     if (tools) tools.classList.add('hidden');
     if (btnDelete) btnDelete.classList.add('hidden');
@@ -891,6 +968,11 @@ function updateSidePreview(side) {
       badge.textContent = 'Sin foto';
       badge.className = 'text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400';
     }
+
+    ['accHintFit', 'accHintImg', 'accHintTools'].forEach(function(prefix) {
+      const hintEl = $(prefix + suffix);
+      if (hintEl) hintEl.textContent = '';
+    });
 
     const oaciOverlay = $('oaciGuide' + suffix);
     if (oaciOverlay) oaciOverlay.classList.add('hidden');

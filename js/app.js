@@ -1010,7 +1010,7 @@ function switchCategory(cat) {
     if (slot1Title) slot1Title.textContent = '1. Frente (Delantera con Foto)';
     if (slot2Title) slot2Title.textContent = '2. Reverso (Atrás / Vuelta)';
     if (cardBackContainer) cardBackContainer.classList.toggle('hidden', (state.documentPageCount || 2) < 2);
-    if (!FORMAT_SPECS[state.format] || FORMAT_SPECS[state.format].category !== 'docs') selectFormat('card');
+    if (!FORMAT_SPECS[state.format] || FORMAT_SPECS[state.format].category !== 'docs') selectFormat(getRememberedFormat('docs'));
   } else if (cat === 'photos') {
     if (step1Title) step1Title.textContent = 'Planilla de Fotos en Hoja A4';
     if (step1Subtitle) step1Subtitle.textContent = 'Copias por hoja';
@@ -1019,7 +1019,7 @@ function switchCategory(cat) {
     if (slot1Title) slot1Title.textContent = state.mixTwoPhotos ? 'Foto 1 (Persona A / Trámite 1)' : 'Foto Oficial (Rostro / Credencial)';
     if (slot2Title) slot2Title.textContent = 'Foto 2 (Persona B / Trámite 2)';
     if (cardBackContainer) cardBackContainer.classList.toggle('hidden', !state.mixTwoPhotos);
-    if (!FORMAT_SPECS[state.format] || FORMAT_SPECS[state.format].category !== 'photos') selectFormat('photo_infantil');
+    if (!FORMAT_SPECS[state.format] || FORMAT_SPECS[state.format].category !== 'photos') selectFormat(getRememberedFormat('photos'));
     updatePhotoGridStats();
   } else if (cat === 'custom') {
     if (step1Title) step1Title.textContent = 'Modo de Impresión A4';
@@ -1372,12 +1372,151 @@ function setPrintMode(mode) {
   }
 }
 
-function selectFormat(formatKey) {
+/* ---------- Selector de tipo compacto (v3.12.0): frecuentes + buscador ----------
+   El último tipo usado por categoría se recuerda y se precarga la próxima vez. */
+const LAST_FORMATS_KEY = 'realscan_last_formats_v1';
+function getRememberedFormat(cat) {
+  try {
+    const map = JSON.parse(localStorage.getItem(LAST_FORMATS_KEY) || '{}');
+    const key = map[cat];
+    if (key && window.FORMAT_SPECS && FORMAT_SPECS[key] && FORMAT_SPECS[key].category === cat) return key;
+  } catch (e) {}
+  return cat === 'photos' ? 'photo_infantil' : 'card';
+}
+function rememberFormat(formatKey) {
+  const spec = window.FORMAT_SPECS && FORMAT_SPECS[formatKey];
+  if (!spec || !spec.category) return;
+  try {
+    const map = JSON.parse(localStorage.getItem(LAST_FORMATS_KEY) || '{}');
+    map[spec.category] = formatKey;
+    localStorage.setItem(LAST_FORMATS_KEY, JSON.stringify(map));
+  } catch (e) {}
+}
+function refreshFormatBars() {
+  document.querySelectorAll('[data-format-bar]').forEach(function(bar) {
+    const cat = bar.getAttribute('data-format-bar');
+    const label = bar.querySelector('.format-current-label');
+    if (!label) return;
+    let key = state.format;
+    if (!window.FORMAT_SPECS || !FORMAT_SPECS[key] || FORMAT_SPECS[key].category !== cat) key = getRememberedFormat(cat);
+    const spec = window.FORMAT_SPECS && FORMAT_SPECS[key];
+    if (spec) label.textContent = (spec.shortName || spec.name) + ' · ' + spec.widthMm + ' × ' + spec.heightMm + ' mm';
+  });
+}
+function normalizeSearchText(t) {
+  return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+const FORMAT_QUICK = {
+  docs: [
+    { key: 'card', label: '🪪 ID-1 · INE/DNI' },
+    { key: 'passport_open', label: '📕 Pasaporte abierto' },
+    { key: 'passport', label: '📄 Pasaporte (1 pág.)' }
+  ],
+  photos: [
+    { key: 'photo_infantil', label: '👶 Infantil' },
+    { key: 'photo_carnet', label: '🪪 Carnet / DNI' },
+    { key: 'photo_passport', label: '🛂 Foto pasaporte' }
+  ]
+};
+const FORMAT_GROUPS = {
+  docs: [['Tarjetas', ['card', 'business_card']], ['Pasaportes', ['passport_open', 'passport']], ['Documentos', ['document_a6']]],
+  photos: [['Fotos estándar', ['photo_infantil', 'photo_carnet', 'photo_passport', 'photo_visa_usa', 'photo_titulo', 'photo_credencial']], ['Fotos con óvalo', ['photo_ovalo_titulo', 'photo_ovalo_mignon', 'photo_ovalo_credencial']]]
+};
+function setupFormatSelector(cat) {
+  const grid = $(cat === 'docs' ? 'containerCatDocs' : 'containerCatPhotos');
+  if (!grid || grid.dataset.selectorReady) return;
+  grid.dataset.selectorReady = '1';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'space-y-2.5';
+  wrap.setAttribute('data-format-wrap', cat);
+  grid.parentNode.insertBefore(wrap, grid);
+  // El envoltorio hereda el id: switchCategory muestra/oculta todo el selector.
+  wrap.id = grid.id;
+  grid.removeAttribute('id');
+  if (grid.classList.contains('hidden')) { wrap.classList.add('hidden'); grid.classList.remove('hidden'); }
+
+  const bar = document.createElement('div');
+  bar.className = 'flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900';
+  bar.setAttribute('data-format-bar', cat);
+  bar.innerHTML = '<div class="min-w-0 flex-1"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Tipo elegido</p>' +
+    '<p class="format-current-label font-bold text-sm text-slate-900 dark:text-white leading-snug"></p></div>' +
+    '<button type="button" class="format-change-btn shrink-0 min-h-[44px] px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">Cambiar</button>';
+  wrap.appendChild(bar);
+
+  const quickRow = document.createElement('div');
+  quickRow.className = 'flex flex-wrap items-center gap-1.5';
+  quickRow.innerHTML = '<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mr-0.5">Frecuentes</span>';
+  (FORMAT_QUICK[cat] || []).forEach(function(q) {
+    const spec = window.FORMAT_SPECS && FORMAT_SPECS[q.key];
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'format-btn format-quick-btn min-h-[44px] px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200';
+    b.setAttribute('data-quick-format', q.key);
+    b.textContent = q.label + (spec ? ' · ' + spec.widthMm + ' × ' + spec.heightMm + ' mm' : '');
+    quickRow.appendChild(b);
+  });
+  wrap.appendChild(quickRow);
+
+  const panel = document.createElement('div');
+  panel.className = 'format-panel hidden space-y-2.5';
+  panel.setAttribute('data-format-panel', cat);
+  panel.innerHTML = '<input type="search" class="format-search w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500" placeholder="🔎 Escribe INE, DNI, pasaporte…" aria-label="Buscar tipo de documento o foto">' +
+    '<p class="format-empty hidden text-xs font-semibold text-slate-500 dark:text-slate-400">Sin resultados para tu búsqueda.</p>';
+  wrap.appendChild(panel);
+  panel.appendChild(grid);
+
+  (FORMAT_GROUPS[cat] || []).forEach(function(group) {
+    const firstBtn = grid.querySelector('[data-format="' + group[1][0] + '"]');
+    if (!firstBtn) return;
+    const h = document.createElement('div');
+    h.className = 'format-group-title col-span-1 sm:col-span-2 pt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500';
+    h.textContent = group[0];
+    grid.insertBefore(h, firstBtn);
+  });
+
+  const changeBtn = bar.querySelector('.format-change-btn');
+  const searchInput = panel.querySelector('.format-search');
+  const emptyMsg = panel.querySelector('.format-empty');
+  changeBtn.addEventListener('click', function() {
+    const willOpen = panel.classList.contains('hidden');
+    panel.classList.toggle('hidden', !willOpen);
+    changeBtn.textContent = willOpen ? 'Cerrar' : 'Cambiar';
+    if (willOpen) setTimeout(function() { searchInput.focus(); }, 60);
+  });
+  panel.addEventListener('click', function(e) {
+    if (e.target.closest('.format-btn')) {
+      panel.classList.add('hidden');
+      changeBtn.textContent = 'Cambiar';
+    }
+  });
+  searchInput.addEventListener('input', function() {
+    const q = normalizeSearchText(searchInput.value);
+    let anyVisible = false;
+    grid.querySelectorAll('.format-btn').forEach(function(b) {
+      const hit = !q || normalizeSearchText(b.textContent).includes(q);
+      b.classList.toggle('hidden', !hit);
+      if (hit) anyVisible = true;
+    });
+    grid.querySelectorAll('.format-group-title').forEach(function(h) {
+      let n = h.nextElementSibling, any = false;
+      while (n && !n.classList.contains('format-group-title')) {
+        if (n.classList.contains('format-btn') && !n.classList.contains('hidden')) any = true;
+        n = n.nextElementSibling;
+      }
+      h.classList.toggle('hidden', !any);
+    });
+    emptyMsg.classList.toggle('hidden', anyVisible);
+  });
+}
+
+function selectFormat(formatKey, silent) {
   state.format = formatKey;
   $$('.format-btn').forEach(function(btn) {
-    const active = btn.getAttribute('data-format') === formatKey;
+    const active = (btn.getAttribute('data-format') || btn.getAttribute('data-quick-format')) === formatKey;
     btn.classList.toggle('is-active', active);
   });
+  rememberFormat(formatKey);
 
   // Adaptación automática según formato
   if (formatKey === 'business_card') {
@@ -1403,7 +1542,7 @@ function selectFormat(formatKey) {
     photo_ovalo_mignon: 'Foto Óvalo Mignon seleccionada (5.0 × 7.0 cm). Caben 6 fotos a escala 1:1 real en 1 hoja.',
     photo_ovalo_credencial: 'Foto Óvalo Credencial seleccionada (3.5 × 5.0 cm). Caben hasta 12 fotos a escala 1:1 real.'
   }[formatKey];
-  if (msg) showToast(msg, 'info');
+  if (msg && !silent) showToast(msg, 'info');
 
   if (state.activeCategory === 'photos') {
     const spec = getActiveSpec();
@@ -1418,6 +1557,7 @@ function selectFormat(formatKey) {
   ['front', 'back', 'page3', 'page4'].forEach(function(s) {
     if (state.images[s].originalSrc && typeof renderProcessedImage === 'function') renderProcessedImage(s);
   });
+  refreshFormatBars();
   updateUI();
 }
 
@@ -1701,6 +1841,22 @@ function prevPreviewPage() {
 
 function updateUI() {
   $('docsModeNote')?.classList.toggle('hidden',state.activeCategory === 'photos');
+  // Miniaturas dentro de cada tarjeta de slot (red de seguridad: cubre flujos
+  // que refrescan con updateUI sin pasar por updateSidePreview, p. ej.
+  // intercambiar caras, deshacer/rehacer o restaurar un borrador).
+  [['front', 'Front'], ['back', 'Back'], ['page3', 'Page3'], ['page4', 'Page4']].forEach(function(pair) {
+    const wrap = $('slotThumbWrap' + pair[1]);
+    const img = $('slotThumb' + pair[1]);
+    if (!wrap || !img) return;
+    const src = state.images[pair[0]] && state.images[pair[0]].processedDataUrl;
+    if (src) {
+      if (img.getAttribute('src') !== src) img.src = src;
+      wrap.classList.remove('hidden');
+    } else {
+      img.removeAttribute('src');
+      wrap.classList.add('hidden');
+    }
+  });
   const editPreview = !!state._previewEditEnabled;
   if ($('btnPreviewEdit')) {
     $('btnPreviewEdit').setAttribute('aria-pressed',String(editPreview));
@@ -2348,13 +2504,19 @@ function bindEvents() {
     on($('chkMixTwoPhotos'), 'change', function(e){ setMixTwoPhotos(e.target.checked); });
   }
 
-  // Formatos
+  // Formatos: selector compacto (frecuentes + panel con buscador) y restauración
+  // del último tipo usado por categoría
+  setupFormatSelector('docs');
+  setupFormatSelector('photos');
   $$('.format-btn').forEach(function(b) {
     on(b, 'click', function(){
-      selectFormat(b.getAttribute('data-format'));
+      selectFormat(b.getAttribute('data-format') || b.getAttribute('data-quick-format'));
       savePreferences();
     });
   });
+  const rememberedInitial = getRememberedFormat(state.activeCategory === 'photos' ? 'photos' : 'docs');
+  if (rememberedInitial !== state.format) selectFormat(rememberedInitial, true);
+  refreshFormatBars();
 
   // Orientación de Pasaporte
   if ($('btnPassOpenPortrait')) {
@@ -2428,6 +2590,48 @@ function bindEvents() {
 
   // Camera / Upload / Paste buttons
   $$('.cam-btn').forEach(function(b) { on(b, 'click', function(){ if (typeof handleCameraClick === 'function') handleCameraClick(b.getAttribute('data-camera')); }); });
+
+  // Tocar la foto dentro de su tarjeta lleva a la vista previa completa de la
+  // hoja. MANTENER pulsada compara antes/después: muestra la foto original
+  // mientras se mantiene (útil para juzgar el filtro Escáner/B/N y la luz).
+  $$('.slot-thumb').forEach(function(b) {
+    const side = b.getAttribute('data-slot-thumb');
+    const img = b.querySelector('img');
+    let holdTimer = null, comparing = false, suppressClick = false;
+    on(b, 'click', function() {
+      if (suppressClick) { suppressClick = false; return; }
+      const sheet = document.querySelector('.a4-sheet');
+      if (!sheet) return;
+      sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      sheet.classList.add('ring-4', 'ring-indigo-400');
+      setTimeout(function() { sheet.classList.remove('ring-4', 'ring-indigo-400'); }, 1800);
+    });
+    b.addEventListener('pointerdown', function() {
+      holdTimer = setTimeout(function() {
+        const data = state.images[side];
+        const original = data && (data.originalSrc || data.rawOriginalSrc);
+        if (img && original && data.processedDataUrl && original !== data.processedDataUrl) {
+          img.src = original;
+          comparing = true;
+          b.classList.add('ring-4', 'ring-amber-400');
+        }
+      }, 350);
+    });
+    function endCompare() {
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      if (comparing && img) {
+        const data = state.images[side];
+        if (data && data.processedDataUrl) img.src = data.processedDataUrl;
+        comparing = false;
+        suppressClick = true;
+        b.classList.remove('ring-4', 'ring-amber-400');
+      }
+    }
+    b.addEventListener('pointerup', endCompare);
+    b.addEventListener('pointerleave', endCompare);
+    b.addEventListener('pointercancel', endCompare);
+    b.addEventListener('contextmenu', function(e) { if (comparing) e.preventDefault(); });
+  });
   $$('.upload-btn').forEach(function(b) { on(b, 'click', function(){ if (typeof triggerNativeUpload === 'function') triggerNativeUpload(b.getAttribute('data-upload'), false); }); });
   $$('.paste-btn').forEach(function(b) { on(b, 'click', function(){ if (typeof pasteFromClipboard === 'function') pasteFromClipboard(b.getAttribute('data-paste')); }); });
 
@@ -2922,6 +3126,8 @@ function bindEvents() {
 
   // Autenticación, Seguridad y Ajustes
   on($('loginForm'), 'submit', handleLoginSubmit);
+  on($('setupForm'), 'submit', handleSetupSubmit);
+  on($('forcedChangeForm'), 'submit', handleForcedChangeSubmit);
   on($('btnToggleLoginPass'), 'click', toggleLoginPasswordVisibility);
   on($('btnLogout'), 'click', handleLogout);
   on($('btnOpenSettings'), 'click', openSettingsModal);

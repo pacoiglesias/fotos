@@ -74,7 +74,8 @@
       select.append(option);
     }
   }
-  function testPdf(face) {
+  async function testPdf(face) {
+    if (typeof ensureJsPdf === 'function') await ensureJsPdf();
     const paper = getActivePaperSpec(), doc = new jspdf.jsPDF({ unit: "mm", format: [paper.widthMm, paper.heightMm] });
     doc.setFontSize(26);
     doc.text("PRUEBA " + face, 25, 35);
@@ -87,7 +88,8 @@
     doc.text("Papel comun - Escala 100% - Misma bandeja", 20, 185);
     downloadPdfBlob(doc, "RealScan_Prueba_Duplex_" + face + ".pdf");
   }
-  function jobPdf(face) {
+  async function jobPdf(face) {
+    if (typeof ensureJsPdf === 'function') await ensureJsPdf();
     const status = document.getElementById("duplexStatus");
     if (!document.getElementById("duplexVerified").checked) {
       status.textContent = "Completa primero la prueba con papel común.";

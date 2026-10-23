@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>RealScan — Fotos, documentos y entrega digital</title>
+  <meta name="description" content="RealScan Pro: estudio fotográfico local para escanear, recortar e imprimir fotos y documentos a escala real 1:1, con entrega digital, respaldo cifrado y prueba de calibración." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="RealScan Pro — Fotos y documentos a escala real 1:1" />
+  <meta property="og:description" content="Escanea, recorta, imprime y entrega fotos y documentos con escala 1:1 verificada. Funciona sin conexión tras la primera carga." />
+  <meta property="og:image" content="assets/icons/icon-512.png" />
   <script>
     // Update independently of app.js so an old broken cached script can recover.
     if ('serviceWorker' in navigator) {
@@ -47,13 +52,10 @@
 
   <!-- Google Fonts: Inter -->
 
-  <!-- jsPDF CDN (v2.5.1) -->
-  <script src="vendor/jspdf.umd.min.js"></script>
+  <!-- jsPDF y JSZip se cargan bajo demanda con js/vendor-loader.js
+       (ensureJsPdf / ensureJSZip) para aligerar la primera carga. -->
 
-  <!-- JSZip CDN (v3.11.1) para exportar paquetes de fotos y respaldos -->
-  <script src="vendor/jszip.min.js"></script>
-
-  <!-- PDF.js CDN (v3.11.174) para leer PDFs escaneados -->
+  <!-- PDF.js (módulo, no bloquea el pintado) para leer PDFs escaneados -->
   <script type="module" src="js/pdf-loader.mjs"></script>
 
   <!-- Web App Manifest (PWA) -->
@@ -78,7 +80,7 @@
           <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.11.1</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.12.0</span>
           </div>
           <p class="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1 mt-0.5">
             <span class="hidden sm:inline">Desarrollado por</span>
@@ -955,95 +957,62 @@
         </div>
 
         <!-- Banner Proactivo Inteligente de Ranura 1 -->
+        <!-- Foto capturada DENTRO de la tarjeta: se ve en cuanto se toma, sin bajar a la vista previa -->
+        <button type="button" id="slotThumbWrapFront" data-slot-thumb="front" class="slot-thumb hidden relative w-full rounded-xl overflow-hidden border-2 border-indigo-300 dark:border-indigo-700 bg-slate-100 dark:bg-slate-800 shadow-sm active:scale-[0.99] transition-transform" title="Toca para verla en la hoja completa">
+          <img id="slotThumbFront" alt="Foto capturada del Frente" class="block w-full h-48 sm:h-56 object-contain bg-slate-100 dark:bg-slate-800" />
+          <span class="absolute bottom-2 right-2 text-[10px] font-bold bg-slate-900/80 text-white px-2.5 py-1 rounded-full pointer-events-none">🔍 Hoja · mantén = original</span>
+        </button>
+
         <div id="inspectorBannerFront" class="hidden p-2 rounded-xl bg-indigo-50/90 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-[11px] flex items-center justify-between gap-2 shadow-xs transition-all mt-2">
           <div class="flex items-center gap-2 min-w-0">
             <span class="text-base">💡</span>
             <div class="min-w-0">
-              <p id="inspectorTextFront" class="font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">Resolución 300 DPI detectada</p>
+              <p id="inspectorTextFront" class="font-bold text-slate-800 dark:text-slate-200 leading-snug">Resolución 300 DPI detectada</p>
               <p id="inspectorSubtextFront" class="text-[9.5px] text-slate-500 dark:text-slate-400 font-mono">3024 × 4032 px • Alta definición</p>
             </div>
           </div>
           <div id="inspectorActionsFront" class="flex items-center gap-1 shrink-0"></div>
         </div>
 
-        <div id="toolsFront" class="hidden space-y-2 pt-1 border-t border-indigo-100 dark:border-indigo-900/60 mt-2">
-          <!-- Fila 1: Ajuste de Más a Menos (Fit/Cover), Auto 1:1, Slider de Zoom con % y Presets -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-800 text-xs">
-            <div class="flex items-center gap-1 flex-wrap">
-              <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span>
-              <button type="button" id="btnFitModeFront" data-fit-mode="front:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa dentro del marco sin cortar nada (ideal para imágenes grandes)">📐 Encajar Todo</button>
-              <button type="button" id="btnCoverModeFront" data-fit-mode="front:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button>
-              <button type="button" data-autofit="front" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Centrar y encajar la imagen completa sin recortar">Centrar y encajar</button>
-              <button type="button" id="btnToggleCropFront" data-crop="front" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button>
-            </div>
-
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <!-- Slider de Escala de más a menos y de menos a más -->
-              <div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                <span class="text-[10px] text-slate-400 font-bold" title="Reducir / Ampliar escala">🔍</span>
-                <button type="button" data-zoom="front:-0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 px-1" title="Reducir imagen">-</button>
-                <input type="range" id="zoomSliderFront" data-slot="front" min="20" max="350" step="5" value="100" class="zoom-slider w-20 sm:w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer" title="Desliza para ajustar escala de más a menor o de menor a más">
-                <button type="button" data-zoom="front:0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 px-1" title="Ampliar imagen">+</button>
-                <span id="zoomPercentFront" class="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 w-9 text-right">100%</span>
-              </div>
-              <button type="button" data-scale-preset="front:0.75" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Reducir al 75% del tamaño">-25%</button>
-              <button type="button" data-scale-preset="front:1.00" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Restablecer tamaño normal 100%">100%</button>
-              <button type="button" data-scale-preset="front:1.25" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar al 125%">+25%</button>
-              <button type="button" data-scale-preset="front:1.50" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar al 150%">+50%</button>
-            </div>
-          </div>
-
-          <!-- Fila 2: Herramientas Visuales (Filtros, Giro, Regla mm, Guía OACI, Centrado y Borrar) -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-indigo-100 dark:border-indigo-900/40 text-xs">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" data-rotate="front" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Girar 90 grados">
+        <div id="toolsFront" class="slot-tools hidden space-y-2 pt-1 border-t border-indigo-100 dark:border-indigo-900/60 mt-2">
+          <!-- Acciones rápidas: siempre visibles -->
+          <div class="flex flex-wrap items-center gap-1.5 px-0.5"><button type="button" data-rotate="front" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Girar 90 grados">
                 <span>🔄</span><span>Rotar</span>
-              </button>
-              <button type="button" id="btnToggleMmGridFront" data-grid="front" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Superponer cuadrícula milimétrica en pantalla para verificar medidas">📏 Regla mm</button>
-              <button type="button" data-guide="front" class="guide-btn px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 transition-colors" title="Guía facial OACI para pasaporte">👤 OACI</button>
-              <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md border border-slate-200 dark:border-slate-700 text-[9.5px]">
+              </button><button type="button" data-warp="front" class="warp-btn px-2 py-0.5 rounded border border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/80 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 font-bold text-[10px] text-indigo-800 dark:text-indigo-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
+                <span>📐</span><span>Enderezar 4 Esquinas</span>
+              </button><button type="button" data-undo="front" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button></div>
+          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>📐 Ajuste y zoom</span><span id="accHintFitFront" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+            <div class="px-3 pb-3 pt-1 flex flex-col gap-2.5">
+              <div class="flex flex-wrap items-center gap-1.5"><span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span><button type="button" id="btnFitModeFront" data-fit-mode="front:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa dentro del marco sin cortar nada (ideal para imágenes grandes)">📐 Encajar Todo</button><button type="button" id="btnCoverModeFront" data-fit-mode="front:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button><button type="button" data-autofit="front" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Centrar y encajar la imagen completa sin recortar">Centrar y encajar</button></div>
+              <div class="flex flex-wrap items-center gap-1.5"><div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <span class="text-[10px] text-slate-400 font-bold" title="Reducir / Ampliar escala">🔍</span>
+                <button type="button" data-zoom="front:-0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 px-2.5" title="Reducir imagen">-</button>
+                <input type="range" id="zoomSliderFront" data-slot="front" min="20" max="350" step="5" value="100" class="zoom-slider w-20 sm:w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer" title="Desliza para ajustar escala de más a menor o de menor a más">
+                <button type="button" data-zoom="front:0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 px-2.5" title="Ampliar imagen">+</button>
+                <span id="zoomPercentFront" class="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 w-9 text-right">100%</span>
+              </div><button type="button" data-scale-preset="front:0.75" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Reducir al 75% del tamaño">-25%</button><button type="button" data-scale-preset="front:1.00" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Restablecer tamaño normal 100%">100%</button><button type="button" data-scale-preset="front:1.25" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar al 125%">+25%</button><button type="button" data-scale-preset="front:1.50" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar al 150%">+50%</button></div>
+              <div class="flex flex-wrap items-center gap-1.5"><span class="text-[10px] font-semibold text-slate-400">Centrar:</span><button type="button" data-pan="front:0:-5" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Arriba">↑</button><button type="button" data-pan="front:0:5" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Abajo">↓</button><button type="button" data-pan="front:-5:0" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Izquierda">←</button><button type="button" data-pan="front:5:0" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Derecha">→</button><button type="button" data-pan-reset="front" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[9.5px] font-medium" title="Restablecer posición inicial">🎯 Reset</button></div>
+            </div>
+          </details>
+          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>🎨 Mejoras de imagen</span><span id="accHintImgFront" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-2"><div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md border border-slate-200 dark:border-slate-700 text-[9.5px]">
                 <button type="button" data-filter="front:color" class="filter-btn is-active px-1.5 py-0.5 rounded font-medium">🎨 Color</button>
                 <button type="button" data-filter="front:bw" class="filter-btn px-1.5 py-0.5 rounded font-medium">⚫ B/N</button>
                 <button type="button" data-filter="front:scanner" class="filter-btn px-1.5 py-0.5 rounded font-medium">📄 Escáner</button>
-              </div>
-              <div class="flex items-center gap-0.5 bg-amber-50/90 dark:bg-amber-950/40 p-0.5 rounded-md border border-amber-200 dark:border-amber-800/60 text-[9.5px]">
+              </div><div class="flex items-center gap-0.5 bg-amber-50/90 dark:bg-amber-950/40 p-0.5 rounded-md border border-amber-200 dark:border-amber-800/60 text-[9.5px]">
                 <button type="button" data-light="front:brightness:15" class="light-btn px-1.5 py-0.5 rounded font-medium text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors" title="Aclarar imagen (+15%)">☀️ +15%</button>
                 <button type="button" data-light="front:brightness:-15" class="light-btn px-1.5 py-0.5 rounded font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Oscurecer imagen (-15%)">🌙 -15%</button>
                 <button type="button" data-light="front:contrast:15" class="light-btn px-1.5 py-0.5 rounded font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors" title="Aumentar nitidez y contraste">🔆 Contraste</button>
                 <button type="button" data-light="front:reset:0" class="light-btn px-1 py-0.5 rounded font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white" title="Restablecer iluminación original">🔄</button>
-              </div>
-            </div>
-
-            <!-- Nudge / Centrado y Borrar -->
-            <div class="flex items-center gap-1">
-              <span class="text-[9.5px] font-semibold text-slate-400">Centrar:</span>
-              <button type="button" data-pan="front:0:-5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Arriba">↑</button>
-              <button type="button" data-pan="front:0:5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Abajo">↓</button>
-              <button type="button" data-pan="front:-5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Izquierda">←</button>
-              <button type="button" data-pan="front:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Derecha">→</button>
-              <button type="button" data-pan-reset="front" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[9.5px] font-medium" title="Restablecer posición inicial">🎯 Reset</button>
-              <button type="button" data-delete="front" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/80 transition-colors ml-1" title="Eliminar foto">🗑️</button>
-            </div>
-          </div>
-
-          <!-- Fila 3: Precisión Documental (Enderezar 4 esquinas, Auto-Luz, Intercambiar, Undo/Redo) -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-indigo-50/50 dark:bg-slate-900/40 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" data-warp="front" class="warp-btn px-2 py-0.5 rounded border border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/80 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 font-bold text-[10px] text-indigo-800 dark:text-indigo-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
-                <span>📐</span><span>Enderezar 4 Esquinas</span>
-              </button>
-              <button type="button" data-autolight="front" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+              </div></div>
+          </details>
+          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>🧰 Herramientas</span><span id="accHintToolsFront" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5"><button type="button" id="btnToggleCropFront" data-crop="front" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button><button type="button" id="btnToggleMmGridFront" data-grid="front" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Superponer cuadrícula milimétrica en pantalla para verificar medidas">📏 Regla mm</button><button type="button" data-guide="front" class="guide-btn px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 transition-colors" title="Guía facial OACI para pasaporte">👤 OACI</button><button type="button" data-autolight="front" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
                 <span>🪄</span><span>Auto-Luz</span>
-              </button>
-              <button type="button" data-swap="front:back" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con el Reverso">
+              </button><button type="button" data-swap="front:back" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con el Reverso">
                 <span>⇄</span><span>Intercambiar con Reverso</span>
-              </button>
-            </div>
-            <div class="flex items-center gap-1">
-              <button type="button" data-undo="front" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button>
-              <button type="button" data-redo="front" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button>
-            </div>
-          </div>
+              </button><button type="button" data-redo="front" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button><button type="button" data-delete="front" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/80 transition-colors ml-1" title="Eliminar foto">🗑️</button></div>
+          </details>
         </div>
       </div>
 
@@ -1085,95 +1054,62 @@
         </div>
 
         <!-- Banner Proactivo Inteligente de Ranura 2 -->
+        <!-- Foto capturada DENTRO de la tarjeta: se ve en cuanto se toma, sin bajar a la vista previa -->
+        <button type="button" id="slotThumbWrapBack" data-slot-thumb="back" class="slot-thumb hidden relative w-full rounded-xl overflow-hidden border-2 border-amber-300 dark:border-amber-700 bg-slate-100 dark:bg-slate-800 shadow-sm active:scale-[0.99] transition-transform" title="Toca para verla en la hoja completa">
+          <img id="slotThumbBack" alt="Foto capturada del Reverso" class="block w-full h-48 sm:h-56 object-contain bg-slate-100 dark:bg-slate-800" />
+          <span class="absolute bottom-2 right-2 text-[10px] font-bold bg-slate-900/80 text-white px-2.5 py-1 rounded-full pointer-events-none">🔍 Hoja · mantén = original</span>
+        </button>
+
         <div id="inspectorBannerBack" class="hidden p-2 rounded-xl bg-amber-50/90 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-[11px] flex items-center justify-between gap-2 shadow-xs transition-all mt-2">
           <div class="flex items-center gap-2 min-w-0">
             <span class="text-base">💡</span>
             <div class="min-w-0">
-              <p id="inspectorTextBack" class="font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">Resolución 300 DPI detectada</p>
+              <p id="inspectorTextBack" class="font-bold text-slate-800 dark:text-slate-200 leading-snug">Resolución 300 DPI detectada</p>
               <p id="inspectorSubtextBack" class="text-[9.5px] text-slate-500 dark:text-slate-400 font-mono">3024 × 4032 px • Alta definición</p>
             </div>
           </div>
           <div id="inspectorActionsBack" class="flex items-center gap-1 shrink-0"></div>
         </div>
 
-        <div id="toolsBack" class="hidden space-y-2 pt-1 border-t border-amber-200 dark:border-amber-900/60 mt-2">
-          <!-- Fila 1: Ajuste de Más a Menos (Fit/Cover), Auto 1:1, Slider de Zoom con % y Presets -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-800 text-xs">
-            <div class="flex items-center gap-1 flex-wrap">
-              <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span>
-              <button type="button" id="btnFitModeBack" data-fit-mode="back:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa dentro del marco sin cortar nada (ideal para imágenes grandes)">📐 Encajar Todo</button>
-              <button type="button" id="btnCoverModeBack" data-fit-mode="back:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button>
-              <button type="button" data-autofit="back" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Centrar y encajar la imagen completa sin recortar">Centrar y encajar</button>
-              <button type="button" id="btnToggleCropBack" data-crop="back" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button>
-            </div>
-
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <!-- Slider de Escala -->
-              <div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                <span class="text-[10px] text-slate-400 font-bold" title="Reducir / Ampliar escala">🔍</span>
-                <button type="button" data-zoom="back:-0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 px-1" title="Reducir imagen">-</button>
-                <input type="range" id="zoomSliderBack" data-slot="back" min="20" max="350" step="5" value="100" class="zoom-slider w-20 sm:w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer" title="Desliza para ajustar escala de más a menor o de menor a más">
-                <button type="button" data-zoom="back:0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 px-1" title="Ampliar imagen">+</button>
-                <span id="zoomPercentBack" class="text-[10px] font-mono font-bold text-amber-700 dark:text-amber-400 w-9 text-right">100%</span>
-              </div>
-              <button type="button" data-scale-preset="back:0.75" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Reducir al 75% del tamaño">-25%</button>
-              <button type="button" data-scale-preset="back:1.00" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Restablecer tamaño normal 100%">100%</button>
-              <button type="button" data-scale-preset="back:1.25" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar al 125%">+25%</button>
-              <button type="button" data-scale-preset="back:1.50" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar al 150%">+50%</button>
-            </div>
-          </div>
-
-          <!-- Fila 2: Herramientas Visuales (Filtros, Giro, Regla mm, Guía OACI, Centrado y Borrar) -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-amber-200 dark:border-amber-900/40 text-xs">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" data-rotate="back" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Girar 90 grados">
+        <div id="toolsBack" class="slot-tools hidden space-y-2 pt-1 border-t border-amber-200 dark:border-amber-900/60 mt-2">
+          <!-- Acciones rápidas: siempre visibles -->
+          <div class="flex flex-wrap items-center gap-1.5 px-0.5"><button type="button" data-rotate="back" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Girar 90 grados">
                 <span>🔄</span><span>Rotar</span>
-              </button>
-              <button type="button" id="btnToggleMmGridBack" data-grid="back" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Superponer cuadrícula milimétrica en pantalla para verificar medidas">📏 Regla mm</button>
-              <button type="button" data-guide="back" class="guide-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/70 text-[10px] font-semibold text-amber-800 dark:text-amber-300 transition-colors" title="Guía facial OACI para pasaporte">👤 OACI</button>
-              <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md border border-slate-200 dark:border-slate-700 text-[9.5px]">
+              </button><button type="button" data-warp="back" class="warp-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar reverso tomado en ángulo">
+                <span>📐</span><span>Enderezar 4 Esquinas</span>
+              </button><button type="button" data-undo="back" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button></div>
+          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>📐 Ajuste y zoom</span><span id="accHintFitBack" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+            <div class="px-3 pb-3 pt-1 flex flex-col gap-2.5">
+              <div class="flex flex-wrap items-center gap-1.5"><span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span><button type="button" id="btnFitModeBack" data-fit-mode="back:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa dentro del marco sin cortar nada (ideal para imágenes grandes)">📐 Encajar Todo</button><button type="button" id="btnCoverModeBack" data-fit-mode="back:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button><button type="button" data-autofit="back" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Centrar y encajar la imagen completa sin recortar">Centrar y encajar</button></div>
+              <div class="flex flex-wrap items-center gap-1.5"><div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <span class="text-[10px] text-slate-400 font-bold" title="Reducir / Ampliar escala">🔍</span>
+                <button type="button" data-zoom="back:-0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 px-2.5" title="Reducir imagen">-</button>
+                <input type="range" id="zoomSliderBack" data-slot="back" min="20" max="350" step="5" value="100" class="zoom-slider w-20 sm:w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer" title="Desliza para ajustar escala de más a menor o de menor a más">
+                <button type="button" data-zoom="back:0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 px-2.5" title="Ampliar imagen">+</button>
+                <span id="zoomPercentBack" class="text-[10px] font-mono font-bold text-amber-700 dark:text-amber-400 w-9 text-right">100%</span>
+              </div><button type="button" data-scale-preset="back:0.75" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Reducir al 75% del tamaño">-25%</button><button type="button" data-scale-preset="back:1.00" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Restablecer tamaño normal 100%">100%</button><button type="button" data-scale-preset="back:1.25" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar al 125%">+25%</button><button type="button" data-scale-preset="back:1.50" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:text-indigo-600 transition-colors" title="Ampliar al 150%">+50%</button></div>
+              <div class="flex flex-wrap items-center gap-1.5"><span class="text-[10px] font-semibold text-slate-400">Centrar:</span><button type="button" data-pan="back:0:-5" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Arriba">↑</button><button type="button" data-pan="back:0:5" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Abajo">↓</button><button type="button" data-pan-back="back:-5:0" data-pan="back:-5:0" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Izquierda">←</button><button type="button" data-pan="back:5:0" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Derecha">→</button><button type="button" data-pan-reset="back" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[9.5px] font-medium" title="Restablecer posición inicial">🎯 Reset</button></div>
+            </div>
+          </details>
+          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>🎨 Mejoras de imagen</span><span id="accHintImgBack" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-2"><div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md border border-slate-200 dark:border-slate-700 text-[9.5px]">
                 <button type="button" data-filter="back:color" class="filter-btn is-active px-1.5 py-0.5 rounded font-medium">🎨 Color</button>
                 <button type="button" data-filter="back:bw" class="filter-btn px-1.5 py-0.5 rounded font-medium">⚫ B/N</button>
                 <button type="button" data-filter="back:scanner" class="filter-btn px-1.5 py-0.5 rounded font-medium">📄 Escáner</button>
-              </div>
-              <div class="flex items-center gap-0.5 bg-amber-50/90 dark:bg-amber-950/40 p-0.5 rounded-md border border-amber-200 dark:border-amber-800/60 text-[9.5px]">
+              </div><div class="flex items-center gap-0.5 bg-amber-50/90 dark:bg-amber-950/40 p-0.5 rounded-md border border-amber-200 dark:border-amber-800/60 text-[9.5px]">
                 <button type="button" data-light="back:brightness:15" class="light-btn px-1.5 py-0.5 rounded font-medium text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors" title="Aclarar imagen (+15%)">☀️ +15%</button>
                 <button type="button" data-light="back:brightness:-15" class="light-btn px-1.5 py-0.5 rounded font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Oscurecer imagen (-15%)">🌙 -15%</button>
                 <button type="button" data-light="back:contrast:15" class="light-btn px-1.5 py-0.5 rounded font-medium text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors" title="Aumentar nitidez y contraste">🔆 Contraste</button>
                 <button type="button" data-light="back:reset:0" class="light-btn px-1 py-0.5 rounded font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white" title="Restablecer iluminación original">🔄</button>
-              </div>
-            </div>
-
-            <!-- Nudge / Centrado y Borrar -->
-            <div class="flex items-center gap-1">
-              <span class="text-[9.5px] font-semibold text-slate-400">Centrar:</span>
-              <button type="button" data-pan="back:0:-5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Arriba">↑</button>
-              <button type="button" data-pan="back:0:5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Abajo">↓</button>
-              <button type="button" data-pan-back="back:-5:0" data-pan="back:-5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Izquierda">←</button>
-              <button type="button" data-pan="back:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 text-[10px] flex items-center justify-center" title="Derecha">→</button>
-              <button type="button" data-pan-reset="back" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[9.5px] font-medium" title="Restablecer posición inicial">🎯 Reset</button>
-              <button type="button" data-delete="back" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/80 transition-colors ml-1" title="Eliminar foto">🗑️</button>
-            </div>
-          </div>
-
-          <!-- Fila 3: Precisión Documental (Enderezar 4 esquinas, Auto-Luz, Intercambiar, Undo/Redo) -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-amber-50/50 dark:bg-slate-900/40 rounded-lg border border-amber-200/50 dark:border-amber-900/30 text-xs">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" data-warp="back" class="warp-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar reverso tomado en ángulo">
-                <span>📐</span><span>Enderezar 4 Esquinas</span>
-              </button>
-              <button type="button" data-autolight="back" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+              </div></div>
+          </details>
+          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>🧰 Herramientas</span><span id="accHintToolsBack" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5"><button type="button" id="btnToggleCropBack" data-crop="back" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button><button type="button" id="btnToggleMmGridBack" data-grid="back" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Superponer cuadrícula milimétrica en pantalla para verificar medidas">📏 Regla mm</button><button type="button" data-guide="back" class="guide-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/70 text-[10px] font-semibold text-amber-800 dark:text-amber-300 transition-colors" title="Guía facial OACI para pasaporte">👤 OACI</button><button type="button" data-autolight="back" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
                 <span>🪄</span><span>Auto-Luz</span>
-              </button>
-              <button type="button" data-swap="back:front" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con el Frente">
+              </button><button type="button" data-swap="back:front" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con el Frente">
                 <span>⇄</span><span>Intercambiar con Frente</span>
-              </button>
-            </div>
-            <div class="flex items-center gap-1">
-              <button type="button" data-undo="back" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button>
-              <button type="button" data-redo="back" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button>
-            </div>
-          </div>
+              </button><button type="button" data-redo="back" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button><button type="button" data-delete="back" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/80 transition-colors ml-1" title="Eliminar foto">🗑️</button></div>
+          </details>
         </div>
       </div>
 
@@ -1207,85 +1143,55 @@
         </div>
 
         <!-- Banner Proactivo Inteligente de Ranura 3 -->
+        <!-- Foto capturada DENTRO de la tarjeta: se ve en cuanto se toma, sin bajar a la vista previa -->
+        <button type="button" id="slotThumbWrapPage3" data-slot-thumb="page3" class="slot-thumb hidden relative w-full rounded-xl overflow-hidden border-2 border-purple-300 dark:border-purple-700 bg-slate-100 dark:bg-slate-800 shadow-sm active:scale-[0.99] transition-transform" title="Toca para verla en la hoja completa">
+          <img id="slotThumbPage3" alt="Foto capturada de la Página 3" class="block w-full h-48 sm:h-56 object-contain bg-slate-100 dark:bg-slate-800" />
+          <span class="absolute bottom-2 right-2 text-[10px] font-bold bg-slate-900/80 text-white px-2.5 py-1 rounded-full pointer-events-none">🔍 Hoja · mantén = original</span>
+        </button>
+
         <div id="inspectorBannerPage3" class="hidden p-2 rounded-xl bg-purple-50/90 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-[11px] flex items-center justify-between gap-2 shadow-xs transition-all mt-2">
           <div class="flex items-center gap-2 min-w-0">
             <span class="text-base">💡</span>
             <div class="min-w-0">
-              <p id="inspectorTextPage3" class="font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">Resolución 300 DPI detectada</p>
+              <p id="inspectorTextPage3" class="font-bold text-slate-800 dark:text-slate-200 leading-snug">Resolución 300 DPI detectada</p>
               <p id="inspectorSubtextPage3" class="text-[9.5px] text-slate-500 dark:text-slate-400 font-mono">3024 × 4032 px • Alta definición</p>
             </div>
           </div>
           <div id="inspectorActionsPage3" class="flex items-center gap-1 shrink-0"></div>
         </div>
 
-        <div id="toolsPage3" class="hidden space-y-2 pt-1 border-t border-purple-200 dark:border-purple-900/60 mt-2">
-          <!-- Fila 1: Ajuste de Más a Menos (Fit/Cover), Auto 1:1, Slider de Zoom con % y Presets -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-800 text-xs">
-            <div class="flex items-center gap-1 flex-wrap">
-              <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span>
-              <button type="button" id="btnFitModePage3" data-fit-mode="page3:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa sin cortar nada">📐 Encajar Todo</button>
-              <button type="button" id="btnCoverModePage3" data-fit-mode="page3:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button>
-              <button type="button" data-autofit="page3" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">Centrar y encajar</button>
-              <button type="button" id="btnToggleCropPage3" data-crop="page3" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-800 text-purple-800 dark:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button>
-            </div>
-
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <!-- Slider de Escala -->
-              <div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+        <div id="toolsPage3" class="slot-tools hidden space-y-2 pt-1 border-t border-purple-200 dark:border-purple-900/60 mt-2">
+          <!-- Acciones rápidas: siempre visibles -->
+          <div class="flex flex-wrap items-center gap-1.5 px-0.5"><button type="button" data-rotate="page3" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200"><span>🔄</span><span>Rotar</span></button><button type="button" data-warp="page3" class="warp-btn px-2 py-0.5 rounded border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/80 hover:bg-purple-100 dark:hover:bg-purple-900/80 font-bold text-[10px] text-purple-800 dark:text-purple-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
+                <span>📐</span><span>Enderezar 4 Esquinas</span>
+              </button><button type="button" data-undo="page3" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button></div>
+          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>📐 Ajuste y zoom</span><span id="accHintFitPage3" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+            <div class="px-3 pb-3 pt-1 flex flex-col gap-2.5">
+              <div class="flex flex-wrap items-center gap-1.5"><span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span><button type="button" id="btnFitModePage3" data-fit-mode="page3:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa sin cortar nada">📐 Encajar Todo</button><button type="button" id="btnCoverModePage3" data-fit-mode="page3:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button><button type="button" data-autofit="page3" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">Centrar y encajar</button></div>
+              <div class="flex flex-wrap items-center gap-1.5"><div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
                 <span class="text-[10px] text-slate-400 font-bold">🔍</span>
-                <button type="button" data-zoom="page3:-0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 px-1">-</button>
+                <button type="button" data-zoom="page3:-0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 px-2.5">-</button>
                 <input type="range" id="zoomSliderPage3" data-slot="page3" min="20" max="350" step="5" value="100" class="zoom-slider w-20 sm:w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer">
-                <button type="button" data-zoom="page3:0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 px-1">+</button>
+                <button type="button" data-zoom="page3:0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 px-2.5">+</button>
                 <span id="zoomPercentPage3" class="text-[10px] font-mono font-bold text-purple-700 dark:text-purple-400 w-9 text-right">100%</span>
-              </div>
-              <button type="button" data-scale-preset="page3:0.75" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">-25%</button>
-              <button type="button" data-scale-preset="page3:1.00" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">100%</button>
-              <button type="button" data-scale-preset="page3:1.25" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">+25%</button>
-              <button type="button" data-scale-preset="page3:1.50" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">+50%</button>
+              </div><button type="button" data-scale-preset="page3:0.75" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">-25%</button><button type="button" data-scale-preset="page3:1.00" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">100%</button><button type="button" data-scale-preset="page3:1.25" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">+25%</button><button type="button" data-scale-preset="page3:1.50" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">+50%</button></div>
+              <div class="flex flex-wrap items-center gap-1.5"><span class="text-[10px] font-semibold text-slate-400">Centrar:</span><button type="button" data-pan="page3:0:-5" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">↑</button><button type="button" data-pan="page3:0:5" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">↓</button><button type="button" data-pan="page3:-5:0" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">←</button><button type="button" data-pan="page3:5:0" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">→</button><button type="button" data-pan-reset="page3" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[9.5px]">🎯 Reset</button></div>
             </div>
-          </div>
-
-          <!-- Fila 2: Herramientas Visuales (Filtros, Giro, Regla mm, Guía OACI, Centrado y Borrar) -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-purple-200 dark:border-purple-900/40 text-xs">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" data-rotate="page3" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200"><span>🔄</span><span>Rotar</span></button>
-              <button type="button" id="btnToggleMmGridPage3" data-grid="page3" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200">📏 Regla mm</button>
-              <button type="button" data-guide="page3" class="guide-btn px-2 py-0.5 rounded border border-purple-300 dark:border-purple-800 bg-white dark:bg-slate-800 hover:bg-purple-50 text-[10px] font-semibold text-purple-800 dark:text-purple-300">👤 OACI</button>
-              <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md text-[9.5px]">
+          </details>
+          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>🎨 Mejoras de imagen</span><span id="accHintImgPage3" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-2"><div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md text-[9.5px]">
                 <button type="button" data-filter="page3:color" class="filter-btn is-active px-1.5 py-0.5 rounded font-medium">🎨 Color</button>
                 <button type="button" data-filter="page3:bw" class="filter-btn px-1.5 py-0.5 rounded font-medium">⚫ B/N</button>
                 <button type="button" data-filter="page3:scanner" class="filter-btn px-1.5 py-0.5 rounded font-medium">📄 Escáner</button>
-              </div>
-            </div>
-            <div class="flex items-center gap-1">
-              <span class="text-[9.5px] font-semibold text-slate-400">Centrar:</span>
-              <button type="button" data-pan="page3:0:-5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">↑</button>
-              <button type="button" data-pan="page3:0:5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">↓</button>
-              <button type="button" data-pan="page3:-5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">←</button>
-              <button type="button" data-pan="page3:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">→</button>
-              <button type="button" data-pan-reset="page3" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[9.5px]">🎯 Reset</button>
-              <button type="button" data-delete="page3" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 ml-1">🗑️</button>
-            </div>
-          </div>
-
-          <!-- Fila 3: Precisión Documental (Enderezar 4 esquinas, Auto-Luz, Intercambiar, Undo/Redo) -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-purple-50/50 dark:bg-slate-900/40 rounded-lg border border-purple-200/50 dark:border-purple-900/30 text-xs">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" data-warp="page3" class="warp-btn px-2 py-0.5 rounded border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/80 hover:bg-purple-100 dark:hover:bg-purple-900/80 font-bold text-[10px] text-purple-800 dark:text-purple-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
-                <span>📐</span><span>Enderezar 4 Esquinas</span>
-              </button>
-              <button type="button" data-autolight="page3" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+              </div></div>
+          </details>
+          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>🧰 Herramientas</span><span id="accHintToolsPage3" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5"><button type="button" id="btnToggleCropPage3" data-crop="page3" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-800 text-purple-800 dark:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button><button type="button" id="btnToggleMmGridPage3" data-grid="page3" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200">📏 Regla mm</button><button type="button" data-guide="page3" class="guide-btn px-2 py-0.5 rounded border border-purple-300 dark:border-purple-800 bg-white dark:bg-slate-800 hover:bg-purple-50 text-[10px] font-semibold text-purple-800 dark:text-purple-300">👤 OACI</button><button type="button" data-autolight="page3" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
                 <span>🪄</span><span>Auto-Luz</span>
-              </button>
-              <button type="button" data-swap="page3:page4" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con la Página 4">
+              </button><button type="button" data-swap="page3:page4" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con la Página 4">
                 <span>⇄</span><span>Intercambiar con Pág 4</span>
-              </button>
-            </div>
-            <div class="flex items-center gap-1">
-              <button type="button" data-undo="page3" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button>
-              <button type="button" data-redo="page3" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button>
-            </div>
-          </div>
+              </button><button type="button" data-redo="page3" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button><button type="button" data-delete="page3" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 ml-1">🗑️</button></div>
+          </details>
         </div>
       </div>
 
@@ -1319,85 +1225,55 @@
         </div>
 
         <!-- Banner Proactivo Inteligente de Ranura 4 -->
+        <!-- Foto capturada DENTRO de la tarjeta: se ve en cuanto se toma, sin bajar a la vista previa -->
+        <button type="button" id="slotThumbWrapPage4" data-slot-thumb="page4" class="slot-thumb hidden relative w-full rounded-xl overflow-hidden border-2 border-teal-300 dark:border-teal-700 bg-slate-100 dark:bg-slate-800 shadow-sm active:scale-[0.99] transition-transform" title="Toca para verla en la hoja completa">
+          <img id="slotThumbPage4" alt="Foto capturada de la Página 4" class="block w-full h-48 sm:h-56 object-contain bg-slate-100 dark:bg-slate-800" />
+          <span class="absolute bottom-2 right-2 text-[10px] font-bold bg-slate-900/80 text-white px-2.5 py-1 rounded-full pointer-events-none">🔍 Hoja · mantén = original</span>
+        </button>
+
         <div id="inspectorBannerPage4" class="hidden p-2 rounded-xl bg-teal-50/90 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-[11px] flex items-center justify-between gap-2 shadow-xs transition-all mt-2">
           <div class="flex items-center gap-2 min-w-0">
             <span class="text-base">💡</span>
             <div class="min-w-0">
-              <p id="inspectorTextPage4" class="font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">Resolución 300 DPI detectada</p>
+              <p id="inspectorTextPage4" class="font-bold text-slate-800 dark:text-slate-200 leading-snug">Resolución 300 DPI detectada</p>
               <p id="inspectorSubtextPage4" class="text-[9.5px] text-slate-500 dark:text-slate-400 font-mono">3024 × 4032 px • Alta definición</p>
             </div>
           </div>
           <div id="inspectorActionsPage4" class="flex items-center gap-1 shrink-0"></div>
         </div>
 
-        <div id="toolsPage4" class="hidden space-y-2 pt-1 border-t border-teal-200 dark:border-teal-900/60 mt-2">
-          <!-- Fila 1: Ajuste de Más a Menos (Fit/Cover), Auto 1:1, Slider de Zoom con % y Presets -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-800 text-xs">
-            <div class="flex items-center gap-1 flex-wrap">
-              <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span>
-              <button type="button" id="btnFitModePage4" data-fit-mode="page4:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa sin cortar nada">📐 Encajar Todo</button>
-              <button type="button" id="btnCoverModePage4" data-fit-mode="page4:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button>
-              <button type="button" data-autofit="page4" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">Centrar y encajar</button>
-              <button type="button" id="btnToggleCropPage4" data-crop="page4" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-teal-300 dark:border-teal-700 bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-200 hover:bg-teal-50 dark:hover:bg-teal-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button>
-            </div>
-
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <!-- Slider de Escala -->
-              <div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+        <div id="toolsPage4" class="slot-tools hidden space-y-2 pt-1 border-t border-teal-200 dark:border-teal-900/60 mt-2">
+          <!-- Acciones rápidas: siempre visibles -->
+          <div class="flex flex-wrap items-center gap-1.5 px-0.5"><button type="button" data-rotate="page4" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200"><span>🔄</span><span>Rotar</span></button><button type="button" data-warp="page4" class="warp-btn px-2 py-0.5 rounded border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/80 hover:bg-teal-100 dark:hover:bg-teal-900/80 font-bold text-[10px] text-teal-800 dark:text-teal-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
+                <span>📐</span><span>Enderezar 4 Esquinas</span>
+              </button><button type="button" data-undo="page4" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button></div>
+          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>📐 Ajuste y zoom</span><span id="accHintFitPage4" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+            <div class="px-3 pb-3 pt-1 flex flex-col gap-2.5">
+              <div class="flex flex-wrap items-center gap-1.5"><span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span><button type="button" id="btnFitModePage4" data-fit-mode="page4:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa sin cortar nada">📐 Encajar Todo</button><button type="button" id="btnCoverModePage4" data-fit-mode="page4:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button><button type="button" data-autofit="page4" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">Centrar y encajar</button></div>
+              <div class="flex flex-wrap items-center gap-1.5"><div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
                 <span class="text-[10px] text-slate-400 font-bold">🔍</span>
-                <button type="button" data-zoom="page4:-0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 px-1">-</button>
+                <button type="button" data-zoom="page4:-0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 px-2.5">-</button>
                 <input type="range" id="zoomSliderPage4" data-slot="page4" min="20" max="350" step="5" value="100" class="zoom-slider w-20 sm:w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer">
-                <button type="button" data-zoom="page4:0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 px-1">+</button>
+                <button type="button" data-zoom="page4:0.15" class="zoom-btn text-xs font-bold text-slate-600 dark:text-slate-300 px-2.5">+</button>
                 <span id="zoomPercentPage4" class="text-[10px] font-mono font-bold text-teal-700 dark:text-teal-400 w-9 text-right">100%</span>
-              </div>
-              <button type="button" data-scale-preset="page4:0.75" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">-25%</button>
-              <button type="button" data-scale-preset="page4:1.00" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">100%</button>
-              <button type="button" data-scale-preset="page4:1.25" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">+25%</button>
-              <button type="button" data-scale-preset="page4:1.50" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">+50%</button>
+              </div><button type="button" data-scale-preset="page4:0.75" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">-25%</button><button type="button" data-scale-preset="page4:1.00" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">100%</button><button type="button" data-scale-preset="page4:1.25" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">+25%</button><button type="button" data-scale-preset="page4:1.50" class="scale-preset-btn px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">+50%</button></div>
+              <div class="flex flex-wrap items-center gap-1.5"><span class="text-[10px] font-semibold text-slate-400">Centrar:</span><button type="button" data-pan="page4:0:-5" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">↑</button><button type="button" data-pan="page4:0:5" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">↓</button><button type="button" data-pan="page4:-5:0" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">←</button><button type="button" data-pan="page4:5:0" class="pan-btn w-10 h-10 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">→</button><button type="button" data-pan-reset="page4" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[9.5px]">🎯 Reset</button></div>
             </div>
-          </div>
-
-          <!-- Fila 2: Herramientas Visuales (Filtros, Giro, Regla mm, Guía OACI, Centrado y Borrar) -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-teal-200 dark:border-teal-900/40 text-xs">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" data-rotate="page4" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200"><span>🔄</span><span>Rotar</span></button>
-              <button type="button" id="btnToggleMmGridPage4" data-grid="page4" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200">📏 Regla mm</button>
-              <button type="button" data-guide="page4" class="guide-btn px-2 py-0.5 rounded border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-800 hover:bg-teal-50 text-[10px] font-semibold text-teal-800 dark:text-teal-300">👤 OACI</button>
-              <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md text-[9.5px]">
+          </details>
+          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>🎨 Mejoras de imagen</span><span id="accHintImgPage4" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-2"><div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md text-[9.5px]">
                 <button type="button" data-filter="page4:color" class="filter-btn is-active px-1.5 py-0.5 rounded font-medium">🎨 Color</button>
                 <button type="button" data-filter="page4:bw" class="filter-btn px-1.5 py-0.5 rounded font-medium">⚫ B/N</button>
                 <button type="button" data-filter="page4:scanner" class="filter-btn px-1.5 py-0.5 rounded font-medium">📄 Escáner</button>
-              </div>
-            </div>
-            <div class="flex items-center gap-1">
-              <span class="text-[9.5px] font-semibold text-slate-400">Centrar:</span>
-              <button type="button" data-pan="page4:0:-5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">↑</button>
-              <button type="button" data-pan="page4:0:5" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">↓</button>
-              <button type="button" data-pan="page4:-5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">←</button>
-              <button type="button" data-pan="page4:5:0" class="pan-btn w-5 h-5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px]">→</button>
-              <button type="button" data-pan-reset="page4" class="pan-reset-btn px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-[9.5px]">🎯 Reset</button>
-              <button type="button" data-delete="page4" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 ml-1">🗑️</button>
-            </div>
-          </div>
-
-          <!-- Fila 3: Precisión Documental (Enderezar 4 esquinas, Auto-Luz, Intercambiar, Undo/Redo) -->
-          <div class="flex flex-wrap items-center justify-between gap-1.5 p-1.5 bg-teal-50/50 dark:bg-slate-900/40 rounded-lg border border-teal-200/50 dark:border-teal-900/30 text-xs">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" data-warp="page4" class="warp-btn px-2 py-0.5 rounded border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/80 hover:bg-teal-100 dark:hover:bg-teal-900/80 font-bold text-[10px] text-teal-800 dark:text-teal-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
-                <span>📐</span><span>Enderezar 4 Esquinas</span>
-              </button>
-              <button type="button" data-autolight="page4" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+              </div></div>
+          </details>
+          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>🧰 Herramientas</span><span id="accHintToolsPage4" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5"><button type="button" id="btnToggleCropPage4" data-crop="page4" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-teal-300 dark:border-teal-700 bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-200 hover:bg-teal-50 dark:hover:bg-teal-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button><button type="button" id="btnToggleMmGridPage4" data-grid="page4" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200">📏 Regla mm</button><button type="button" data-guide="page4" class="guide-btn px-2 py-0.5 rounded border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-800 hover:bg-teal-50 text-[10px] font-semibold text-teal-800 dark:text-teal-300">👤 OACI</button><button type="button" data-autolight="page4" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
                 <span>🪄</span><span>Auto-Luz</span>
-              </button>
-              <button type="button" data-swap="page4:page3" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con la Página 3">
+              </button><button type="button" data-swap="page4:page3" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con la Página 3">
                 <span>⇄</span><span>Intercambiar con Pág 3</span>
-              </button>
-            </div>
-            <div class="flex items-center gap-1">
-              <button type="button" data-undo="page4" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button>
-              <button type="button" data-redo="page4" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button>
-            </div>
-          </div>
+              </button><button type="button" data-redo="page4" class="redo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Rehacer cambio">↪️ Rehacer</button><button type="button" data-delete="page4" class="delete-slot-btn px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/70 text-[9.5px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 ml-1">🗑️</button></div>
+          </details>
         </div>
       </div>
 
@@ -1916,6 +1792,10 @@
       <p class="text-xs text-slate-600 dark:text-slate-300">Guarda primero el trabajo actual en el historial. El respaldo incluye los trabajos guardados; el borrador, los ajustes y los enlaces QR no son un respaldo permanente.</p>
       <div class="flex flex-wrap gap-2">
         <button type="button" id="dailyBackup" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Descargar respaldo del historial</button>
+        <label class="inline-flex items-center gap-1.5 text-xs font-semibold self-center cursor-pointer" for="dailyBackupEncrypt">
+          <input type="checkbox" id="dailyBackupEncrypt" class="w-4 h-4 rounded accent-indigo-600" checked />
+          🔒 Cifrar con contraseña (recomendado)
+        </label>
         <button type="button" id="dailyVerify" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold">Verificar archivo de respaldo</button>
         <label class="text-xs self-center" for="dailyCalibrationPaper">Papel de prueba</label>
         <select id="dailyCalibrationPaper" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm"><option value="a4">A4</option><option value="letter">Carta</option><option value="oficio">Oficio México</option><option value="legal">Legal USA</option></select>
@@ -1923,6 +1803,45 @@
         <input type="file" id="dailyBackupFile" accept=".json,application/json" class="hidden" aria-label="Seleccionar respaldo para verificar">
       </div>
       <p id="dailyCareStatus" role="status" aria-live="polite" class="text-xs text-slate-600 dark:text-slate-300">Conserva el archivo descargado en otra unidad. Puedes verificarlo aquí sin importar ni modificar tus trabajos.</p>
+      <div class="mt-3 rounded-xl border border-slate-200 dark:border-slate-700 p-3 space-y-2">
+        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">📏 Registro de calibración física</p>
+        <p class="text-xs text-slate-600 dark:text-slate-300">Imprime la hoja de prueba al 100 %, mide con una regla física y anota aquí lo que mediste. La app calcula la desviación de escala y guarda el registro.</p>
+        <div class="flex flex-wrap gap-2 items-end">
+          <label class="text-xs font-semibold">Regla de 50 mm midió
+            <input type="number" id="calRuleInput" step="0.1" min="1" placeholder="50.0" class="block mt-1 w-24 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm" /> mm
+          </label>
+          <label class="text-xs font-semibold">Tarjeta 85.6 mm midió
+            <input type="number" id="calCardInput" step="0.1" min="1" placeholder="85.6" class="block mt-1 w-24 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm" /> mm
+          </label>
+          <button type="button" id="dailyCalibrationSave" class="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Registrar medición</button>
+        </div>
+        <p id="calibrationLogStatus" role="status" aria-live="polite" class="text-xs text-slate-600 dark:text-slate-300">Sin mediciones registradas en este equipo.</p>
+      </div>
+      <div class="mt-3 rounded-xl border border-slate-200 dark:border-slate-700 p-3 space-y-2">
+        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">🖨️ Perfiles de calibración por impresora</p>
+        <p class="text-xs text-slate-600 dark:text-slate-300">Cada impresora imprime con su propio error. Guarda un perfil por impresora con la corrección medida: al imprimir o descargar el PDF, la corrección se aplica a la geometría del documento. La impresora física la eliges en el diálogo de impresión del navegador; el perfil activo es el que corrige la hoja.</p>
+        <div class="flex flex-wrap gap-2 items-end">
+          <label class="text-xs font-semibold">Nombre de la impresora
+            <input type="text" id="printerProfileName" placeholder="Ej. HP del mostrador" class="block mt-1 w-44 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm" />
+          </label>
+          <label class="text-xs font-semibold">Escala X %
+            <input type="number" id="printerScaleX" step="0.1" value="100" class="block mt-1 w-20 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm" />
+          </label>
+          <label class="text-xs font-semibold">Escala Y %
+            <input type="number" id="printerScaleY" step="0.1" value="100" class="block mt-1 w-20 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm" />
+          </label>
+          <label class="text-xs font-semibold">Desplaz. X mm
+            <input type="number" id="printerOffsetX" step="0.1" value="0" class="block mt-1 w-20 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm" />
+          </label>
+          <label class="text-xs font-semibold">Desplaz. Y mm
+            <input type="number" id="printerOffsetY" step="0.1" value="0" class="block mt-1 w-20 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm" />
+          </label>
+          <button type="button" id="btnPrinterProfileFromMeasurement" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-bold">Usar última medición</button>
+          <button type="button" id="btnPrinterProfileSave" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold">Guardar perfil</button>
+        </div>
+        <div id="printerProfilesList" class="space-y-1.5"></div>
+        <p id="printerProfileStatus" role="status" aria-live="polite" class="text-xs text-slate-600 dark:text-slate-300">Sin perfiles guardados: la impresión sale sin corrección.</p>
+      </div>
       <details class="text-sm text-slate-600 dark:text-slate-300">
         <summary class="cursor-pointer font-semibold">Comprobación antes de atender clientes</summary>
         <ol class="list-decimal pl-5 space-y-2 mt-3">
@@ -1937,7 +1856,7 @@
     <footer class="text-center text-xs text-slate-500 space-y-2.5 py-6 border-t border-slate-200 dark:border-slate-800 mt-8">
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.11.1</span>
+        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.12.0</span>
         <span class="text-slate-300 dark:text-slate-600">•</span>
         <span class="font-medium">Desarrollado por <strong class="font-bold text-slate-900 dark:text-white">Paco Iglesias</strong></span>
       </div>
@@ -2093,7 +2012,7 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
         </div>
         <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Acceso al Sistema</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">RealScan Pro <span class="font-bold text-indigo-600 dark:text-indigo-400 font-mono">v2.4.1</span> • Impresión 1:1</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">RealScan Pro <span class="font-bold text-indigo-600 dark:text-indigo-400 font-mono">v3.12.0</span> • Impresión 1:1</p>
       </div>
 
       <form id="loginForm" class="space-y-3.5" autocomplete="on">
@@ -2124,8 +2043,50 @@
         </button>
       </form>
 
+      <!-- Primer uso: crear la cuenta de administrador (sin credencial por defecto) -->
+      <form id="setupForm" class="space-y-3.5 hidden" autocomplete="off">
+        <p class="text-xs text-slate-600 dark:text-slate-300 font-medium bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 rounded-xl p-2.5">
+          👋 <strong>Primer uso en este equipo.</strong> Crea la cuenta de administrador para proteger el mostrador. No hay ninguna contraseña predefinida: la eliges tú ahora.
+        </p>
+        <div>
+          <label for="setupUserInput" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Usuario administrador</label>
+          <input type="text" id="setupUserInput" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white transition-all" value="admin" required autocomplete="username" />
+        </div>
+        <div>
+          <label for="setupPassInput" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Contraseña (mínimo 6 caracteres)</label>
+          <input type="password" id="setupPassInput" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white transition-all" placeholder="Elige una contraseña" required autocomplete="new-password" />
+        </div>
+        <div>
+          <label for="setupPassConfirmInput" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Confirma la contraseña</label>
+          <input type="password" id="setupPassConfirmInput" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white transition-all" placeholder="Repite la contraseña" required autocomplete="new-password" />
+        </div>
+        <div id="setupErrorMsg" class="hidden text-xs text-red-600 dark:text-red-400 font-semibold bg-red-50 dark:bg-red-950/50 p-2.5 rounded-xl border border-red-200 dark:border-red-900/60 text-center"></div>
+        <button type="submit" id="btnSetupSubmit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-all active:scale-[0.98]">
+          Crear cuenta e ingresar
+        </button>
+      </form>
+
+      <!-- Cambio obligatorio: la clave de fábrica debe reemplazarse antes de entrar -->
+      <form id="forcedChangeForm" class="space-y-3.5 hidden" autocomplete="off">
+        <p class="text-xs text-amber-700 dark:text-amber-300 font-medium bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl p-2.5">
+          ⚠️ Este equipo aún usa la <strong>clave inicial de fábrica</strong>, que ya no es secreta. Por seguridad debes fijar una contraseña nueva para poder entrar.
+        </p>
+        <div>
+          <label for="forcedNewPassInput" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nueva contraseña (mínimo 6 caracteres)</label>
+          <input type="password" id="forcedNewPassInput" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white transition-all" placeholder="Contraseña nueva" required autocomplete="new-password" />
+        </div>
+        <div>
+          <label for="forcedConfirmPassInput" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Confirma la nueva contraseña</label>
+          <input type="password" id="forcedConfirmPassInput" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white transition-all" placeholder="Repite la contraseña nueva" required autocomplete="new-password" />
+        </div>
+        <div id="forcedErrorMsg" class="hidden text-xs text-red-600 dark:text-red-400 font-semibold bg-red-50 dark:bg-red-950/50 p-2.5 rounded-xl border border-red-200 dark:border-red-900/60 text-center"></div>
+        <button type="submit" id="btnForcedChangeSubmit" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-md transition-all active:scale-[0.98]">
+          Cambiar contraseña y entrar
+        </button>
+      </form>
+
       <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-center">
-        <p class="text-[11px] text-slate-400 dark:text-slate-500">Credenciales iniciales: <strong class="text-slate-600 dark:text-slate-300">admin</strong> / PIN: <strong class="text-slate-600 dark:text-slate-300">1313</strong></p>
+        <p id="loginFooterHint" class="text-[11px] text-slate-400 dark:text-slate-500">Acceso protegido por usuario y contraseña.</p>
       </div>
     </div>
   </div>
@@ -2141,7 +2102,7 @@
             ⚙️
           </div>
           <div>
-            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.11.1</span></h3>
+            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.12.0</span></h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400">Control de acceso y bitácora de auditoría</p>
           </div>
         </div>
@@ -2168,6 +2129,22 @@
               <span>🛡️</span> <span>Control de Acceso y Bitácora Local</span>
             </p>
             <p>Las contraseñas se almacenan como hashes SHA-256 en el almacenamiento local del navegador (localStorage). Este mecanismo previene accesos casuales y operaciones accidentales en terminal de mostrador; no constituye autorización de servidor ni autenticación remota.</p>
+          </div>
+
+          <!-- Bloqueo automático por inactividad -->
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-1.5">
+            <p class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <span>⏱️</span> <span>Bloqueo automático del mostrador</span>
+            </p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Si nadie usa el equipo, la pantalla de acceso se bloquea sola y pide la contraseña de nuevo. La sesión larga (12 h o 30 días con «Recordar») no cambia: esto solo bloquea la pantalla.</p>
+            <label for="selectIdleLockMinutes" class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Bloquear tras inactividad de</label>
+            <select id="selectIdleLockMinutes" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium outline-none focus:ring-1 focus:ring-indigo-500">
+              <option value="0">Nunca (desactivado)</option>
+              <option value="5">5 minutos</option>
+              <option value="10">10 minutos</option>
+              <option value="15">15 minutos</option>
+              <option value="30">30 minutos</option>
+            </select>
           </div>
 
           <!-- Lista de Usuarios Existentes -->
@@ -2850,8 +2827,12 @@
   <script src="js/firebase-config.js"></script>
   <script src="js/firebase-transfer.js"></script>
   <script src="js/qr-sync.js"></script>
+  <script src="js/confirm-dialog.js"></script>
+  <script src="js/vendor-loader.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/draft-store.js"></script>
+  <script src="js/backup-crypto.js"></script>
+  <script src="js/jpeg-dpi.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/crop-warp.js"></script>
   <script src="js/scan-assist.js"></script>
@@ -2868,6 +2849,7 @@
   <script src="vendor/jsqr.js"></script>
   <script src="js/local-transfer.js"></script>
   <script src="js/local-transfer-ui.js"></script>
+  <script src="js/printer-profiles.js"></script>
   <script src="js/operations.js"></script>
   <script src="js/output-review.js"></script>
   <script src="js/receive-workflow.js"></script>
@@ -2877,6 +2859,7 @@
   <script src="js/mobile-entry.js"></script>
   <script src="js/document-job.js"></script>
   <script src="js/digital-workflow.js"></script>
+  <script src="js/guided-steps.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

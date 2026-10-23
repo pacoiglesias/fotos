@@ -1,14 +1,23 @@
 (function() {
   "use strict";
-  function render(target, delivery = false) {
+  function render(target, delivery = false, mode) {
     if (!target) return;
     target.replaceChildren();
     target.className = "output-review";
     const layout = RealScanLayout.computeDocumentLayout(state), spec = getActiveSpec(), facts = document.createElement("div");
     facts.className = "output-review-facts";
     const scale = (Number(state.outputScalePercent) || 100) / 100;
-    const pairs = [["Tama\xF1o de cada pieza", (spec.widthMm * scale).toFixed(2) + " \xD7 " + (spec.heightMm * scale).toFixed(2) + " mm"], ["Papel y hojas", layout.paper.shortName + " \xB7 " + layout.pages.length + " hoja(s)"], ["Contenido", layout.summary || spec.shortName], ["Destino", delivery ? "Descarga privada por QR" : "Impresora \xB7 PDF a escala real"]];
+    const pairs = [["Tama\xF1o de cada pieza", (spec.widthMm * scale).toFixed(2) + " \xD7 " + (spec.heightMm * scale).toFixed(2) + " mm"], ["Papel y hojas", layout.paper.shortName + " \xB7 " + layout.pages.length + " hoja(s)"], ["Contenido", layout.summary || spec.shortName], ["Destino", delivery ? "Descarga privada por QR" : (mode === "pdf" ? "Descarga de PDF a escala real" : "Impresora \xB7 PDF a escala real")]];
     pairs.push(['Guías de corte',layout.includeCutMarks ? 'Visibles en la hoja' : 'Sin marcas'], ['Acabado',layout.isCleanSheet ? 'Hoja limpia' : 'Con anotaciones activas']);
+    if (!delivery) {
+      if (state.activeCategory === 'photos') {
+        pairs.push(["Copias", state.mixTwoPhotos ? ((state.photoCopiesPersonA || 0) + " de la persona A + " + (state.photoCopiesPersonB || 0) + " de la persona B") : String(state.photoCopies || 1)]);
+      } else {
+        pairs.push(["Copias", "1 juego \xB7 más copias en el diálogo de impresión"]);
+      }
+      const activeProfile = window.RealScanPrinterProfiles?.getActive();
+      pairs.push(["Perfil de impresora", activeProfile ? activeProfile.name : "Sin corrección"]);
+    }
     if (delivery) {
       const format = $("selectDeliveryFormat").value.toUpperCase(), max = $("selectDeliveryMaxPx").value;
       pairs.push(["Peso máximo por archivo", Number($("selectDeliveryMaxBytes")?.value)?(Number($("selectDeliveryMaxBytes").value)/1000000)+" MB":"Sin límite adicional"]);
@@ -24,6 +33,45 @@
       facts.append(box);
     }
     target.append(facts);
+    if (!delivery) {
+      // Vista previa de la hoja tal como saldrá (clon a escala de la hoja real).
+      const sheet = document.querySelector('.a4-sheet');
+      if (sheet) {
+        const sheetWrap = document.createElement('div');
+        sheetWrap.className = 'output-review-sheet';
+        const clone = sheet.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+        sheetWrap.append(clone);
+        target.append(sheetWrap);
+      }
+      // Perfil de impresora aplicable a esta salida (corrección de geometría).
+      if (window.RealScanPrinterProfiles) {
+        const profileRow = document.createElement('label');
+        profileRow.className = 'output-review-profile';
+        const profileText = document.createElement('span');
+        profileText.textContent = '🖨️ Perfil:';
+        const profileSelect = document.createElement('select');
+        profileSelect.setAttribute('aria-label', 'Perfil de calibración de impresora');
+        const noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.textContent = 'Sin corrección';
+        profileSelect.append(noneOpt);
+        for (const p of window.RealScanPrinterProfiles.list()) {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name;
+          profileSelect.append(opt);
+        }
+        profileSelect.value = window.RealScanPrinterProfiles.getActiveId() || '';
+        profileSelect.addEventListener('change', () => {
+          window.RealScanPrinterProfiles.setActive(profileSelect.value || null);
+          render(target, false, mode);
+        });
+        profileRow.append(profileText, profileSelect);
+        target.append(profileRow);
+      }
+    }
     const sheetSlots = new Set(layout.pages.flatMap(page => page.placements.map(placement => placement.slot)));
     const wanted = delivery ? new Set([
       ...($("checkDeliverPdfSheet").checked ? sheetSlots : []),
@@ -60,7 +108,8 @@
     const checklist=document.createElement('ul');checklist.className='operator-checklist';checklist.setAttribute('aria-label','Revisión del operador');for(const value of ['Todas las caras necesarias y en el orden correcto','Orientación correcta y bordes completos','Texto o rostro nítido al ampliar la imagen']){const li=document.createElement('li');li.textContent=value;checklist.append(li);}target.append(checklist);
   }
   window.updateDeliveryReview = () => render($("deliveryReview"), true);
-  window.showPrintReview = (callback) => {
+  window.showPrintReview = (callback, options) => {
+    const opts = options || {};
     let modal = $("outputReviewModal");
     if (!modal) {
       modal = document.createElement("div");
@@ -69,10 +118,12 @@
       modal.setAttribute("role", "dialog");
       modal.setAttribute("aria-modal", "true");
       modal.setAttribute("aria-labelledby", "outputReviewTitle");
-      modal.innerHTML = '<div class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto space-y-4"><h2 id="outputReviewTitle" class="text-lg font-bold">Revisa antes de imprimir</h2><div id="printReview"></div><div class="flex flex-wrap gap-3"><button type="button" data-close-modal="outputReviewModal" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800">Volver a editar</button><button type="button" id="confirmPrintReview" class="px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold">Continuar a imprimir</button></div></div>';
+      modal.innerHTML = '<div class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto space-y-4"><h2 id="outputReviewTitle" class="text-lg font-bold">Revisa antes de imprimir</h2><div id="printReview"></div><div class="flex flex-wrap gap-3"><button type="button" data-close-modal="outputReviewModal" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800">Volver a corregir</button><button type="button" id="confirmPrintReview" class="px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold min-h-[44px]">Continuar a imprimir</button></div></div>';
       document.body.append(modal);
     }
-    render($("printReview"));
+    $("outputReviewTitle").textContent = opts.title || "Revisa antes de imprimir";
+    $("confirmPrintReview").textContent = opts.confirmLabel || "Continuar a imprimir";
+    render($("printReview"), false, opts.mode);
     $("confirmPrintReview").onclick = () => {
       closeModal("outputReviewModal");
       callback();

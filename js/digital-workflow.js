@@ -17,7 +17,7 @@
     if(busy||!RealScanWorkflow.describe().ready)return;busy=true;render();const revision=state._jobRevision||0,wanted=slots(),sources=wanted.map(s=>state.images[s].processedDataUrl),chosen=settings();
     try{const files=[];for(const side of wanted)files.push(await createDigitalFile(side,chosen.format,chosen.max,chosen.bytes?chosen.bytes-1:0));
       if(revision!==(state._jobRevision||0)||wanted.some((s,i)=>state.images[s].processedDataUrl!==sources[i]))throw Error('Las imágenes cambiaron. Revisa el resultado y vuelve a preparar la entrega.');
-      let blob,name;if(files.length===1){blob=await(await fetch(files[0].dataUrl)).blob();name=files[0].name;}else{const zip=new JSZip();files.forEach((file,i)=>zip.file((i+1)+'-'+file.name,file.dataUrl.split(',')[1],{base64:true}));blob=await zip.generateAsync({type:'blob'});name='RealScan_Entrega_Digital.zip';}
+      let blob,name;if(files.length===1){blob=await(await fetch(files[0].dataUrl)).blob();name=files[0].name;}else{if (typeof ensureJSZip === 'function') await ensureJSZip();const zip=new JSZip();files.forEach((file,i)=>zip.file((i+1)+'-'+file.name,file.dataUrl.split(',')[1],{base64:true}));blob=await zip.generateAsync({type:'blob'});name='RealScan_Entrega_Digital.zip';}
       if(revision!==(state._jobRevision||0))return;const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),10000);$('digitalStatus').textContent='Archivo preparado. Comprueba que abre y cumple los requisitos del destino.';
     }catch(e){$('digitalStatus').textContent=e.message;}finally{busy=false;render();}
   }

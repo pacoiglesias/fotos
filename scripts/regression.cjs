@@ -62,7 +62,15 @@ let browser;
   page.on("dialog", (d) => d.accept());
   await page.goto(base, { waitUntil: "load" });
   await page.waitForFunction(
-    () => typeof updateUI === "function" && window.pdfjsLib && window.jspdf,
+    () => typeof updateUI === "function" && window.pdfjsLib && typeof ensureJsPdf === "function",
+  );
+  // v3.12.0: jsPDF ya no bloquea el arranque; se carga bajo demanda.
+  await page.evaluate(async () => {
+    await window.ensureJsPdf();
+  });
+  assert(
+    await page.evaluate(() => !!window.jspdf),
+    "jsPDF debe estar disponible tras la carga bajo demanda",
   );
   const servedVersion = await page.evaluate(() =>
     fetch("version.json", { cache: "no-store" }).then((r) => r.json()),
@@ -299,21 +307,30 @@ let browser;
     "Project, preset, draft and imported backup preserve 3A/5B and crops",
     persistent,
   );
-  const backupEvent = page.waitForEvent('download');
   await page.locator('#dailyBackup').click();
+  // v3.12.0: el respaldo diario sale cifrado por defecto; se crea la contraseña.
+  await page.locator('#rsBackupPass1').waitFor({ state: 'visible' });
+  await page.locator('#rsBackupPass1').fill('RespaldoPrueba2026');
+  await page.locator('#rsBackupPass2').fill('RespaldoPrueba2026');
+  const backupEvent = page.waitForEvent('download');
+  await page.locator('#rsBackupPassOk').click();
   const backupDownload = await backupEvent;
   const backupPath = path.join(out, 'daily-backup.json');
   await backupDownload.saveAs(backupPath);
   const savedBackup = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
   const beforeVerify = await page.evaluate(async () => (await getAllScansFromStorage()).length);
   await page.locator('#dailyBackupFile').setInputFiles(backupPath);
-  await page.waitForFunction(() => document.getElementById('dailyCareStatus').textContent.includes('Respaldo verificado:'));
+  // La verificación de un respaldo cifrado pide su contraseña.
+  await page.locator('#rsBackupPass1').waitFor({ state: 'visible' });
+  await page.locator('#rsBackupPass1').fill('RespaldoPrueba2026');
+  await page.locator('#rsBackupPassOk').click();
+  await page.waitForFunction(() => document.getElementById('dailyCareStatus').textContent.includes('Respaldo verificado'));
   assert.equal(await page.evaluate(async () => (await getAllScansFromStorage()).length), beforeVerify);
   const restoreContext = await browser.newContext({serviceWorkers: 'block'});
   const restorePage = await restoreContext.newPage();
   await restorePage.goto(base);
   await restorePage.waitForFunction(() => typeof inspectBackupFile === 'function' && typeof updateUI === 'function');
-  const restoredBackup = await restorePage.evaluate(async (backup) => {
+  const restoredBackupPromise = restorePage.evaluate(async (backup) => {
     const file = new File([JSON.stringify(backup)], 'backup.json');
     const inspected = await inspectBackupFile(file);
     const result = await importScansFromJson(file);
@@ -341,8 +358,16 @@ let browser;
     try { await inspectBackupFile({size: BACKUP_MAX_BYTES + 1}); } catch (_) { oversizeRejected = true; }
     return { inspected, imported: result.imported, count, blobRejected, oversizeRejected, rollbackCalls: calls };
   }, savedBackup);
-  assert.equal(restoredBackup.count, savedBackup.count);
-  assert.equal(restoredBackup.imported, savedBackup.count);
+  // El respaldo de prueba va cifrado: inspeccionarlo e importarlo pide la
+  // contraseña con el modal propio (dos veces); se responde desde la suite.
+  for (let i = 0; i < 2; i++) {
+    await restorePage.locator('#rsBackupPass1').waitFor({ state: 'visible', timeout: 60000 });
+    await restorePage.locator('#rsBackupPass1').fill('RespaldoPrueba2026');
+    await restorePage.locator('#rsBackupPassOk').click();
+  }
+  const restoredBackup = await restoredBackupPromise;
+  assert.equal(restoredBackup.count, beforeVerify);
+  assert.equal(restoredBackup.imported, beforeVerify);
   assert(restoredBackup.blobRejected && restoredBackup.oversizeRejected);
   assert.equal(restoredBackup.rollbackCalls, 2);
   await restoreContext.close();

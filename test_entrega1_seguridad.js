@@ -233,15 +233,18 @@ async function runTests() {
     vm.runInContext(configCode, sb);
     vm.runInContext(authCode, sb);
 
-    // 1. Estado inicial: admin existe
+    // 1. Estado inicial (v3.12.0): sin cuentas precreadas ni credencial de
+    // fábrica; el primer uso obliga a crear el administrador.
     const initialAuth = sb.getAuthData();
-    assert.strictEqual(initialAuth.users.length, 1);
-    assert.strictEqual(initialAuth.users[0].role, 'admin');
+    assert.strictEqual(initialAuth.users.length, 0);
+    assert.strictEqual(initialAuth.needsSetup, true);
+    await sb.createInitialAdmin('admin', 'ClaveInicialSegura2026');
+    const authAdmin = sb.getAuthData();
+    assert.strictEqual(authAdmin.users.length, 1);
+    assert.strictEqual(authAdmin.users[0].role, 'admin');
 
     // 2. Crear un operador legítimo mediante admin
     sb.window.DEFAULT_USER = 'admin';
-    initialAuth.currentUsername = 'admin';
-    sb.saveAuthData(initialAuth);
 
     sb.$('inputAddUserName').value = 'cajero1';
     sb.$('inputAddUserPass').value = 'pin1234';

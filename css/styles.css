@@ -528,3 +528,11 @@ body[data-document-job=true] :is(.calibrated-workspace,#workflowGuide,#serviceFo
 @media print{.operator-journey,.operator-advanced>summary{display:none!important}}
 @media(max-width:767px){.document-output{order:0}.document-options select{font-size:16px}.operator-advanced>summary{min-height:44px}}
 .document-workspace label[hidden]{display:none}
+
+/* v3.12.0 — Tarjetas de slot con secciones plegables: objetivos táctiles
+   amplios y encabezados sin marcador nativo, con chevron propio. */
+.slot-tools button { min-height: 44px; }
+.slot-acc > summary { list-style: none; }
+.slot-acc > summary::-webkit-details-marker { display: none; }
+.slot-acc .slot-acc-chevron { transition: transform .15s ease; }
+.slot-acc[open ] .slot-acc-chevron { transform: rotate(180deg); }

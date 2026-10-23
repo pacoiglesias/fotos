@@ -92,6 +92,9 @@
   function close() {
     current?.close();
   }
+  // La cámara elegida (frontal/trasera) se recuerda durante toda la sesión,
+  // aunque se cierre y se vuelva a abrir el escáner.
+  let savedFacing = "environment";
   function open(options = {}) {
     close();
     root.RealScanDiagnostics?.record("camera.open");
@@ -102,18 +105,20 @@
       <ol class="scan-steps" aria-label="Progreso de captura"><li data-phase="capture">1 · Capturar</li><li data-phase="review">2 · Revisar</li><li data-phase="confirm">3 · Confirmar</li></ol>
       <label class="scan-format">Forma del documento <select aria-label="Forma del documento"><option value="auto">Automática / Otro documento</option><option value="card">Tarjeta (INE / licencia)</option><option value="a4">Hoja A4</option><option value="letter">Hoja Carta</option></select></label>
       <label class="scan-filter">Aspecto <select aria-label="Aspecto de la imagen"><option value="color">Color original</option><option value="gray">Escala de grises</option><option value="document">Documento contrastado</option></select></label>
-      <div class="scan-preview-area"><div class="scan-stage"><video autoplay playsinline webkit-playsinline muted></video><canvas class="scan-still" hidden></canvas><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="scan-shade" fill-rule="evenodd"/><polygon/></svg><div class="scan-corners" hidden></div></div></div>
+      <div class="scan-preview-area"><div class="scan-stage"><video autoplay playsinline webkit-playsinline muted></video><canvas class="scan-still" hidden></canvas><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="scan-shade" fill-rule="evenodd"/><polygon/></svg><div class="scan-corners" hidden></div></div><button type="button" data-act="switch" class="scan-switch-cam" aria-label="Cambiar entre cámara frontal y trasera" title="Cambiar entre cámara frontal y trasera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 7.5h10l-2.6-2.6M16.5 16.5h-10l2.6 2.6"/><circle cx="12" cy="12" r="3.1"/></svg><span class="scan-switch-label">Trasera</span></button></div>
       <p class="scan-status" role="status" aria-live="polite">Preparando la cámara…</p><p class="scan-help">Apoya el documento plano, deja sus cuatro bordes visibles y evita sombras. Elige el tamaño de salida. Para obtener más detalle, puedes usar Cámara del teléfono.</p>
       <div class="scan-quality" aria-label="Calidad estimada"><span data-quality="light">Luz: revisando</span><span data-quality="sharp">Nitidez: revisando</span><span data-quality="steady">Encuadre: revisando</span></div>
       <p class="scan-focus-info">El control de enfoque depende de la cámara y del navegador.</p>
       <label class="scan-auto"><input type="checkbox"> Capturar al mantener el documento estable</label>
-      <div class="scan-actions"><button type="button" data-act="capture">Tomar foto</button><button type="button" data-act="focus">Reintentar enfoque</button><button type="button" data-act="switch">Cambiar cámara</button><button type="button" data-act="torch" hidden>Linterna</button><button type="button" data-act="native">Cámara del teléfono</button>
+      <div class="scan-actions"><button type="button" data-act="capture">Tomar foto</button><button type="button" data-act="focus">Reintentar enfoque</button><button type="button" data-act="torch" hidden>Linterna</button><button type="button" data-act="native">Cámara del teléfono</button>
       <button type="button" data-act="left" hidden>Girar izquierda</button><button type="button" data-act="right" hidden>Girar derecha</button><button type="button" data-act="reset" hidden>Restaurar original</button><button type="button" data-act="confirm" hidden>Usar esta imagen</button><button type="button" data-act="edit" hidden>Volver a ajustar</button>
       <button type="button" data-act="retry" hidden>Repetir</button><button type="button" data-act="original" hidden>Usar completa</button><button type="button" data-act="accept" hidden>Enderezar y usar</button></div>`;
     const settings = document.createElement('details');
     settings.className = 'scan-settings';
     settings.innerHTML = '<summary>Opciones de captura y ayuda</summary><div class="scan-settings-content"></div>';
-    for (const selector of ['.scan-format','.scan-filter','.scan-help','.scan-focus-info','.scan-auto']) settings.lastElementChild.append(dialog.querySelector(selector));
+    // v3.12.0: «.scan-auto» (captura automática al estabilizar) queda VISIBLE
+    // fuera de las opciones avanzadas: es parte del flujo principal de captura.
+    for (const selector of ['.scan-format','.scan-filter','.scan-help','.scan-focus-info']) settings.lastElementChild.append(dialog.querySelector(selector));
     dialog.querySelector('.scan-actions').before(settings);
     const guidance = document.createElement('p');guidance.className='scan-guidance';guidance.textContent=options.photoMode?'Coloca el rostro centrado y busca luz uniforme. Revisa el enfoque antes de confirmar.':'Documento plano, cuatro bordes visibles y sin reflejos. Tras capturar, ajusta las esquinas antes de confirmar.';dialog.querySelector('.scan-preview-area').before(guidance);
     document.body.append(dialog);
@@ -154,8 +159,15 @@
     filter.onchange = () => {
       canvas.style.filter = filters[filter.value] || "none";
     };
-    let stream = null, timer = null, revision = 0, disposed = false, captured = null, quad = null, facing = "environment", busy = false, torch = false;
+    let stream = null, timer = null, revision = 0, disposed = false, captured = null, quad = null, facing = savedFacing, busy = false, torch = false;
     const btn = (a) => $(`[data-act="${a}"]`);
+    function syncSwitchLabel() {
+      const switchBtn = btn("switch");
+      if (!switchBtn) return;
+      const label = switchBtn.querySelector(".scan-switch-label");
+      if (label) label.textContent = facing === "user" ? "Frontal" : "Trasera";
+      switchBtn.setAttribute("aria-label", "Cambiar de cámara (ahora está la " + (facing === "user" ? "frontal" : "trasera") + ")");
+    }
     function phase(value) {
       dialog.dataset.phase=value;
       dialog.querySelectorAll('[data-phase]').forEach(step=>{if(step.dataset.phase===value)step.setAttribute('aria-current','step');else step.removeAttribute('aria-current');});
@@ -302,6 +314,15 @@
           status.textContent = options.photoMode ? 'Conserva el encuadre del retrato. Revisa luz y nitidez antes de tomar la foto.' : a.coverage>0&&a.coverage<.2?'Acerca el teléfono dejando visibles los cuatro bordes.':a.message;
           const stable = rawQuad && motion<0.012 && a.coverage>=.2 && a.coverage<=.9 && a.brightness > 60 && a.brightness < 235 && a.sharpness >= 35 && !focusBusy;
           stableFrames = stable ? stableFrames + 1 : 0;
+          // El botón de captura anuncia la detección en vivo (v3.12.0): el
+          // documento se detecta por análisis de intervalos sobre el video,
+          // compatible con iOS Safari (sin ImageCapture ni ML del sistema).
+          if (!options.photoMode) {
+            const capBtn = btn("capture");
+            const detectedText = stableFrames >= 2 ? "✓ Documento detectado — Tomar foto" : rawQuad ? "Documento detectado — Tomar foto" : "Tomar foto";
+            if (capBtn.textContent !== detectedText) capBtn.textContent = detectedText;
+            capBtn.classList.toggle("scan-detected", !!rawQuad);
+          }
           lastQuad = rawQuad?.map((p) => ({ ...p }));
           showQuality(a);
           paint();
@@ -339,6 +360,7 @@
       for (const a of ["capture", "switch", "native", "focus"]) btn(a).hidden = false;
       for (const a of ["retry", "accept", "original", "torch"]) btn(a).hidden = true;
       btn("capture").disabled = true;
+      syncSwitchLabel();
       status.textContent = "Preparando la cámara…";
       try {
         if (!navigator.mediaDevices?.getUserMedia) throw Error("unsupported");
@@ -597,6 +619,8 @@
     btn("original").onclick = () => accept(false);
     btn("switch").onclick = () => {
       facing = facing === "environment" ? "user" : "environment";
+      savedFacing = facing;
+      syncSwitchLabel();
       start();
     };
     btn("native").onclick = () => {

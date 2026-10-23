@@ -60,7 +60,7 @@
       $('btnUnitCm').classList.toggle('is-active',state.customUnit==='cm');$('btnUnitMm').classList.toggle('is-active',state.customUnit==='mm');
       switchCategory(state.activeCategory);
       if(state.activeCategory!=='photos')setDocumentPages(state.documentPageCount);
-      document.querySelectorAll('.format-btn').forEach(b=>b.classList.toggle('is-active',b.dataset.format===state.format));
+      document.querySelectorAll('.format-btn').forEach(b=>b.classList.toggle('is-active',(b.dataset.format||b.dataset.quickFormat)===state.format));
       $('chkMixTwoPhotos').checked=state.mixTwoPhotos;
       $('chkDuplicateCard').checked=state.duplicateCard;
       if(state.activeCategory==='photos')setMixTwoPhotos(state.mixTwoPhotos);

@@ -14,17 +14,38 @@ async function computeSha256(str) {
   return Array.from(new Uint8Array(hashBuf)).map(function(b){ return b.toString(16).padStart(2, '0'); }).join('');
 }
 
+/* Hashes de las claves de fábrica que versiones anteriores traían publicadas.
+   Se conservan SOLO como detector: si una instalación existente aún usa una de
+   estas claves, se marca mustChangePassword y el acceso obliga a cambiarla antes
+   de entrar. Nunca se usan para crear cuentas nuevas ni como credencial de
+   respaldo: las instalaciones nuevas nacen sin usuarios y exigen crear la
+   cuenta de administrador en el primer uso. El texto plano ya no existe en el
+   código. */
+const LEGACY_FACTORY_HASHES = [
+  '1cfafff6d51a03662b85b93dc3417f51687034ba9a46682f5328257eff7133ed',
+  '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab'
+];
+function isFactoryPasswordHash(hash) {
+  return !!hash && LEGACY_FACTORY_HASHES.indexOf(hash) !== -1;
+}
+
 function getAuthData() {
   try {
     const raw = localStorage.getItem(window.AUTH_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.users) && parsed.users.length > 0) {
-        // Auto-migración si algún usuario tiene el PIN viejo de 2026 o sin hash
+        // Migración: sin hash -> se asume clave de fábrica; con hash de fábrica ->
+        // cambio obligatorio. NUNCA se reescribe el hash de una clave ya elegida
+        // por el operador: su contraseña se respeta tal cual.
         let migrated = false;
         parsed.users.forEach(function(u) {
           if (!u.passwordHash) {
-            u.passwordHash = window.DEFAULT_PIN_HASH;
+            u.passwordHash = LEGACY_FACTORY_HASHES[0];
+            u.mustChangePassword = true;
+            migrated = true;
+          } else if (isFactoryPasswordHash(u.passwordHash) && u.mustChangePassword !== true) {
+            u.mustChangePassword = true;
             migrated = true;
           }
         });
@@ -38,9 +59,10 @@ function getAuthData() {
     const oldRaw = localStorage.getItem('realscan_auth_v1');
     if (oldRaw) {
       const old = JSON.parse(oldRaw);
+      const oldHash = old.passwordHash || LEGACY_FACTORY_HASHES[0];
       const migrated = {
         users: [
-          { username: old.username || window.DEFAULT_USER, passwordHash: old.passwordHash || window.DEFAULT_PIN_HASH, role: 'admin' }
+          { username: old.username || window.DEFAULT_USER, passwordHash: oldHash, role: 'admin', mustChangePassword: isFactoryPasswordHash(oldHash) }
         ],
         currentUsername: old.username || window.DEFAULT_USER,
         sessionToken: old.sessionToken || null,
@@ -50,13 +72,15 @@ function getAuthData() {
       return migrated;
     }
   } catch(e) {}
+  // Instalación nueva: sin usuarios. La app exige crear la cuenta de
+  // administrador en el primer uso (ver handleSetupSubmit); no hay ninguna
+  // credencial por defecto.
   return {
-    users: [
-      { username: window.DEFAULT_USER, passwordHash: window.DEFAULT_PIN_HASH, role: 'admin', mustChangePassword: true }
-    ],
-    currentUsername: window.DEFAULT_USER,
+    users: [],
+    currentUsername: '',
     sessionToken: null,
-    sessionExpiry: 0
+    sessionExpiry: 0,
+    needsSetup: true
   };
 }
 
@@ -64,6 +88,22 @@ function saveAuthData(data) {
   try {
     localStorage.setItem(window.AUTH_STORAGE_KEY, JSON.stringify(data));
   } catch(e) {}
+}
+
+/* Política mínima para claves nuevas: 6+ caracteres y nunca una clave de fábrica. */
+async function validateNewPassword(newPass) {
+  if (!newPass || newPass.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
+  const hash = await computeSha256(newPass);
+  if (isFactoryPasswordHash(hash)) return 'Esa es la clave de fábrica antigua. Elige una contraseña distinta.';
+  return null;
+}
+
+/* Confirmación con el diálogo propio de la app; degrada a confirm() nativo solo
+   si el módulo de diálogos no está cargado (p. ej. pruebas unitarias). */
+async function askConfirmDialog(message, options) {
+  if (typeof showConfirmDialog === 'function') return showConfirmDialog(message, options);
+  if (typeof confirm === 'function') return confirm(message);
+  return false;
 }
 
 /* ============================================================
@@ -140,12 +180,18 @@ function exportAuditLogCsv() {
     showToast('La bitácora está vacía', 'warning');
     return;
   }
+  // Neutraliza celdas que una hoja de cálculo interpretaría como fórmula (=, +, -, @).
+  function csvCell(value) {
+    let v = String(value == null ? '' : value);
+    if (/^[=+\-@\t\r]/.test(v)) v = "'" + v;
+    return '"' + v.replace(/"/g, '""') + '"';
+  }
   let csv = '\uFEFF"ID","Fecha","Hora","Usuario","Acción","Detalles"\n';
   logs.forEach(function(l) {
     const d = new Date(l.timestamp);
     const fDate = d.toLocaleDateString('es-MX');
     const fTime = d.toLocaleTimeString('es-MX');
-    csv += '"' + l.id + '","' + fDate + '","' + fTime + '","' + (l.user||'').replace(/"/g, '""') + '","' + (l.action||'').replace(/"/g, '""') + '","' + (l.details||'').replace(/"/g, '""') + '"\n';
+    csv += csvCell(l.id) + ',' + csvCell(fDate) + ',' + csvCell(fTime) + ',' + csvCell(l.user || '') + ',' + csvCell(l.action || '') + ',' + csvCell(l.details || '') + '\n';
   });
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -160,8 +206,9 @@ function exportAuditLogCsv() {
   showToast('Bitácora descargada en formato CSV', 'success');
 }
 
-function clearAuditLog() {
-  if (!confirm('¿Estás seguro de que deseas vaciar la bitácora de auditoría? Esta acción no se puede deshacer.')) return;
+async function clearAuditLog() {
+  const ok = await askConfirmDialog('¿Estás seguro de que deseas vaciar la bitácora de auditoría? Esta acción no se puede deshacer.', { danger: true, confirmText: 'Vaciar bitácora' });
+  if (!ok) return;
   localStorage.removeItem(window.AUDIT_STORAGE_KEY);
   renderAuditLogs();
   logActivity('Bitácora Vaciada', 'El historial fue reiniciado manualmente');
@@ -304,6 +351,12 @@ async function handleAddUser(e) {
     return;
   }
 
+  const policyError = await validateNewPassword(newPass);
+  if (policyError) {
+    showToast(policyError, 'warning');
+    return;
+  }
+
   const hash = await computeSha256(newPass);
   auth.users.push({
     username: newName,
@@ -320,7 +373,7 @@ async function handleAddUser(e) {
   showToast('¡Usuario "' + newName + '" creado con éxito!', 'success');
 }
 
-function handleDeleteUser(usernameToDelete) {
+async function handleDeleteUser(usernameToDelete) {
   if (!usernameToDelete) return;
 
   if (!isCurrentUserAdmin()) {
@@ -349,7 +402,8 @@ function handleDeleteUser(usernameToDelete) {
     }
   }
 
-  if (typeof confirm === 'function' && !confirm('¿Estás seguro de que deseas eliminar al usuario "' + usernameToDelete + '"?')) return;
+  const confirmedDelete = await askConfirmDialog('¿Estás seguro de que deseas eliminar al usuario "' + usernameToDelete + '"?', { danger: true, confirmText: 'Eliminar usuario' });
+  if (!confirmedDelete) return;
 
   auth.users = auth.users.filter(function(u) {
     return u.username.toLowerCase() !== usernameToDelete.toLowerCase();
@@ -364,6 +418,20 @@ function handleDeleteUser(usernameToDelete) {
 /* ============================================================
    Control de Sesión / Bloqueo y Login
    ============================================================ */
+/* Muestra uno de los tres paneles del overlay de acceso:
+   'login' (acceso normal), 'setup' (primer uso, crear administrador) o
+   'change' (cambio de contraseña obligatorio). */
+function showLoginPanel(panel) {
+  const panels = { login: $('loginForm'), setup: $('setupForm'), change: $('forcedChangeForm') };
+  Object.keys(panels).forEach(function(key) {
+    if (panels[key]) panels[key].classList.toggle('hidden', key !== panel);
+  });
+  const hint = $('loginFooterHint');
+  if (hint) hint.textContent = panel === 'setup'
+    ? 'Primer uso: crea la cuenta de administrador. Sin ella no se puede entrar.'
+    : 'Acceso protegido por usuario y contraseña.';
+}
+
 function checkAuthSession() {
   const auth = getAuthData();
   const now = Date.now();
@@ -373,18 +441,129 @@ function checkAuthSession() {
   const overlay = $('loginOverlay');
   if (!overlay) return;
 
+  // Sin usuarios: primer uso obligatorio (crear administrador).
+  if (!auth.users || auth.users.length === 0) {
+    if (typeof closeAllModals === 'function') closeAllModals();
+    overlay.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+    showLoginPanel('setup');
+    const setupUser = $('setupUserInput');
+    if (setupUser && !setupUser.value) setupUser.value = window.DEFAULT_USER;
+    const setupPass = $('setupPassInput');
+    if (setupPass && setupPass.focus) setTimeout(function(){ setupPass.focus(); }, 100);
+    return;
+  }
+
   if (auth.sessionToken && auth.sessionExpiry && now < auth.sessionExpiry) {
     overlay.classList.add('hidden');
     document.body.classList.remove('modal-open');
+    armIdleLockTimer();
   } else {
     if (typeof closeAllModals === 'function') closeAllModals();
     overlay.classList.remove('hidden');
     document.body.classList.add('modal-open');
+    showLoginPanel(pendingForcedChangeUser ? 'change' : 'login');
     const userInput = $('loginUserInput');
     if (userInput) userInput.value = auth.currentUsername || window.DEFAULT_USER;
     const passInput = $('loginPassInput');
-    if (passInput) setTimeout(function(){ passInput.focus(); }, 100);
+    if (passInput && passInput.focus) setTimeout(function(){ passInput.focus(); }, 100);
   }
+}
+
+/* ---------- Configuración inicial (primer uso, sin credencial por defecto) ---------- */
+async function createInitialAdmin(username, password) {
+  const auth = getAuthData();
+  if (auth.users && auth.users.length > 0) throw new Error('Ya existe una cuenta configurada.');
+  const name = (username || '').trim();
+  if (!name) throw new Error('Ingresa un nombre de usuario.');
+  const policyError = await validateNewPassword(password);
+  if (policyError) throw new Error(policyError);
+  const hash = await computeSha256(password);
+  const data = {
+    users: [{ username: name, passwordHash: hash, role: 'admin', mustChangePassword: false }],
+    currentUsername: name,
+    sessionToken: 'token_' + Date.now() + '_' + Math.random().toString(36).substring(2),
+    sessionExpiry: Date.now() + 12 * 60 * 60 * 1000
+  };
+  saveAuthData(data);
+  return data;
+}
+
+async function handleSetupSubmit(e) {
+  if (e) e.preventDefault();
+  const errorBox = $('setupErrorMsg');
+  function fail(msg) {
+    if (errorBox) { errorBox.textContent = msg; errorBox.classList.remove('hidden'); }
+  }
+  const user = ($('setupUserInput').value || '').trim();
+  const pass = $('setupPassInput').value || '';
+  const confirmPass = $('setupPassConfirmInput').value || '';
+  if (pass !== confirmPass) { fail('La contraseña y su confirmación no coinciden.'); return; }
+  try {
+    const data = await createInitialAdmin(user, pass);
+    if (errorBox) errorBox.classList.add('hidden');
+    $('setupPassInput').value = '';
+    $('setupPassConfirmInput').value = '';
+    $('loginOverlay').classList.add('hidden');
+    document.body.classList.remove('modal-open');
+    const label = $('currentUserLabel');
+    if (label) label.textContent = data.currentUsername;
+    logActivity('Configuración Inicial', 'Cuenta de administrador creada: ' + data.currentUsername);
+    showToast('Cuenta creada. ¡Bienvenido a RealScan Pro, ' + data.currentUsername + '!', 'success');
+    armIdleLockTimer();
+  } catch (err) {
+    fail(err.message || 'No se pudo crear la cuenta.');
+  }
+}
+
+/* ---------- Límite de intentos de acceso ---------- */
+function getAuthGuard() {
+  try {
+    return JSON.parse(localStorage.getItem(window.AUTH_GUARD_KEY || 'realscan_auth_guard_v1') || '{}') || {};
+  } catch (e) { return {}; }
+}
+function saveAuthGuard(guard) {
+  try { localStorage.setItem(window.AUTH_GUARD_KEY || 'realscan_auth_guard_v1', JSON.stringify(guard)); } catch (e) {}
+}
+function loginLockRemainingMs(username) {
+  const entry = getAuthGuard()[(username || '').toLowerCase()];
+  if (!entry || !entry.lockedUntil) return 0;
+  return Math.max(0, entry.lockedUntil - Date.now());
+}
+function registerLoginFailure(username) {
+  const guard = getAuthGuard();
+  const key = (username || '').toLowerCase();
+  const maxAttempts = window.AUTH_MAX_FAILED_ATTEMPTS || 5;
+  const lockoutMs = window.AUTH_LOCKOUT_MS || 5 * 60 * 1000;
+  const entry = guard[key] || { fails: 0, lockedUntil: 0 };
+  entry.fails = (entry.fails || 0) + 1;
+  if (entry.fails >= maxAttempts) {
+    entry.lockedUntil = Date.now() + lockoutMs;
+    entry.fails = 0;
+  }
+  guard[key] = entry;
+  saveAuthGuard(guard);
+  return entry.lockedUntil > Date.now() ? entry.lockedUntil : 0;
+}
+function clearLoginFailures(username) {
+  const guard = getAuthGuard();
+  delete guard[(username || '').toLowerCase()];
+  saveAuthGuard(guard);
+}
+
+/* ---------- Entrada con sesión (compartido por login y cambio forzado) ---------- */
+let pendingForcedChangeUser = null;
+function grantSession(auth, matched, remember) {
+  auth.currentUsername = matched.username;
+  auth.sessionToken = 'token_' + Date.now() + '_' + Math.random().toString(36).substring(2);
+  auth.sessionExpiry = remember ? (Date.now() + 30 * 24 * 60 * 60 * 1000) : (Date.now() + 12 * 60 * 60 * 1000);
+  saveAuthData(auth);
+  const overlay = $('loginOverlay');
+  if (overlay) overlay.classList.add('hidden');
+  document.body.classList.remove('modal-open');
+  const label = $('currentUserLabel');
+  if (label) label.textContent = matched.username;
+  armIdleLockTimer();
 }
 
 async function handleLoginSubmit(e) {
@@ -394,50 +573,150 @@ async function handleLoginSubmit(e) {
   const remember = $('chkRememberMe') ? $('chkRememberMe').checked : true;
   const errorBox = $('loginErrorMsg');
 
-  if (!user || !pass) {
+  function showError(msg) {
     if (errorBox) {
-      errorBox.textContent = 'Por favor ingresa tu usuario y contraseña o PIN';
+      errorBox.textContent = msg;
       errorBox.classList.remove('hidden');
+      errorBox.classList.remove('animate-shake');
+      void errorBox.offsetWidth;
+      errorBox.classList.add('animate-shake');
     }
+  }
+
+  if (!user || !pass) {
+    showError('Por favor ingresa tu usuario y contraseña o PIN');
     return;
   }
 
   const auth = getAuthData();
+  if (!auth.users || auth.users.length === 0) {
+    showLoginPanel('setup');
+    return;
+  }
+
+  const lockMs = loginLockRemainingMs(user);
+  if (lockMs > 0) {
+    showError('Demasiados intentos fallidos. Espera ' + Math.ceil(lockMs / 60000) + ' minuto(s) antes de volver a intentarlo.');
+    return;
+  }
+
   const passHash = await computeSha256(pass);
   const matched = auth.users.find(function(u) {
     return u.username.toLowerCase() === user.toLowerCase() && u.passwordHash === passHash;
   });
 
   if (matched) {
-    auth.currentUsername = matched.username;
-    auth.sessionToken = 'token_' + Date.now() + '_' + Math.random().toString(36).substring(2);
-    auth.sessionExpiry = remember ? (Date.now() + 30 * 24 * 60 * 60 * 1000) : (Date.now() + 12 * 60 * 60 * 1000);
-    saveAuthData(auth);
-
+    clearLoginFailures(user);
     if (errorBox) errorBox.classList.add('hidden');
     $('loginPassInput').value = '';
-    $('loginOverlay').classList.add('hidden');
-    document.body.classList.remove('modal-open');
 
-    const label = $('currentUserLabel');
-    if (label) label.textContent = matched.username;
+    // Cambio obligatorio: la sesión NO se concede hasta fijar una clave nueva.
+    if (matched.mustChangePassword === true) {
+      pendingForcedChangeUser = matched.username;
+      showLoginPanel('change');
+      const newPassInput = $('forcedNewPassInput');
+      if (newPassInput && newPassInput.focus) setTimeout(function(){ newPassInput.focus(); }, 100);
+      logActivity('Cambio Obligatorio Pendiente', 'El usuario ' + matched.username + ' debe cambiar la clave de fábrica antes de entrar');
+      return;
+    }
 
+    grantSession(auth, matched, remember);
     logActivity('Inicio de Sesión', 'Acceso correcto con usuario: ' + matched.username + ' (' + matched.role + ')');
     showToast('¡Bienvenido al sistema, ' + matched.username + '!', 'success');
-
-    if (matched.mustChangePassword === true) {
-      showToast('⚠️ Clave inicial en uso. Por seguridad, cámbiala en Ajustes.', 'warning');
-    }
   } else {
-    if (errorBox) {
-      errorBox.textContent = 'Usuario o contraseña/PIN incorrectos';
-      errorBox.classList.remove('hidden');
-      errorBox.classList.remove('animate-shake');
-      void errorBox.offsetWidth;
-      errorBox.classList.add('animate-shake');
+    const lockedUntil = registerLoginFailure(user);
+    if (lockedUntil) {
+      showError('Demasiados intentos fallidos. Acceso bloqueado temporalmente por seguridad.');
+    } else {
+      showError('Usuario o contraseña/PIN incorrectos');
     }
     logActivity('Acceso Fallido', 'Intento incorrecto con usuario: ' + user);
   }
+}
+
+/* ---------- Cambio de contraseña obligatorio (clave de fábrica) ---------- */
+async function handleForcedChangeSubmit(e) {
+  if (e) e.preventDefault();
+  const errorBox = $('forcedErrorMsg');
+  function fail(msg) {
+    if (errorBox) { errorBox.textContent = msg; errorBox.classList.remove('hidden'); }
+  }
+  const newPass = $('forcedNewPassInput').value || '';
+  const confirmPass = $('forcedConfirmPassInput').value || '';
+  if (newPass !== confirmPass) { fail('La nueva contraseña y su confirmación no coinciden.'); return; }
+  const policyError = await validateNewPassword(newPass);
+  if (policyError) { fail(policyError); return; }
+
+  const auth = getAuthData();
+  const targetName = pendingForcedChangeUser || auth.currentUsername || '';
+  const target = auth.users.find(function(u) {
+    return u.username.toLowerCase() === targetName.toLowerCase();
+  });
+  if (!target) { fail('No se encontró el usuario. Vuelve a iniciar sesión.'); showLoginPanel('login'); return; }
+
+  target.passwordHash = await computeSha256(newPass);
+  target.mustChangePassword = false;
+  pendingForcedChangeUser = null;
+  $('forcedNewPassInput').value = '';
+  $('forcedConfirmPassInput').value = '';
+  if (errorBox) errorBox.classList.add('hidden');
+
+  const remember = $('chkRememberMe') ? $('chkRememberMe').checked : false;
+  grantSession(auth, target, remember);
+  logActivity('Cambio de Contraseña Obligatorio', 'Clave de fábrica reemplazada para el usuario: ' + target.username);
+  showToast('Contraseña actualizada. ¡Bienvenido, ' + target.username + '!', 'success');
+}
+
+/* ---------- Bloqueo automático del mostrador por inactividad ---------- */
+let idleLockTimer = null;
+let lastIdleRearm = 0;
+function getIdleLockMinutes() {
+  try {
+    const prefs = JSON.parse(localStorage.getItem(window.PREFS_KEY || 'realscan_prefs_v2') || '{}');
+    if (typeof prefs.idleLockMinutes === 'number' && isFinite(prefs.idleLockMinutes)) {
+      return Math.max(0, prefs.idleLockMinutes);
+    }
+  } catch (e) {}
+  return (typeof window.IDLE_LOCK_DEFAULT_MINUTES === 'number') ? window.IDLE_LOCK_DEFAULT_MINUTES : 10;
+}
+function setIdleLockMinutes(minutes) {
+  try {
+    const key = window.PREFS_KEY || 'realscan_prefs_v2';
+    const prefs = JSON.parse(localStorage.getItem(key) || '{}');
+    prefs.idleLockMinutes = Math.max(0, Number(minutes) || 0);
+    localStorage.setItem(key, JSON.stringify(prefs));
+  } catch (e) {}
+}
+function armIdleLockTimer() {
+  if (idleLockTimer) { clearTimeout(idleLockTimer); idleLockTimer = null; }
+  const minutes = getIdleLockMinutes();
+  if (!minutes || minutes <= 0) return;
+  const auth = getAuthData();
+  if (!auth.sessionToken) return;
+  idleLockTimer = setTimeout(lockScreenForInactivity, minutes * 60 * 1000);
+  // En entornos Node (suites de regresión) el temporizador no debe retener el
+  // proceso; en el navegador setTimeout devuelve un número y esto no actúa.
+  if (idleLockTimer && typeof idleLockTimer.unref === 'function') idleLockTimer.unref();
+}
+function lockScreenForInactivity() {
+  const auth = getAuthData();
+  if (!auth.sessionToken) return;
+  auth.sessionToken = null;
+  auth.sessionExpiry = 0;
+  saveAuthData(auth);
+  logActivity('Bloqueo Automático', 'Sesión bloqueada por inactividad');
+  showToast('Sesión bloqueada por inactividad. Ingresa de nuevo para continuar.', 'info');
+  checkAuthSession();
+}
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+  ['pointerdown', 'keydown', 'touchstart'].forEach(function(evt) {
+    document.addEventListener(evt, function() {
+      const now = Date.now();
+      if (now - lastIdleRearm < 5000) return;
+      lastIdleRearm = now;
+      armIdleLockTimer();
+    }, { passive: true });
+  });
 }
 
 function handleLogout() {
@@ -484,6 +763,12 @@ async function handleUpdateCredentials(e) {
     return;
   }
 
+  const factoryError = await validateNewPassword(newPass);
+  if (factoryError) {
+    showAlert(factoryError, false);
+    return;
+  }
+
   const newHash = await computeSha256(newPass);
   activeUser.passwordHash = newHash;
   activeUser.mustChangePassword = false;
@@ -517,6 +802,20 @@ function openSettingsModal() {
   switchSettingsTab('creds');
   renderAuditLogs();
   openModal('settingsModal');
+  const idleSelect = $('selectIdleLockMinutes');
+  if (idleSelect) {
+    idleSelect.value = String(getIdleLockMinutes());
+    if (!idleSelect.dataset.bound) {
+      idleSelect.dataset.bound = '1';
+      idleSelect.addEventListener('change', function() {
+        setIdleLockMinutes(parseInt(idleSelect.value, 10));
+        armIdleLockTimer();
+        showToast(idleSelect.value === '0'
+          ? 'Bloqueo por inactividad desactivado.'
+          : 'La pantalla se bloqueará tras ' + idleSelect.value + ' min sin uso.', 'success');
+      });
+    }
+  }
 }
 
 function switchSettingsTab(tabKey) {

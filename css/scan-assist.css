@@ -281,7 +281,26 @@
 }
 .scan-dialog .scan-stage:has(canvas:not([hidden])){max-width:none;}
 .scan-preview-area{position:relative}.scan-magnifier{position:absolute;top:8px;width:112px;height:112px;border:3px solid white;border-radius:18px;box-shadow:0 4px 18px #0008;pointer-events:none;z-index:2;}
+/* Botón GRANDE de cambio de cámara: flotante sobre el video, esquina inferior
+   derecha (zona del pulgar), siempre visible durante la captura. La etiqueta
+   dice qué cámara está activa; al tocarlo cambia a la otra y la elección se
+   recuerda durante la sesión. */
+.scan-switch-cam{position:absolute;right:12px;bottom:12px;z-index:6;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:76px;min-height:76px;padding:10px 8px;border-radius:9999px;border:2px solid #ffffffd9;background:#0f172ad9;color:#fff;box-shadow:0 8px 24px #000a;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.scan-switch-cam svg{width:32px;height:32px;flex:none}
+.scan-switch-cam .scan-switch-label{font-size:.7rem;line-height:1;letter-spacing:.02em}
+.scan-switch-cam:active{transform:scale(.93)}
+.scan-dialog [hidden].scan-switch-cam,.scan-switch-cam[hidden]{display:none!important}
 .scan-actions [data-act=original]{color:#fff;border-color:#047857;}
 .scan-dialog[data-phase=review] .scan-stage{overflow:visible;}
 .scan-guidance{flex:none;font-size:.72rem;line-height:1.45;color:#c7d2fe;margin:0;padding:5px 9px;border-left:2px solid #818cf8;background:#312e8133;border-radius:0 8px 8px 0}
 @media(orientation:landscape) and (max-height:540px){.scan-guidance{display:none}}
+
+/* v3.12.0 — Revisión previa: vista de la hoja y selector de perfil */
+.output-review-sheet{border:1px solid #cbd5e1;border-radius:12px;overflow:hidden;background:#fff;margin-top:10px}
+.output-review-sheet .a4-sheet{width:100%!important;height:auto!important;min-height:0!important;margin:0!important;box-shadow:none!important}
+.output-review-profile{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;font-weight:600}
+.output-review-profile select{min-height:40px;flex:1;border:1px solid #cbd5e1;border-radius:10px;padding:6px 8px;background:#fff;color:#0f172a;font:inherit}
+.dark .output-review-profile select{background:#1e293b;color:#f1f5f9;border-color:#475569}
+
+/* v3.12.0 — El botón de captura se ilumina cuando hay documento detectado */
+.scan-actions [data-act=capture].scan-detected{background:#047857!important;border-color:#047857!important;color:#fff!important}

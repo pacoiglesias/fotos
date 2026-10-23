@@ -3,14 +3,19 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.11.1';
+window.APP_VERSION = 'v3.12.0';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
 window.DEFAULT_USER = 'admin';
-window.DEFAULT_PIN = '1313';
-window.DEFAULT_PIN_HASH = '1cfafff6d51a03662b85b93dc3417f51687034ba9a46682f5328257eff7133ed'; // sha256('1313')
-window.LEGACY_PIN_HASH = '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab'; // sha256('2026')
+// Seguridad (v3.12.0): ya NO existe ninguna credencial por defecto en el código.
+// En el primer uso la app exige crear la cuenta de administrador; las instalaciones
+// que aún usan la clave de fábrica se detectan en auth.js y se fuerza su cambio.
+window.AUTH_GUARD_KEY = 'realscan_auth_guard_v1';
+window.AUTH_MAX_FAILED_ATTEMPTS = 5;
+window.AUTH_LOCKOUT_MS = 5 * 60 * 1000; // bloqueo temporal tras 5 intentos fallidos
+window.IDLE_LOCK_DEFAULT_MINUTES = 10; // bloqueo automático del mostrador por inactividad
+window.CALIBRATION_LOG_KEY = 'realscan_calibration_log_v1';
 window.TARGET_DPI = 300;
 window.MAX_OUT_PX = 4000;
 

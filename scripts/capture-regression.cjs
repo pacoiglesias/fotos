@@ -66,9 +66,14 @@ function cameraFixture() {
   page.setDefaultTimeout(2e4);
   page.on("pageerror", (e) => errors.push(e.message));
   await page.addInitScript(cameraFixture);
+  // v3.12.0: ya no hay PIN de fábrica; se siembra una cuenta de prueba
+  // (hash SHA-256 de "PruebaAcceso2026", clave elegida solo para la suite).
+  await page.addInitScript(() => {
+    localStorage.getItem('realscan_auth_v2')||localStorage.setItem('realscan_auth_v2', JSON.stringify({ users: [{ username: "admin", passwordHash: "beeaac74a3a1833e8547bf1510c9bbdfaa41d019ad7da238b606d91155014abe", role: "admin", mustChangePassword: false }], currentUsername: "admin", sessionToken: null, sessionExpiry: 0 }));
+  });
   await page.goto("http://127.0.0.1:5521");
   await page.locator("#loginUserInput").fill("admin");
-  await page.locator("#loginPassInput").fill("1313");
+  await page.locator("#loginPassInput").fill("PruebaAcceso2026");
   await page.locator("#btnLoginSubmit").click();
   await page.locator("#loginOverlay").waitFor({ state: "hidden" });
   const analysis = await page.evaluate(() => {
@@ -116,7 +121,8 @@ function cameraFixture() {
   await page.locator("#btnPrintDirect").click();
   await page.locator("#outputReviewModal").waitFor({ state: "visible" });
   assert((await page.locator("#printReview").innerText()).includes("85.6"));
-  assert.equal(await page.locator("#printReview img").count(), 1);
+  assert.equal(await page.evaluate(() => [...document.querySelectorAll("#printReview img")].filter(i => !i.closest(".output-review-sheet")).length), 1);
+  assert(await page.evaluate(() => !!document.querySelector("#printReview .output-review-sheet .a4-sheet")), "La revisión previa debe mostrar la vista previa de la hoja");
   await page.locator("#outputReviewModal").screenshot({path:path.join(out,"print-review.png")});
   await page.locator("#outputReviewModal [data-close-modal]").click();
   await page.locator("#btnOpenDeliveryModal").click();

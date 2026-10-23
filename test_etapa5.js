@@ -162,7 +162,10 @@ async function runTests() {
     vm.runInContext(code, sb);
 
     sb.saveActiveDraft();
-    sb.resetWorkspaceToNewProject();
+    // v3.12.0: el reseteo pide confirmación con el diálogo propio (asíncrono);
+    // en la caja de arena se autoconfirma y se espera a que termine.
+    sb.showConfirmDialog = async () => true;
+    await sb.resetWorkspaceToNewProject();
 
     assert.strictEqual(sb.getActiveDraft(), null, 'Debe limpiar el borrador activo al crear nuevo proyecto');
     assert.deepStrictEqual(slotCleared, ['front', 'back', 'page3', 'page4'], 'Debe limpiar las 4 ranuras');

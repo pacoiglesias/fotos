@@ -15,10 +15,15 @@ const pass = name => { checks.push(name); console.log('PASS ' + name); };
   const context = await browser.newContext({serviceWorkers:'block', viewport:{width:1440,height:1000}}), page = await context.newPage(), errors = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('dialog', dialog => dialog.accept());
+  // v3.12.0: ya no hay PIN de fábrica; se siembra una cuenta de prueba
+  // (hash SHA-256 de "PruebaAcceso2026", clave elegida solo para la suite).
+  await page.addInitScript(() => {
+    localStorage.getItem('realscan_auth_v2')||localStorage.setItem('realscan_auth_v2', JSON.stringify({ users: [{ username: 'admin', passwordHash: 'beeaac74a3a1833e8547bf1510c9bbdfaa41d019ad7da238b606d91155014abe', role: 'admin', mustChangePassword: false }], currentUsername: 'admin', sessionToken: null, sessionExpiry: 0 }));
+  });
   await page.goto(process.env.REALSCAN_URL || 'http://127.0.0.1:5519');
-  await page.waitForFunction(() => typeof updateUI === 'function' && window.pdfjsLib);
+  await page.waitForFunction(() => typeof updateUI === 'function' && window.pdfjsLib && typeof ensureJsPdf === 'function');
   await page.locator('#loginUserInput').fill('admin');
-  await page.locator('#loginPassInput').fill('1313');
+  await page.locator('#loginPassInput').fill('PruebaAcceso2026');
   await page.locator('#btnLoginSubmit').click();
   await page.locator('#loginOverlay').waitFor({state:'hidden'});
   const duplicates = await page.evaluate(() => {
@@ -71,6 +76,7 @@ const pass = name => { checks.push(name); console.log('PASS ' + name); };
   await receive();
   // Exercise the actual nested PDF assignment flow, rather than only open/close helpers.
   await page.evaluate(async () => {
+    await ensureJsPdf();
     const doc = new jspdf.jsPDF(); doc.text('Synthetic page one',20,20); doc.addPage(); doc.text('Synthetic page two',20,20);
     const data = doc.output('datauristring').split(',')[1];
     RealScanQrSync.addReceivedFile({id:'synthetic-pdf',name:'synthetic.pdf',type:'application/pdf',dataUrl:'data:application/pdf;base64,'+data,size:atob(data).length});

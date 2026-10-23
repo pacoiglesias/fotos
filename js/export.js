@@ -20,6 +20,7 @@ async function createDigitalFile(side, format, maxPx) {
   const ctx = canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);
   let type, dataUrl, extension;
   if (format === 'pdf') {
+    if (typeof ensureJsPdf === 'function') await ensureJsPdf();
     const spec = getActiveSpec();
     const doc = new window.jspdf.jsPDF({orientation:spec.widthMm>spec.heightMm?'landscape':'portrait',unit:'mm',format:[spec.widthMm,spec.heightMm]});
     const box = RealScanLayout.imagePlacement({xMm:0,yMm:0,widthMm:spec.widthMm,heightMm:spec.heightMm},canvas.width,canvas.height);
@@ -28,6 +29,9 @@ async function createDigitalFile(side, format, maxPx) {
   } else {
     type=format==='png'?'image/png':'image/jpeg';extension=format==='png'?'png':'jpg';dataUrl=canvas.toDataURL(type,.94);
     if(policy?.maxBytes){for(const quality of [.90,.85,.80,.75]){if(Math.floor(dataUrl.split(',')[1].length*.75)<=policy.maxBytes)break;dataUrl=canvas.toDataURL(type,quality);}if(Math.floor(dataUrl.split(',')[1].length*.75)>policy.maxBytes)throw Error('La foto supera el peso máximo del perfil. Prueba la opción de 600 px.');}
+    // Escribe la densidad 300 DPI en la cabecera JFIF para que la entrega
+    // conserve la escala al imprimirla en otro equipo.
+    if (type === 'image/jpeg' && window.RealScanJpeg) dataUrl = window.RealScanJpeg.dataUrlWithDpi(dataUrl);
   }
   return {name:'RealScan_'+(side==='front'?'Frente':'Reverso')+'_'+Date.now()+'.'+extension,type,dataUrl,size:Math.floor((dataUrl.length-dataUrl.indexOf(',')-1)*.75)};
 }
@@ -59,9 +63,14 @@ function downloadPdfBlob(doc, fileName) {
 /**
  * Manejador principal de Exportar / Compartir PDF
  */
-async function handleExportPDF(tryShare) {
+async function handleExportPDF(tryShare, reviewed) {
   if (typeof waitForProcessingComplete === 'function') {
     if (!await waitForProcessingComplete()) return;
+  }
+  // Resumen previo a la descarga (mismo criterio que «Revisa antes de imprimir»):
+  // tipo, caras, papel, copias, perfil de impresora y vista de la hoja.
+  if (reviewed !== true && tryShare !== true && typeof showPrintReview === 'function') {
+    return showPrintReview(function() { handleExportPDF(tryShare, true); }, { title: 'Revisa antes de descargar el PDF', confirmLabel: 'Continuar a descargar', mode: 'pdf' });
   }
   // Verificación de Pre-Vuelo Estricta (M-31)
   if (typeof runPreflightChecks === 'function') {
@@ -78,16 +87,17 @@ async function handleExportPDF(tryShare) {
       if (missingSlotErrors.length > 0) {
         const missingMsg = missingSlotErrors.map(x => x.message).join('\n') +
           '\n\n¿Deseas exportar ÚNICAMENTE las caras disponibles (dejando el espacio vacío sin inventar contenido) o cancelar para cargar la imagen faltante?';
-        if (!confirm(missingMsg)) return;
+        if (!(await showConfirmDialog(missingMsg, { title: 'Faltan caras por cargar', confirmText: 'Exportar así' }))) return;
       }
     }
     const warnings = preflight.issues.filter(x => x.type === 'warning');
     if (warnings.length > 0) {
       const warnMsg = warnings.map(x => x.message).join('\n') + '\n\n¿Deseas continuar con la exportación?';
-      if (!confirm(warnMsg)) return;
+      if (!(await showConfirmDialog(warnMsg, { title: 'Advertencias de exportación', confirmText: 'Continuar' }))) return;
     }
   }
 
+  if (typeof ensureJsPdf === 'function') await ensureJsPdf();
   const doc = generatePdfDoc();
   if (!doc) return;
   const spec = getActiveSpec();
@@ -149,16 +159,17 @@ async function handlePrintDirect(reviewed = false) {
       if (missingSlotErrors.length > 0) {
         const missingMsg = missingSlotErrors.map(x => x.message).join('\n') +
           '\n\n¿Deseas imprimir ÚNICAMENTE las caras disponibles (dejando el espacio vacío sin inventar contenido) o cancelar para cargar la imagen faltante?';
-        if (!confirm(missingMsg)) return;
+        if (!(await showConfirmDialog(missingMsg, { title: 'Faltan caras por cargar', confirmText: 'Imprimir así' }))) return;
       }
     }
     const warnings = preflight.issues.filter(x => x.type === 'warning');
     if (warnings.length > 0) {
       const warnMsg = warnings.map(x => x.message).join('\n') + '\n\n¿Deseas continuar con la impresión?';
-      if (!confirm(warnMsg)) return;
+      if (!(await showConfirmDialog(warnMsg, { title: 'Advertencias de impresión', confirmText: 'Continuar' }))) return;
     }
   }
 
+  if (typeof ensureJsPdf === 'function') await ensureJsPdf();
   const doc = generatePdfDoc();
   if (!doc) return;
 
@@ -327,13 +338,13 @@ async function downloadA4Image() {
       if (missingSlotErrors.length > 0) {
         const missingMsg = missingSlotErrors.map(x => x.message).join('\n') +
           '\n\n¿Deseas exportar ÚNICAMENTE las caras disponibles (dejando el espacio vacío sin inventar contenido) o cancelar para cargar la imagen faltante?';
-        if (!confirm(missingMsg)) return;
+        if (!(await showConfirmDialog(missingMsg, { title: 'Faltan caras por cargar', confirmText: 'Exportar así' }))) return;
       }
     }
     const warnings = preflight.issues.filter(x => x.type === 'warning');
     if (warnings.length > 0) {
       const warnMsg = warnings.map(x => x.message).join('\n') + '\n\n¿Deseas continuar con la exportación de imagen?';
-      if (!confirm(warnMsg)) return;
+      if (!(await showConfirmDialog(warnMsg, { title: 'Advertencias de exportación', confirmText: 'Continuar' }))) return;
     }
   }
 
@@ -381,8 +392,9 @@ async function downloadA4Image() {
   // Caso 1: 1 sola página -> Descarga directa de archivo JPG
   if (layout.totalPages === 1) {
     const canvas = renderPageToCanvas(layout.pages[0], layout, loadedImages);
-    canvas.toBlob(function(blob) {
+    canvas.toBlob(async function(blob) {
       if (!blob) return;
+      if (window.RealScanJpeg) blob = await window.RealScanJpeg.blobWithDpi(blob);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -398,15 +410,18 @@ async function downloadA4Image() {
     return;
   }
 
-  // Caso 2: Múltiples páginas -> Empaquetar en ZIP si JSZip está presente, o descargar secuencialmente
-  if (typeof window.JSZip !== 'undefined') {
+  // Caso 2: Múltiples páginas -> Empaquetar en ZIP (JSZip se carga bajo demanda),
+  // o descargar secuencialmente si la librería no se pudo cargar
+  const zipReady = (typeof ensureJSZip === 'function') ? await ensureJSZip() : (typeof window.JSZip !== 'undefined');
+  if (zipReady && typeof window.JSZip !== 'undefined') {
     const zip = new window.JSZip();
     const folder = zip.folder(baseName + '_hojas_300DPI');
 
     const pageBlobs = layout.pages.map(function(page, idx) {
       const canvas = renderPageToCanvas(page, layout, loadedImages);
       return new Promise(function(resolve) {
-        canvas.toBlob(function(blob) {
+        canvas.toBlob(async function(blob) {
+          if (blob && window.RealScanJpeg) blob = await window.RealScanJpeg.blobWithDpi(blob);
           folder.file('Hoja_' + (idx + 1) + '_' + paper.shortName.toLowerCase() + '.jpg', blob);
           resolve();
         }, 'image/jpeg', 0.95);
@@ -430,7 +445,9 @@ async function downloadA4Image() {
     // Fallback: descargar cada página individualmente
     layout.pages.forEach(function(page, idx) {
       const canvas = renderPageToCanvas(page, layout, loadedImages);
-      canvas.toBlob(function(blob) {
+      canvas.toBlob(async function(blob) {
+        if (!blob) return;
+        if (window.RealScanJpeg) blob = await window.RealScanJpeg.blobWithDpi(blob);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

@@ -24,6 +24,7 @@ function copy(src, dst) {
     "phone-local.html",
     "mobile-scan.html",
     "manifest.json",
+    "robots.txt",
   ])
     copy(path.join(root, file), path.join(dist, file));
   copy(path.join(root, "js"), path.join(dist, "js"));
@@ -121,7 +122,18 @@ function copy(src, dst) {
   const sw = fs
     .readFileSync(path.join(root, "sw.js"), "utf8")
     .replace("__BUILD_VERSION__", version)
-    .replace("__CORE_ASSETS__", JSON.stringify(files.filter(f=>!f.startsWith("vendor/ocr/")).map((f) => "./" + f)));
+    // Precaché ligero: NO se precargan los archivos de volumen de pdf.js
+    // (cmaps y wasm, ~250 ficheros) ni el OCR (49 MB); el service worker
+    // los cachea bajo demanda en el primer uso (ver sw.js, caché /vendor/).
+    // SÍ se precachean el NÚCLEO de pdf.js (pdf.mjs + pdf.worker.mjs) y las
+    // fuentes estándar (16 ficheros, 816 KB): la app expone pdfjsLib desde
+    // el arranque, dibuja PDFs con esas fuentes e incrusta LiberationSans
+    // en los PDF buscables, también sin conexión.
+    .replace("__CORE_ASSETS__", JSON.stringify(files.filter(f =>
+      !f.startsWith("vendor/ocr/") &&
+      !f.startsWith("vendor/cmaps/") &&
+      !f.startsWith("vendor/wasm/")
+    ).map((f) => "./" + f)));
   const sourceCommit = cp
     .execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })
     .trim();
