@@ -193,6 +193,7 @@ async function downloadPdf() {
   if (typeof ensureJsPdf === 'function') await ensureJsPdf();
   const doc = generatePdfDoc();
   if (!doc) return;
+  if (window.RealScanFolio) window.RealScanFolio.stampOnPdf(doc);
   const spec = getActiveSpec();
   const paper = (typeof getActivePaperSpec === 'function') ? getActivePaperSpec() : { shortName: 'A4' };
   const filename = spec.fileName + '_' + paper.shortName.toLowerCase() + '_1a1_real.pdf';

@@ -2561,9 +2561,16 @@ function bindEvents() {
   // Filtros de imagen
   $$('.filter-btn').forEach(function(b) {
     on(b, 'click', function() {
-      const p = b.getAttribute('data-filter').split(':');
+      const df = b.getAttribute('data-filter');
+      if (!df) return;
+      const p = df.split(':');
       if (typeof setFilter === 'function') setFilter(p[0], p[1]);
     });
+  });
+
+  // Fondo blanco oficial (v3.13.0)
+  $$('[data-whitebg]').forEach(function(b) {
+    on(b, 'click', function() { if (typeof toggleWhiteBackground === 'function') toggleWhiteBackground(b.getAttribute('data-whitebg')); });
   });
 
   // Pan Nudge / Centrado
@@ -2713,7 +2720,8 @@ function bindEvents() {
       const sel = $('selectRetentionDays');
       const days = sel ? parseInt(sel.value, 10) : 3;
       if (typeof saveScanToStorage === 'function') {
-        await saveScanToStorage(null, days);
+        const savedScanA = await saveScanToStorage(null, days);
+        if (savedScanA && window.RealScanIdentify) window.RealScanIdentify.enrichRecord(savedScanA);
       }
     });
   }
@@ -3097,7 +3105,8 @@ function bindEvents() {
       const sel = $('selectRetentionDays');
       const days = sel ? parseInt(sel.value, 10) : 3;
       if (typeof saveScanToStorage === 'function') {
-        await saveScanToStorage(state.documentCustomTitle || null, days);
+        const savedScanB = await saveScanToStorage(state.documentCustomTitle || null, days);
+        if (savedScanB && window.RealScanIdentify) window.RealScanIdentify.enrichRecord(savedScanB);
       }
     });
   }

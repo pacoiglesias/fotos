@@ -176,6 +176,7 @@ async function saveScanToStorage(customTitle, retentionDays) {
           contrast: imgData.contrast || 0,
           panX: imgData.panX || 0,
           panY: imgData.panY || 0,
+          whiteBg: !!imgData.whiteBg,
           naturalWidth: imgData.naturalWidth || 0,
           naturalHeight: imgData.naturalHeight || 0
         });
@@ -224,6 +225,14 @@ async function saveScanToStorage(customTitle, retentionDays) {
       passportPageOrientation: state.passportPageOrientation || 'landscape',
       retentionDays: days,
       expiresAt: expiresAt,
+      updatedAt: now,
+      operator: (function() { try { const d = (typeof getAuthData === 'function') ? getAuthData() : null; return (d && d.currentUsername) || null; } catch(e) { return null; } })(),
+      archivedAt: null,
+      lastFolio: null,
+      personName: null,
+      docNumber: null,
+      docType: null,
+      docTypeLabel: null,
       pages: pages,
       thumbnail: thumb
     };
@@ -236,6 +245,9 @@ async function saveScanToStorage(customTitle, retentionDays) {
         showToast('💾 Escaneo guardado en tu historial local (' + (days > 0 ? ('Auto-elimina en ' + days + ' días') : 'Permanente') + ').', 'success');
         updateHistoryBadge();
         if (typeof renderSavedScansDashboard === 'function') renderSavedScansDashboard();
+        try { state._lastSavedScanId = record.id; } catch(e) {}
+        if (window.RealScanPolish) window.RealScanPolish.successCheck('Trabajo guardado en tu historial');
+        if (window.RealScanCloudSync) window.RealScanCloudSync.notifyChanged();
         resolve(record);
       };
       req.onerror = function(e) {
@@ -279,6 +291,7 @@ async function deleteScanFromStorage(id) {
       const req = store.delete(id);
       req.onsuccess = function() {
         showToast('Escaneo eliminado del historial.', 'info');
+        if (window.RealScanCloudSync) window.RealScanCloudSync.onScanDeleted(id);
         updateHistoryBadge();
         resolve(true);
       };
@@ -288,6 +301,43 @@ async function deleteScanFromStorage(id) {
     return false;
   }
 }
+
+/* Actualizar campos de un trabajo guardado (archivado, folio, OCR, nube) */
+async function updateScanRecord(id, patch) {
+  try {
+    const db = await getDB();
+    return await new Promise(function(resolve, reject) {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const getReq = store.get(id);
+      getReq.onsuccess = function() {
+        const record = getReq.result;
+        if (!record) { resolve(null); return; }
+        Object.assign(record, patch || {});
+        if (!patch || typeof patch.updatedAt === 'undefined') record.updatedAt = Date.now();
+        const putReq = store.put(record);
+        putReq.onsuccess = function() { resolve(record); };
+        putReq.onerror = function(e) { reject(e.target.error); };
+      };
+      getReq.onerror = function(e) { reject(e.target.error); };
+    });
+  } catch (err) { return null; }
+}
+window.updateScanRecord = updateScanRecord;
+
+/* Insertar un trabajo completo (recuperación desde la nube, AÑADIDO 8) */
+async function putScanRecord(record) {
+  try {
+    const db = await getDB();
+    return await new Promise(function(resolve, reject) {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const req = tx.objectStore(STORE_NAME).put(record);
+      req.onsuccess = function() { resolve(record); };
+      req.onerror = function(e) { reject(e.target.error); };
+    });
+  } catch (err) { return null; }
+}
+window.putScanRecord = putScanRecord;
 
 /* Vaciar todo el historial */
 async function clearAllScansFromStorage() {
@@ -420,6 +470,7 @@ async function restoreScanToApp(id) {
             state.images[slot].originalSrc = p.originalSrc || p.rawOriginalSrc;
             state.images[slot].processedDataUrl = p.dataUrl || p.originalSrc;
             state.images[slot].filter = p.filter || 'color';
+            state.images[slot].whiteBg = !!p.whiteBg;
             state.images[slot].rotation = p.rotation || 0;
             state.images[slot].zoom = p.zoom || 1.0;
             state.images[slot].fitMode = p.fitMode || 'cover';
@@ -654,7 +705,10 @@ async function renderHistoryUI(filterQuery) {
       const titleMatch = (s.title || '').toLowerCase().includes(query);
       const dateMatch = (s.createdFormatted || '').toLowerCase().includes(query);
       const idMatch = (s.id || '').toLowerCase().includes(query);
-      return titleMatch || dateMatch || idMatch;
+      const personMatch = (s.personName || '').toLowerCase().includes(query);
+      const docMatch = (s.docNumber || '').toLowerCase().includes(query);
+      const typeMatch = (s.docTypeLabel || '').toLowerCase().includes(query);
+      return titleMatch || dateMatch || idMatch || personMatch || docMatch || typeMatch;
     });
   }
 
@@ -699,6 +753,11 @@ async function renderHistoryUI(filterQuery) {
     const safeId = escapeHtml(s.id);
     const pagesCount = (s.pages && Array.isArray(s.pages)) ? s.pages.length : 1;
 
+    let extraBadgesHtml = '';
+    if (s.archivedAt) extraBadgesHtml += '<span class="text-[10px] font-bold text-teal-700 bg-teal-50 dark:bg-teal-950/60 dark:text-teal-200 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-900">📥 Archivado ' + new Date(s.archivedAt).toLocaleDateString('es-ES') + '</span> ';
+    if (s.lastFolio) extraBadgesHtml += '<span class="text-[10px] font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-200 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">Folio ' + escapeHtml(s.lastFolio) + '</span> ';
+    if (window.RealScanCloudSync) { const cloudBadge = window.RealScanCloudSync.badgeFor(s); if (cloudBadge) extraBadgesHtml += '<span class="text-[10px] font-bold px-2 py-0.5 rounded ' + cloudBadge.cls + '">☁️ ' + cloudBadge.text + '</span> '; }
+
     card.innerHTML = `
       <div class="flex items-center gap-3 min-w-0">
         <div class="thumb-slot-history w-14 h-14 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center">
@@ -710,7 +769,7 @@ async function renderHistoryUI(filterQuery) {
             <span class="text-slate-300 dark:text-slate-700">•</span>
             <span class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">${pagesCount} páginas</span>
           </div>
-          <div class="mt-1.5">${expireBadgeHtml}</div>
+          <div class="mt-1.5 flex flex-wrap gap-1.5">${expireBadgeHtml}${extraBadgesHtml}</div>
         </div>
       </div>
       <div class="flex items-center gap-1.5 shrink-0 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800">
@@ -725,6 +784,14 @@ async function renderHistoryUI(filterQuery) {
         <button type="button" class="btn-repeat-scan px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/70 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 font-semibold text-xs transition-colors flex items-center gap-1" data-id="${safeId}" title="Repetir este trabajo como uno nuevo, listo para imprimir">
           <span>🔁</span>
           <span>Repetir</span>
+        </button>
+        ${s.archivedAt ? '' : `<button type="button" class="btn-archive-scan px-2.5 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/70 dark:hover:bg-teal-900/80 text-teal-700 dark:text-teal-300 font-semibold text-xs transition-colors flex items-center gap-1" data-id="${safeId}" title="Archivar: PDF final y metadatos para Paperless-ngx o el NAS">
+          <span>📥</span>
+          <span>Archivar</span>
+        </button>`}
+        <button type="button" class="btn-share-scan px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-colors flex items-center gap-1" data-id="${safeId}" title="Enviar por WhatsApp con la hoja de compartir del sistema">
+          <span>📲</span>
+          <span>WhatsApp</span>
         </button>
         <button type="button" class="btn-delete-scan p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white hover:bg-red-50 dark:bg-slate-800 dark:hover:bg-red-950/60 text-slate-600 hover:text-red-600 dark:text-slate-300 dark:hover:text-red-400 text-xs transition-colors" data-id="${safeId}" title="Eliminar este escaneo">
           🗑️
@@ -770,6 +837,18 @@ async function renderHistoryUI(filterQuery) {
     });
   });
 
+  container.querySelectorAll('.btn-archive-scan').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      if (window.RealScanArchive) await window.RealScanArchive.archiveScan(btn.getAttribute('data-id'));
+    });
+  });
+
+  container.querySelectorAll('.btn-share-scan').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      if (window.RealScanShare) await window.RealScanShare.shareScan(btn.getAttribute('data-id'));
+    });
+  });
+
   container.querySelectorAll('.btn-delete-scan').forEach(function(btn) {
     btn.addEventListener('click', async function() {
       if (await showConfirmDialog('¿Deseas eliminar este escaneo del historial?', { danger: true, confirmText: 'Eliminar' })) {
@@ -778,6 +857,8 @@ async function renderHistoryUI(filterQuery) {
       }
     });
   });
+
+  if (window.RealScanArchive) window.RealScanArchive.refreshPendingCount();
 }
 
 /* Exportar un escaneo en ZIP (imágenes de cada página + metadata) */
@@ -907,9 +988,12 @@ async function exportAllScansAsJson(options) {
     showToast(encrypted
       ? 'Respaldo CIFRADO descargado. Guarda la contraseña: sin ella no se puede restaurar.'
       : 'Descarga del respaldo solicitada. Verifica el archivo y guárdalo en otra unidad.', 'success');
+    try { localStorage.setItem('realscan_last_backup_at_v1', String(Date.now())); } catch (e) {}
+    if (window.RealScanBackupReminder) window.RealScanBackupReminder.render();
     return { count: scans.length, bytes: blob.size, encrypted: encrypted };
   } catch (err) {
-    showToast('Error exportando respaldo JSON: ' + err.message, 'warning');
+    console.error('Error exportando el respaldo:', err);
+    showToast('No se pudo exportar el respaldo. Revisa el espacio disponible en el equipo y vuelve a intentarlo.', 'warning');
   }
 }
 
@@ -1033,6 +1117,7 @@ async function importScansFromJson(file) {
             warpQuad: isV2 ? (p.warpQuad || null) : null,
             dataUrl: p.dataUrl,
             filter: isV2 ? (p.filter || 'color') : 'color',
+            whiteBg: !!p.whiteBg,
             rotation: isV2 ? (p.rotation || 0) : 0,
             zoom: isV2 ? (p.zoom || 1.0) : 1.0,
             fitMode: p.fitMode || 'cover',
