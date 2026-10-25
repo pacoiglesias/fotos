@@ -149,7 +149,7 @@
     const left=$('colControlPanel'),stage=$('colStageWorkspace'),grid=left.parentElement;
     grid.classList.add('studio-grid');stage.classList.add('studio-stage');
     const welcome=node('section','studio-welcome');welcome.id='studioWelcome';
-    welcome.innerHTML='<div class="studio-welcome-heading"><div><p class="studio-eyebrow">TU ESTUDIO DE IMPRESIÓN</p><h1>Un buen trabajo empieza aquí.</h1><p id="studioWelcomeHint"></p></div><span class="studio-version">ESTUDIO 3.24</span></div><div class="studio-services"></div>';
+    welcome.innerHTML='<div class="studio-welcome-heading"><div><p class="studio-eyebrow">TU ESTUDIO DE IMPRESIÓN</p><h1>Un buen trabajo empieza aquí.</h1><p id="studioWelcomeHint"></p></div><span class="studio-version">ESTUDIO 3.25</span></div><div class="studio-services"></div>';
     $('counterService').before(welcome);
     const art=illustrations();const tasks=document.querySelector('.operator-tasks');
     welcome.querySelector('.studio-services').append(tasks);
@@ -169,7 +169,7 @@
     const issues=node('ul','studio-checks');issues.id='studioChecks';comparisonPanel.after(issues);
     const empty=node('div','studio-empty');empty.id='studioEmpty';empty.innerHTML=icon('plus')+'<strong>Aquí verás tu hoja</strong><span>Agrega una imagen con Cámara, Archivo o Celular.</span>';stage.querySelector('.stage-canvas-area').before(empty);
     const actions=node('section','studio-actions');actions.setAttribute('aria-label','Revisar y entregar el trabajo');actions.innerHTML='<p id="studioActionHint" role="status"></p><p id="studioApprovalNote"></p><div></div>';const buttons=actions.lastElementChild;
-    buttons.append(action('studioClient','Vista del cliente','eye',async()=>{await handlePrintDirect();if(RealScanPrint.isPrepared()&&!$('confirmPrintReview').disabled&&!$('outputReviewModal').classList.contains('hidden'))showClientApproval();}),action('studioPdf','Guardar PDF','file',()=>{if(window.RealScanDocuments?.status().active)$('docPdf').click();else handleExportPDF();}),action('studioDigital','Entregar','arrow',()=>{if(window.RealScanDocuments?.status().active)$('docQr').click();else $('btnOpenDeliveryModal').click();}),action('studioPrint','Revisar e imprimir','print',()=>{if(window.RealScanDocuments?.status().active)$('docPrint')?.click();else handlePrintDirect();},true));stage.append(actions);
+    buttons.append(action('studioClient','Vista del cliente','eye',async()=>{await handlePrintDirect();if(RealScanPrint.isPrepared()&&!$('confirmPrintReview').disabled&&!$('outputReviewModal').classList.contains('hidden'))showClientApproval();}),action('studioPdf','Guardar PDF','file',()=>{if(window.RealScanDocuments?.status().active)$('docPdf').click();else handleExportPDF();}),action('studioDigital','Entregar','arrow',()=>{if(window.RealScanDocuments?.status().active)$('docQr').click();else $('btnOpenDeliveryModal').click();}),action('studioPrint','Revisar e imprimir','print',()=>{if(window.RealScanDocuments?.status().active)window.RealScanDocumentPrint?RealScanDocumentPrint.review():$('docPrint')?.click();else handlePrintDirect();},true));stage.append(actions);
     // Image selection is shared by the thumbnails and the actual sheet.
     for(const [side,tail]of Object.entries(suffix))$('previewImg'+tail)?.addEventListener('click',()=>{if(unlocked())selectSlot(side);});
     document.addEventListener('change',()=>requestAnimationFrame(update));document.addEventListener('click',e=>{if(e.target.closest('[data-task]'))engaged=true;requestAnimationFrame(update);});

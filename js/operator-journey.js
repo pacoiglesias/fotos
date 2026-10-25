@@ -18,7 +18,7 @@
     } else if (step === 'review' || step === 'adjust') {
       if (doc?.active) { const target=step==='adjust'?$('docPaper'):$('docPages');target.scrollIntoView({block:'center'});(target.querySelector('button')||target).focus(); }
       else RealScanWorkflow.moveTo(step === 'adjust' ? 3 : 2, step === 'review' ? RealScanWorkflow.describe().missing[0]||RealScanWorkflow.describe().wanted[0] : null);
-    } else if (doc?.active) { $('docPdf').scrollIntoView({block:'center'}); $('docPdf').focus(); }
+    } else if (doc?.active) { if(doc.ready&&document.body.dataset.outputMode!=='digital'&&window.RealScanDocumentPrint){RealScanDocumentPrint.review();return;}$('docPdf').scrollIntoView({block:'center'}); $('docPdf').focus(); }
     else if(document.body.dataset.outputMode==='digital')$('btnOpenDeliveryModal').click();
     else handlePrintDirect();
   }

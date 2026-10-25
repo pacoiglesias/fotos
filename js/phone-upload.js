@@ -55,6 +55,7 @@
       row.append(name,b);
       $("thumbnailsList").append(row);
     });
+    document.dispatchEvent(new CustomEvent('realscan:phone-upload-updated',{detail:{count:queue.length,sending,preparing,ready:sessionReady}}));
   }
   async function prepare(file, policy = $('selectTransferPolicy').value) {
     if (file.size <= 0 || file.size > 30 * 1024 * 1024)

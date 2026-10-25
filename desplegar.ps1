@@ -2,15 +2,15 @@ param([switch]$PrepararAccesos)
 # Publish the audited application even when this folder has old Git metadata.
 # A new checkout preserves all local files and gives the build its true source SHA.
 $ErrorActionPreference = 'Stop'
-$releaseVersion = '3.24.0'
-$releaseBranch = 'release/3.24.0'
+$releaseVersion = '3.25.0'
+$releaseBranch = 'release/3.25.0'
 $releaseRef = 'refs/heads/' + $releaseBranch
 $releaseCommit = $null
 $originalLocation = Get-Location
 $auditRoot = Join-Path $PSScriptRoot '.audit'
 $publicationId = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [Guid]::NewGuid().ToString('N').Substring(0,8)
-$releaseRoot = Join-Path $auditRoot ('publicacion-324-' + $publicationId)
-$releaseLog = Join-Path $auditRoot ('publicacion-324-' + $publicationId + '.log')
+$releaseRoot = Join-Path $auditRoot ('publicacion-325-' + $publicationId)
+$releaseLog = Join-Path $auditRoot ('publicacion-325-' + $publicationId + '.log')
 $transcribing = $false
 $originalPath = $env:PATH
 $result = 1
@@ -132,7 +132,7 @@ try {
     $releaseHeadExit = $LASTEXITCODE
     $releaseHead = ([string]($releaseHeadOutput | Select-Object -Last 1)).Trim()
     if ($releaseHeadExit -ne 0 -or $releaseHead -notmatch ('^(?<sha>[0-9a-f]{40})\s+' + [regex]::Escape($releaseRef) + '$')) {
-        throw 'No se pudo resolver la version 3.24. Comprueba la conexion y que la rama release/3.24.0 este publicada.'
+        throw 'No se pudo resolver la version 3.25. Comprueba la conexion y que la rama release/3.25.0 este publicada.'
     }
     $releaseCommit = $Matches.sha
     $stage = 'Descargar y comprobar la version'

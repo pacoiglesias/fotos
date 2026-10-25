@@ -3,3 +3,5 @@
 .queue-thumbnail{width:80px;height:86px;object-fit:contain;background:#fff;border:1px solid #cbd5e1;border-radius:8px}
 
 .workbench-document-help{font-size:12px;margin:12px 0 18px;color:inherit;opacity:.85}.workbench-document-help summary,#documentAdvanced>summary{cursor:pointer;min-height:36px;padding:8px 0;font-weight:650}#documentAdvanced{border:1px solid #94a3b844;border-radius:12px;padding:8px 12px;margin:12px 0}.rs-quick .document-page-actions button:not([data-page-action="Revisar"]):not([data-page-action="Girar"]):not([data-page-action="Quitar"]){display:none}.rs-quick .document-history span{display:none}.rs-quick .document-heading h2{font-size:24px}.rs-quick .document-output>h3{font-size:16px}@media(max-width:600px){.rs-quick .document-grid{display:flex;flex-direction:column}.rs-quick .document-output{order:-1}}
+
+#flowDuplexContinueBox{padding:16px;border:1px solid #99d8c5;border-radius:14px;background:#0596690a;margin:14px 0}#flowDuplexContinueBox h3{font-weight:700}#flowDuplexContinueBox p{font-size:13px;margin:8px 0}#flowDuplexContinue{margin-top:12px;min-height:48px}
