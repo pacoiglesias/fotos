@@ -2,6 +2,14 @@
 
 Este registro describe los avances del código. Un build o un push no acreditan una publicación: el deploy se confirma comprobando el mismo commit y build en los dominios de ambos sitios. Las pruebas físicas de papel, giro y calidad se realizan con la impresora del establecimiento.
 
+## 3.25.1 — corrección del publicador
+
+- La autenticación, la comprobación de acceso y el deploy usan la API oficial de firebase-tools.
+- Se evita el manejador de cierre de la CLI que intentaba escribir lastError en el perfil local después de completar la operación.
+- Las credenciales y los permisos se conservan. Los errores reales de autenticación, red y despliegue siguen dando salida no exitosa.
+- Se mantiene la comprobación del mismo commit y build en los cuatro dominios.
+- Pruebas del adaptador y del BAT para que una operación rechazada nunca se anuncie como completada.
+
 ## 3.25.0 — 25 de octubre de 2026
 
 ### Escaneo más claro para cada servicio

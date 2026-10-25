@@ -3,8 +3,10 @@ param([ValidateSet('Menu', 'Check', 'Local', 'Remote')][string]$Action = 'Menu')
 
 $ErrorActionPreference = 'Stop'
 $installedFirebase = Get-Command firebase.cmd -ErrorAction SilentlyContinue
-$npxCommand = Get-Command npx.cmd -ErrorAction SilentlyContinue
-if (-not $installedFirebase -and -not $npxCommand) {
+$npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
+$nodeCommand = Get-Command node.exe -ErrorAction SilentlyContinue
+$firebaseRunner = Join-Path $PSScriptRoot 'firebase-runner.cjs'
+if (-not $nodeCommand -or (-not $installedFirebase -and -not $npmCommand)) {
     Write-Host 'Falta Node.js con npm. Instala la version LTS desde https://nodejs.org y vuelve a abrir el BAT.' -ForegroundColor Yellow
     exit 1
 }
@@ -12,28 +14,24 @@ Set-Location -LiteralPath (Split-Path -Parent $PSScriptRoot)
 
 function Initialize-FirebaseCli {
     Write-Host 'Comprobando la herramienta oficial de Firebase...'
-    if ($installedFirebase) {
-        Write-Host 'Se usara Firebase CLI instalado y la sesion existente.' -ForegroundColor DarkCyan
-        return $true
-    }
-    # Prefer the installed npm cache; a temporary registry failure need not block login.
     $previousPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
     try {
-        $versionOutput = @(& $npxCommand.Source --offline --yes firebase-tools@15.26.0 --version 2>&1)
+        $ErrorActionPreference = 'Continue'
+        $versionOutput = @(& $nodeCommand.Source $firebaseRunner --version 2>&1)
         $cliExit = $LASTEXITCODE
         if ($cliExit -ne 0) {
-            Write-Host 'Se necesita descargar la herramienta oficial. Comprueba tu conexion a internet.' -ForegroundColor Yellow
-            $versionOutput = @(& $npxCommand.Source --yes firebase-tools@15.26.0 --version 2>&1)
+            if (-not $npmCommand) { Write-Host 'Falta npm para preparar Firebase.' -ForegroundColor Red; return $false }
+            $cliRoot = Join-Path (Split-Path -Parent $PSScriptRoot) '.audit\firebase-cli'
+            Write-Host 'Preparando el modulo oficial de Firebase en la carpeta del proyecto.' -ForegroundColor Yellow
+            & $npmCommand.Source install --prefix $cliRoot --no-save --package-lock=false firebase-tools@15.26.0 2>&1 | Out-Host
+            if ($LASTEXITCODE -ne 0) { return $false }
+            $env:PATH = (Join-Path $cliRoot 'node_modules\.bin') + [IO.Path]::PathSeparator + $env:PATH
+            $versionOutput = @(& $nodeCommand.Source $firebaseRunner --version 2>&1)
             $cliExit = $LASTEXITCODE
         }
     } finally { $ErrorActionPreference = $previousPreference }
-    if ($cliExit -ne 0) {
-        Write-Host 'No se pudo preparar Firebase. Revisa internet y que Node.js funcione.' -ForegroundColor Red
-        return $false
-    }
-    $versionText = $versionOutput | ForEach-Object { [string]$_ } | Where-Object { $_ -match '^\d+\.\d+\.\d+' } | Select-Object -Last 1
-    Write-Host ('Firebase CLI ' + $versionText) -ForegroundColor DarkCyan
+    if ($cliExit -ne 0) { Write-Host 'No se pudo preparar Firebase. Revisa el error anterior.' -ForegroundColor Red; return $false }
+    Write-Host ('Firebase ' + ($versionOutput | Select-Object -Last 1) + ' preparado mediante su API oficial.') -ForegroundColor DarkCyan
     return $true
 }
 
@@ -42,11 +40,7 @@ function Invoke-FirebaseCli {
     $previousPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        if ($installedFirebase) {
-            & $installedFirebase.Source @CliArguments | Out-Host
-        } else {
-            & $npxCommand.Source --offline --yes firebase-tools@15.26.0 @CliArguments | Out-Host
-        }
+        & $nodeCommand.Source $firebaseRunner @CliArguments 2>&1 | Out-Host
         return [int]$LASTEXITCODE
     } finally { $ErrorActionPreference = $previousPreference }
 }

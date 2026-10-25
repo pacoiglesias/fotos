@@ -1,6 +1,6 @@
 {
   "name": "realscan",
-  "version": "3.25.0",
+  "version": "3.25.1",
   "private": true,
   "scripts": {
     "build": "node scripts/build.cjs",

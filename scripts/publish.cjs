@@ -1,9 +1,7 @@
 // All supported deploy entry points publish the same committed build to both sites.
 const cp = require('child_process'), fs = require('fs'), assert = require('assert');
 function firebase(args) {
-  if (!args.every(x => /^[a-zA-Z0-9_.:=/-]+$/.test(x))) throw Error('Unsafe CLI argument');
-  if (process.platform === 'win32') cp.execFileSync(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', 'firebase.cmd ' + args.join(' ')], {stdio: 'inherit'});
-  else cp.execFileSync('firebase', args, {stdio: 'inherit'});
+  cp.execFileSync(process.execPath, [require('path').join(__dirname,'firebase-runner.cjs'), ...args], {stdio:'inherit'});
 }
 (async () => {
   assert.equal(cp.execFileSync('git', ['status','--porcelain','--untracked-files=no'], {encoding:'utf8'}).trim(), '', 'Guarda los cambios en un commit antes de publicar.');

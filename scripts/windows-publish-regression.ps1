@@ -6,18 +6,31 @@ if ($Scenario) {
     $global:publishTestScenario = $Scenario
     $global:publishTestTrace = $Trace
     $global:publishTestGithubLoggedIn = $false
+    $global:publishTestSdkReady = $Scenario -ne 'missing-sdk'
     $env:REALSCAN_TEST_AUTH_MARKER = $Trace + '.auth'
     function global:Read-Host { if ($global:publishTestScenario -eq 'auth-cancel') { '0' } else { '1' } }
     function global:Write-PublishTrace {
         param([string]$Value)
         [IO.File]::AppendAllText($global:publishTestTrace, $Value + [Environment]::NewLine)
     }
-    if ($Scenario -eq 'node-24-13') { function global:node.exe { $global:LASTEXITCODE=0; 'v24.13.0' } }
-    if ($Scenario -eq 'old-node') {
-        function global:node.exe { $global:LASTEXITCODE = 0; 'v22.0.0' }
+    $global:realPublishNode = (Get-Command node.exe).Source
+    function global:node.exe {
+        if ($args[0] -eq '--version') {
+            if ($global:publishTestScenario -eq 'old-node') { $global:LASTEXITCODE=0; 'v22.0.0'; return }
+            if ($global:publishTestScenario -eq 'node-24-13') { $global:LASTEXITCODE=0; 'v24.13.0'; return }
+            & $global:realPublishNode @args
+            return
+        }
+        if ([IO.Path]::GetFileName([string]$args[0]) -eq 'firebase-runner.cjs') {
+            Write-PublishTrace 'firebase-api-runner'
+            firebase.cmd @($args | Select-Object -Skip 1)
+            return
+        }
+        & $global:realPublishNode @args
     }
     function global:firebase.cmd {
         Write-PublishTrace ('firebase ' + ($args -join ' '))
+        if ($args[0] -eq '--version') { if ($global:publishTestSdkReady) { $global:LASTEXITCODE=0; '15.26.0' } else { $global:LASTEXITCODE=3 }; return }
         $global:LASTEXITCODE = 0
         if ($global:publishTestScenario -eq 'auth-failure') { $global:LASTEXITCODE = 2 }
         if ($global:publishTestScenario -in @('auth-renew','auth-cancel') -and -not (Test-Path -LiteralPath $env:REALSCAN_TEST_AUTH_MARKER)) { Write-Error 'Expired authentication'; $global:LASTEXITCODE=2 }
@@ -34,7 +47,7 @@ if ($Scenario) {
         if ($args[0] -eq 'clone') {
             $fixture = $args[$args.Count - 1]
             New-Item -ItemType Directory -Path $fixture | Out-Null
-            [IO.File]::WriteAllText((Join-Path $fixture 'package.json'), '{"version":"3.25.0"}')
+            [IO.File]::WriteAllText((Join-Path $fixture 'package.json'), '{"version":"3.25.1"}')
         }
         if ($args[0] -eq 'ls-remote') { '8b4d9c4782afa0f0f3f3a924841cd7371a4d4a5b' + "`t" + $args[$args.Count - 1] }
         if ($args[0] -eq 'rev-parse') {
@@ -45,11 +58,12 @@ if ($Scenario) {
     function global:npm.cmd {
         Write-PublishTrace ('npm ' + ($args -join ' '))
         $global:LASTEXITCODE = 0
+        if ($args[0] -eq 'install') { $global:publishTestSdkReady=$true }
         if ($args[0] -eq 'ci' -and $global:publishTestScenario -eq 'install-failure') { $global:LASTEXITCODE = 8 }
         if ($args[0] -eq 'run' -and $global:publishTestScenario -eq 'publish-failure') { $global:LASTEXITCODE = 9 }
     }
     function global:npx.cmd { Write-PublishTrace ('npx ' + ($args -join ' ')); $global:LASTEXITCODE = 0 }
-    if ($Scenario -in @('prepare-access','auth-renew','auth-cancel','missing-gcm')) { & $Publisher -PrepararAccesos }
+    if ($Scenario -in @('prepare-access','auth-renew','auth-cancel','missing-gcm','missing-sdk')) { & $Publisher -PrepararAccesos }
     else { & $Publisher }
     exit $LASTEXITCODE
 }
@@ -80,11 +94,13 @@ foreach ($case in @('success','prepare-access','auth-failure','wrong-commit','in
     $caseText = Get-Content -LiteralPath $caseOutput -Raw
     $traceText = ''
     if (Test-Path -LiteralPath $caseTrace) { $traceText = Get-Content -LiteralPath $caseTrace -Raw }
-    if ($case -in @('success','prepare-access','node-24-13','auth-renew','missing-gcm')) {
+    if ($case -in @('success','prepare-access','node-24-13','auth-renew','missing-gcm','missing-sdk')) {
         if ($caseExit -ne 0 -or $traceText -notmatch 'npx playwright install chromium webkit' -or $traceText -notmatch 'npm run publish' -or $caseText -notmatch 'Node.js v24\..+ compatible') {
             throw "Fallo en $case. Salida: $caseText"
         }
         if ($case -eq 'auth-renew' -and (-not (Test-Path -LiteralPath ($caseTrace + '.auth')) -or $caseText -notmatch 'La informacion del acceso interactivo')) { throw 'No se verifico la renovacion aislada del acceso.' }
+        if ($case -eq 'missing-sdk' -and $traceText -notmatch 'npm install --prefix') { throw 'No se preparo el modulo oficial faltante.' }
+        if ($traceText -notmatch 'firebase-api-runner') { throw 'No se utilizo la API oficial de Firebase.' }
         if ($case -eq 'prepare-access' -and ($traceText -notmatch 'git credential-manager configure' -or $traceText -notmatch 'git credential-manager github login --username pacoiglesias --browser')) {
             throw 'No se preparo el acceso GitHub con el navegador.'
         }

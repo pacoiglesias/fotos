@@ -4,6 +4,7 @@ try {
     "check",
     "build",
     "auth-regression",
+    "firebase-runner-regression",
     "regression",
     "photo-layout-regression",
     "studio-regression",

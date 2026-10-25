@@ -2,20 +2,21 @@ param([switch]$PrepararAccesos)
 # Publish the audited application even when this folder has old Git metadata.
 # A new checkout preserves all local files and gives the build its true source SHA.
 $ErrorActionPreference = 'Stop'
-$releaseVersion = '3.25.0'
-$releaseBranch = 'release/3.25.0'
+$releaseVersion = '3.25.1'
+$releaseBranch = 'release/3.25.1'
 $releaseRef = 'refs/heads/' + $releaseBranch
 $releaseCommit = $null
 $originalLocation = Get-Location
 $auditRoot = Join-Path $PSScriptRoot '.audit'
 $publicationId = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [Guid]::NewGuid().ToString('N').Substring(0,8)
-$releaseRoot = Join-Path $auditRoot ('publicacion-325-' + $publicationId)
-$releaseLog = Join-Path $auditRoot ('publicacion-325-' + $publicationId + '.log')
+$releaseRoot = Join-Path $auditRoot ('publicacion-3251-' + $publicationId)
+$releaseLog = Join-Path $auditRoot ('publicacion-3251-' + $publicationId + '.log')
 $transcribing = $false
 $originalPath = $env:PATH
 $result = 1
 $publishStarted = $false
 $stage = 'Preparacion'
+$firebaseRunner = Join-Path $PSScriptRoot 'scripts\firebase-runner.cjs'
 
 function Invoke-ReleaseStep {
     param([string]$Program, [string[]]$Arguments)
@@ -83,15 +84,20 @@ try {
         }
     }
 
-    # Use the installed CLI and its existing login. Only install if it is absent.
-    if (-not (Get-Command firebase.cmd -ErrorAction SilentlyContinue)) {
+    # Probe the module API, not the binary's failing shutdown hook.
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & node.exe $firebaseRunner --version 2>&1 | Out-Host
+        $sdkExit = $LASTEXITCODE
+    } finally { $ErrorActionPreference = $previousPreference }
+    if ($sdkExit -ne 0) {
         $cliRoot = Join-Path $auditRoot 'firebase-cli'
         $cliBin = Join-Path $cliRoot 'node_modules\.bin'
-        if (-not (Test-Path -LiteralPath (Join-Path $cliBin 'firebase.cmd'))) {
-            Write-Host 'Preparando Firebase CLI...'
-            Invoke-ReleaseStep 'npm.cmd' @('install','--prefix',$cliRoot,'--no-save','--package-lock=false','firebase-tools@15.26.0')
-        }
+        Write-Host 'Preparando el modulo oficial de Firebase...'
+        Invoke-ReleaseStep 'npm.cmd' @('install','--prefix',$cliRoot,'--no-save','--package-lock=false','firebase-tools@15.26.0')
         $env:PATH = $cliBin + [IO.Path]::PathSeparator + $env:PATH
+        Invoke-ReleaseStep 'node.exe' @($firebaseRunner,'--version')
     }
     Write-Host '[1/5] Comprobando acceso a los dos proyectos de Firebase.' -ForegroundColor Cyan
     foreach ($project in @('fotos-cobertores-pro','cobertores-web')) {
@@ -99,7 +105,7 @@ try {
         $previousPreference = $ErrorActionPreference
         try {
             $ErrorActionPreference = 'Continue'
-            & firebase.cmd hosting:sites:list --project $project 2>&1 | Out-Host
+            & node.exe $firebaseRunner hosting:sites:list --project $project 2>&1 | Out-Host
             $accessExit = $LASTEXITCODE
         } finally { $ErrorActionPreference = $previousPreference }
         if ($accessExit -ne 0) {
@@ -124,7 +130,7 @@ try {
                 Write-Host 'La informacion del acceso interactivo no se incluye en el registro.'
             }
             if ($authExit -ne 0) { throw 'No se pudo completar el acceso a Firebase.' }
-            Invoke-ReleaseStep 'firebase.cmd' @('hosting:sites:list','--project',$project)
+            Invoke-ReleaseStep 'node.exe' @($firebaseRunner,'hosting:sites:list','--project',$project)
         }
     }
     Write-Host "[2/5] Descargando la version auditada $releaseVersion. Tu carpeta actual se conserva." -ForegroundColor Cyan
@@ -132,7 +138,7 @@ try {
     $releaseHeadExit = $LASTEXITCODE
     $releaseHead = ([string]($releaseHeadOutput | Select-Object -Last 1)).Trim()
     if ($releaseHeadExit -ne 0 -or $releaseHead -notmatch ('^(?<sha>[0-9a-f]{40})\s+' + [regex]::Escape($releaseRef) + '$')) {
-        throw 'No se pudo resolver la version 3.25. Comprueba la conexion y que la rama release/3.25.0 este publicada.'
+        throw 'No se pudo resolver la version 3.25. Comprueba la conexion y que la rama release/3.25.1 este publicada.'
     }
     $releaseCommit = $Matches.sha
     $stage = 'Descargar y comprobar la version'

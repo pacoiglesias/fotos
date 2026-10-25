@@ -149,7 +149,7 @@
     const left=$('colControlPanel'),stage=$('colStageWorkspace'),grid=left.parentElement;
     grid.classList.add('studio-grid');stage.classList.add('studio-stage');
     const welcome=node('section','studio-welcome');welcome.id='studioWelcome';
-    welcome.innerHTML='<div class="studio-welcome-heading"><div><p class="studio-eyebrow">TU ESTUDIO DE IMPRESIÓN</p><h1>Un buen trabajo empieza aquí.</h1><p id="studioWelcomeHint"></p></div><span class="studio-version">ESTUDIO 3.25</span></div><div class="studio-services"></div>';
+    welcome.innerHTML='<div class="studio-welcome-heading"><div><p class="studio-eyebrow">TU ESTUDIO DE IMPRESIÓN</p><h1>Un buen trabajo empieza aquí.</h1><p id="studioWelcomeHint"></p></div><span class="studio-version">ESTUDIO 3.25.1</span></div><div class="studio-services"></div>';
     $('counterService').before(welcome);
     const art=illustrations();const tasks=document.querySelector('.operator-tasks');
     welcome.querySelector('.studio-services').append(tasks);
