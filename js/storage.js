@@ -118,7 +118,7 @@ function prepareWorkspaceForJobSwitch(options) {
 
   // 4. Limpiar título personalizado si no se conserva
   if (typeof state !== 'undefined' && !options.keepTitle) {
-    state.documentCustomTitle = '';
+    state.documentCustomTitle = '';state.hideSheetTitle=false;state.sheetPosition='center';
     const inputTitle = (typeof $ === 'function') ? $('inputDocumentTitle') : null;
     if (inputTitle) inputTitle.value = '';
   }
@@ -205,7 +205,7 @@ async function saveScanToStorage(customTitle, retentionDays) {
       createdFormatted: new Date(now).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }),
       title: projectTitle,
       projectTitle: projectTitle,
-      printedSheetTitle: printedSheetTitle,
+      printedSheetTitle: printedSheetTitle,hideSheetTitle:!!state.hideSheetTitle,sheetPosition:state.sheetPosition,
       category: state.activeCategory || 'docs',
       format: state.format || 'card',
       formatName: spec.name || 'Documento Oficial',
@@ -398,6 +398,7 @@ async function restoreScanToApp(id) {
 
     // 1. Limpieza rigurosa y centralizada del espacio de trabajo
     prepareWorkspaceForJobSwitch({ clearDraft: false, keepTitle: true });
+  await state._jobSwitchCleanup;
 
     // 2. Restauración de configuración integral del proyecto
     if (scan.paperSize) {
@@ -442,7 +443,7 @@ async function restoreScanToApp(id) {
     if (typeof updatePassportOptionsUI === 'function') updatePassportOptionsUI();
 
     if (scan.printedSheetTitle !== undefined) {
-      state.documentCustomTitle = scan.printedSheetTitle;
+      state.hideSheetTitle=!!scan.hideSheetTitle;state.sheetPosition=['top','compact'].includes(scan.sheetPosition)?scan.sheetPosition:'center';state.documentCustomTitle = scan.printedSheetTitle;
     } else if (scan.title && scan.title !== scan.formatName && scan.title !== scan.shortName) {
       state.documentCustomTitle = scan.title;
     }
@@ -1224,7 +1225,7 @@ function snapshotActiveDraft() {
         printMode: state.printMode,
         sheetLayout: state.sheetLayout,
         documentPageCount: state.documentPageCount,
-        documentCustomTitle: state.documentCustomTitle,
+        documentCustomTitle: state.documentCustomTitle,hideSheetTitle:!!state.hideSheetTitle,sheetPosition:state.sheetPosition,
         printedSheetTitle: (state.documentCustomTitle || '').trim(),
         duplicateCard: state.duplicateCard,
         includeRulerFooter: state.includeRulerFooter,
@@ -1292,8 +1293,8 @@ function clearActiveDraft() {
   draftWriteQueue=draftWriteQueue.catch(()=>{}).then(()=>window.RealScanDraftStore?.remove()).catch(()=>{setDraftStatus('error');});setDraftStatus('empty');
 }
 
-async function restoreActiveDraft() {
-  const draft = await loadActiveDraft();
+async function restoreActiveDraft(suppliedDraft) {
+  const draft = suppliedDraft || await loadActiveDraft();
   if (!draft || !draft.images) return false;
 
   // 1. Limpieza rigurosa previa: un borrador de 1 cara NO debe conservar el reverso del trabajo anterior
@@ -1305,6 +1306,7 @@ async function restoreActiveDraft() {
   state.printMode = draft.printMode || 'both';
   state.sheetLayout = draft.sheetLayout || 'same_page';
   state.documentPageCount = draft.documentPageCount || 2;
+  state.hideSheetTitle=!!draft.hideSheetTitle;state.sheetPosition=['top','compact'].includes(draft.sheetPosition)?draft.sheetPosition:'center';
   state.documentCustomTitle = draft.printedSheetTitle !== undefined ? draft.printedSheetTitle : (draft.documentCustomTitle || '');
   const inputTitle = (typeof $ === 'function') ? $('inputDocumentTitle') : null;
   if (inputTitle) inputTitle.value = state.documentCustomTitle || '';

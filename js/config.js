@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.23.0';
+window.APP_VERSION = 'v3.24.0';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -34,6 +34,8 @@ window.state = {
   format: 'card',
   photoCopies: 4,
   outputSets: 1,
+  sheetPosition: 'center',
+  hideSheetTitle: false,
   customWidth: 8.5,
   customHeight: 5.5,
   customUnit: 'cm',

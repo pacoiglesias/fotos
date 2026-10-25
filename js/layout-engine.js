@@ -54,7 +54,7 @@
     const includeLabels = (state.includeDocLabels !== false);
     const includeCutMarks = (state.includeCutMarks !== false);
     const customTitle = (state.documentCustomTitle || '').trim();
-    const includeSheetTitle = includeLabels || !!customTitle;
+    const includeSheetTitle = !state.hideSheetTitle && (includeLabels || !!customTitle);
     const isCleanSheet = (!includeRuler && !includeLabels && !includeCutMarks && !customTitle);
 
     // Márgenes y límites físicos de seguridad
@@ -92,7 +92,8 @@
         if (!includeSheetTitle) page.sheetTitle = '';
         else if (!customTitle) page.sheetTitle = describeScale(page.sheetTitle || '');
       });
-      const geom = validateDocumentGeometry(p, spec, paper);
+      if(['top','compact'].includes(state.sheetPosition))for(const page of p.pages){const items=page.placements;if(!items.length)continue;const dy=marginTop-Math.min(...items.map(i=>i.y)),dx=state.sheetPosition==='compact'?marginSide-Math.min(...items.map(i=>i.x)):0;for(const item of items){item.x+=dx;item.y+=dy;if(Number.isFinite(item.labelY))item.labelY+=dy;}}
+const geom = validateDocumentGeometry(p, spec, paper);
       if (geom.errors && geom.errors.length > 0) {
         geom.errors.forEach(function(err) {
           if (!p.errors) p.errors = [];

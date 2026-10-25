@@ -37,6 +37,7 @@ function copy(src, dst) {
   copy(path.join(root, "css/polish.css"), path.join(dist, "css/polish.css"));
   copy(path.join(root, "css/studio.css"), path.join(dist, "css/studio.css"));
   copy(path.join(root, "css/service-flow.css"), path.join(dist, "css/service-flow.css"));
+  copy(path.join(root, "css/workbench.css"), path.join(dist, "css/workbench.css"));
   const manifest = JSON.parse(
     fs.readFileSync(path.join(root, "manifest.json")),
   );

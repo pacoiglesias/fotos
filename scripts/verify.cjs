@@ -8,6 +8,7 @@ try {
     "photo-layout-regression",
     "studio-regression",
     "service-flow-regression",
+    "workbench-regression",
     "print-usability-regression",
     "mobile-workflow-regression",
     "functional-audit-regression",

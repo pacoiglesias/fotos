@@ -2,6 +2,7 @@
   "use strict";
   let worker = null, epoch = 0, busy = false, externalSource=null;
   function open(options = {}) {
+      cancel(true);
     externalSource=options.dataUrl || null;
     let modal = document.getElementById("localOcrModal");
     if (!modal) {
@@ -47,7 +48,7 @@
     await current?.terminate().catch(() => {
     });
     const status = document.getElementById("ocrStatus");
-    if (status) status.textContent = "Proceso cancelado. La imagen original se conserva.";
+    if (status && epoch===cancelledRevision) status.textContent = "Proceso cancelado. La imagen original se conserva.";
   }
   async function run() {
     if (busy) return;
