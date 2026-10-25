@@ -25,3 +25,11 @@ body.rs-flow[data-document-job=true] #flowWorkspace{display:none!important}
 .rs-flow[data-flow-kind=document] #flowDocumentOptions>p,.rs-flow[data-flow-kind=document] #flowDuplexActions{grid-column:1/-1}
 .rs-flow[data-studio-engaged=true] .mobile-local-launch{display:none!important}
 @media(max-width:600px){.rs-flow[data-flow-kind=document] #flowDocumentOptions{grid-template-columns:1fr}}
+
+@media(max-width:600px){
+ .rs-flow[data-flow-kind=photos] #studioImageTray:has(>button:only-child){display:none}
+ .rs-flow[data-flow-kind=photos] #studioImageTray:has(>button:only-child)+#studioEditorTools #studioSelectedLabel{display:none}
+ .rs-flow[data-flow-kind=photos] :is(#previewMainTitle,#previewSubtext,#previewGestureHelp,#previewDimensionsTag){display:none}
+ .rs-flow[data-flow-kind=photos] #btnPreviewEdit{margin-top:0}
+ .rs-flow[data-flow-kind=photos] #stageSheetWrapper[data-sheet-zoom=fit]>.a4-sheet{width:260px!important;max-width:100%!important}
+}
