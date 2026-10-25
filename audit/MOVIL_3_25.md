@@ -39,3 +39,10 @@ La impresión de documentos desde el estudio y desde el recorrido de entrega abr
 En doble cara manual, la primera pasada muestra una confirmación de que las caras han salido bien y el papel se ha recolocado. Solo entonces permite continuar con las caras pares. Si cambia el trabajo, las opciones o la revisión después de la primera pasada, se bloquea la continuación para evitar imprimir reversos de un pedido diferente.
 
 No se supone que cerrar la ventana de impresión signifique que el papel salió. La orientación de entrada y el orden de la pila se comprueban con una prueba física en la impresora. Las comprobaciones automáticas validan selección de caras y continuidad, no la colocación física del papel.
+# Pulido de los tres servicios
+
+Las opciones de identificación incorporan dibujos de la hoja y explican la diferencia entre ambas caras de una identificación colocadas juntas en una página y la impresión por ambos lados del papel. La guía manual queda accesible desde ese apartado.
+
+En fotografía, el resumen muestra fotos por juego, número de juegos y total, e indica una copia en el controlador cuando los juegos ya están incluidos. La revisión final separa esos cuatro datos.
+
+La captura móvil identifica la tarea concreta en el encabezado: revisar frente, revisar reverso, repetir una cara, tomar una fotografía o revisar una página numerada. Los títulos se insertan como texto, sin interpretar HTML.

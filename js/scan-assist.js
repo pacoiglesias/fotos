@@ -138,6 +138,7 @@
     // fuera de las opciones avanzadas: es parte del flujo principal de captura.
     for (const selector of ['.scan-format','.scan-filter','.scan-help','.scan-focus-info']) settings.lastElementChild.append(dialog.querySelector(selector));
     dialog.querySelector('.scan-actions').before(settings);
+    if(typeof options.title==='string'&&options.title.trim())dialog.querySelector('.scan-head strong').textContent=options.title.trim().slice(0,80);
     const guidance = document.createElement('p');guidance.className='scan-guidance';guidance.textContent=options.photoMode?'Coloca el rostro centrado y busca luz uniforme. Revisa el enfoque antes de confirmar.':'Documento plano, cuatro bordes visibles y sin reflejos. Tras capturar, ajusta las esquinas antes de confirmar.';dialog.querySelector('.scan-preview-area').before(guidance);
     document.body.append(dialog);
     const oldOverflow = document.documentElement.style.overflow;

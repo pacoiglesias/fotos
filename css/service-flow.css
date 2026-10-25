@@ -44,3 +44,5 @@ body.rs-flow[data-document-job=true] #flowWorkspace{display:none!important}
  .rs-flow[data-flow-kind=photos] #colStageWorkspace>.studio-compare{order:5}
  .rs-flow[data-flow-kind=photos] #colStageWorkspace>.studio-actions{order:6}
 }
+
+.flow-side-visual{display:block;width:56px;height:42px;color:var(--rs-accent-text)}.flow-side-visual svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.5}.flow-side-visual text{fill:currentColor;stroke:none;font:8px system-ui;text-anchor:middle}.flow-side-hint{font-size:12px!important;color:var(--studio-muted);margin-top:10px}.service-flow #flowIdDuplexGuide{margin-top:10px;min-height:44px;width:100%}@media(max-width:1023px){.flow-dock #flowOrderHint{display:block;font-size:10px}.rs-flow main{padding-bottom:165px}}
