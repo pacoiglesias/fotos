@@ -22,11 +22,11 @@
    const pending=Tesseract.createWorker(language,1,{workerPath:new URL('vendor/ocr/worker.min.js',location.href).href,corePath:new URL('vendor/ocr/core/',location.href).href,langPath:new URL('vendor/ocr/lang/',location.href).href,workerBlobURL:false,errorHandler:()=>{},logger:m=>{if(!job.cancelled&&job.isCurrent())onProgress?.({stage:m.status,progress:m.progress||0});}});
    pending.then(w=>{if(job.cancelled||active!==job)w.terminate().catch(()=>{});},()=>{});
    try{job.worker=await wait(job,pending,60000);}catch(e){job.cancelled=true;throw e;}check(job);
-   const encodedFont=await wait(job,font(),20000);check(job);let pageNumber=0;const summary=[];
-   const result=await work(async(pdf,source,g)=>{
+   const encodedFont=await wait(job,font(),20000);check(job);let pageNumber=0;const summary=[],recognizedCache=new Map();
+   const result=await work(async(pdf,source,g,cacheKey)=>{
     check(job);pageNumber++;onProgress?.({page:pageNumber,stage:'page',progress:0});
     const c=document.createElement('canvas'),scale=Math.min(1,2600/Math.max(source.width,source.height));c.width=Math.max(1,Math.round(source.width*scale));c.height=Math.max(1,Math.round(source.height*scale));const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,c.width,c.height);x.drawImage(source,0,0,c.width,c.height);
-    const recognized=await wait(job,job.worker.recognize(c,{}, {text:true,blocks:true}),90000);check(job);
+    let recognized=cacheKey?recognizedCache.get(cacheKey):null;if(!recognized){recognized=await wait(job,job.worker.recognize(c,{}, {text:true,blocks:true}),90000);if(cacheKey)recognizedCache.set(cacheKey,recognized);}check(job);
     if(!pdf.existsFileInVFS('RealScanOCR.ttf')){pdf.addFileToVFS('RealScanOCR.ttf',encodedFont);pdf.addFont('RealScanOCR.ttf','RealScanOCR','normal');}pdf.setFont('RealScanOCR','normal');
     let words=0;
     for(const block of recognized.data.blocks||[])for(const paragraph of block.paragraphs||[])for(const line of paragraph.lines||[])for(const word of line.words||[]){

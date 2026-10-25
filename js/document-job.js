@@ -4,7 +4,7 @@
   const MAX_PAGES=40,MAX_BYTES=80*1024*1024,MAX_EDGE=3508;
   const $=id=>document.getElementById(id);
   let active=false,pages=[],originals=[],selected=0,epoch=0,busy=false,task=null,saveTimer=null,saveChain=Promise.resolve(),connection=null,recovery=null;
-  let searchable=false,ocrLanguage='spa',version=0;const selection=new Set();
+  let searchable=false,ocrLanguage='spa',version=0,ocrSummary=[];const selection=new Set();
   let past=[],future=[],replacement=null,qualityNotes=new Map(),pdfCache=null;
   function unlocked(){return $('loginOverlay')?.classList.contains('hidden')&&(!$('setupOverlay')||$('setupOverlay').classList.contains('hidden'));}
   function capture(){return {pages:pages.map(p=>({...p})),originals:originals.slice(),options:{...options},selected,searchable,ocrLanguage};}
@@ -28,7 +28,7 @@
     const header=settings.headerEnabled&&settings.headerText?12:0;const scale=Math.min((w-2*margin)/page.width,(h-2*margin-header)/page.height);
     return {paperWidth:w,paperHeight:h,width:page.width*scale,height:page.height*scale,header,margin,x:settings.position==='compact'?margin:(w-page.width*scale)/2,y:settings.position==='center'?margin+header+(h-2*margin-header-page.height*scale)/2:margin+header,dpi:page.width/(page.width*scale/25.4)};
   }
-  function status(){return {active,busy,count:pages.length,reviewed:pages.filter(p=>p.reviewed).length,ready:active&&!busy&&pages.length>0&&pages.every(p=>p.reviewed),selected,revision:version,selectedCount:selection.size,searchable,ocrLanguage,options:{...options}};}
+  function status(){return {active,busy,count:pages.length,reviewed:pages.filter(p=>p.reviewed).length,ready:active&&!busy&&pages.length>0&&pages.every(p=>p.reviewed),selected,revision:version,selectedCount:selection.size,ocr:ocrSummary.map(p=>({...p})),searchable,ocrLanguage,options:{...options}};}
   function activate(){active=true;document.body.dataset.documentJob='true';render();root.RealScanCounter?.update();}
   function deactivate(){active=false;delete document.body.dataset.documentJob;render();root.RealScanCounter?.update();}
   function pack(){
@@ -41,7 +41,7 @@
   }
   async function transaction(mode,action){const db=await database();return new Promise((resolve,reject)=>{const tx=db.transaction('jobs',mode),request=action(tx.objectStore('jobs'));tx.oncomplete=()=>resolve(request?.result);tx.onerror=tx.onabort=()=>reject(tx.error||request?.error||Error('No se pudo guardar el documento.'));});}
   function persist(){
-    version++;trimHistory(past);trimHistory(future);pdfCache=null;for(const [id,note]of qualityNotes){if(!pages.some(p=>p.id===id&&p.data===note.data))qualityNotes.delete(id);}
+    version++;ocrSummary=[];trimHistory(past);trimHistory(future);pdfCache=null;for(const [id,note]of qualityNotes){if(!pages.some(p=>p.id===id&&p.data===note.data))qualityNotes.delete(id);}
     const link=$('docPrintLink');
     if(link){link.hidden=true;if(link.dataset.objectUrl)URL.revokeObjectURL(link.dataset.objectUrl);delete link.dataset.objectUrl;link.removeAttribute('href');}
     if($('docDeliveryBox'))$('docDeliveryBox').hidden=true;
@@ -51,7 +51,7 @@
     },350);
   }
   function reset(clearDraft=false){
-    version++;selection.clear();past=[];future=[];replacement=null;qualityNotes.clear();pdfCache=null;root.RealScanSearchable?.cancel();searchable=false;ocrLanguage='spa';
+    version++;ocrSummary=[];selection.clear();past=[];future=[];replacement=null;qualityNotes.clear();pdfCache=null;root.RealScanSearchable?.cancel();searchable=false;ocrLanguage='spa';
     epoch++;busy=false;clearTimeout(saveTimer);root.RealScanReview?.cancel();root.RealScanCapture?.close();task?.destroy?.();task=null;pages=[];originals=[];selected=0;deactivate();
     if($('docDeliveryBox'))$('docDeliveryBox').hidden=true;
     if($('docPrintLink')){const link=$('docPrintLink');link.hidden=true;if(link.dataset.objectUrl)URL.revokeObjectURL(link.dataset.objectUrl);delete link.dataset.objectUrl;}
@@ -142,13 +142,13 @@
       const img=await image(page.data);if(revision!==epoch)throw Error('El trabajo cambió.');
       const canvas=document.createElement('canvas'),max=settings.quality==='light'?1600:MAX_EDGE,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
       canvas.width=Math.round(img.naturalWidth*scale);canvas.height=Math.round(img.naturalHeight*scale);const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);if(settings.color==='gray')ctx.filter='grayscale(1)';ctx.drawImage(img,0,0,canvas.width,canvas.height);
-      const lossless=settings.quality==='high';const preserve=lossless&&settings.color==='color'&&Math.max(page.width,page.height)<=MAX_EDGE&&/^data:image\/(png|jpeg);/.test(page.data);const data=preserve?page.data:canvas.toDataURL(lossless?'image/png':'image/jpeg',.82);pdf.addImage(data,data.startsWith('data:image/png')?'PNG':'JPEG',g.x,g.y,g.width,g.height);if(addText)await addText(pdf,canvas,g);canvas.width=canvas.height=1;
+      const lossless=settings.quality==='high';const preserve=lossless&&settings.color==='color'&&Math.max(page.width,page.height)<=MAX_EDGE&&/^data:image\/(png|jpeg);/.test(page.data);const data=preserve?page.data:canvas.toDataURL(lossless?'image/png':'image/jpeg',.82);pdf.addImage(data,data.startsWith('data:image/png')?'PNG':'JPEG',g.x,g.y,g.width,g.height);if(addText)await addText(pdf,canvas,g,page.data);canvas.width=canvas.height=1;
     }return pdf;};
-    if(!withText){const pdf=await build();if(revision===epoch)pdfCache={key:cacheKey,pdf};return pdf;}
+    if(!withText){const pdf=await build();if(revision!==epoch||jobVersion!==version)throw Error('El trabajo cambió. Prepara otra entrega.');if(revision===epoch)pdfCache={key:cacheKey,pdf};return pdf;}
     let currentPage=1;
-    const result=await RealScanSearchable.run(language,p=>{if(p.page)currentPage=p.page;say('PDF con texto · página '+currentPage+' de '+snapshot.length+' · '+Math.round((p.progress||0)*100)+' %');},build,()=>revision===epoch);
-    if(result.summary.some(p=>!p.words)&&!confirm('Hay páginas sin texto reconocible. ¿Guardar el PDF con sus imágenes y el texto de las demás páginas?'))throw Error('Entrega cancelada. Las imágenes se conservan.');
-    if(revision===epoch)pdfCache={key:cacheKey,pdf:result.result};return result.result;
+    const result=await RealScanSearchable.run(language,p=>{if(p.page)currentPage=p.page;say('PDF con texto · página '+currentPage+' de '+snapshot.length+' · '+Math.round((p.progress||0)*100)+' %');},build,()=>revision===epoch&&jobVersion===version);
+    if(revision!==epoch||jobVersion!==version)throw Error('El trabajo cambió. Prepara otra entrega.');if(result.summary.some(p=>!p.words)&&!confirm('Hay páginas sin texto reconocible. ¿Guardar el PDF con sus imágenes y el texto de las demás páginas?'))throw Error('Entrega cancelada. Las imágenes se conservan.');
+    ocrSummary=result.summary.map(p=>({...p}));document.dispatchEvent(new Event('realscan:document-updated'));if(revision===epoch)pdfCache={key:cacheKey,pdf:result.result};return result.result;
   }
   function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
   async function output(kind){

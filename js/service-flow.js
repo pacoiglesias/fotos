@@ -18,7 +18,7 @@
   for(const b of document.querySelectorAll('[data-flow-format]'))b.setAttribute('aria-pressed',String(b.dataset.flowFormat===state.format));
   for(const b of document.querySelectorAll('[data-flow-sides]'))b.setAttribute('aria-pressed',String(b.dataset.flowSides===state.printMode));
   for(const b of document.querySelectorAll('[data-flow-count]'))b.setAttribute('aria-pressed',String(Number(b.dataset.flowCount)===Number(state.photoCopies)));
-  $('flowCount').value=state.photoCopies;$('flowSets').value=doc.active?(doc.options.sets||1):(state.outputSets||1);
+  if(document.activeElement!==$('flowCount'))$('flowCount').value=state.photoCopies;if(document.activeElement!==$('flowSets'))$('flowSets').value=doc.active?(doc.options.sets||1):(state.outputSets||1);
   $('flowSetLabel').textContent=doc.active?'Juegos para imprimir':'Juegos completos';
   const sets=doc.active?(doc.options.sets||1):(state.outputSets||1),pages=doc.active?doc.count:work.layout.pages.length;
   let summary=doc.active?doc.count+' páginas · '+sets+' juego(s) de impresión · '+PAPER_SPECS[doc.options.paper].shortName+(doc.options.color==='gray'?' · Blanco y negro':' · Color'): (photos?(state.mixTwoPhotos?(state.photoCopiesPersonA||0)+' fotos A + '+(state.photoCopiesPersonB||0)+' fotos B':state.photoCopies+' fotos')+' por juego · ':getActiveSpec().shortName+' · ')+sets+' juego(s) · '+pages+' hoja(s) '+work.layout.paper.shortName;
@@ -26,7 +26,7 @@
   $('flowSummary').textContent=summary;$('flowSummary').setAttribute('title',summary);
   const ready=doc.active?doc.ready:work.ready&&!work.layout.errors.length;
   $('flowPrimary').disabled=!allowed||!ready||(doc.active?doc.busy:work.busy);
-  $('flowPrimary').textContent=doc.active?'Preparar impresión':document.body.dataset.outputMode==='digital'?'Revisar entrega digital':'Revisar e imprimir';
+  $('flowPrimary').textContent=doc.active?'Revisar e imprimir':document.body.dataset.outputMode==='digital'?'Revisar entrega digital':'Revisar e imprimir';
   $('flowNextHint').textContent=doc.active?(doc.count?doc.reviewed+' de '+doc.count+' páginas revisadas. Toca cada página para comprobarla.':'Agrega archivos, captura páginas o recibe desde el celular.'):work.busy?'Preparando imágenes…':work.missing.length?'Agrega '+(photos?'tu fotografía':sideNames[work.missing[0]].toLowerCase())+' para continuar.':'Comprueba el encuadre y las medidas antes de entregar.';
   const busy=doc.active?doc.busy:work.busy;
   for(const el of $('serviceFlow').querySelectorAll('button,input,select'))el.disabled=!allowed||busy;

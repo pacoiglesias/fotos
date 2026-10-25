@@ -1,6 +1,8 @@
-# RealScan Pro 3.20
+# RealScan Pro 3.24
 
-La 3.24 reúne tres etapas: preparación por servicio con cantidades y juegos claros; edición reversible y organización de páginas; y asistencia de calidad y preparación anticipada de impresión. Consulta `audit/MEJORAS_TRES_ETAPAS.md` para pruebas y límites de validación.
+La 3.23 reunió tres etapas: preparación por servicio con cantidades y juegos claros; edición reversible y organización de páginas; y asistencia de calidad y preparación anticipada de impresión. Consulta `audit/MEJORAS_TRES_ETAPAS.md` para pruebas y límites de validación.
+
+La 3.24 añade modo rápido, cola local de pedidos, edición por lotes, encabezados con vista previa, distribución de hoja e impresión directa de documentos. Consulta [los cambios y sus límites](audit/MEJORAS_MOSTRADOR_3_24.md).
 
 Edición y composición de documentos y fotografías para mostrador. Desarrollado por Paco Iglesias.
 
