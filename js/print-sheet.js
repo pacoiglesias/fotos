@@ -63,6 +63,7 @@
     clear();
     if (job.layout.errors.length) throw Error(job.layout.errors.join(' '));
     if (!job.sources.some(([,src])=>src)) throw Error('Carga una foto o identificación antes de imprimir.');
+    const preparedAt=performance.now();
     const entry = {...job,frame:null}; cached = entry;
     entry.promise = (async () => {
       const images = {};
@@ -85,7 +86,7 @@
         const probe=new frame.contentWindow.Image();probe.onload=resolve;probe.onerror=()=>reject(Error('No se pudo preparar una imagen.'));probe.src=node.getAttribute('href');
       })));
       if(cached!==entry || !matches(entry,snapshot())) throw Error('El trabajo cambió. Vuelve a revisar la hoja.');
-      entry.ready=true;
+      entry.ready=true;window.RealScanDiagnostics?.record('print.prepared','info',{pages:job.layout.pages.length,milliseconds:Math.round(performance.now()-preparedAt)});
       return entry;
     })().catch(error=>{entry.frame?.remove();if(cached===entry)cached=null;throw error;});
     return entry.promise;
@@ -97,7 +98,7 @@
     if(!matches(entry,snapshot()))throw Error('El trabajo cambió. Revisa la hoja antes de imprimir.');
     printing=true;
     const release=()=>{printing=false;clearTimeout(releaseTimer);};
-    entry.frame.contentWindow.addEventListener('afterprint',release,{once:true});
+    entry.frame.contentWindow.addEventListener('afterprint',()=>{release();if(matches(entry,snapshot()))document.dispatchEvent(new Event('realscan:print-dialog-closed'));},{once:true});
     releaseTimer=setTimeout(release,90000);
     try {entry.frame.contentWindow.focus();entry.frame.contentWindow.print();}
     catch(error){release();throw error;}

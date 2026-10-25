@@ -33,6 +33,7 @@ jobs:
             dist/
             .audit/print-usability/results.json
             .audit/print-usability/review-*.png
+            .audit/service-flow/
             .audit/studio-320/results.json
             .audit/studio-320/home-desktop.png
             .audit/studio-320/workspace-1440.png

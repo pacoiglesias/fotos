@@ -85,7 +85,7 @@ El respaldo JSON admite hasta 50 MB tanto al exportar como al importar. Se recha
 
 ## Publicación coordinada
 
-En Windows, abre **subir_a_firebase.bat** con doble clic. Comprueba tu acceso actual, resuelve y descarga la **3.22.0** desde `release/3.22.0`, instala dependencias y Chromium/WebKit, y ejecuta la verificación y publicación en ambos sitios. Conserva tu carpeta actual y los cambios locales; publica la versión de GitHub con el commit resuelto. La ventana permanece abierta y muestra dónde guardó el registro. Los otros BAT de despliegue usan este mismo lanzador. Consulta [el procedimiento de la 3.20](audit/ESTUDIO_3_20_0.md).
+En Windows, abre **subir_a_firebase.bat** con doble clic. Comprueba tu acceso actual, resuelve y descarga la **3.23.0** desde `release/3.23.0`, instala dependencias y Chromium/WebKit, y ejecuta la verificación y publicación en ambos sitios. Conserva tu carpeta actual y los cambios locales; publica la versión de GitHub con el commit resuelto. La ventana permanece abierta y muestra dónde guardó el registro. Los otros BAT de despliegue usan este mismo lanzador. Consulta [el procedimiento de la 3.20](audit/ESTUDIO_3_20_0.md).
 
 Para publicar desde un checkout propio limpio, ejecuta `npm run publish` con los cambios confirmados en Git. Si falla uno de los sitios, devuelve error y debe repetirse para completar la actualización; no existe una transacción de publicación entre proyectos.
 

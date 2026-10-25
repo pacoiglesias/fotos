@@ -133,7 +133,7 @@
       }
       setTimeout(render, 60);
     }, true);
-    setInterval(render, 1500);
+    document.addEventListener('realscan:studio-updated',render);document.addEventListener('realscan:document-updated',render);
     render();
     window.RealScanGuided={render};
   }

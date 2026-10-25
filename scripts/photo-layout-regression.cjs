@@ -53,11 +53,11 @@ let browser;
  await page.locator('#faithfulSheetPlacements').screenshot({path:path.join(out,'guides-desktop.png')});
  for(const width of [360,390,768]){
   await page.setViewportSize({width,height:844});await page.evaluate(()=>setMobileStep(1));
-  await page.getByRole('button',{name:'Continuar a Cargar Fotos'}).click();
+  await page.locator('[data-guided-step="2"]').click();
   assert.equal(await page.evaluate(()=>document.body.dataset.mobileStep),'2','Mobile Continue must open the capture step');
   await page.locator('.mob-pane-2 .btn-mob-nav').first().click();
   assert.equal(await page.evaluate(()=>document.body.dataset.mobileStep),'1');
-  await page.getByRole('button',{name:'Continuar a Cargar Fotos'}).click();
+  await page.locator('[data-guided-step="2"]').click();
   await page.locator('.mob-pane-2 .btn-mob-nav').last().click();
   assert.equal(await page.evaluate(()=>document.body.dataset.mobileStep),'3');
   await page.locator('.mob-pane-3 .btn-mob-nav').click();

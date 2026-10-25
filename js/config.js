@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.22.0';
+window.APP_VERSION = 'v3.23.0';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -554,3 +554,6 @@ Object.assign(window.FORMAT_SPECS.photo_carnet, {
   reqsPhysical:'Fotografía reciente en color, 26 mm de ancho × 32 mm de alto, de frente y fondo blanco uniforme. Confirma los requisitos al solicitar la cita.'
 });
 window.FORMAT_SPECS.photo_passport.noRetouch = true;
+
+// Everyday photographic print size; this is not an official identity-photo profile.
+window.FORMAT_SPECS.photo_10x15={category:'photos',name:'Fotografía 10 × 15 cm',shortName:'Foto 10 × 15 cm',fileName:'foto_10x15',widthMm:100,heightMm:150,reqsPhysical:'Fotografía de 100 × 150 mm. Elige papel que permita conservar estas medidas.',reqsDigital:'Conserva el encuadre y revisa la nitidez.',editingRestrictions:'Formato fotográfico libre.'};

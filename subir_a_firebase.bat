@@ -1,8 +1,8 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 cd /d "%~dp0"
-title RealScan 3.20 - Compilar y publicar
-echo RealScan 3.20 - Build, pruebas y publicacion en ambos sitios
+title RealScan 3.23 - Compilar y publicar
+echo RealScan 3.23 - Build, pruebas y publicacion en ambos sitios
 echo.
 where powershell.exe >nul 2>&1
 if errorlevel 1 (
@@ -16,7 +16,7 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0desplegar.
 set "deployResult=%errorlevel%"
 echo.
 if "%deployResult%"=="0" (
-  echo PUBLICACION VERIFICADA. La version 3.20 esta en ambos sitios.
+  echo PUBLICACION VERIFICADA. La version 3.23 esta en ambos sitios.
 ) else (
   echo PUBLICACION INCOMPLETA. Revisa el error y el registro indicado arriba.
 )

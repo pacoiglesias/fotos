@@ -1182,9 +1182,7 @@ function updatePhotoGridStats() {
   const maxSupportedPages = 2;
   const totalAllowed = info.maxPerPage * maxSupportedPages;
 
-  if (state.photoCopies > totalAllowed) {
-    state.photoCopies = totalAllowed;
-  }
+  // Preserve the requested order; preflight offers explicit corrections when it does not fit.
 
   const badgeMax = $('badgeMaxPhotosFit');
   if (badgeMax) {
@@ -1232,8 +1230,9 @@ function setPhotoCopies(num) {
     showToast('⚠️ Cantidad máxima admitida: ' + totalAllowed + ' fotos en ' + maxSupportedPages + ' hojas ' + paper.shortName + '.', 'warning');
   }
 
-  const clamped = Math.max(1, Math.min(totalAllowed, parsed));
+  const clamped = Math.max(1, Math.min(48, parsed));
   state.photoCopies = clamped;
+  if(state.mixTwoPhotos){state.photoCopiesPersonA=Math.ceil(clamped/2);state.photoCopiesPersonB=Math.floor(clamped/2);}
 
   const inputCopies = $('inputPhotoCopies');
   if (inputCopies) inputCopies.value = clamped;
@@ -1549,7 +1548,7 @@ function selectFormat(formatKey, silent) {
     const info = getPhotoLayoutInfo(spec.widthMm, spec.heightMm, state.photoCopies);
     const totalAllowed = info.maxPerPage * 2;
     if (state.photoCopies > totalAllowed) {
-      state.photoCopies = totalAllowed;
+      if(!silent)showToast('La cantidad elegida no cabe en este formato y papel. Revisa la cantidad o el papel; no se ha reducido automáticamente.','warning');
     }
     updatePhotoGridStats();
   }

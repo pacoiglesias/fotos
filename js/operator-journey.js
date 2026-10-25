@@ -109,7 +109,7 @@
     document.addEventListener('click',()=>requestAnimationFrame(update));
     document.addEventListener('change',()=>requestAnimationFrame(update));
     window.addEventListener('online',update); window.addEventListener('offline',update);
-    setInterval(update,1000);
+    document.addEventListener('realscan:studio-updated',update);document.addEventListener('realscan:document-updated',update);
   });
   window.RealScanJourney = {update,go};
 })();

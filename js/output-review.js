@@ -13,7 +13,7 @@
       if (state.activeCategory === 'photos') {
         pairs.push(["Copias", state.mixTwoPhotos ? ((state.photoCopiesPersonA || 0) + " de la persona A + " + (state.photoCopiesPersonB || 0) + " de la persona B") : String(state.photoCopies || 1)]);
       } else {
-        pairs.push(["Copias", "1 juego \xB7 más copias en el diálogo de impresión"]);
+        pairs.push(["Copias", (state.outputSets||1)+" juego(s) en el archivo · usa 1 copia en la impresora"]);
       }
       const activeProfile = window.RealScanPrinterProfiles?.getActive();
       pairs.push(["Perfil de impresora", activeProfile ? activeProfile.name : "Sin corrección"]);
