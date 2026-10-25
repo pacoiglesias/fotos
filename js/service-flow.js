@@ -3,14 +3,15 @@
  'use strict';
  const $=id=>document.getElementById(id);
  const sideNames={front:'Frente',back:'Reverso',page3:'Página 3',page4:'Página 4'};
- let selected='front',warmTimer=null,lastWarm=[],adviceKey='';
+ let selected='front',warmTimer=null,lastWarm=[],adviceKey='',placing=false;
+ function placePanel(active){const panel=$('serviceFlow'),parent=active?$('documentWorkspace'):$('colControlPanel');if(placing||panel.parentElement===parent)return;placing=true;queueMicrotask(()=>{try{const target=RealScanDocuments.status().active?$('documentWorkspace'):$('colControlPanel');if(panel.parentElement!==target)target.insertBefore(panel,target.firstChild);}finally{placing=false;}});}
  function unlocked(){return $('loginOverlay')?.classList.contains('hidden')&&(!$('setupOverlay')||$('setupOverlay').classList.contains('hidden'));}
  function button(text,fn,cls='flow-choice'){const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=text;b.onclick=()=>{if(unlocked()){fn();update();}};return b;}
  function change(fn){if(!unlocked()||RealScanWorkflow.describe().busy)return;fn();updateUI();RealScanJourney.update();RealScanStudio.update();if(typeof saveActiveDraft==='function')saveActiveDraft();}
  function update(){
   if(!$('serviceFlow'))return;
   const doc=RealScanDocuments.status(),work=RealScanWorkflow.describe(),photos=state.activeCategory==='photos',allowed=unlocked();
-  document.body.dataset.studioDocument=String(doc.active);
+  placePanel(doc.active);document.body.dataset.studioDocument=String(doc.active);
   document.body.dataset.flowKind=doc.active?'document':photos?'photos':'id';
   $('flowPhotoChoices').hidden=!photos||doc.active;$('flowQuantity').hidden=!photos||doc.active;$('flowIdChoices').hidden=photos||doc.active;
   $('flowHeading').textContent=doc.active?'Tu documento, página por página':photos?'Prepara tus fotografías':'Prepara tu identificación';
@@ -65,6 +66,7 @@
   panel.innerHTML='<p class="flow-eyebrow">PREPARA TU TRABAJO</p><h2 id="flowHeading"></h2><div id="flowReceive"></div><p id="flowNextHint" role="status"></p><button type="button" id="flowAddMissing" class="flow-soft"></button><div id="flowPhotoChoices" class="flow-block"><h3>Tamaño de cada foto</h3><div id="flowSizes" class="flow-choice-grid"></div></div><div id="flowIdChoices" class="flow-block"><h3>Distribución de las caras</h3><div id="flowSides" class="flow-choice-grid"></div></div><div id="flowQuantity" class="flow-block"><h3>Fotos por juego</h3><div id="flowCounts" class="flow-counts"></div><div class="flow-number"><label for="flowCount">Otra cantidad</label><input id="flowCount" type="number" min="1" max="48" inputmode="numeric"></div></div><div id="flowPaper"></div><div class="flow-number"><label id="flowSetLabel" for="flowSets">Juegos completos</label><input id="flowSets" type="number" min="1" max="10" value="1" inputmode="numeric"></div><div id="flowDocumentOptions" class="flow-block"><label>Acabado<select id="flowDocColor"><option value="color">Color</option><option value="gray">Blanco y negro</option></select></label><label>Impresión<select id="flowDocDuplex"><option value="single">Una cara por hoja</option><option value="manual">Doble cara manual · guía</option></select></label><p id="flowDuplexHint">Prueba primero con dos páginas: el giro y el orden de la bandeja dependen de tu impresora. Imprime impares, recoloca el papel e imprime pares. Si un juego tiene páginas impares, se añade un reverso vacío para separar los juegos.</p></div>';
   $('colControlPanel').prepend(panel);
   $('flowReceive').append($('operatorReceiveActions'));if($('operatorNotices'))$('flowNextHint').after($('operatorNotices'));
+  $('flowDocumentOptions').prepend($('docPaper').parentElement);
   $('flowPaper').append($('quickPrintSettings')); // Preserve original control IDs and change handlers.
   for(const [format,name]of [['photo_infantil','Infantil'],['photo_passport','Pasaporte'],['photo_10x15','10 × 15 cm']]){
    if(!FORMAT_SPECS[format])continue;const spec=FORMAT_SPECS[format],b=button('',()=>change(()=>selectFormat(format)));b.dataset.flowFormat=format;

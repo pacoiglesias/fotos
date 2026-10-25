@@ -90,7 +90,7 @@
     const work=RealScanWorkflow.describe(),doc=window.RealScanDocuments?.status(),allowed=unlocked();
     const sides=work.wanted,active=!!doc?.active,busy=active?doc.busy:work.busy,ready=allowed&&(active?doc.ready:work.ready);
     const snapshot=approvalSnapshot();
-    const current=[allowed,active,busy,ready,engaged,doc?.count,doc?.reviewed,state._jobRevision,snapshot[0],state.activeCategory,selected,comparison,...sides,...sides.flatMap(s=>[state.images[s]?.originalSrc,state.images[s]?.processedDataUrl,state.images[s]?.rotation,state.images[s]?._renderVersion])];
+    const current=[document.body.dataset.mobileStep,allowed,active,busy,ready,engaged,doc?.count,doc?.reviewed,state._jobRevision,snapshot[0],state.activeCategory,selected,comparison,...sides,...sides.flatMap(s=>[state.images[s]?.originalSrc,state.images[s]?.processedDataUrl,state.images[s]?.rotation,state.images[s]?._renderVersion])];
     if(current.length===previous.length&&current.every((x,i)=>x===previous[i]))return;previous=current;
     if(revision!==state._jobRevision){comparison=false;selected=sides[0]||'front';revision=state._jobRevision;}
     if(!sides.includes(selected))selected=sides[0]||'front';

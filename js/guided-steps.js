@@ -28,6 +28,8 @@
         if (w) ready = !!w.ready;
       }
     } catch (e) {}
+    const visibleStep=Number(document.body.dataset.mobileStep);
+    if(matchMedia('(max-width:1023px)').matches&&[1,2,3].includes(visibleStep))return {current:visibleStep,loaded,ready};
     if (!loaded && !formatPicked()) return { current: 1, loaded: loaded, ready: ready };
     if (!ready) return { current: 2, loaded: loaded, ready: ready };
     return { current: 3, loaded: loaded, ready: ready };
@@ -39,7 +41,7 @@
     if(step===1 && typeof setMobileStep==='function')setMobileStep(1);
     let target = null;
     if (step === 1) {
-      target = document.querySelector('[data-format-wrap="' + (state.activeCategory || 'docs') + '"]') ||
+      target = document.getElementById('serviceFlow') || document.querySelector('[data-format-wrap="' + (state.activeCategory || 'docs') + '"]') ||
         document.getElementById('serviceFormats') ||
         document.querySelector('.cat-tab');
     } else if (step === 2) {
