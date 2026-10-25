@@ -1,0 +1,23 @@
+const fs=require('fs'),path=require('path'),assert=require('assert'),{chromium}=require('playwright');
+const root=path.resolve('dist'),out=path.resolve('.audit/service-flow');fs.mkdirSync(out,{recursive:true});
+let browser;const errors=[],checks=[];
+function pass(name){checks.push(name);console.log('PASS '+name);}
+(async()=>{
+ browser=await chromium.launch({headless:true,...(process.env.REALSCAN_CHROMIUM?{executablePath:process.env.REALSCAN_CHROMIUM}:{})});
+ const context=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:1100}}),page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+ await context.route('http://127.0.0.1:5576/**',async route=>{const name=new URL(route.request().url()).pathname,file=path.resolve(root,'.'+(name==='/'?'/index.html':name));if(!file.startsWith(root+path.sep))return route.fulfill({status:403});if(!fs.existsSync(file))return route.fulfill({status:404});await route.fulfill({path:file,contentType:({'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.wasm':'application/wasm'})[path.extname(file)]||'application/octet-stream'});});
+ await page.addInitScript(()=>{localStorage.setItem('realscan_welcome_seen_v1','1');localStorage.setItem('realscan_auth_v2',JSON.stringify({users:[{username:'admin',passwordHash:'beeaac74a3a1833e8547bf1510c9bbdfaa41d019ad7da238b606d91155014abe',role:'admin',mustChangePassword:false}],currentUsername:'admin',sessionToken:null,sessionExpiry:0}));});
+ await page.goto('http://127.0.0.1:5576');await page.waitForFunction(()=>window.RealScanStudio);await page.locator('#loginUserInput').fill('admin');await page.locator('#loginPassInput').fill('PruebaAcceso2026');
+ await page.locator('#btnLoginSubmit').click();await page.locator('#loginOverlay').waitFor({state:'hidden'});await page.evaluate(()=>RealScanStudio.update());
+
+ await page.waitForFunction(()=>window.RealScanServiceFlow);assert(await page.locator('#serviceFlow').isVisible());assert(await page.locator('#studioAdvanced').evaluate(e=>!e.open));
+ await page.locator('[data-task=photos]').click();await page.locator('[data-flow-format=photo_infantil]').click();await page.locator('[data-flow-count="6"]').click();assert.equal(await page.evaluate(()=>state.photoCopies),6);assert.equal(await page.evaluate(()=>state.format),'photo_infantil');
+ await page.locator('#flowSets').fill('2');await page.locator('#flowSets').dispatchEvent('change');assert.equal(await page.evaluate(()=>RealScanLayout.computeDocumentLayout(state).pages.length),2);assert((await page.locator('#flowSummary').textContent()).includes('2 juego'));pass('Visual size and quantity choices produce two real sets without altering photo dimensions');
+ await page.evaluate(()=>{const c=document.createElement('canvas');c.width=640;c.height=800;const x=c.getContext('2d');x.fillStyle='#dbe8f0';x.fillRect(0,0,640,800);x.fillStyle='#394866';x.beginPath();x.ellipse(320,325,112,145,0,0,Math.PI*2);x.fill();x.fillStyle='#7585a3';x.beginPath();x.ellipse(320,760,220,265,0,0,Math.PI*2);x.fill();window.__studioSample=c.toDataURL();Object.assign(state.images.front,{originalSrc:__studioSample,rawOriginalSrc:__studioSample,processedDataUrl:__studioSample,naturalWidth:640,naturalHeight:800,isCropApplied:true});updateUI();RealScanJourney.update();RealScanStudio.update();});
+
+ await page.evaluate(()=>RealScanServiceFlow.update());assert(await page.locator('#flowPrimary').isEnabled());
+ await page.evaluate(()=>{RealScanDocuments.activate();RealScanDocuments.setOptions({color:'gray',sets:2,duplex:'manual'});});assert(await page.locator('#flowDocumentOptions').isVisible());assert((await page.locator('#flowDuplexHint').textContent()).includes('dos páginas'));assert.equal(await page.evaluate(()=>RealScanDocuments.status().options.sets),2);pass('Document options apply grayscale and print sets with explicit manual duplex guidance');
+ await page.evaluate(()=>RealScanDocuments.deactivate());for(const width of [320,390,768,1440]){await page.setViewportSize({width,height:900});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'overflow '+width);}
+ await page.screenshot({path:path.join(out,'flow-desktop.png')});pass('One compact service panel and fixed next action fit mobile and desktop');assert.deepEqual(errors,[]);
+
+})().catch(e=>{console.error(e);console.error(errors);process.exitCode=1;}).finally(async()=>{await browser?.close();});

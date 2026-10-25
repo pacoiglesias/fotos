@@ -4,7 +4,7 @@
   const $ = id => document.getElementById(id);
   let starting = false;
   let output = 'both';
-  const settings = ['activeCategory','format','paperSize','printMode','sheetLayout','documentPageCount','photoCopies','photoCopiesPersonA','photoCopiesPersonB','mixTwoPhotos','duplicateCard','includeRulerFooter','includeDocLabels','includeCutMarks','customWidth','customHeight','customUnit','passportOpenOrientation','passportPageOrientation'];
+  const settings = ['outputSets','activeCategory','format','paperSize','printMode','sheetLayout','documentPageCount','photoCopies','photoCopiesPersonA','photoCopiesPersonB','mixTwoPhotos','duplicateCard','includeRulerFooter','includeDocLabels','includeCutMarks','customWidth','customHeight','customUnit','passportOpenOrientation','passportPageOrientation'];
   function activeDelivery() {
     const s = window.RealScanQrSync?.getActiveDeliverySession();
     return s && !['revoked','expired'].includes(s.status) && Date.now() < s.expiresAt ? s : null;

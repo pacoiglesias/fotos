@@ -61,6 +61,7 @@ function prepareWorkspaceForJobSwitch(options) {
       state._jobSwitchCleanup = Promise.allSettled(cleanup);
     }
     state.outputScalePercent = 100;
+    state.outputSets = 1;
     state.photoCopiesPersonA = 2;
     state.photoCopiesPersonB = 2;
     state._jobRevision = (state._jobRevision || 0) + 1;
@@ -220,6 +221,7 @@ async function saveScanToStorage(customTitle, retentionDays) {
       customHeight: state.customHeight,
       customUnit: state.customUnit || 'cm',
       photoCopies: state.photoCopies || 4,
+      outputSets: Math.max(1,Math.min(10,Math.round(Number(state.outputSets)||1))),
       photoCopiesPersonA: state.photoCopiesPersonA ?? Math.ceil((state.photoCopies || 4) / 2),
       photoCopiesPersonB: state.photoCopiesPersonB ?? Math.floor((state.photoCopies || 4) / 2),
       outputScalePercent: state.outputScalePercent || 100,
@@ -423,6 +425,7 @@ async function restoreScanToApp(id) {
     if (scan.customHeight) state.customHeight = scan.customHeight;
     if (scan.customUnit) state.customUnit = scan.customUnit;
     if (scan.photoCopies) state.photoCopies = scan.photoCopies;
+    state.outputSets = Math.max(1,Math.min(10,Math.round(Number(scan.outputSets)||1)));
     state.photoCopiesPersonA = Number.isInteger(scan.photoCopiesPersonA) ? scan.photoCopiesPersonA : Math.ceil((scan.photoCopies || 4) / 2);
     state.photoCopiesPersonB = Number.isInteger(scan.photoCopiesPersonB) ? scan.photoCopiesPersonB : Math.floor((scan.photoCopies || 4) / 2);
     state.outputScalePercent = Math.max(25, Math.min(200, Number(scan.outputScalePercent) || 100));
@@ -1101,6 +1104,7 @@ async function importScansFromJson(file) {
         customHeight: s.customHeight,
         customUnit: s.customUnit || 'cm',
         photoCopies: s.photoCopies || 4,
+      outputSets: Math.max(1,Math.min(10,Math.round(Number(s.outputSets)||1))),
         photoCopiesPersonA: s.photoCopiesPersonA ?? Math.ceil((s.photoCopies || 4) / 2),
         photoCopiesPersonB: s.photoCopiesPersonB ?? Math.floor((s.photoCopies || 4) / 2),
         outputScalePercent: s.outputScalePercent || 100,
@@ -1230,6 +1234,7 @@ function snapshotActiveDraft() {
         customHeight: state.customHeight,
         customUnit: state.customUnit,
         photoCopies: state.photoCopies,
+      outputSets: Math.max(1,Math.min(10,Math.round(Number(state.outputSets)||1))),
         photoCopiesPersonA: state.photoCopiesPersonA ?? Math.ceil((state.photoCopies || 4) / 2),
         photoCopiesPersonB: state.photoCopiesPersonB ?? Math.floor((state.photoCopies || 4) / 2),
         outputScalePercent: state.outputScalePercent || 100,
@@ -1312,6 +1317,7 @@ async function restoreActiveDraft() {
   state.customHeight = draft.customHeight || 5.5;
   state.customUnit = draft.customUnit || 'cm';
   state.photoCopies = draft.photoCopies || 4;
+  state.outputSets = Math.max(1,Math.min(10,Math.round(Number(draft.outputSets)||1)));
   state.photoCopiesPersonA = Number.isInteger(draft.photoCopiesPersonA) ? draft.photoCopiesPersonA : Math.ceil((draft.photoCopies || 4) / 2);
   state.photoCopiesPersonB = Number.isInteger(draft.photoCopiesPersonB) ? draft.photoCopiesPersonB : Math.floor((draft.photoCopies || 4) / 2);
   state.outputScalePercent = Math.max(25, Math.min(200, Number(draft.outputScalePercent) || 100));
@@ -1380,6 +1386,7 @@ function saveUserPreset(presetName) {
     customHeight: state.customHeight,
     customUnit: state.customUnit,
     photoCopies: state.photoCopies || 4,
+      outputSets: Math.max(1,Math.min(10,Math.round(Number(state.outputSets)||1))),
     photoCopiesPersonA: state.photoCopiesPersonA ?? Math.ceil((state.photoCopies || 4) / 2),
     photoCopiesPersonB: state.photoCopiesPersonB ?? Math.floor((state.photoCopies || 4) / 2),
     outputScalePercent: state.outputScalePercent || 100,

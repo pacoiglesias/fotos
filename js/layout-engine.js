@@ -105,6 +105,9 @@
           if (p.warnings.indexOf(warn) === -1) p.warnings.push(warn);
         });
       }
+      const sets=Math.max(1,Math.min(10,Math.round(Number(state.outputSets)||1)));
+      p.basePages=p.pages.length;p.outputSets=sets;
+      if(sets>1){const base=p.pages;p.pages=Array.from({length:sets},(_,set)=>base.map(page=>({...page,setNumber:set+1,placements:page.placements.map(item=>({...item}))}))).flat();p.pages.forEach((page,i)=>{page.pageIndex=i;page.pageNumber=i+1;});p.totalPages=p.pages.length;p.summary+=' · '+sets+' juegos · '+p.totalPages+' hojas totales';}
       return p;
     }
 

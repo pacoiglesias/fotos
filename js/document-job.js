@@ -5,7 +5,7 @@
   const $=id=>document.getElementById(id);
   let active=false,pages=[],originals=[],selected=0,epoch=0,busy=false,task=null,saveTimer=null,saveChain=Promise.resolve(),connection=null,recovery=null;
   let searchable=false,ocrLanguage='spa';
-  let options={paper:'a4',orientation:'auto',margin:8,quality:'high'};
+  let options={paper:'a4',orientation:'auto',margin:8,quality:'high',color:'color',sets:1,duplex:'single'};
   function say(message,error=false){if($('docStatus')){$('docStatus').textContent=message;$('docStatus').dataset.error=String(error);}}
   function id(){return crypto.randomUUID();}
   function bytes(data){return atob(data.split(',')[1]).length;}
@@ -45,7 +45,7 @@
     epoch++;busy=false;clearTimeout(saveTimer);root.RealScanReview?.cancel();root.RealScanCapture?.close();task?.destroy?.();task=null;pages=[];originals=[];selected=0;deactivate();
     if($('docDeliveryBox'))$('docDeliveryBox').hidden=true;
     if($('docPrintLink')){const link=$('docPrintLink');link.hidden=true;if(link.dataset.objectUrl)URL.revokeObjectURL(link.dataset.objectUrl);delete link.dataset.objectUrl;}
-    options={paper:'a4',orientation:'auto',margin:8,quality:'high'};
+    options={paper:'a4',orientation:'auto',margin:8,quality:'high',color:'color',sets:1,duplex:'single'};
     const cleanup=clearDraft?saveChain.catch(()=>{}).then(()=>transaction('readwrite',s=>s.delete('active'))).catch(()=>say('No se pudo limpiar el borrador anterior. Puedes descartarlo desde Recuperación.',true)):Promise.resolve();
     if(clearDraft){recovery=null;if($('docRecovery'))$('docRecovery').hidden=true;}
     return cleanup;
@@ -114,10 +114,10 @@
     catch(e){if(revision===epoch)say(e.message,true);}finally{if(revision===epoch){busy=false;render();}}
   }
   function move(index,step){if(busy||index+step<0||index+step>=pages.length)return;[pages[index],pages[index+step]]=[pages[index+step],pages[index]];selected=index+step;persist();render();}
-  async function makePdf(){
+  async function makePdf(printJob=false){
     if(!status().ready)throw Error('Revisa y confirma todas las páginas antes de preparar la entrega.');
     if (typeof ensureJsPdf === 'function') await ensureJsPdf();
-    const revision=epoch,snapshot=pages.map(p=>({...p})),settings={...options},withText=searchable,language=ocrLanguage;let pdf;
+    const revision=epoch,snapshot=Array.from({length:printJob?(options.sets||1):1},()=>pages.map(p=>({...p}))).flat(),settings={...options},withText=searchable,language=ocrLanguage;let pdf;
     const build=async addText=>{
     for(let n=0;n<snapshot.length;n++){
       if(revision!==epoch)throw Error('El trabajo cambió. Prepara otra entrega.');
@@ -126,7 +126,7 @@
       else pdf.addPage([g.paperWidth,g.paperHeight],landscape?'landscape':'portrait');
       const img=await image(page.data);if(revision!==epoch)throw Error('El trabajo cambió.');
       const canvas=document.createElement('canvas'),max=settings.quality==='light'?1600:MAX_EDGE,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
-      canvas.width=Math.round(img.naturalWidth*scale);canvas.height=Math.round(img.naturalHeight*scale);const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      canvas.width=Math.round(img.naturalWidth*scale);canvas.height=Math.round(img.naturalHeight*scale);const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);if(settings.color==='gray')ctx.filter='grayscale(1)';ctx.drawImage(img,0,0,canvas.width,canvas.height);
       pdf.addImage(canvas.toDataURL('image/jpeg',settings.quality==='light'?.82:.96),'JPEG',g.x,g.y,g.width,g.height);if(addText)await addText(pdf,canvas,g);canvas.width=canvas.height=1;
     }return pdf;};
     if(!withText)return build();
@@ -140,7 +140,7 @@
     if(!status().ready)return;const revision=epoch;busy=true;render();
     try{
       // Only this operation owns the busy flag; rendering uses a frozen snapshot.
-      busy=false;const pdfPromise=makePdf();busy=true;const pdf=await pdfPromise;
+      busy=false;const pdfPromise=makePdf(kind==='print');busy=true;const pdf=await pdfPromise;
       if(revision!==epoch)return;
       if(kind==='qr'){
         const data=pdf.output('datauristring').split(',')[1],file={name:'RealScan_Documento.pdf',type:'application/pdf',dataUrl:'data:application/pdf;base64,'+data,size:atob(data).length};
@@ -164,7 +164,7 @@
     const asset=n=>{if(!Number.isInteger(n)||n<0||n>=record.assets.length)throw Error('Referencia de archivo no válida.');return record.assets[n];};
     const restored=[];for(const page of record.pages){const data=asset(page.data),source=asset(page.source),img=await image(data);await image(source);restored.push({id:id(),sourceId:String(page.sourceId).slice(0,80),data,source,width:img.naturalWidth,height:img.naturalHeight,reviewed:!!page.reviewed});}
     const files=record.originals.map(f=>{const data=asset(f.data);if(typeof f.name!=='string'||f.name.length>180||!['image/jpeg','image/png','image/webp','application/pdf'].includes(f.type)||!data.startsWith('data:'+f.type+';'))throw Error('Original no válido.');return {id:String(f.id).slice(0,80),name:f.name,type:f.type,data};});
-    return {pages:restored,originals:files,options:{...record.options}};
+    return {pages:restored,originals:files,options:{...record.options,color:record.options.color==='gray'?'gray':'color',sets:Math.max(1,Math.min(10,Math.round(Number(record.options.sets)||1))),duplex:record.options.duplex==='manual'?'manual':'single'}};
   }
   async function backup(){if(busy||!pages.length)return;try{if (typeof ensureJSZip === 'function') await ensureJSZip();const body=JSON.stringify(pack()),zip=new JSZip();zip.file('document.json',body);zip.file('integrity.json',JSON.stringify({sha256:await digest(body)}));download(await zip.generateAsync({type:'blob',compression:'DEFLATE'}),'RealScan_Documento.realscan');say('Respaldo con páginas y originales descargado.');}catch(e){say('No se pudo crear el respaldo: '+e.message,true);}}
   async function restoreFile(file){
@@ -198,6 +198,7 @@
     else{$('docGeometry').textContent='Importa archivos o captura la primera página.';preview.style.aspectRatio='210 / 297';}
     const sourceList=$('docOriginals');sourceList.replaceChildren();for(const source of originals){const b=document.createElement('button');b.type='button';b.textContent='Descargar original · '+source.name;b.onclick=async()=>download(await(await fetch(source.data)).blob(),source.name);sourceList.append(b);}
     root.RealScanCounter?.update();
+    document.dispatchEvent(new Event('realscan:document-updated'));
   }
   document.addEventListener('DOMContentLoaded',()=>{
     const area=document.createElement('section');area.id='documentWorkspace';area.hidden=true;area.className='document-workspace';area.innerHTML=`<div class="document-heading"><div><p class="counter-kicker">DOCUMENTO COMPLETO</p><h2>De la primera página a la entrega</h2><p id="docSummary"></p></div><div class="document-actions"><button type="button" id="docImport">＋ Añadir archivos</button><button type="button" id="docCamera">Escanear otra página</button><button type="button" id="docReceive">Recibir por QR</button><button type="button" id="docCancel" hidden>Cancelar proceso</button></div></div>
@@ -221,5 +222,6 @@
     transaction('readonly',s=>s.get('active')).then(record=>{if(record&&Date.now()-record.savedAt<14*86400000&&record.pages?.length){recovery=record;banner.hidden=false;}}).catch(()=>{});
     render();
   });
-  root.RealScanDocuments={activate,deactivate,reset,status,geometry,addFiles,fromInbox,makePdf,backup,restoreFile,render,reviewPage};
+  function setOptions(patch){if(busy)return;const next={...options,...patch};if(!['color','gray'].includes(next.color)||!['single','manual'].includes(next.duplex)||!Number.isInteger(next.sets)||next.sets<1||next.sets>10)return;options=next;persist();render();}
+  root.RealScanDocuments={setOptions,activate,deactivate,reset,status,geometry,addFiles,fromInbox,makePdf,backup,restoreFile,render,reviewPage};
 })(window);
