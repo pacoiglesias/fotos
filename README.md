@@ -1,5 +1,7 @@
 # RealScan Pro 3.20
 
+La 3.23 reúne tres etapas: preparación por servicio con cantidades y juegos claros; edición reversible y organización de páginas; y asistencia de calidad y preparación anticipada de impresión. Consulta `audit/MEJORAS_TRES_ETAPAS.md` para pruebas y límites de validación.
+
 Edición y composición de documentos y fotografías para mostrador. Desarrollado por Paco Iglesias.
 
 La 3.20 incorpora el estudio visual: tarjetas de servicios, hoja en vivo, herramientas de edición junto a la vista previa, comparación original/resultado, formatos frecuentes guardados sin fotografías y revisión del cliente de todas las hojas. Los ajustes avanzados conservan las funciones existentes. Consulta [los cambios y la validación](audit/ESTUDIO_3_20_0.md).
