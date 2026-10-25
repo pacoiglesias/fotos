@@ -29,6 +29,7 @@
   const busy=doc.active?doc.busy:work.busy;
   for(const el of $('serviceFlow').querySelectorAll('button,input,select'))el.disabled=!allowed||busy;
   $('flowAddMissing').hidden=doc.active||!work.missing.length;$('flowAddMissing').textContent='Agregar '+(photos?'foto':sideNames[work.missing[0]]||'imagen');
+  if($('flowUndo')){const side=RealScanStudio.getSelected();$('flowUndo').disabled=!allowed||busy||!window.RealScanEditor?.canUndo(side);$('flowRedo').disabled=!allowed||busy||!window.RealScanEditor?.canRedo(side);$('flowReplace').disabled=!allowed||busy;}
   $('flowDocumentOptions').hidden=!doc.active;
   if(doc.active){$('flowDocColor').value=doc.options.color||'color';$('flowDocDuplex').value=doc.options.duplex||'single';}
   $('flowDuplexHint').hidden=!doc.active||doc.options.duplex!=='manual';
@@ -55,9 +56,13 @@
   $('flowAddMissing').onclick=()=>{if(unlocked())RealScanWorkflow.moveTo(2,RealScanWorkflow.describe().missing[0]);};
   const dock=document.createElement('section');dock.id='flowDock';dock.className='flow-dock';dock.setAttribute('aria-label','Resumen y siguiente acción');dock.innerHTML='<div><strong id="flowSummary"></strong><span>Vista previa y medidas antes de imprimir</span></div><button type="button" id="flowPrimary" class="counter-primary">Revisar e imprimir</button>';document.body.append(dock);
   $('flowPrimary').onclick=()=>{if(!unlocked())return;if(RealScanDocuments.status().active)$('docPrint').click();else if(document.body.dataset.outputMode==='digital')$('btnOpenDeliveryModal').click();else handlePrintDirect();};
+  const tools=$('studioEditorTools');
+  for(const [id,label,fn]of [['flowUndo','↶ Deshacer',()=>handleSlotUndo(RealScanStudio.getSelected())],['flowRedo','↷ Rehacer',()=>handleSlotRedo(RealScanStudio.getSelected())],['flowReplace','Cambiar imagen',()=>{const side=RealScanStudio.getSelected();$({front:'fileInputFront',back:'fileInputBack',page3:'fileInputPage3',page4:'fileInputPage4'}[side]).click();}]]){const b=button(label,()=>{fn();if(typeof saveActiveDraft==='function')saveActiveDraft();},'studio-button');b.id=id;tools.append(b);}
+  const repeat=button('Repetir servicio con imágenes nuevas',()=>RealScanCounter.openNewService('repeat','file'),'flow-repeat');repeat.id='flowRepeat';dock.firstElementChild.append(repeat);
+  if($('bannerActiveDraftRecovery'))$('bannerActiveDraftRecovery').setAttribute('aria-label','Recuperar trabajo interrumpido');
   document.addEventListener('realscan:studio-updated',update);document.addEventListener('realscan:document-updated',update);
   document.addEventListener('change',()=>requestAnimationFrame(update));document.addEventListener('click',()=>requestAnimationFrame(update));
-  window.RealScanServiceFlow={update,getSelected:()=>selected,select(side){selected=side;RealScanStudio.selectSlot(side);}};update();
+  window.RealScanServiceFlow={update,getSelected:()=>RealScanStudio.getSelected(),select(side){selected=side;RealScanStudio.selectSlot(side);}};update();
  }
  document.addEventListener('DOMContentLoaded',()=>setTimeout(init,1));
 })();

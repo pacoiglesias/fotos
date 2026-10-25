@@ -8,3 +8,6 @@ Las medidas permanecen en el motor compartido. Los juegos de fotos/identificacio
 Validación: build y regresión service-flow (formatos, cantidades, hojas reales, opciones de documentos, bloqueo y tamaños de pantalla).
 
 Las etapas siguientes añaden edición y recuperación, y después asistencia y rendimiento.
+
+## Etapa 2 — 3.22.0
+Edición de foto/identificación seleccionada con deshacer, rehacer y reemplazar; repetición del servicio con confirmación de limpieza. Documentos con historial de ocho acciones y hasta 24 MB adicionales de imágenes históricas, selección por miniatura y teclado, reordenación arrastrando o por botones, reemplazo de imagen y edición tocando la página de salida. El historial se limpia al terminar el servicio. Se conservan los originales y la recuperación local existente.

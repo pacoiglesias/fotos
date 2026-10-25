@@ -149,7 +149,7 @@
     const left=$('colControlPanel'),stage=$('colStageWorkspace'),grid=left.parentElement;
     grid.classList.add('studio-grid');stage.classList.add('studio-stage');
     const welcome=node('section','studio-welcome');welcome.id='studioWelcome';
-    welcome.innerHTML='<div class="studio-welcome-heading"><div><p class="studio-eyebrow">TU ESTUDIO DE IMPRESIÓN</p><h1>Un buen trabajo empieza aquí.</h1><p id="studioWelcomeHint"></p></div><span class="studio-version">ESTUDIO 3.21</span></div><div class="studio-services"></div>';
+    welcome.innerHTML='<div class="studio-welcome-heading"><div><p class="studio-eyebrow">TU ESTUDIO DE IMPRESIÓN</p><h1>Un buen trabajo empieza aquí.</h1><p id="studioWelcomeHint"></p></div><span class="studio-version">ESTUDIO 3.22</span></div><div class="studio-services"></div>';
     $('counterService').before(welcome);
     const art=illustrations();const tasks=document.querySelector('.operator-tasks');
     welcome.querySelector('.studio-services').append(tasks);
@@ -174,7 +174,7 @@
     for(const [side,tail]of Object.entries(suffix))$('previewImg'+tail)?.addEventListener('click',()=>{if(unlocked())selectSlot(side);});
     document.addEventListener('change',()=>requestAnimationFrame(update));document.addEventListener('click',e=>{if(e.target.closest('[data-task]'))engaged=true;requestAnimationFrame(update);});
     window.addEventListener('storage',e=>{if(e.key===PRESETS_KEY)renderPresets();});
-    setInterval(update,650);update();window.RealScanStudio={update,applyPreset,savedPresets,selectSlot,markApproved};
+    setInterval(update,650);update();window.RealScanStudio={getSelected:()=>selected,update,applyPreset,savedPresets,selectSlot,markApproved};
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,0));else init();
 })();
