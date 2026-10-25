@@ -21,11 +21,11 @@ La comprobación real de Firebase en esta sesión devuelve credenciales caducada
 El navegador no confirma la entrega física de papel. Deben comprobarse orientación, márgenes, escala 100 %, orden de doble cara y calidad real de la impresora. El OCR es automático y puede equivocarse con imágenes borrosas; revisar nombres y números.
 ## Resultado de la auditoría
 
-La aplicación y sus once comprobaciones nuevas de mostrador pasaron la batería completa de GitHub Actions sobre el commit c9d64b85db41135308fadcdb415497caa7526dbb:
+La aplicación pasó la batería completa de GitHub Actions sobre el commit c9d64b85db41135308fadcdb415497caa7526dbb:
 https://github.com/pacoiglesias/fotos/actions/runs/40202440537
 
 La batería incluye Chromium y WebKit, OCR real español/inglés, lectura del texto generado en PDF, paginación real de ocho hojas con reversos horizontales en blanco, lotes con deshacer, recuperación de cola tras recargar, y comprobaciones de interfaz de 320 a 1440 px. Los PDF y las capturas se guardan como evidencia del workflow.
 
 El publicador pasó además doce escenarios de Windows PowerShell con Node real: éxito, preparación de acceso, acceso inválido, commit incorrecto, fallo de instalación, fallo de publicación, Node antiguo, Node 24.13, error en stderr, renovación, cancelación y ausencia de Git Credential Manager. La descarga pública puede continuar sin GCM; enviar cambios a GitHub sigue necesitando un acceso válido.
 
-Los cambios de cierre del publicador y este informe no modifican la aplicación verificada. La ejecución automática del commit final vuelve a comprobar el conjunto completo. Build y respaldo no equivalen a deploy: Firebase requiere renovar la sesión caducada antes de publicar.
+El cierre añade una comprobación de que guardar de nuevo un pedido actualiza su copia sin duplicarla, además de los cambios del publicador. La ejecución automática del commit final vuelve a comprobar el conjunto completo. Build y respaldo no equivalen a deploy: Firebase requiere renovar la sesión caducada antes de publicar.
