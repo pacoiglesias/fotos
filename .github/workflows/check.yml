@@ -35,6 +35,7 @@ jobs:
             .audit/print-usability/review-*.png
             .audit/service-flow/
             .audit/workbench-324/
+            .audit/modern-326/
             .audit/mobile-experience-chromium/
             .audit/mobile-experience-webkit/
             .audit/studio-320/results.json

@@ -10,6 +10,7 @@ try {
     "studio-regression",
     "service-flow-regression",
     "workbench-regression",
+    "modern-regression",
     "print-usability-regression",
     "mobile-workflow-regression",
     "functional-audit-regression",

@@ -1,118 +1,81 @@
-(function(root) {
-  "use strict";
-  const key = "realscan_duplex_profiles_v1";
-  let profiles = [];
-  try {
-    profiles = JSON.parse(localStorage.getItem(key) || "[]");
-    if (!Array.isArray(profiles)) profiles = [];
-  } catch {
+/* Manual duplex: placement is learned from the operator's physical test, never guessed. */
+(function(root){
+ 'use strict';
+ const key='realscan_duplex_profiles_v1',activeKey='realscan_duplex_active_v1',$=id=>document.getElementById(id);
+ let profiles=[],activeName='',firstPass=null;
+ try{const saved=JSON.parse(localStorage.getItem(key)||'[]');profiles=Array.isArray(saved)?saved.filter(p=>p&&typeof p.name==='string'&&p.name.length<=80&&typeof p.notes==='string'&&p.notes.length<=180&&['book','calendar'].includes(p.flip)).slice(-20):[];activeName=localStorage.getItem(activeKey)||'';}catch{}
+ function unlocked(){return $('loginOverlay')?.classList.contains('hidden')&&(!$('setupOverlay')||$('setupOverlay').classList.contains('hidden'));}
+ function paperKey(){const doc=root.RealScanDocuments?.status();return doc?.active?doc.options.paper:state.paperSize;}
+ function currentPaper(){return PAPER_SPECS[paperKey()]||getActivePaperSpec();}
+ function structured(p){return p&&['up','down'].includes(p.face)&&['top','bottom'].includes(p.edge)&&p.paper===paperKey()&&Number.isFinite(p.verifiedAt);}
+ function guide(){const p=profiles.find(p=>p.name===activeName);return structured(p)?{...p}:null;}
+ function sheet(face,edge){const visible=face==='up';return '<svg viewBox="0 0 240 166" role="img" aria-label="'+(visible?'Cara A visible hacia arriba':'Cara A hacia abajo, oculta')+'; '+(edge==='top'?'borde ARRIBA entra primero':'borde contrario a ARRIBA entra primero')+'"><rect x="28" y="13" width="184" height="138" rx="17" fill="var(--duplex-tray,#e8eef5)"/><path d="M53 30h134" stroke="#8296ac" stroke-width="6" stroke-linecap="round"/><path d="m120 4-7 10h14z" fill="#275ecb"/><rect x="73" y="35" width="94" height="110" rx="5" fill="white" stroke="#7188a2" stroke-width="2"/><rect x="80" y="'+(edge==='top'?'39':'131')+'" width="80" height="7" rx="2" fill="#f59e0b"/><text x="120" y="84" text-anchor="middle" font-size="24" font-weight="700" fill="#275ecb">'+(visible?'A':'B')+'</text><text x="120" y="103" text-anchor="middle" font-size="9" fill="#435a72">'+(visible?'YA IMPRESA':'SIN IMPRIMIR')+'</text><path d="M120 23v-8m-5 5 5-5 5 5" stroke="#275ecb" stroke-width="2" fill="none"/></svg>';}
+ function renderGuide(container,placement=guide()){
+  if(!container)return;container.replaceChildren();container.className='duplex-placement';
+  if(!placement){const p=document.createElement('p');p.textContent='No hay una colocación verificada para este papel. Haz primero la prueba de una hoja; no adivines el giro.';container.append(p);return;}
+  const figure=document.createElement('div');figure.className='duplex-placement-art';figure.innerHTML=sheet(placement.face,placement.edge);
+  const text=document.createElement('div'),title=document.createElement('strong');title.textContent=placement.face==='up'?'Cara A impresa hacia ARRIBA':'Cara A impresa hacia ABAJO';
+  const edge=document.createElement('p');edge.textContent=placement.edge==='top'?'Entra primero el borde naranja marcado ARRIBA.':'Entra primero el borde contrario al marcado ARRIBA.';
+  const note=document.createElement('small');note.textContent='El dibujo muestra la hoja al entrar en la bandeja. '+(placement.flip==='book'?'Lectura final: como un libro.':'Lectura final: como un calendario.');text.append(title,edge,note);container.append(figure,text);
+  if(placement.name){const profile=document.createElement('p');profile.className='duplex-placement-profile';profile.textContent='Tu prueba: '+placement.name+' · '+(PAPER_SPECS[placement.paper]?.shortName||placement.paper);container.append(profile);}
+ }
+ function placement(){return {face:$('duplexFace').value,edge:$('duplexEdge').value,flip:$('duplexFlip').value};}
+ function invalidate(){ $('duplexVerified').checked=false;firstPass=null;$('duplexJobReinserted').checked=false;update(); }
+ function update(){
+  const p=placement(),complete=['up','down'].includes(p.face)&&['top','bottom'].includes(p.edge);
+  $('duplexVerified').disabled=!complete;$('duplexSave').disabled=!complete||!$('duplexVerified').checked;
+  $('duplexJobA').disabled=!complete||!$('duplexVerified').checked;
+  $('duplexJobB').disabled=!complete||!$('duplexVerified').checked||!firstPass||!$('duplexJobReinserted').checked;
+  $('duplexJobReinserted').disabled=!firstPass;
+  $('duplexSheet').dataset.flip=p.flip;
+  $('duplexInstruction').textContent=p.flip==='book'?'Comprueba A y B leyéndolas como un libro.':'Comprueba A y B leyéndolas como un calendario.';
+  renderGuide($('duplexPlacementPreview'),complete?p:null);
+ }
+ function refresh(){const select=$('duplexProfiles');select.replaceChildren();const empty=document.createElement('option');empty.value='';empty.textContent='Nueva prueba de una hoja';select.append(empty);for(const p of profiles){const o=document.createElement('option');o.value=p.name;o.textContent=p.name+(structured(p)?' · probada':' · repetir prueba');select.append(o);}}
+ function load(){const p=profiles.find(p=>p.name===$('duplexProfiles').value);activeName=p?.name||'';firstPass=null;$('duplexJobReinserted').checked=false;
+  $('duplexName').value=p?.name||'';$('duplexNotes').value=p?.notes||'';$('duplexFlip').value=p?.flip||'book';$('duplexFace').value=p?.face||'';$('duplexEdge').value=p?.edge||'';$('duplexVerified').checked=!!structured(p);update();
+  $('duplexStatus').textContent=p?(structured(p)?'Colocación guardada para este papel. Repite la prueba si cambias de impresora, bandeja o ajustes.':'Este perfil no tiene una colocación verificada para el papel actual. Conservamos tus notas; repite la prueba.'):'Completa primero la prueba con una sola hoja común. No uses aún las hojas del cliente.';
+  try{localStorage.setItem(activeKey,activeName);}catch{}
+ }
+ function open(){
+  if(!unlocked())return;let modal=$('duplexAssistantModal');
+  if(!modal){modal=document.createElement('div');modal.id='duplexAssistantModal';modal.className='hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','duplexTitle');
+   modal.innerHTML='<div class="duplex-dialog"><div class="duplex-title-row"><div><span class="duplex-kicker">TU IMPRESORA · TU COLOCACIÓN</span><h2 id="duplexTitle">Doble cara, sin adivinar.</h2></div><button type="button" data-close-modal="duplexAssistantModal" aria-label="Cerrar guía">Cerrar</button></div><p>La impresora no informa al navegador cómo toma el papel. Guardaremos la colocación que tú compruebes con una hoja.</p><label>Impresora y bandeja guardadas<select id="duplexProfiles"></select></label><section class="duplex-step"><span class="duplex-step-number">1</span><div><h3>Imprime la cara A</h3><p>Usa una hoja común y escala 100 %. La prueba lleva una A grande y el borde ARRIBA en naranja.</p><button type="button" id="duplexTestA">Descargar prueba A</button></div></section><section class="duplex-step"><span class="duplex-step-number">2</span><div><h3>Prueba una colocación</h3><p>Después de imprimir A, elige cómo vas a meter de nuevo esa misma hoja. El dibujo cambia con tus respuestas.</p><div class="duplex-pickers"><label>La cara A ya impresa queda<select id="duplexFace"><option value="">Elige una colocación</option><option value="down">Hacia abajo · no la veo</option><option value="up">Hacia arriba · la veo</option></select></label><label>El borde que entra primero es<select id="duplexEdge"><option value="">Elige el borde</option><option value="top">El naranja · ARRIBA</option><option value="bottom">El contrario a ARRIBA</option></select></label></div><div id="duplexPlacementPreview"></div><p>Imprime B en esa misma hoja. Si cae encima de A, cambia la cara. Si B queda de cabeza al leerla con el giro elegido, cambia el borde y repite con una hoja nueva.</p><button type="button" id="duplexTestB">Descargar prueba B</button></div></section><section class="duplex-step"><span class="duplex-step-number">3</span><div><h3>Comprueba y guarda tu dibujo</h3><label>Cómo se lee el resultado<select id="duplexFlip"><option value="book">Como un libro · giro lateral</option><option value="calendar">Como un calendario · giro superior</option></select></label><div class="duplex-demo" aria-hidden="true"><div id="duplexSheet" class="duplex-sheet"><span class="duplex-front">A<br>ARRIBA ↑</span><span class="duplex-back">B<br>ARRIBA ↑</span></div></div><p id="duplexInstruction"></p><label>Nombre de impresora y bandeja<input id="duplexName" maxlength="80" placeholder="Ej. Mostrador · bandeja trasera"></label><label>Una nota para recordarlo<input id="duplexNotes" maxlength="180" placeholder="Opcional: posición de la bandeja o ajustes"></label><label class="duplex-confirm"><input id="duplexVerified" type="checkbox"><span>A y B están en caras distintas de la MISMA hoja y se leen derechas con el giro elegido.</span></label><button type="button" id="duplexSave" class="duplex-primary">Guardar esta colocación</button></div></section><details class="duplex-job"><summary>Usar con una identificación de frente y reverso</summary><p>Descarga e imprime el frente a 100 %. Recoloca una hoja siguiendo el dibujo; confirma antes de descargar el reverso.</p><button type="button" id="duplexJobA">Descargar frente del trabajo</button><label class="duplex-confirm"><input id="duplexJobReinserted" type="checkbox"><span>El frente salió bien y reinserté esa hoja como muestra el dibujo.</span></label><button type="button" id="duplexJobB">Descargar reverso del trabajo</button></details><p id="duplexStatus" role="status" aria-live="polite"></p><p class="duplex-note">La colocación se guarda en este navegador. Para varias hojas, comprueba también el orden de salida y empieza con dos páginas.</p></div>';
+   document.body.append(modal);
+   for(const id of ['duplexFace','duplexEdge','duplexFlip'])$(id).onchange=invalidate;
+   $('duplexName').oninput=$('duplexNotes').oninput=invalidate;
+   $('duplexVerified').onchange=$('duplexJobReinserted').onchange=update;
+   $('duplexProfiles').onchange=load;
+   $('duplexTestA').onclick=()=>testPdf('A').catch(fail);$('duplexTestB').onclick=()=>testPdf('B').catch(fail);
+   $('duplexJobA').onclick=()=>jobPdf(1).catch(fail);$('duplexJobB').onclick=()=>jobPdf(2).catch(fail);
+   $('duplexSave').onclick=()=>{
+    if(!unlocked())return;const p=placement();if(!$('duplexVerified').checked||!$('duplexName').value.trim()||!p.face||!p.edge){$('duplexStatus').textContent='Elige cara y borde, escribe el nombre y comprueba ambas caras antes de guardar.';return;}
+    const profile={name:$('duplexName').value.trim(),notes:$('duplexNotes').value.trim(),...p,paper:paperKey(),verifiedAt:Date.now()};const next=[...profiles.filter(p=>p.name!==profile.name),profile].slice(-20);
+    try{localStorage.setItem(key,JSON.stringify(next));localStorage.setItem(activeKey,profile.name);profiles=next;activeName=profile.name;refresh();$('duplexProfiles').value=profile.name;$('duplexStatus').textContent='Colocación guardada. La próxima vez verás el dibujo de esta impresora, bandeja y papel.';document.dispatchEvent(new Event('realscan:duplex-profile-updated'));}catch{$('duplexStatus').textContent='No se pudo guardar en este navegador. Conserva cara y borde por escrito; la prueba no se guardó.';}
+   };
   }
-  function open() {
-    let modal = document.getElementById("duplexAssistantModal");
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.id = "duplexAssistantModal";
-      modal.className = "hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4";
-      modal.setAttribute("role", "dialog");
-      modal.setAttribute("aria-modal", "true");
-      modal.setAttribute("aria-labelledby", "duplexTitle");
-      modal.innerHTML = '<div class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-5 max-w-xl w-full space-y-3 max-h-[90vh] overflow-y-auto"><h2 id="duplexTitle" class="font-bold text-lg">Doble cara manual, paso a paso</h2><p class="text-xs">Prueba primero con UNA hoja común. Usa la misma impresora, bandeja, tamaño y escala 100 %. El navegador no conoce cómo recoge o entrega el papel tu impresora.</p><label class="block">Perfil probado <select id="duplexProfiles" class="block w-full border p-2 rounded bg-white dark:bg-slate-800"></select></label><label class="block">Giro de la hoja <select id="duplexFlip" class="block w-full border p-2 rounded bg-white dark:bg-slate-800"><option value="book">Lateral: como una página de libro</option><option value="calendar">Arriba: como un calendario</option></select></label><div class="duplex-demo"><div id="duplexSheet" class="duplex-sheet"><span class="duplex-front">A<br>ARRIBA ↑</span><span class="duplex-back">B<br>ARRIBA ↑</span></div></div><p id="duplexInstruction" class="text-sm font-semibold"></p><label class="block text-xs">Impresora y bandeja <input id="duplexName" maxlength="80" class="block w-full border rounded p-2 bg-white dark:bg-slate-800" placeholder="Ejemplo: impresora del mostrador, bandeja trasera"></label><label class="block text-xs">Cómo la reinsertaste en la prueba <input id="duplexNotes" maxlength="180" class="block w-full border rounded p-2 bg-white dark:bg-slate-800" placeholder="Anota cara hacia arriba/abajo y borde que entra primero"></label><div class="flex flex-wrap gap-2"><button type="button" id="duplexTestA" class="px-3 py-2 rounded bg-slate-200 dark:bg-slate-700">1. Descargar prueba A</button><button type="button" id="duplexTestB" class="px-3 py-2 rounded bg-slate-200 dark:bg-slate-700">2. Descargar prueba B</button></div><label class="block text-xs"><input id="duplexVerified" type="checkbox"> He impreso ambas caras en la misma hoja común y comprobado cara, posición y orientación.</label><button type="button" id="duplexSave" class="px-3 py-2 rounded bg-indigo-600 text-white">Guardar perfil verificado</button><p class="text-xs">Con el perfil verificado, descarga e imprime primero el frente del trabajo. Recoloca UNA hoja siguiendo tu prueba y después imprime el reverso. Empieza siempre por una pieza de prueba.</p><div class="flex flex-wrap gap-2"><button type="button" id="duplexJobA" class="px-3 py-2 rounded bg-emerald-700 text-white">Descargar frente del trabajo</button><button type="button" id="duplexJobB" class="px-3 py-2 rounded bg-emerald-700 text-white">Descargar reverso del trabajo</button><button type="button" data-close-modal="duplexAssistantModal" class="px-3 py-2 rounded bg-slate-200 dark:bg-slate-700">Cerrar</button></div><p id="duplexStatus" role="status" class="text-xs"></p></div>';
-      document.body.append(modal);
-      const $ = (id) => document.getElementById(id);
-      $("duplexFlip").onchange = () => {
-        $("duplexSheet").dataset.flip = $("duplexFlip").value;
-        $("duplexInstruction").textContent = $("duplexFlip").value === "book" ? "Gira lateralmente, como una página de libro; no gires la hoja sobre la mesa." : "Gira de arriba hacia abajo, como una hoja de calendario; no la rotes sobre la mesa.";
-        $("duplexVerified").checked = false;
-      };
-      $("duplexTestA").onclick = () => testPdf("A");
-      $("duplexTestB").onclick = () => testPdf("B");
-      $("duplexJobA").onclick = () => jobPdf(1);
-      $("duplexJobB").onclick = () => jobPdf(2);
-      $("duplexSave").onclick = () => {
-        if (!$("duplexVerified").checked || !$("duplexName").value.trim() || !$("duplexNotes").value.trim()) {
-          $("duplexStatus").textContent = "Completa el nombre, la colocación real y la comprobación de ambas caras.";
-          return;
-        }
-        const profile = { name: $("duplexName").value.trim(), notes: $("duplexNotes").value.trim(), flip: $("duplexFlip").value, verifiedAt: Date.now() };
-        profiles = profiles.filter((p) => p.name !== profile.name);
-        profiles.push(profile);
-        try {
-          localStorage.setItem(key, JSON.stringify(profiles));
-          refresh();
-          $("duplexProfiles").value = profile.name;
-          $("duplexStatus").textContent = "Perfil guardado para esta impresora y bandeja.";
-        } catch {
-          $("duplexStatus").textContent = "No se pudo guardar el perfil. Conserva las instrucciones por escrito.";
-        }
-      };
-      $("duplexProfiles").onchange = () => {
-        const p = profiles.find((p2) => p2.name === $("duplexProfiles").value);
-        if (!p) return;
-        $("duplexName").value = p.name;
-        $("duplexNotes").value = p.notes;
-        $("duplexFlip").value = p.flip;
-        $("duplexFlip").onchange();
-        $("duplexVerified").checked = true;
-        $("duplexStatus").textContent = "Perfil previamente verificado. Repite la prueba si cambias impresora, bandeja o papel.";
-      };
-    }
-    refresh();
-    document.getElementById("duplexFlip").onchange();
-    openModal("duplexAssistantModal");
-  }
-  function refresh() {
-    const select = document.getElementById("duplexProfiles");
-    select.replaceChildren();
-    const empty = document.createElement("option");
-    empty.value = "";
-    empty.textContent = "Nueva prueba de orientación";
-    select.append(empty);
-    for (const p of profiles) {
-      const option = document.createElement("option");
-      option.value = p.name;
-      option.textContent = p.name;
-      select.append(option);
-    }
-  }
-  async function testPdf(face) {
-    if (typeof ensureJsPdf === 'function') await ensureJsPdf();
-    const paper = getActivePaperSpec(), doc = new jspdf.jsPDF({ unit: "mm", format: [paper.widthMm, paper.heightMm] });
-    doc.setFontSize(26);
-    doc.text("PRUEBA " + face, 25, 35);
-    doc.text("ARRIBA / TOP", 25, 55);
-    doc.line(70, 65, 70, 85);
-    doc.line(70, 65, 65, 72);
-    doc.line(70, 65, 75, 72);
-    doc.rect((paper.widthMm - 85.6) / 2, 110, 85.6, 53.98);
-    doc.setFontSize(12);
-    doc.text("Papel comun - Escala 100% - Misma bandeja", 20, 185);
-    downloadPdfBlob(doc, "RealScan_Prueba_Duplex_" + face + ".pdf");
-  }
-  async function jobPdf(face) {
-    if (typeof ensureJsPdf === 'function') await ensureJsPdf();
-    const status = document.getElementById("duplexStatus");
-    if (!document.getElementById("duplexVerified").checked) {
-      status.textContent = "Completa primero la prueba con papel común.";
-      return;
-    }
-    if (state.activeCategory === "photos" || state.documentPageCount > 2 || !state.images.front.processedDataUrl || !state.images.back.processedDataUrl) {
-      status.textContent = "Este asistente prepara un documento de frente y reverso. Carga ambas caras; usa el flujo habitual para fotos o más páginas.";
-      return;
-    }
-    const old = { printMode: state.printMode, duplicateCard: state.duplicateCard, documentPageCount: state.documentPageCount };
-    try {
-      Object.assign(state, { printMode: "both_separate", duplicateCard: false, documentPageCount: 2 });
-      const doc = generatePdfDoc();
-      if (!doc) throw Error("Revisa las medidas y el papel.");
-      if (doc.getNumberOfPages() !== 2) throw Error("El trabajo no se compone de dos caras separadas.");
-      doc.deletePage(face === 1 ? 2 : 1);
-      downloadPdfBlob(doc, "RealScan_Duplex_" + (face === 1 ? "Frente" : "Reverso") + ".pdf");
-      status.textContent = "Imprime a tamaño real 100 %. " + document.getElementById("duplexNotes").value;
-    } catch (e) {
-      status.textContent = e.message;
-    } finally {
-      Object.assign(state, old);
-    }
-  }
-  root.RealScanDuplex = { open };
+  refresh();$('duplexProfiles').value=activeName;load();openModal('duplexAssistantModal');
+ }
+ function fail(e){$('duplexStatus').textContent=e.message||'No se pudo preparar la prueba. Vuelve a intentarlo.';}
+ async function testPdf(face){
+  if(!unlocked())return;if(typeof ensureJsPdf==='function')await ensureJsPdf();if(!unlocked())return;
+  const paper=currentPaper(),doc=new jspdf.jsPDF({unit:'mm',format:[paper.widthMm,paper.heightMm]});const w=paper.widthMm,h=paper.heightMm;
+  doc.setFillColor(245,158,11);doc.rect(9,9,w-18,12,'F');doc.setTextColor(25,40,55);doc.setFontSize(12);doc.text('ARRIBA / TOP - BORDE NARANJA',w/2,17,{align:'center'});
+  doc.setFontSize(Math.min(100,h*.32));doc.text(face,w/2,h*.52,{align:'center'});doc.setFontSize(14);doc.text('PRUEBA - CARA '+face,w/2,h*.66,{align:'center'});
+  doc.setFontSize(10);doc.text(doc.splitTextToSize('Una hoja comun - misma impresora y bandeja - escala 100%',w-20),w/2,h-32,{align:'center'});doc.text(doc.splitTextToSize('A y B deben quedar en caras diferentes y leerse derechas.',w-20),w/2,h-18,{align:'center'});
+  downloadPdfBlob(doc,'RealScan_Prueba_Duplex_'+face+'.pdf');$('duplexStatus').textContent='Prueba '+face+' descargada. Descargar no confirma que la impresora haya impreso.';
+ }
+ function signature(){return JSON.stringify([state._jobRevision,paperKey(),state.images.front.processedDataUrl,state.images.back.processedDataUrl,placement()]);}
+ async function jobPdf(face){
+  const status=$('duplexStatus');if(!unlocked())return;
+  if(!$('duplexVerified').checked||!$('duplexFace').value||!$('duplexEdge').value){status.textContent='Completa primero la prueba con papel común.';return;}
+  if(face===2&&(firstPass!==signature()||!$('duplexJobReinserted').checked)){status.textContent='Imprime el frente y confirma la recolocación. Si cambió el trabajo, prepara otra vez el frente.';firstPass=null;update();return;}
+  if(state.activeCategory==='photos'||state.documentPageCount>2||!state.images.front.processedDataUrl||!state.images.back.processedDataUrl){status.textContent='Carga frente y reverso de una identificación. Para documentos de varias páginas usa la guía de impares y pares.';return;}
+  const preparedSignature=signature();if(typeof ensureJsPdf==='function')await ensureJsPdf();if(!unlocked()||preparedSignature!==signature())return;
+  const old={printMode:state.printMode,duplicateCard:state.duplicateCard,documentPageCount:state.documentPageCount};
+  try{Object.assign(state,{printMode:'both_separate',duplicateCard:false,documentPageCount:2});const doc=generatePdfDoc();if(!doc||doc.getNumberOfPages()!==2)throw Error('Revisa medidas, papel y las dos caras.');doc.deletePage(face===1?2:1);downloadPdfBlob(doc,'RealScan_Duplex_'+(face===1?'Frente':'Reverso')+'.pdf');status.textContent='Imprime a tamaño real 100 %. Sigue el dibujo de cara y borde.';}
+  catch(e){fail(e);return;}finally{Object.assign(state,old);}
+  if(face===1){firstPass=signature();$('duplexJobReinserted').checked=false;}else firstPass=null;update();
+ }
+ root.RealScanDuplex={open,getGuide:guide,renderGuide};
 })(window);

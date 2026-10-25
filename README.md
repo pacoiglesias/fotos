@@ -1,8 +1,8 @@
-# RealScan Pro 3.25.1
+# RealScan Pro 3.26.0
 
 [Registro de cambios](CHANGELOG.md) · [Auditoría 3.25](audit/MOVIL_3_25.md)
 
-La 3.25.1 corrige el cierre de publicación usando la API oficial de Firebase, conserva los fallos reales y mantiene la verificación del build en ambos sitios.
+La 3.26.0 corrige el cierre de publicación usando la API oficial de Firebase, conserva los fallos reales y mantiene la verificación del build en ambos sitios.
 
 La 3.25 mejora los recorridos de escaneo local y envío al mostrador desde el móvil: servicios visuales, frente y reverso, acciones al alcance del pulgar, nombre de PDF, compartir con descarga alternativa y continuación guiada de doble cara manual.
 

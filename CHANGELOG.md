@@ -2,6 +2,15 @@
 
 Este registro describe los avances del código. Un build o un push no acreditan una publicación: el deploy se confirma comprobando el mismo commit y build en los dominios de ambos sitios. Las pruebas físicas de papel, giro y calidad se realizan con la impresora del establecimiento.
 
+## 3.26.0 - Mostrador visual y doble cara guiada
+
+- Interfaz coherente de mostrador y móvil: tarjetas de servicio, contraste, controles táctiles y vista previa de la hoja.
+- Botones de papel frecuente conectados a las medidas reales y plantillas de encabezado editables con miniaturas.
+- Prueba A/B con borde naranja ARRIBA, selección explícita de cara y borde de entrada y dibujo que cambia con esas respuestas.
+- Perfiles de impresora, bandeja y papel comprobados por el usuario; se recuperan al abrir la guía. Los perfiles antiguos conservan notas y requieren completar la colocación.
+- El dibujo guardado aparece al reinsertar papel en documentos. En identificaciones se confirma la recolocación antes de preparar el reverso; cambios del trabajo invalidan la primera pasada.
+- Las medidas de impresión y los motores de captura, PDF y OCR se mantienen compartidos. La orientación física requiere la prueba en la impresora real.
+
 ## Ajuste del BAT - 25 de octubre de 2026
 
 - Los mensajes de progreso nativos se muestran como texto sin bloques NativeCommandError de PowerShell. Se conservan stderr y los codigos de salida reales; pruebas con procesos reales que terminan en 0 y 7.
