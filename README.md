@@ -1,5 +1,7 @@
 # RealScan Pro 3.25
 
+[Registro de cambios](CHANGELOG.md) · [Auditoría 3.25](audit/MOVIL_3_25.md)
+
 La 3.25 mejora los recorridos de escaneo local y envío al mostrador desde el móvil: servicios visuales, frente y reverso, acciones al alcance del pulgar, nombre de PDF, compartir con descarga alternativa y continuación guiada de doble cara manual.
 
 La 3.23 reunió tres etapas: preparación por servicio con cantidades y juegos claros; edición reversible y organización de páginas; y asistencia de calidad y preparación anticipada de impresión. Consulta `audit/MEJORAS_TRES_ETAPAS.md` para pruebas y límites de validación.
