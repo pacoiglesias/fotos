@@ -56,8 +56,16 @@ try {
         Write-Host 'GIT: comprobando conexion con el repositorio de RealScan.' -ForegroundColor Cyan
         Invoke-ReleaseStep 'git.exe' @('ls-remote','--exit-code','https://github.com/pacoiglesias/fotos.git','refs/heads/main')
         Write-Host 'GITHUB: preparando el acceso de pacoiglesias con Git Credential Manager.' -ForegroundColor Cyan
-        Invoke-ReleaseStep 'git.exe' @('credential-manager','--version')
-        Invoke-ReleaseStep 'git.exe' @('credential-manager','configure')
+        $gcmReady = $true
+        try {
+            Invoke-ReleaseStep 'git.exe' @('credential-manager','--version')
+            Invoke-ReleaseStep 'git.exe' @('credential-manager','configure')
+        } catch {
+            $gcmReady = $false
+            Write-Host 'Git Credential Manager no esta disponible. La descarga del repositorio publico puede continuar sin iniciar sesion en GitHub.' -ForegroundColor Yellow
+            Write-Host 'Para enviar cambios desde Git, repara Git Credential Manager. Este publicador solo descarga la version respaldada.'
+        }
+        if ($gcmReady) {
         $githubAccounts = @(& git.exe credential-manager github list)
         if ($LASTEXITCODE -ne 0) { throw 'No se pudieron consultar las cuentas de GitHub. Comprueba Git Credential Manager.' }
         $githubAccounts = @($githubAccounts | ForEach-Object { ([string]$_).Trim() })
@@ -72,6 +80,7 @@ try {
             }
         }
         Write-Host 'Cuenta GitHub guardada. Se conserva el historial y los archivos de tu carpeta.' -ForegroundColor Green
+        }
     }
 
     # Use the installed CLI and its existing login. Only install if it is absent.

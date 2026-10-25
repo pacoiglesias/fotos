@@ -27,7 +27,7 @@ if ($Scenario) {
         Write-PublishTrace ('git ' + ($args -join ' '))
         $global:LASTEXITCODE = 0
         if ($args[0] -eq 'credential-manager') {
-            if ($args[1] -eq '--version') { '2.9.1' }
+            if ($args[1] -eq '--version') { if ($global:publishTestScenario -eq 'missing-gcm') { $global:LASTEXITCODE=3 } else { '2.9.1' } }
             if ($args[1] -eq 'github' -and $args[2] -eq 'login') { $global:publishTestGithubLoggedIn = $true }
             if ($args[1] -eq 'github' -and $args[2] -eq 'list' -and $global:publishTestGithubLoggedIn) { 'pacoiglesias' }
         }
@@ -49,7 +49,7 @@ if ($Scenario) {
         if ($args[0] -eq 'run' -and $global:publishTestScenario -eq 'publish-failure') { $global:LASTEXITCODE = 9 }
     }
     function global:npx.cmd { Write-PublishTrace ('npx ' + ($args -join ' ')); $global:LASTEXITCODE = 0 }
-    if ($Scenario -in @('prepare-access','auth-renew','auth-cancel')) { & $Publisher -PrepararAccesos }
+    if ($Scenario -in @('prepare-access','auth-renew','auth-cancel','missing-gcm')) { & $Publisher -PrepararAccesos }
     else { & $Publisher }
     exit $LASTEXITCODE
 }
@@ -68,7 +68,7 @@ foreach ($file in @($testPublisher, (Join-Path $PSScriptRoot 'firebase-access.ps
 }
 New-Item -ItemType Directory -Path (Join-Path $testRoot 'scripts') | Out-Null
 [IO.File]::WriteAllText((Join-Path $testRoot 'scripts\firebase-access.ps1'), 'param([string]$Action) [IO.File]::WriteAllText($env:REALSCAN_TEST_AUTH_MARKER, $Action); exit 0')
-foreach ($case in @('success','prepare-access','auth-failure','wrong-commit','install-failure','publish-failure','old-node','node-24-13','auth-stderr','auth-renew','auth-cancel')) {
+foreach ($case in @('success','prepare-access','auth-failure','wrong-commit','install-failure','publish-failure','old-node','node-24-13','auth-stderr','auth-renew','auth-cancel','missing-gcm')) {
     $caseTrace = Join-Path $testRoot ($case + '.trace')
     $caseOutput = Join-Path $testRoot ($case + '.output')
     $previousPreference = $ErrorActionPreference
@@ -80,7 +80,7 @@ foreach ($case in @('success','prepare-access','auth-failure','wrong-commit','in
     $caseText = Get-Content -LiteralPath $caseOutput -Raw
     $traceText = ''
     if (Test-Path -LiteralPath $caseTrace) { $traceText = Get-Content -LiteralPath $caseTrace -Raw }
-    if ($case -in @('success','prepare-access','node-24-13','auth-renew')) {
+    if ($case -in @('success','prepare-access','node-24-13','auth-renew','missing-gcm')) {
         if ($caseExit -ne 0 -or $traceText -notmatch 'npx playwright install chromium webkit' -or $traceText -notmatch 'npm run publish' -or $caseText -notmatch 'Node.js v24\..+ compatible') {
             throw "Fallo en $case. Salida: $caseText"
         }
