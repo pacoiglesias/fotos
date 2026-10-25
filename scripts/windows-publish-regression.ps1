@@ -44,6 +44,13 @@ if ($Scenario) {
             if ($args[1] -eq 'github' -and $args[2] -eq 'login') { $global:publishTestGithubLoggedIn = $true }
             if ($args[1] -eq 'github' -and $args[2] -eq 'list' -and $global:publishTestGithubLoggedIn) { 'pacoiglesias' }
         }
+        if ($args[0] -eq 'clone' -and $global:publishTestScenario -in @('native-stderr','native-stderr-failure')) {
+            $nativeCode = '0'
+            if ($global:publishTestScenario -eq 'native-stderr-failure') { $nativeCode = '7' }
+            & $global:realPublishNode -e 'process.stderr.write(String.fromCharCode(71,73,84,95,80,82,79,71,82,69,83,83,95,82,69,65,76,83,67,65,78,10));process.exit(Number(process.argv[1]))' $nativeCode
+            $nativeExit = $LASTEXITCODE
+            if ($nativeExit -ne 0) { $global:LASTEXITCODE=$nativeExit; return }
+        }
         if ($args[0] -eq 'clone') {
             $fixture = $args[$args.Count - 1]
             New-Item -ItemType Directory -Path $fixture | Out-Null
@@ -82,7 +89,7 @@ foreach ($file in @($testPublisher, (Join-Path $PSScriptRoot 'firebase-access.ps
 }
 New-Item -ItemType Directory -Path (Join-Path $testRoot 'scripts') | Out-Null
 [IO.File]::WriteAllText((Join-Path $testRoot 'scripts\firebase-access.ps1'), 'param([string]$Action) [IO.File]::WriteAllText($env:REALSCAN_TEST_AUTH_MARKER, $Action); exit 0')
-foreach ($case in @('success','prepare-access','auth-failure','wrong-commit','install-failure','publish-failure','old-node','node-24-13','auth-stderr','auth-renew','auth-cancel','missing-gcm')) {
+foreach ($case in @('success','prepare-access','auth-failure','wrong-commit','install-failure','publish-failure','old-node','node-24-13','auth-stderr','auth-renew','auth-cancel','missing-gcm','missing-sdk','native-stderr','native-stderr-failure')) {
     $caseTrace = Join-Path $testRoot ($case + '.trace')
     $caseOutput = Join-Path $testRoot ($case + '.output')
     $previousPreference = $ErrorActionPreference
@@ -94,7 +101,7 @@ foreach ($case in @('success','prepare-access','auth-failure','wrong-commit','in
     $caseText = Get-Content -LiteralPath $caseOutput -Raw
     $traceText = ''
     if (Test-Path -LiteralPath $caseTrace) { $traceText = Get-Content -LiteralPath $caseTrace -Raw }
-    if ($case -in @('success','prepare-access','node-24-13','auth-renew','missing-gcm','missing-sdk')) {
+    if ($case -in @('success','prepare-access','node-24-13','auth-renew','missing-gcm','missing-sdk','native-stderr')) {
         if ($caseExit -ne 0 -or $traceText -notmatch 'npx playwright install chromium webkit' -or $traceText -notmatch 'npm run publish' -or $caseText -notmatch 'Node.js v24\..+ compatible') {
             throw "Fallo en $case. Salida: $caseText"
         }
@@ -109,6 +116,11 @@ foreach ($case in @('success','prepare-access','auth-failure','wrong-commit','in
         if ($case -ne 'publish-failure' -and $traceText -match 'npm run publish') { throw "Se intento publicar despues del fallo de $case." }
         if ($case -eq 'auth-stderr' -and $caseText -notmatch 'PUBLICACION NO INICIADA') { throw 'Fallo al capturar stderr de Firebase.' }
         if ($case -eq 'old-node' -and $caseText -notmatch 'Se requiere Node.js 24') { throw 'La version antigua de Node no se rechazo correctamente.' }
+    }
+    if ($case -in @('native-stderr','native-stderr-failure')) {
+        if ($caseText -notmatch 'GIT_PROGRESS_REALSCAN') { throw 'Se perdio la salida stderr del proceso real.' }
+        if ($caseText -match 'NativeCommandError|CategoryInfo|FullyQualifiedErrorId') { throw 'PowerShell agrego un bloque de error a la salida nativa.' }
+        if ($case -eq 'native-stderr-failure' -and $caseText -notmatch 'codigo 7') { throw 'No se conservo el codigo real del proceso.' }
     }
     Write-Host "PASS publicador Windows: $case"
 }

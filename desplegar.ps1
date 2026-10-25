@@ -23,7 +23,7 @@ function Invoke-ReleaseStep {
     $previousPreference = $ErrorActionPreference
     try {
         $ErrorActionPreference = 'Continue'
-        & $Program @Arguments 2>&1 | Out-Host
+        & $Program @Arguments 2>&1 | ForEach-Object { [string]$_ } | Out-Host
         $stepExit = $LASTEXITCODE
     } finally { $ErrorActionPreference = $previousPreference }
     if ($stepExit -ne 0) {
@@ -88,7 +88,7 @@ try {
     $previousPreference = $ErrorActionPreference
     try {
         $ErrorActionPreference = 'Continue'
-        & node.exe $firebaseRunner --version 2>&1 | Out-Host
+        & node.exe $firebaseRunner --version 2>&1 | ForEach-Object { [string]$_ } | Out-Host
         $sdkExit = $LASTEXITCODE
     } finally { $ErrorActionPreference = $previousPreference }
     if ($sdkExit -ne 0) {
@@ -105,7 +105,7 @@ try {
         $previousPreference = $ErrorActionPreference
         try {
             $ErrorActionPreference = 'Continue'
-            & node.exe $firebaseRunner hosting:sites:list --project $project 2>&1 | Out-Host
+            & node.exe $firebaseRunner hosting:sites:list --project $project 2>&1 | ForEach-Object { [string]$_ } | Out-Host
             $accessExit = $LASTEXITCODE
         } finally { $ErrorActionPreference = $previousPreference }
         if ($accessExit -ne 0) {

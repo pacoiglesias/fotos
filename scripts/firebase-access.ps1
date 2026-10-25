@@ -23,7 +23,7 @@ function Initialize-FirebaseCli {
             if (-not $npmCommand) { Write-Host 'Falta npm para preparar Firebase.' -ForegroundColor Red; return $false }
             $cliRoot = Join-Path (Split-Path -Parent $PSScriptRoot) '.audit\firebase-cli'
             Write-Host 'Preparando el modulo oficial de Firebase en la carpeta del proyecto.' -ForegroundColor Yellow
-            & $npmCommand.Source install --prefix $cliRoot --no-save --package-lock=false firebase-tools@15.26.0 2>&1 | Out-Host
+            & $npmCommand.Source install --prefix $cliRoot --no-save --package-lock=false firebase-tools@15.26.0 2>&1 | ForEach-Object { [string]$_ } | Out-Host
             if ($LASTEXITCODE -ne 0) { return $false }
             $env:PATH = (Join-Path $cliRoot 'node_modules\.bin') + [IO.Path]::PathSeparator + $env:PATH
             $versionOutput = @(& $nodeCommand.Source $firebaseRunner --version 2>&1)
@@ -40,7 +40,7 @@ function Invoke-FirebaseCli {
     $previousPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        & $nodeCommand.Source $firebaseRunner @CliArguments 2>&1 | Out-Host
+        & $nodeCommand.Source $firebaseRunner @CliArguments 2>&1 | ForEach-Object { [string]$_ } | Out-Host
         return [int]$LASTEXITCODE
     } finally { $ErrorActionPreference = $previousPreference }
 }

@@ -2,6 +2,10 @@
 
 Este registro describe los avances del código. Un build o un push no acreditan una publicación: el deploy se confirma comprobando el mismo commit y build en los dominios de ambos sitios. Las pruebas físicas de papel, giro y calidad se realizan con la impresora del establecimiento.
 
+## Ajuste del BAT - 25 de octubre de 2026
+
+- Los mensajes de progreso nativos se muestran como texto sin bloques NativeCommandError de PowerShell. Se conservan stderr y los codigos de salida reales; pruebas con procesos reales que terminan en 0 y 7.
+
 ## 3.25.1 — corrección del publicador
 
 - La autenticación, la comprobación de acceso y el deploy usan la API oficial de firebase-tools.
