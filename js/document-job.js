@@ -41,7 +41,7 @@
   }
   async function transaction(mode,action){const db=await database();return new Promise((resolve,reject)=>{const tx=db.transaction('jobs',mode),request=action(tx.objectStore('jobs'));tx.oncomplete=()=>resolve(request?.result);tx.onerror=tx.onabort=()=>reject(tx.error||request?.error||Error('No se pudo guardar el documento.'));});}
   function persist(){
-    pdfCache=null;for(const [id,note]of qualityNotes){if(!pages.some(p=>p.id===id&&p.data===note.data))qualityNotes.delete(id);}
+    trimHistory(past);trimHistory(future);pdfCache=null;for(const [id,note]of qualityNotes){if(!pages.some(p=>p.id===id&&p.data===note.data))qualityNotes.delete(id);}
     const link=$('docPrintLink');
     if(link){link.hidden=true;if(link.dataset.objectUrl)URL.revokeObjectURL(link.dataset.objectUrl);delete link.dataset.objectUrl;link.removeAttribute('href');}
     if($('docDeliveryBox'))$('docDeliveryBox').hidden=true;
@@ -134,6 +134,7 @@
     const build=async addText=>{
     for(let n=0;n<snapshot.length;n++){
       if(revision!==epoch)throw Error('El trabajo cambió. Prepara otra entrega.');
+      say('Preparando '+(printJob?'impresión':'PDF')+': página '+(n+1)+' de '+snapshot.length+'…');
       const page=snapshot[n],g=geometry(page,settings),landscape=g.paperWidth>g.paperHeight;
       if(!pdf)pdf=new jspdf.jsPDF({unit:'mm',format:[g.paperWidth,g.paperHeight],orientation:landscape?'landscape':'portrait',compress:true});
       else pdf.addPage([g.paperWidth,g.paperHeight],landscape?'landscape':'portrait');

@@ -20,7 +20,8 @@
   $('flowCount').value=state.photoCopies;$('flowSets').value=doc.active?(doc.options.sets||1):(state.outputSets||1);
   $('flowSetLabel').textContent=doc.active?'Juegos para imprimir':'Juegos completos';
   const sets=doc.active?(doc.options.sets||1):(state.outputSets||1),pages=doc.active?doc.count:work.layout.pages.length;
-  const summary=doc.active?doc.count+' páginas · '+sets+' juego(s) de impresión · '+PAPER_SPECS[doc.options.paper].shortName+(doc.options.color==='gray'?' · Blanco y negro':' · Color'): (photos?(state.mixTwoPhotos?(state.photoCopiesPersonA||0)+' fotos A + '+(state.photoCopiesPersonB||0)+' fotos B':state.photoCopies+' fotos')+' por juego · ':getActiveSpec().shortName+' · ')+sets+' juego(s) · '+pages+' hoja(s) '+work.layout.paper.shortName;
+  let summary=doc.active?doc.count+' páginas · '+sets+' juego(s) de impresión · '+PAPER_SPECS[doc.options.paper].shortName+(doc.options.color==='gray'?' · Blanco y negro':' · Color'): (photos?(state.mixTwoPhotos?(state.photoCopiesPersonA||0)+' fotos A + '+(state.photoCopiesPersonB||0)+' fotos B':state.photoCopies+' fotos')+' por juego · ':getActiveSpec().shortName+' · ')+sets+' juego(s) · '+pages+' hoja(s) '+work.layout.paper.shortName;
+  if(!doc.active&&work.scale!==100)summary+=' · Escala '+work.scale+' %';
   $('flowSummary').textContent=summary;$('flowSummary').setAttribute('title',summary);
   const ready=doc.active?doc.ready:work.ready&&!work.layout.errors.length;
   $('flowPrimary').disabled=!allowed||!ready||(doc.active?doc.busy:work.busy);
@@ -36,6 +37,7 @@
   $('flowDuplexHint').hidden=!doc.active||doc.options.duplex!=='manual';if($('flowDuplexActions')){$('flowDuplexActions').hidden=$('flowDuplexHint').hidden;for(const b of $('flowDuplexActions').querySelectorAll('button'))b.disabled=!allowed||!doc.ready||doc.busy;}
  }
  function prepareInBackground(doc,work,allowed){
+  if(!allowed){lastWarm=[];clearTimeout(warmTimer);RealScanPrint.clear();return;}
   const signature=[allowed,doc.active,work.busy,state._jobRevision,JSON.stringify([work.layout,window.RealScanPrinterProfiles?.getActive()]),...work.wanted.map(side=>state.images[side]?.processedDataUrl)];
   if(signature.length===lastWarm.length&&signature.every((x,i)=>x===lastWarm[i]))return;lastWarm=signature;clearTimeout(warmTimer);
   if(!allowed||doc.active||!work.ready||work.layout.errors.length)return;
@@ -62,7 +64,7 @@
   const panel=document.createElement('section');panel.id='serviceFlow';panel.className='service-flow';
   panel.innerHTML='<p class="flow-eyebrow">PREPARA TU TRABAJO</p><h2 id="flowHeading"></h2><div id="flowReceive"></div><p id="flowNextHint" role="status"></p><button type="button" id="flowAddMissing" class="flow-soft"></button><div id="flowPhotoChoices" class="flow-block"><h3>Tamaño de cada foto</h3><div id="flowSizes" class="flow-choice-grid"></div></div><div id="flowIdChoices" class="flow-block"><h3>Distribución de las caras</h3><div id="flowSides" class="flow-choice-grid"></div></div><div id="flowQuantity" class="flow-block"><h3>Fotos por juego</h3><div id="flowCounts" class="flow-counts"></div><div class="flow-number"><label for="flowCount">Otra cantidad</label><input id="flowCount" type="number" min="1" max="48" inputmode="numeric"></div></div><div id="flowPaper"></div><div class="flow-number"><label id="flowSetLabel" for="flowSets">Juegos completos</label><input id="flowSets" type="number" min="1" max="10" value="1" inputmode="numeric"></div><div id="flowDocumentOptions" class="flow-block"><label>Acabado<select id="flowDocColor"><option value="color">Color</option><option value="gray">Blanco y negro</option></select></label><label>Impresión<select id="flowDocDuplex"><option value="single">Una cara por hoja</option><option value="manual">Doble cara manual · guía</option></select></label><p id="flowDuplexHint">Prueba primero con dos páginas: el giro y el orden de la bandeja dependen de tu impresora. Imprime impares, recoloca el papel e imprime pares. Si un juego tiene páginas impares, se añade un reverso vacío para separar los juegos.</p></div>';
   $('colControlPanel').prepend(panel);
-  $('flowReceive').append($('operatorReceiveActions'));
+  $('flowReceive').append($('operatorReceiveActions'));if($('operatorNotices'))$('flowNextHint').after($('operatorNotices'));
   $('flowPaper').append($('quickPrintSettings')); // Preserve original control IDs and change handlers.
   for(const [format,name]of [['photo_infantil','Infantil'],['photo_passport','Pasaporte'],['photo_10x15','10 × 15 cm']]){
    if(!FORMAT_SPECS[format])continue;const spec=FORMAT_SPECS[format],b=button('',()=>change(()=>selectFormat(format)));b.dataset.flowFormat=format;
