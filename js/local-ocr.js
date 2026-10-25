@@ -40,7 +40,7 @@
   async function cancel(clearText = false) {
     if(clearText===true)externalSource=null;
     if(clearText===true){const text=document.getElementById("ocrText");if(text)text.value="";}
-    ++epoch;
+    const cancelledRevision = ++epoch;
     busy = false;
     document.getElementById("ocrRun")?.removeAttribute("disabled");
     const current = worker;
@@ -116,6 +116,7 @@
     }
   }
   root.RealScanOcr = { open, cancel };
+  document.addEventListener('realscan:modal-closed',event=>{if(event.detail?.id==='localOcrModal')cancel();});
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) cancel();
   });
