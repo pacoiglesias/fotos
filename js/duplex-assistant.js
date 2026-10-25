@@ -65,7 +65,7 @@
   doc.setFontSize(10);doc.text(doc.splitTextToSize('Una hoja comun - misma impresora y bandeja - escala 100%',w-20),w/2,h-32,{align:'center'});doc.text(doc.splitTextToSize('A y B deben quedar en caras diferentes y leerse derechas.',w-20),w/2,h-18,{align:'center'});
   downloadPdfBlob(doc,'RealScan_Prueba_Duplex_'+face+'.pdf');$('duplexStatus').textContent='Prueba '+face+' descargada. Descargar no confirma que la impresora haya impreso.';
  }
- function signature(){return JSON.stringify([state._jobRevision,paperKey(),state.images.front.processedDataUrl,state.images.back.processedDataUrl,placement()]);}
+ function signature(){return JSON.stringify([state._jobRevision,paperKey(),RealScanLayout.computeDocumentLayout(state),state.hideSheetTitle,state.documentCustomTitle,state.outputScalePercent,state.images.front.rotation,state.images.back.rotation,state.images.front.processedDataUrl,state.images.back.processedDataUrl,placement()]);}
  async function jobPdf(face){
   const status=$('duplexStatus');if(!unlocked())return;
   if(!$('duplexVerified').checked||!$('duplexFace').value||!$('duplexEdge').value){status.textContent='Completa primero la prueba con papel común.';return;}
