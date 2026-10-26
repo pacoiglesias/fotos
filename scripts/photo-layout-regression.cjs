@@ -30,8 +30,8 @@ let browser;
   for(const format of ['photo_infantil','photo_ovalo_credencial']){
    state.format=format;state.includeCutMarks=true;updateUI();const plan=RealScanLayout.computeDocumentLayout(state);
    // renderPageToCanvas expects HTMLImageElement with naturalWidth/complete.
-   const image=new Image();image.src=src.toDataURL();await image.decode();const a=renderPageToCanvas(plan.pages[0],plan,{front:image}),pa=await pdfCanvas();
-   state.includeCutMarks=false;updateUI();const clean=RealScanLayout.computeDocumentLayout(state),b=renderPageToCanvas(clean.pages[0],clean,{front:image}),pb=await pdfCanvas();
+   const image=new Image();image.src=src.toDataURL();await image.decode();const a=await renderPageToCanvas(plan.pages[0],plan,{front:image}),pa=await pdfCanvas();
+   state.includeCutMarks=false;updateUI();const clean=RealScanLayout.computeDocumentLayout(state),b=await renderPageToCanvas(clean.pages[0],clean,{front:image}),pb=await pdfCanvas();
    if(document.querySelector('#faithfulSheetPlacements .cut-guide-overlay'))throw Error('Disabled preview marks still exist');
    const rasterDiff=difference(a,b),pdfDiff=difference(pa,pb),rasterCircle=redRatio(b),pdfCircle=redRatio(pb);
    if(rasterDiff<50||pdfDiff<20)throw Error('Missing exported marks '+format+' '+rasterDiff+' '+pdfDiff);

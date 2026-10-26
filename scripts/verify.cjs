@@ -1,4 +1,5 @@
 const cp = require("child_process");
+const failures = [];
 try {
   for (const script of [
     "check",
