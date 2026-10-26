@@ -3,13 +3,13 @@
 'use strict';
 const $=id=>document.getElementById(id), TTL=48*3600000, LIMIT=80*1024*1024;
 const labels={pending:'Pendiente de imprimir',printing:'Ventana de impresión abierta',review:'Comprobar resultado',failed:'Falló / cancelada',done:'Impresión confirmada',delivered:'Entregada al cliente'};
-let database,rows=[],retryFrame=null,loading=false,epoch=0,retryMeta=null,historyQuery='',historyPendingOnly=false;
+let database,rows=[],retryFrame=null,loading=false,epoch=0,retryMeta=null,historyQuery='',historyPendingOnly=false,listSequence=0;
 const unlocked=()=>$('loginOverlay')?.classList.contains('hidden')&&(!$('setupOverlay')||$('setupOverlay').classList.contains('hidden'));
 const say=message=>root.showToast?.(message,'info');
 function day(date){const d=new Date(date);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}
 async function db(){if(database)return database;database=await new Promise((resolve,reject)=>{const q=indexedDB.open('realscan_print_desk_v1',1);q.onupgradeneeded=()=>q.result.createObjectStore('jobs',{keyPath:'id'});q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);q.onblocked=()=>reject(Error('Cierra otras pestañas para abrir el historial.'));});database.onversionchange=()=>{database.close();database=null;};return database;}
 async function tx(mode,fn){const d=await db();return new Promise((resolve,reject)=>{const t=d.transaction('jobs',mode);let result;fn(t.objectStore('jobs'),v=>result=v);t.oncomplete=()=>resolve(result);t.onerror=t.onabort=()=>reject(t.error||Error('No se pudo guardar el historial.'));});}
-async function list(){rows=await tx('readwrite',(s,done)=>{const q=s.getAll();q.onsuccess=()=>{const valid=[];for(const row of q.result){if(Date.now()-row.createdAt>31*86400000){s.delete(row.id);continue;}if(Date.now()-row.createdAt>TTL&&row.html){row.html=null;s.put(row);}valid.push(row);}done(valid);};});rows.sort((a,b)=>b.createdAt-a.createdAt);return rows;}
+async function list(){const sequence=++listSequence,current=await tx('readwrite',(s,done)=>{const q=s.getAll();q.onsuccess=()=>{const valid=[];for(const row of q.result){if(Date.now()-row.createdAt>31*86400000){s.delete(row.id);continue;}if(Date.now()-row.createdAt>TTL&&row.html){row.html=null;s.put(row);}valid.push(row);}done(valid);};});current.sort((a,b)=>b.createdAt-a.createdAt);if(sequence===listSequence)rows=current;return current;}
 function refresh(){if(!$('deskRepeat'))return;const allowed=unlocked(),busy=root.RealScanWorkflow?.describe().busy||root.RealScanDocuments?.status().busy;for(const b of $('deskReceive')?.querySelectorAll('button')||[])b.disabled=!allowed||busy;$('deskRepeat').disabled=!allowed||!rows.some(r=>r.html);for(const id of ['deskRecent','deskDaily','deskCalibrate','deskQueueCurrent'])$(id).disabled=!allowed;}
 const saves=new Map();
 function record(frame,meta={}){
