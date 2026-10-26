@@ -14,5 +14,7 @@
 ## Límites de validación
 La firma con certificado queda fuera por decisión del usuario. Una firma dibujada o marca visible no equivale a firma criptográfica ni a certificación legal. El registro vive en este navegador y no acredita quién hizo una copia física. La orientación de alimentación y el tamaño físico final requieren una prueba en la impresora real.
 
+- Revisión de CSP en condiciones de publicación: se permite procesar imágenes locales `data:` sin ampliar los destinos externos de red. La regresión de las nuevas funciones utiliza los encabezados reales del alojamiento.
+
 ## Verificación
 El proceso de entrega ejecuta `npm run verify` en GitHub Actions (Chromium, WebKit y pruebas del publicador en Windows), revisión de dependencias, build desde el commit y verificación posterior de versión/commit en los cuatro dominios. Los resultados efectivos de ejecución y publicación se conservan en el registro de entrega; este documento describe el alcance, no anticipa resultados.
