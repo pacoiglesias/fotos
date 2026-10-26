@@ -19,7 +19,7 @@
   const LINK_KEY = 'realscan_cloud_link_v1';
   const ENABLED_KEY = 'realscan_cloud_enabled_v1';
   const STATE_KEY = 'realscan_cloud_state_v1';
-  let idToken = null, idTokenExpiry = 0, syncing = false, pendingTimer = null, cloudOnlyIds = [];
+  let idToken = null, idTokenExpiry = 0, syncing = false, restoring = false, pendingTimer = null, cloudOnlyIds = [];
 
   function cfg() { return window.REALSCAN_FIREBASE_CONFIG || null; }
   function bucketName() {
@@ -126,7 +126,7 @@
     if (!token) throw new Error('Sin sesión de nube.');
     const c = cfg();
     const res = await fetch(c.databaseURL + path + '.json?auth=' + encodeURIComponent(token), {
-      method: method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined
+      method: method, cache: 'no-store', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined
     });
     if (!res.ok) throw new Error('RTDB HTTP ' + res.status);
     return res.status === 204 ? null : res.json().catch(function () { return null; });
@@ -169,16 +169,21 @@
     });
   }
 
-  async function uploadScan(scan, uid) {
-    setState(scan.id, { s: 'uploading', at: scan.updatedAt || scan.createdAt || 0 });
-    await rtdb('/users/' + uid + '/scans/' + scan.id, 'PUT', metadataFor(scan));
-    for (const page of scan.pages || []) {
-      const src = page.dataUrl || page.originalSrc || page.rawOriginalSrc;
-      if (!src) continue;
-      const blob = await dataUrlToBlob(src);
-      await storageUpload('users/' + uid + '/scans/' + scan.id + '/' + (page.slot || 'front') + '.jpg', blob);
+  async function digest(blob){const bytes=await crypto.subtle.digest('SHA-256',await blob.arrayBuffer());return Array.from(new Uint8Array(bytes),v=>v.toString(16).padStart(2,'0')).join('');}
+  async function uploadScan(scan,uid){
+    if(!Array.isArray(scan.pages)||!scan.pages.length||scan.pages.length>40)throw Error('El trabajo no tiene páginas válidas.');
+    const meta=metadataFor(scan),files=[],slots=new Set();
+    for(let index=0;index<scan.pages.length;index++){
+      const page=scan.pages[index],source=page.dataUrl||page.originalSrc||page.rawOriginalSrc,slot=page.slot||'front';
+      if(!source||slots.has(slot))throw Error('Falta una imagen o hay caras repetidas.');slots.add(slot);
+      const blob=await dataUrlToBlob(source);if(!blob.size||!/^image\/(png|jpeg|webp)$/.test(blob.type))throw Error('Imagen de respaldo no válida.');
+      meta.pagesMeta[index].cloudHash=await digest(blob);files.push({slot,blob});
     }
-    setState(scan.id, { s: 'synced', at: scan.updatedAt || scan.createdAt || 0 });
+    setState(scan.id,{s:'uploading',at:scan.updatedAt||scan.createdAt||0});meta.cloudState='uploading';
+    await rtdb('/users/'+uid+'/scans/'+scan.id,'PUT',meta);
+    for(const file of files)await storageUpload('users/'+uid+'/scans/'+scan.id+'/'+file.slot+'.jpg',file.blob);
+    meta.cloudState='ready';await rtdb('/users/'+uid+'/scans/'+scan.id,'PUT',meta);
+    setState(scan.id,{s:'synced',at:scan.updatedAt||scan.createdAt||0});
   }
 
   async function syncNow() {
@@ -242,40 +247,43 @@
 
   async function restoreCloudOnly() {
     const l = link();
-    if (!l || !cloudOnlyIds.length) return;
-    const btn = document.getElementById('btnCloudRestoreNow');
-    if (btn) btn.disabled = true;
-    let restored = 0;
+    if (restoring || !enabled() || !l || !cloudOnlyIds.length) return;
+    const ids=cloudOnlyIds.slice(),pending=new Set(ids),btn=document.getElementById('btnCloudRestoreNow');
+    restoring=true;if(btn)btn.disabled=true;let restored=0;
     try {
-      for (const id of cloudOnlyIds.slice()) {
-        const meta = await rtdb('/users/' + l.uid + '/scans/' + id, 'GET');
-        if (!meta) continue;
-        const pages = [];
-        for (const pm of meta.pagesMeta || []) {
-          try {
-            const blob = await storageDownload('users/' + l.uid + '/scans/' + id + '/' + (pm.slot || 'front') + '.jpg');
-            const dataUrl = await blobToDataUrl(blob);
-            pages.push(Object.assign({}, pm, { dataUrl: dataUrl, originalSrc: dataUrl, rawOriginalSrc: dataUrl, croppedSrc: null }));
-          } catch (e) {}
-        }
-        if (!pages.length) continue;
-        const record = {};
-        Object.keys(meta).forEach(function (k) { if (k !== 'pagesMeta') record[k] = meta[k]; });
-        record.pages = pages;
-        record.schemaVersion = record.schemaVersion || 1;
-        if (typeof window.putScanRecord === 'function') await window.putScanRecord(record);
-        setState(id, { s: 'synced', at: record.updatedAt || record.createdAt || 0 });
-        restored++;
+      for (const id of ids) {
+        try {
+          const meta=await rtdb('/users/'+l.uid+'/scans/'+id,'GET');
+          if(meta?.cloudState&&meta.cloudState!=='ready')throw Error('La copia de nube sigue en proceso.');
+          if(!meta||!Array.isArray(meta.pagesMeta)||!meta.pagesMeta.length||meta.pagesMeta.length>40)throw Error('El respaldo no tiene una lista de páginas válida.');
+          const pages=[],slots=new Set();
+          for(const pm of meta.pagesMeta){
+            if(!pm||typeof pm!=='object')throw Error('Página de respaldo no válida.');
+            const slot=pm.slot||'front';if(typeof slot!=='string'||slots.has(slot))throw Error('Páginas repetidas en el respaldo.');slots.add(slot);
+            const blob=await storageDownload('users/'+l.uid+'/scans/'+id+'/'+slot+'.jpg');
+            if(!/^image\/(png|jpeg|webp)$/.test(blob.type)||!blob.size)throw Error('La página descargada no es una imagen válida.');
+            if(pm.cloudHash&&(!/^[a-f0-9]{64}$/.test(pm.cloudHash)||await digest(blob)!==pm.cloudHash))throw Error('La página no coincide con el respaldo.');
+            const dataUrl=await blobToDataUrl(blob),image=new Image();image.src=dataUrl;await image.decode();
+            if(!image.naturalWidth||image.naturalWidth*image.naturalHeight>60000000)throw Error('Dimensiones de respaldo no válidas.');
+            pages.push(Object.assign({},pm,{dataUrl,originalSrc:dataUrl,rawOriginalSrc:dataUrl,croppedSrc:null}));
+          }
+          if(!enabled()||link()?.uid!==l.uid)throw Error('La cuenta de nube cambió.');
+          const latest=await rtdb('/users/'+l.uid+'/scans/'+id,'GET');if(JSON.stringify(latest)!==JSON.stringify(meta))throw Error('La copia de nube cambió durante la descarga.');
+          const existing=await getAllScansFromStorage();
+          if(existing.some(record=>record.id===id)){pending.delete(id);continue;}
+          if(typeof window.putScanRecord!=='function')throw Error('El almacenamiento local no está disponible.');
+          const record={};Object.keys(meta).forEach(k=>{if(k!=='pagesMeta')record[k]=meta[k];});
+          record.id=id;record.pages=pages;record.schemaVersion=record.schemaVersion||1;
+          await window.putScanRecord(record);
+          setState(id,{s:'synced',at:record.updatedAt||record.createdAt||0});pending.delete(id);restored++;
+        } catch(e) { window.RealScanDiagnostics?.record('cloud.restore.failed','warning'); }
       }
-      cloudOnlyIds = [];
-      renderRestoreBanner();
-      if (typeof renderHistoryUI === 'function') renderHistoryUI();
-      if (typeof updateHistoryBadge === 'function') updateHistoryBadge();
-      showToast(restored ? ('☁️ ' + restored + ' trabajo(s) recuperados de tu nube.') : 'No se pudo recuperar ningún trabajo (revisa Storage en la consola).', restored ? 'success' : 'warning');
-    } catch (e) {
-      showToast('No se pudo recuperar de la nube: ' + (e && e.message ? e.message : e), 'error');
-    }
-    if (btn) btn.disabled = false;
+      cloudOnlyIds=[...pending];renderRestoreBanner();
+      if(typeof renderHistoryUI==='function')renderHistoryUI();if(typeof updateHistoryBadge==='function')updateHistoryBadge();
+      const remaining=pending.size;window.RealScanDiagnostics?.record('cloud.restore',remaining?'warning':'info',{count:restored});
+      setStatus(remaining?'recuperación incompleta: '+remaining+' trabajo(s) pendientes; vuelve a intentar':'recuperación completa');
+      showToast(restored+' trabajo(s) recuperados completos.'+(remaining?' '+remaining+' siguen pendientes; no se guardaron documentos incompletos. Vuelve a intentar.':''),remaining?'warning':'success');
+    } finally { restoring=false;if(btn)btn.disabled=false; }
   }
 
   function badgeFor(scan) {

@@ -1,3 +1,12 @@
+## 3.28.0 — acabado local y cierre de auditoría
+
+- Corrige la pérdida del arrastre cuando se actualiza la vista previa; la prueba fuerza esa actualización con el dedo agarrando la foto.
+- Acabado local y reversible de documentos y fotografías: contraste, reducción suave de ruido, nitidez, comparación y original conservado. Se procesa fuera de la interfaz, sin servicios externos.
+- Los formatos marcados sin retoque mantienen desactivada la mejora en mostrador. Se preservan proporciones, resolución y transparencia. No reconstruye partes inexistentes ni garantiza recuperar desenfoque fuerte.
+- Recuperación de nube completa por trabajo: no anuncia documentos parciales, conserva reintentos y valida las huellas de las copias nuevas. Las copias en proceso no se dan por listas.
+- El publicador toma la versión del programa y verifica la rama correspondiente. Diagnóstico técnico sin imágenes, texto OCR ni datos de clientes.
+- Pruebas de Windows, Chromium y WebKit; resultados efectivos de publicación en el acta de cierre.
+
 ## 3.27.0 — Pulido de mostrador (revisión del 26 de octubre de 2026)
 
 - Recepción se desbloquea al iniciar sesión; cámara, archivo y QR mantienen su acceso directo.

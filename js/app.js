@@ -1937,6 +1937,7 @@ function updateUI() {
   }
 
   if (faithfulLayer && layout && activePage) {
+    if (!state._previewDragging) {
     faithfulLayer.innerHTML = '';
     // Ocultar elementos fijos legados para evitar duplicación visual
     if (canvasFront) canvasFront.classList.add('hidden');
@@ -2041,6 +2042,7 @@ function updateUI() {
       setupDragToPan(pBox, p.slot);
       faithfulLayer.appendChild(pBox);
     });
+    }
   } else {
     // Fallback tradicional
     if (isPhotos) {

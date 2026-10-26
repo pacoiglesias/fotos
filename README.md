@@ -1,4 +1,4 @@
-# RealScan Pro 3.27.0
+# RealScan Pro 3.28.0
 
 [Registro de cambios](CHANGELOG.md) · [Auditoría 3.25](audit/MOVIL_3_25.md)
 

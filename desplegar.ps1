@@ -2,8 +2,9 @@ param([switch]$PrepararAccesos)
 # Publish the audited application even when this folder has old Git metadata.
 # A new checkout preserves all local files and gives the build its true source SHA.
 $ErrorActionPreference = 'Stop'
-$releaseVersion = '3.27.0'
-$releaseBranch = 'release/3.27.0'
+$releaseVersion = [string]((Get-Content -LiteralPath (Join-Path $PSScriptRoot 'package.json') -Raw | ConvertFrom-Json).version)
+if ($releaseVersion -notmatch '^\d+\.\d+\.\d+$') { throw 'La version local no es valida.' }
+$releaseBranch = 'release/' + $releaseVersion
 $releaseRef = 'refs/heads/' + $releaseBranch
 $releaseCommit = $null
 $originalLocation = Get-Location

@@ -2,6 +2,9 @@ name: Verify compiled application
 on: [push, pull_request]
 permissions:
   contents: read
+concurrency:
+  group: realscan-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   windows-publisher:
     runs-on: windows-latest
@@ -37,6 +40,8 @@ jobs:
             .audit/workbench-324/
             .audit/modern-326/
             .audit/annotations-327/
+            .audit/cloud-recovery/
+            .audit/image-enhance/
             .audit/counter-final/
             .audit/mobile-experience-chromium/
             .audit/mobile-experience-webkit/

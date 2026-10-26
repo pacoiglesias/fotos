@@ -1,5 +1,6 @@
 param([string]$Scenario, [string]$Publisher, [string]$Trace)
 $ErrorActionPreference = 'Stop'
+$global:publishTestVersion = [string]((Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) 'package.json') -Raw | ConvertFrom-Json).version)
 
 if ($Scenario) {
     # Keep Node real so Windows PowerShell argument handling is also exercised.
@@ -54,7 +55,7 @@ if ($Scenario) {
         if ($args[0] -eq 'clone') {
             $fixture = $args[$args.Count - 1]
             New-Item -ItemType Directory -Path $fixture | Out-Null
-            [IO.File]::WriteAllText((Join-Path $fixture 'package.json'), '{"version":"3.27.0"}')
+            [IO.File]::WriteAllText((Join-Path $fixture 'package.json'), ('{"version":"' + $global:publishTestVersion + '"}'))
         }
         if ($args[0] -eq 'ls-remote') { if ($global:publishTestScenario -eq 'unverified-main' -and $args[$args.Count - 1] -eq 'refs/heads/main') { 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' + "`trefs/heads/main" } else { '8b4d9c4782afa0f0f3f3a924841cd7371a4d4a5b' + "`t" + $args[$args.Count - 1] } }
         if ($args[0] -eq 'rev-parse') {
@@ -81,6 +82,7 @@ $testRoot = Join-Path $env:TEMP ('RealScan-prueba-publicador-' + [Guid]::NewGuid
 New-Item -ItemType Directory -Path $testRoot | Out-Null
 $testPublisher = Join-Path $testRoot 'desplegar.ps1'
 Copy-Item -LiteralPath (Join-Path $sourceRoot 'desplegar.ps1') -Destination $testPublisher
+Copy-Item -LiteralPath (Join-Path $sourceRoot 'package.json') -Destination (Join-Path $testRoot 'package.json')
 foreach ($file in @($testPublisher, (Join-Path $PSScriptRoot 'firebase-access.ps1'))) {
     $parseTokens = $null
     $parseErrors = $null

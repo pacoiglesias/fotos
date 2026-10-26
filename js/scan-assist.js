@@ -129,7 +129,7 @@
       <p class="scan-focus-info">El control de enfoque depende de la cámara y del navegador.</p>
       <label class="scan-auto"><input type="checkbox"> Capturar al mantener el documento estable</label>
       <div class="scan-actions"><button type="button" data-act="capture">Tomar foto</button><button type="button" data-act="focus">Reintentar enfoque</button><button type="button" data-act="torch" hidden>Linterna</button><button type="button" data-act="native">Cámara del teléfono</button>
-      <button type="button" data-act="left" hidden>Girar izquierda</button><button type="button" data-act="right" hidden>Girar derecha</button><button type="button" data-act="reset" hidden>Restaurar original</button><button type="button" data-act="confirm" hidden>Usar esta imagen</button><button type="button" data-act="edit" hidden>Volver a ajustar</button>
+      <button type="button" data-act="left" hidden>Girar izquierda</button><button type="button" data-act="right" hidden>Girar derecha</button><button type="button" data-act="reset" hidden>Restaurar original</button><button type="button" data-act="enhance" hidden>Mejorar imagen</button><button type="button" data-act="confirm" hidden>Usar esta imagen</button><button type="button" data-act="edit" hidden>Volver a ajustar</button>
       <button type="button" data-act="retry" hidden>Repetir</button><button type="button" data-act="original" hidden>Usar completa</button><button type="button" data-act="accept" hidden>Enderezar y usar</button></div>`;
     const settings = document.createElement('details');
     settings.className = 'scan-settings';
@@ -173,7 +173,7 @@
     let stableFrames = 0, lastQuad = null, autoDeadline = 0;
     const autoCapture = $(".scan-auto input");
     if (options.sourceDataUrl) $(".scan-auto").hidden = true;
-    let originalData = options.sourceDataUrl || null, pendingResult = null, savedQuad = null;
+    let originalData = options.sourceDataUrl || null, pendingResult = null, savedQuad = null, enhanceBase = null, enhancement = null;
     const filters = { color: "none", gray: "grayscale(1)", document: "grayscale(1) contrast(1.25) brightness(1.08)" };
     filter.onchange = () => {
       canvas.style.filter = filters[filter.value] || "none";
@@ -269,7 +269,7 @@
     }
     function finish() {
       if (disposed) return;
-      disposed = true;
+      disposed = true;enhancement?.close();
       cancelAnimationFrame(fitFrame);
       revision++;
       stop();
@@ -359,7 +359,7 @@
     async function start() {
       phase('capture');
       settings.open=false;btn('retry').textContent='Repetir';
-      for(const a of ['left','right','reset','confirm','edit'])btn(a).hidden=true;
+      for(const a of ['left','right','reset','confirm','edit','enhance'])btn(a).hidden=true;
       $('.scan-format').hidden=!!options.photoMode;
       $('.scan-filter').hidden=!!options.photoMode;
       svg.toggleAttribute('hidden',!!options.photoMode);
@@ -549,7 +549,7 @@
           result = output.toDataURL("image/jpeg", 0.96);
         }
         if (disposed) return;
-        pendingResult = result;
+        pendingResult = result;enhanceBase = result;
         phase('confirm');
         savedQuad = quad.map((p) => ({ ...p }));
         const preview = new Image();
@@ -566,7 +566,7 @@
         $(".scan-filter").hidden = true;
         $(".scan-format").hidden = true;
         for (const action of ["left", "right", "reset", "retry", "original", "accept"]) btn(action).hidden = true;
-        btn("confirm").hidden = btn("edit").hidden = false;
+        btn("confirm").hidden = btn("edit").hidden = false;btn("enhance").hidden=!root.RealScanEnhance;btn("enhance").disabled=!!(options.photoMode&&typeof getActiveSpec==='function'&&getActiveSpec().noRetouch);
         status.textContent = "Vista previa del resultado. Comprueba que el contenido y sus proporciones sean correctos antes de usarlo.";
         return;
       } catch (e) {
@@ -576,6 +576,7 @@
         btn("accept").disabled = btn("original").disabled = false;
       }
     }
+    btn('enhance').onclick=async()=>{if(disposed||!pendingResult)return;const base=enhanceBase||pendingResult;try{enhancement=await root.RealScanEnhance.open({sourceDataUrl:base,photoMode:!!options.photoMode,isCurrent:()=>!disposed,onAccept:async data=>{const image=new Image();image.src=data;await image.decode();if(disposed)throw Error('La captura cambió.');pendingResult=data;canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;canvas.getContext('2d').drawImage(image,0,0);fitStage();status.textContent='Mejora aplicada. Revisa el resultado antes de usar la imagen.';}});}catch(e){if(!disposed)status.textContent=e.message;}};
     btn("close").onclick = finish;
     btn("capture").onclick = () => take();
     btn("focus").onclick = requestFocus;
@@ -597,6 +598,7 @@
       }
     };
     btn("edit").onclick = async () => {
+      btn("enhance").hidden=true;
       const points = savedQuad;
       $(".scan-format").hidden = !!options.photoMode;
       await loadImage(captured);

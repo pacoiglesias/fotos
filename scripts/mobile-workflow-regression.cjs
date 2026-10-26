@@ -24,6 +24,7 @@ await page.goto(base);await page.locator('#loginUserInput').fill('admin');await 
  async function gesture(edit){
   const b=await placement.boundingBox(),x=b.x+b.width/2,y=b.y+b.height/2;
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+  if(edit)await page.evaluate(()=>updateUI());
   for(let i=1;i<=4;i++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+i*4,y:y+i*3}]});await page.waitForTimeout(65);}
   if(edit){
    assert(await page.evaluate(()=>window.__heldPlacement.isConnected&&state._previewDragging),'Dragging must retain the same preview node and pointer capture');

@@ -7,7 +7,7 @@
   for(const id of ['counterStart','counterDeliver','counterMore','counterShowDelivery','newServiceStart','newServiceModal','counterMoreModal','pendingDeliveryModal','pendingDeliveryRevoke'])staticIds.add(id);
   const session = global.crypto?.randomUUID?.() || String(Date.now());
   const allowedEvents = new Set(['draft.failed','camera.open','camera.close','camera.failed','camera.corrected','camera.full_frame','app.start','app.ready','ui.click','ui.feedback','modal.open','modal.close','modal.recover','receive.start','receive.ready','receive.failed','receive.cancelled','delivery.start','delivery.ready','delivery.failed','delivery.cancelled','pwa.request','pwa.accepted','pwa.dismissed','pwa.failed','pwa.fallback','pwa.installed','pwa.worker_failed','runtime.error','runtime.rejection','runtime.resource_failed','network.online','network.offline']);
-  for (const event of ['layout.guides','image.fit','output.pdf','output.raster','camera.focus','camera.ready','camera.quality','counter.new-service','document.output','camera.suspended','ocr.completed','ocr.failed','ocr.pdf']) allowedEvents.add(event);
+  for (const event of ['layout.guides','image.fit','output.pdf','output.raster','camera.focus','camera.ready','camera.quality','counter.new-service','document.output','camera.suspended','ocr.completed','ocr.failed','ocr.pdf','cloud.restore','cloud.restore.failed','image.enhance','image.enhance.failed']) allowedEvents.add(event);
   function cleanDetails(details) {
     const result = {};
     if (!details || typeof details !== 'object') return result;

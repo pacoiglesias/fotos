@@ -21,6 +21,8 @@ try {
     "modern-regression",
     "annotations-regression",
     "print-usability-regression",
+    "cloud-recovery-regression",
+    "image-enhance-regression",
     "mobile-workflow-regression",
     "functional-audit-regression",
     "counter-regression",
