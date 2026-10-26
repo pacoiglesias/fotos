@@ -2,6 +2,7 @@
 
 - Las miniaturas móviles se construyen dentro del flujo de captura, con espacio reservado antes de decodificar. Se elimina la dependencia del editor de anotaciones y de una altura automática con imagen al 100 %.
 - El mostrador incorpora frente y reverso visibles desde recepción, incluso cuando falta completar el trabajo. Cada captura abre una vista ampliada que se cierra al bloquear la sesión.
+- La vista previa del PDF preparado carga el lector bajo demanda también en el móvil y libera el lector anterior al preparar otra versión.
 - Tras confirmar una captura se enfoca su vista previa sin depender exclusivamente de requestAnimationFrame.
 - Firmas, sellos y opciones especiales se agrupan en un panel que comienza cerrado en pantallas pequeñas.
 - Actualizaciones de anotaciones pendientes se repiten y se aplican a la página con el ID correspondiente, evitando pérdidas al reconstruir la lista.

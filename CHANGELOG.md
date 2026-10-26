@@ -6,6 +6,8 @@ Este registro describe los avances del código. Un build o un push no acreditan 
 
 - Espacio de captura reservado antes de decodificar la imagen; se evita depender de alturas porcentuales sobre un contenedor de altura automática.
 - La miniatura se crea con la captura y no depende de que cargue el editor de anotaciones. Reintento visible si una imagen no se puede mostrar.
+- La vista del PDF preparado carga el lector cuando hace falta, en lugar de dejar un lienzo vacío en móvil.
+- Herramientas especiales agrupadas y miniaturas de frente/reverso visibles en recepción del mostrador.
 - Tras confirmar se lleva la captura a la vista sin depender de un fotograma de animación.
 - Actualizaciones de anotaciones pendientes se repiten y las páginas se identifican por su ID para evitar cruces tras reemplazar u ordenar.
 - Quitar una página conserva el nombre, las opciones OCR y las anotaciones de las demás al recuperar el borrador.
