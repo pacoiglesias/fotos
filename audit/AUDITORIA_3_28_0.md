@@ -32,6 +32,7 @@ Base: main 396015856742a3145361638e1ddeda2c71ab187a. Se conserva el desarrollo d
 - scripts/mobile-local-regression.cjs: arranque del acabado sin conexión, OCR, PDF a tamaño real, vista previa y borradores en ambos motores.
 - scripts/windows-publish-regression.ps1: dieciséis escenarios con Node y Windows PowerShell reales, servicios externos simulados.
 - scripts/workspace-polish-regression.cjs: escritorio, documento, tamaños de 320/390/768/1440 px, modo oscuro y vista previa móvil confirmada en Chromium y WebKit; capturas en .audit/workspace-polish.
+- El requisito previo de legibilidad de al menos 540 px se conserva y se mide en zoom 100 %, no en «Ajustar hoja». La prueba nueva verifica además el modo de hoja completa. Las pruebas heredadas de Windows utilizan el mismo arranque de navegador que el resto de la auditoría; se mantienen sus aserciones.
 - scripts/delivery-regression.cjs: generador PDF inicialmente ausente, QR decodificado y descargas reales de los tres formatos, cierre y revocación.
 - npm run verify: conjunto completo antes de publicar. El resultado efectivo, commit, huella, sitios y respaldos se registran en el acta final; este documento no anticipa aprobación.
 

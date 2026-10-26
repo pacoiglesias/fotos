@@ -5,7 +5,7 @@ const results = [];
 const testFiles = fs.readdirSync("tests").filter((x) => /^test_.*\.js$/.test(x));
 assert(testFiles.length > 0, "No se encontraron pruebas en tests/");
 for (const file of testFiles) {
-  const result = cp.spawnSync(process.execPath, ["tests/" + file], {
+  const result = cp.spawnSync(process.execPath, [...(process.platform === 'win32' ? ['--require', './scripts/windows-browser-runtime.cjs'] : []), "tests/" + file], {
     encoding: "utf8",
     timeout: 120000,
   });

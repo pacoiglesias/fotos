@@ -480,6 +480,9 @@ let browser;
     state.documentPageCount = 2;
     state.printMode = "both";
     updateUI();
+    // M-19 checks legibility at 100% zoom. Fit mode is separately checked
+    // against the available viewport by workspace-polish-regression.
+    setStageSheetZoom('100');
   });
   await page.screenshot({
     path: path.join(out, "desktop.png"),
@@ -492,6 +495,7 @@ let browser;
       .querySelector("#faithfulSheetPlacements img")
       .getBoundingClientRect().width,
   }));
+  await page.evaluate(() => setStageSheetZoom('fit'));
   const mobile = [];
   for (const width of [360, 390, 768]) {
     await page.setViewportSize({ width, height: 844 });
