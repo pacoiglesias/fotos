@@ -176,5 +176,5 @@
     window.addEventListener('storage',e=>{if(e.key===PRESETS_KEY)renderPresets();});
     setInterval(update,650);update();window.RealScanStudio={getSelected:()=>selected,update,applyPreset,savedPresets,selectSlot,markApproved};
   }
-  if(document.readyState==='complete')init();else document.addEventListener('DOMContentLoaded',()=>setTimeout(init,0));
+  if(document.readyState==='complete')init();else document.addEventListener('DOMContentLoaded',init);
 })();

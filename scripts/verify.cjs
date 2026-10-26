@@ -13,6 +13,8 @@ try {
     "counter-desk-webkit-regression",
     "counter-desk-2-regression",
     "counter-desk-2-webkit-regression",
+    "counter-final-regression",
+    "counter-final-webkit-regression",
     "studio-regression",
     "service-flow-regression",
     "workbench-regression",

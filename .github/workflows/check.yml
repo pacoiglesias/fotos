@@ -37,6 +37,7 @@ jobs:
             .audit/workbench-324/
             .audit/modern-326/
             .audit/annotations-327/
+            .audit/counter-final/
             .audit/mobile-experience-chromium/
             .audit/mobile-experience-webkit/
             .audit/studio-320/results.json
@@ -57,6 +58,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           ref: ${{ github.sha }}
       - uses: actions/setup-node@v4
         with:

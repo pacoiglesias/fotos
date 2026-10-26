@@ -242,7 +242,7 @@ async function renderPageToCanvas(page, layout, loadedImages) {
       const box = RealScanLayout.imagePlacement(item,imgObj.naturalWidth,imgObj.naturalHeight);
       ctx.drawImage(imgObj,box.x*pxPerMm,box.y*pxPerMm,box.w*pxPerMm,box.h*pxPerMm);
     }
-    const guide = RealScanLayout.cutGuideGeometry(item);
+    const guide = RealScanLayout.cutGuideGeometry(item,page.placements,layout.paper);
     ctx.save();
     ctx.scale(pxPerMm,pxPerMm);ctx.strokeStyle='#666666';ctx.lineWidth=0.22;ctx.setLineDash([1.5,1.5]);
     if(guide.oval){ctx.beginPath();ctx.ellipse(guide.x+guide.w/2,guide.y+guide.h/2,guide.w/2,guide.h/2,0,0,Math.PI*2);ctx.stroke();}

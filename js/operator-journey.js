@@ -3,11 +3,12 @@
   'use strict';
   const $ = id => document.getElementById(id);
   let signature = '';
+  const unlocked = () => $('loginOverlay')?.classList.contains('hidden') && (!$('setupOverlay') || $('setupOverlay').classList.contains('hidden'));
   const icons={id:'M4 5h16v14H4z M8 9a2 2 0 1 0 0 4a2 2 0 1 0 0-4 M5 17c0-4 6-4 6 0 M14 9h3 M14 13h3',photos:'M4 4h16v16H4z M4 16l5-5 4 4 3-3 4 4 M15 8h.01',document:'M6 3h8l4 4v14H6z M14 3v5h4 M9 12h6 M9 16h6',camera:'M3 7h4l2-3h6l2 3h4v13H3z M16 13a4 4 0 1 1-8 0a4 4 0 1 1 8 0',file:'M3 7h7l2 2h9v11H3z M3 7V4h7l2 3',qr:'M3 3h6v6H3z M15 3h6v6h-6z M3 15h6v6H3z M15 15h3v3h3v3h-6z'};
   function icon(kind){const span=document.createElement('span');span.className='task-icon';span.setAttribute('aria-hidden','true');span.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+icons[kind]+'"/></svg>';return span;}
   function button(label, action, className = 'counter-secondary') {
     const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
-    b.className = className; b.onclick = action; return b;
+    b.className = className; b.onclick = () => { if (unlocked()) action(); }; return b;
   }
   function go(step) {
     const doc = window.RealScanDocuments?.status();
@@ -28,12 +29,13 @@
     const count = doc?.active ? doc.count : work.wanted.length - work.missing.length;
     const busy = doc?.active ? doc.busy : work.busy;
     const ready = doc?.active ? doc.ready : work.ready;
-    const key = JSON.stringify([doc, count, busy, ready, work.missing, work.warnings, state.format, state.activeCategory, state._jobRevision, state.paperSize,state.photoCopies,state.printMode,state.mixTwoPhotos,document.body.dataset.outputMode,navigator.onLine]);
+    const allowed = unlocked();
+    const key = JSON.stringify([allowed, doc, count, busy, ready, work.missing, work.warnings, state.format, state.activeCategory, state._jobRevision, state.paperSize,state.photoCopies,state.printMode,state.mixTwoPhotos,document.body.dataset.outputMode,navigator.onLine]);
     if (key === signature) return; signature = key;
     const current = !count ? 'receive' : !ready ? 'review' : 'deliver';
     for (const b of $('operatorJourney').querySelectorAll('[data-journey]')) {
       if (b.dataset.journey === current) b.setAttribute('aria-current','step'); else b.removeAttribute('aria-current');
-      b.disabled = busy || (!count && b.dataset.journey !== 'receive');
+      b.disabled = !allowed || busy || (!count && b.dataset.journey !== 'receive');
     }
     $('operatorNextTitle').textContent = busy ? 'Preparando tu trabajo…' : !count ? 'Recibe el documento o la fotografía' : !ready ? 'Completa y revisa las capturas' : 'Comprueba el resultado y entrega';
     $('operatorNextHint').textContent = doc?.active ? doc.reviewed+' de '+doc.count+' páginas revisadas. Confirma cada página; después elige PDF, impresión o QR.' : !ready ? 'Puedes usar la cámara, abrir un archivo o recibir desde otro celular. El trabajo actual se conserva.' : 'Revisa orientación, bordes, caras y medidas. El texto OCR y la aceptación de una foto oficial requieren revisión humana.';
@@ -41,8 +43,8 @@
     // SIEMPRE visibles: capturar es la acción principal del mostrador y no
     // debe desaparecer cuando el trabajo ya está listo (añadir una página o
     // una foto más es también trabajo de todos los días).
-    $('operatorReceiveActions').querySelectorAll('button').forEach(b=>b.disabled=busy);
-    $('operatorNext').disabled = busy;
+    $('operatorReceiveActions').querySelectorAll('button').forEach(b=>b.disabled=!allowed||busy);
+    $('operatorNext').disabled = !allowed || busy;
     $('operatorNext').textContent = !count ? 'Elegir cómo recibir' : !ready ? 'Revisar lo que falta' : 'Revisar entrega';
     $('operatorNext').onclick = () => go(!count ? 'receive' : !ready ? 'review' : 'deliver');
     $('operatorNext').hidden=!count&&!busy;
@@ -65,7 +67,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     const quick = document.createElement('div'); quick.className = 'operator-tasks'; quick.setAttribute('aria-label','Comenzar por tarea');
     for (const [kind,title,hint,source] of [['id','Identificación','Frente y reverso','choose'],['photos','Fotografías','Tamaño y copias','choose'],['document','Documentos','Varias páginas','choose']]) {
-      const b = button('', () => {const occupied=Object.values(state.images).some(i=>i.originalSrc||i.processedDataUrl||i._reading)||RealScanDocuments.status().active||RealScanQrSync.getInboxFiles().length;if(occupied||kind==='document'){RealScanCounter.openNewService(kind,source);return;}switchIntent(kind);RealScanCounter.setOutput('print');RealScanWorkflow.moveTo(2,'front');update();}, 'operator-task'); b.dataset.task = kind;
+      const b = button('', () => {const occupied=Object.values(state.images).some(i=>i.originalSrc||i.processedDataUrl||i._reading)||RealScanDocuments.status().active||RealScanQrSync.getInboxFiles().length;if(occupied||kind==='document'){RealScanCounter.openNewService(kind,source);return;}switchIntent(kind);RealScanCounter.setOutput('print');RealScanWorkflow.moveTo(2,'front');update();window.RealScanStudio?.update();window.RealScanServiceFlow?.update();}, 'operator-task'); b.dataset.task = kind;
       const strong = document.createElement('strong'), small = document.createElement('small'),copy=document.createElement('span'); strong.textContent = title; small.textContent = hint;copy.append(strong,small); b.append(icon(kind),copy); quick.append(b);
     }
     $('counterService').append(quick);
@@ -108,6 +110,7 @@
     update();
     document.addEventListener('click',()=>requestAnimationFrame(update));
     document.addEventListener('change',()=>requestAnimationFrame(update));
+    for(const id of ['loginOverlay','setupOverlay'])if($(id))new MutationObserver(update).observe($(id),{attributes:true,attributeFilter:['class']});
     window.addEventListener('online',update); window.addEventListener('offline',update);
     document.addEventListener('realscan:studio-updated',update);document.addEventListener('realscan:document-updated',update);
   });
