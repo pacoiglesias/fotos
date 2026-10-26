@@ -2152,6 +2152,8 @@ function savePreferences() {
       printMode: state.printMode,
       documentPageCount: state.documentPageCount || 2,
       photoCopies: state.photoCopies,
+      photoPack:!!state.photoPack,hideSheetTitle:!!state.hideSheetTitle,
+      printerProfileId:window.RealScanPrinterProfiles?.getActiveId()||undefined,
       photoCopiesPersonA: state.photoCopiesPersonA ?? Math.ceil((state.photoCopies || 4) / 2),
       photoCopiesPersonB: state.photoCopiesPersonB ?? Math.floor((state.photoCopies || 4) / 2),
       outputScalePercent: state.outputScalePercent || 100,
@@ -2199,6 +2201,7 @@ function loadPreferences() {
       }
     }
     if (p.photoCopies) state.photoCopies = p.photoCopies;
+    state.photoPack=!!p.photoPack;state.hideSheetTitle=!!p.hideSheetTitle;
     state.photoCopiesPersonA = Number.isInteger(p.photoCopiesPersonA) ? p.photoCopiesPersonA : Math.ceil((p.photoCopies || 4) / 2);
     state.photoCopiesPersonB = Number.isInteger(p.photoCopiesPersonB) ? p.photoCopiesPersonB : Math.floor((p.photoCopies || 4) / 2);
     state.outputScalePercent = Math.max(25, Math.min(200, Number(p.outputScalePercent) || 100));

@@ -28,7 +28,7 @@
             },
             {
               "key": "Content-Security-Policy",
-              "value": "default-src 'self'; script-src 'self' 'sha256-opedjnt46Ne40unmRqR2mFRrY+fW/iaR1eB52DP855U=' 'sha256-BX1KwWNGbrh8q3JJvnYZHiDSrMW2v/HRM8YbPn8Knag=' 'wasm-unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' data: https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebasestorage.googleapis.com; worker-src 'self' blob:; frame-src 'self' blob:; media-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+              "value": "default-src 'self'; script-src 'self' 'sha256-m2WynJBYThGD720Bli2SpInV1YwdQkVkOIYS8NK369o=' 'sha256-opedjnt46Ne40unmRqR2mFRrY+fW/iaR1eB52DP855U=' 'sha256-BX1KwWNGbrh8q3JJvnYZHiDSrMW2v/HRM8YbPn8Knag=' 'wasm-unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' data: https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebasestorage.googleapis.com; worker-src 'self' blob:; frame-src 'self' blob:; media-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
             }
           ]
         }

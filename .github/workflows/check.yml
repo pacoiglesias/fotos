@@ -48,3 +48,18 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
           include-hidden-files: true
+  backup-tag:
+    needs: [regression, windows-publisher]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Create and verify immutable version backup tag
+        run: node scripts/backup-tag.cjs

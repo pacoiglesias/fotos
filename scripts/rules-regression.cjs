@@ -51,7 +51,7 @@ async function request(path, token, method = "GET", body) {
           ownerUid: owner.localId,
           kind: "receive",
           createdAt: { ".sv": "timestamp" },
-          expiresAt: Date.now() + 6000,
+          expiresAt: Date.now() + 300000,
         },
       },
     });
@@ -129,14 +129,20 @@ async function request(path, token, method = "GET", body) {
       "Client cannot delete or revoke the operator session",
       !(await request(container, client.idToken, "DELETE")).ok,
     );
+    // Positive permission checks must not race a six-second lease over a slow network.
+    // Use a distinct short-lived session solely for server-expiry checks.
+    const expiredSecret=crypto.randomBytes(32).toString('hex');
+    const expiredPath=container+'/sessions/'+expiredSecret;
+    const expiryCreated=await request(container,owner.idToken,'PUT',{token:expiredSecret,sessions:{[expiredSecret]:{ownerUid:owner.localId,kind:'receive',createdAt:{'.sv':'timestamp'},expiresAt:Date.now()+6000}}});
+    check('Separate short-lived expiry fixture created',expiryCreated.ok);
     await new Promise((r) => setTimeout(r, 6500));
     check(
       "Expired session denied by server clock",
-      !(await request(path, client.idToken)).ok,
+      !(await request(expiredPath, client.idToken)).ok,
     );
     check(
       "Late upload denied by server clock",
-      !(await request(path + "/files/1", client.idToken, "PUT", file)).ok,
+      !(await request(expiredPath + "/files/1", client.idToken, "PUT", file)).ok,
     );
   } finally {
     await request(container, owner.idToken, "DELETE");

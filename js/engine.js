@@ -122,6 +122,7 @@ window.handleLoadedFile = async function(side, dataUrl, name, onAssigned, option
 async function handlePdfFile(file, targetSide, onAssigned, request = beginSlotRequest(targetSide)) {
   let task=null, retained=false;
   try {
+    if(!window.pdfjsLib&&window.ensurePdfReader)await window.ensurePdfReader();
     if (!window.pdfjsLib) throw Error('No se pudo cargar el lector PDF. Recarga la aplicación.');
     showToast('Procesando PDF escaneado...', 'info');
     const arrayBuffer = await file.arrayBuffer();

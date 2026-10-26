@@ -6,8 +6,8 @@ let browser;
  await new Promise(r=>server.listen(5526,'127.0.0.1',r));
  browser=await chromium.launch({headless:true,...(process.env.REALSCAN_CHROMIUM?{executablePath:process.env.REALSCAN_CHROMIUM}:{})});
  const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(process.env.REALSCAN_PHOTO_URL||'http://127.0.0.1:5526/');
- await page.waitForFunction(()=>window.RealScanLayout?.cutGuideGeometry&&window.pdfjsLib&&typeof updateUI==='function'&&typeof ensureJsPdf==='function');
+ await page.goto(process.env.REALSCAN_PHOTO_URL||'http://127.0.0.1:5526/',{waitUntil:'domcontentloaded',timeout:90000});
+ await page.waitForFunction(()=>window.RealScanLayout?.cutGuideGeometry&&window.pdfjsLib&&typeof updateUI==='function'&&typeof ensureJsPdf==='function',null,{polling:100,timeout:90000});
  const result=await page.evaluate(async()=>{
   await ensureJsPdf();
   $('loginOverlay').classList.add('hidden');document.body.classList.remove('modal-open');

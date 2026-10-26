@@ -58,9 +58,10 @@
     const isCleanSheet = (!includeRuler && !includeLabels && !includeCutMarks && !customTitle);
 
     // Márgenes y límites físicos de seguridad
-    const marginSide = 12; // 12 mm margen lateral mínimo
-    const marginTop = (targetH > 100) ? 16 : 20; // 20 mm o 16 mm para documentos grandes
-    const marginBottom = includeRuler ? 38 : 14; // Reserva para regla (38mm) o margen inferior (14mm)
+    const infantPack = !!state.photoPack && isPhotos && state.format==='photo_infantil' && state.paperSize==='photo_4x6' && outputScale===1;
+    const marginSide = infantPack ? 3 : 12; // 12 mm margen lateral mínimo
+    const marginTop = infantPack ? 3 : (targetH > 100) ? 16 : 20; // 20 mm o 16 mm para documentos grandes
+    const marginBottom = infantPack ? 3 : includeRuler ? 38 : 14; // Reserva para regla (38mm) o margen inferior (14mm)
     const availW = paper.widthMm - (marginSide * 2);
     const availH = paper.heightMm - marginTop - marginBottom;
 
@@ -93,7 +94,7 @@
         if (!includeSheetTitle) page.sheetTitle = '';
         else if (!customTitle) page.sheetTitle = describeScale(page.sheetTitle || '');
       });
-      if(['top','compact'].includes(state.sheetPosition))for(const page of p.pages){const items=page.placements;if(!items.length)continue;const dy=marginTop-Math.min(...items.map(i=>i.y)),dx=state.sheetPosition==='compact'?marginSide-Math.min(...items.map(i=>i.x)):0;for(const item of items){item.x+=dx;item.y+=dy;if(Number.isFinite(item.labelY))item.labelY+=dy;}}
+      if(['top','compact'].includes(state.sheetPosition))for(const page of p.pages){const items=page.placements;if(!items.length)continue;const dy=marginTop-Math.min(...items.map(i=>i.yMm)),dx=state.sheetPosition==='compact'?marginSide-Math.min(...items.map(i=>i.xMm)):0;for(const item of items){item.xMm+=dx;item.yMm+=dy;if(Number.isFinite(item.labelY))item.labelY+=dy;}}
 const geom = validateDocumentGeometry(p, spec, paper);
       if (geom.errors && geom.errors.length > 0) {
         geom.errors.forEach(function(err) {
@@ -117,7 +118,7 @@ const geom = validateDocumentGeometry(p, spec, paper);
     // CASO A: FOTOGRAFÍAS OFICIALES (Retícula 1:1 con guías de corte)
     // ============================================================
     if (isPhotos) {
-      const gap = targetW < 30 ? 3.5 : (targetW < 55 ? 4.5 : 6.0);
+      const gap = infantPack ? 1 : targetW < 30 ? 3.5 : (targetW < 55 ? 4.5 : 6.0);
       const maxCols = Math.max(1, Math.floor((availW + gap) / (targetW + gap)));
       const maxRows = Math.max(1, Math.floor((availH + gap) / (targetH + gap)));
       const maxPerPage = Math.max(1, maxCols * maxRows);

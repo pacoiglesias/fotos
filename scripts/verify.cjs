@@ -6,8 +6,11 @@ try {
     "build",
     "auth-regression",
     "firebase-runner-regression",
+    "backup-tag-regression",
     "regression",
     "photo-layout-regression",
+    "counter-desk-regression",
+    "counter-desk-webkit-regression",
     "studio-regression",
     "service-flow-regression",
     "workbench-regression",
@@ -31,13 +34,13 @@ try {
     "upgrade-regression",
     "legacy",
   ]) {
-    try { cp.execFileSync(process.execPath, ["scripts/" + script + ".cjs"], {
+    try { cp.execFileSync(process.execPath, [...(process.platform === "win32" ? ["--require", "./scripts/windows-browser-runtime.cjs"] : []), "scripts/" + script + ".cjs"], {
       stdio: "inherit",
       env: {
         ...process.env,
         ...(script === "legacy" ? { REALSCAN_TEST_RELAY: "0" } : {}),
       },
-    }); } catch (e) { failures.push(script); console.error("FAIL " + script); if (["check", "build"].includes(script)) throw e; }
+    }); } catch (e) { failures.push(script); console.error("FAIL " + script); throw e; }
   }
   if (failures.length) { console.error("Failed checks: " + failures.join(", ")); process.exitCode = 1; }
 } catch (e) {

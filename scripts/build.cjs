@@ -39,7 +39,7 @@ function copy(src, dst) {
   copy(path.join(root, "css/service-flow.css"), path.join(dist, "css/service-flow.css"));
   copy(path.join(root, "css/workbench.css"), path.join(dist, "css/workbench.css"));
   copy(path.join(root, "css/mobile-experience.css"), path.join(dist, "css/mobile-experience.css"));
-  for (const file of ["modern-experience.css", "duplex-guide.css", "annotations.css"]) copy(path.join(root, "css", file), path.join(dist, "css", file));
+  for (const file of ["modern-experience.css", "duplex-guide.css", "annotations.css", "counter-desk.css"]) copy(path.join(root, "css", file), path.join(dist, "css", file));
   const manifest = JSON.parse(
     fs.readFileSync(path.join(root, "manifest.json")),
   );

@@ -62,6 +62,7 @@ function prepareWorkspaceForJobSwitch(options) {
     }
     state.outputScalePercent = 100;
     state.outputSets = 1;
+    state.photoPack = false;
     state.photoCopiesPersonA = 2;
     state.photoCopiesPersonB = 2;
     state._jobRevision = (state._jobRevision || 0) + 1;
@@ -221,7 +222,7 @@ async function saveScanToStorage(customTitle, retentionDays) {
       customWidth: state.customWidth,
       customHeight: state.customHeight,
       customUnit: state.customUnit || 'cm',
-      photoCopies: state.photoCopies || 4,
+      photoCopies: state.photoCopies || 4,photoPack:!!state.photoPack,
       outputSets: Math.max(1,Math.min(10,Math.round(Number(state.outputSets)||1))),
       photoCopiesPersonA: state.photoCopiesPersonA ?? Math.ceil((state.photoCopies || 4) / 2),
       photoCopiesPersonB: state.photoCopiesPersonB ?? Math.floor((state.photoCopies || 4) / 2),
@@ -432,6 +433,7 @@ async function restoreScanToApp(id) {
     state.photoCopiesPersonA = Number.isInteger(scan.photoCopiesPersonA) ? scan.photoCopiesPersonA : Math.ceil((scan.photoCopies || 4) / 2);
     state.photoCopiesPersonB = Number.isInteger(scan.photoCopiesPersonB) ? scan.photoCopiesPersonB : Math.floor((scan.photoCopies || 4) / 2);
     state.outputScalePercent = Math.max(25, Math.min(200, Number(scan.outputScalePercent) || 100));
+  state.photoPack=!!scan.photoPack;
     if (scan.mixTwoPhotos !== undefined) state.mixTwoPhotos = scan.mixTwoPhotos;
 
     if (scan.passportOpenOrientation) {
@@ -1107,7 +1109,7 @@ async function importScansFromJson(file) {
         customWidth: s.customWidth,
         customHeight: s.customHeight,
         customUnit: s.customUnit || 'cm',
-        photoCopies: s.photoCopies || 4,
+        photoCopies: s.photoCopies || 4,photoPack:!!s.photoPack,
       outputSets: Math.max(1,Math.min(10,Math.round(Number(s.outputSets)||1))),
         photoCopiesPersonA: s.photoCopiesPersonA ?? Math.ceil((s.photoCopies || 4) / 2),
         photoCopiesPersonB: s.photoCopiesPersonB ?? Math.floor((s.photoCopies || 4) / 2),
@@ -1238,7 +1240,7 @@ function snapshotActiveDraft() {
         customWidth: state.customWidth,
         customHeight: state.customHeight,
         customUnit: state.customUnit,
-        photoCopies: state.photoCopies,
+        photoCopies: state.photoCopies,photoPack:!!state.photoPack,
       outputSets: Math.max(1,Math.min(10,Math.round(Number(state.outputSets)||1))),
         photoCopiesPersonA: state.photoCopiesPersonA ?? Math.ceil((state.photoCopies || 4) / 2),
         photoCopiesPersonB: state.photoCopiesPersonB ?? Math.floor((state.photoCopies || 4) / 2),
@@ -1328,6 +1330,7 @@ async function restoreActiveDraft(suppliedDraft) {
   state.photoCopiesPersonA = Number.isInteger(draft.photoCopiesPersonA) ? draft.photoCopiesPersonA : Math.ceil((draft.photoCopies || 4) / 2);
   state.photoCopiesPersonB = Number.isInteger(draft.photoCopiesPersonB) ? draft.photoCopiesPersonB : Math.floor((draft.photoCopies || 4) / 2);
   state.outputScalePercent = Math.max(25, Math.min(200, Number(draft.outputScalePercent) || 100));
+  state.photoPack=!!draft.photoPack;
   state.mixTwoPhotos = !!draft.mixTwoPhotos;
 
   if (draft.passportOpenOrientation) {
@@ -1393,7 +1396,7 @@ function saveUserPreset(presetName) {
     customWidth: state.customWidth,
     customHeight: state.customHeight,
     customUnit: state.customUnit,
-    photoCopies: state.photoCopies || 4,
+    photoCopies: state.photoCopies || 4,photoPack:!!state.photoPack,
       outputSets: Math.max(1,Math.min(10,Math.round(Number(state.outputSets)||1))),
     photoCopiesPersonA: state.photoCopiesPersonA ?? Math.ceil((state.photoCopies || 4) / 2),
     photoCopiesPersonB: state.photoCopiesPersonB ?? Math.floor((state.photoCopies || 4) / 2),
@@ -1445,6 +1448,7 @@ function applyUserPreset(presetId) {
   state.photoCopiesPersonA = Number.isInteger(p.photoCopiesPersonA) ? p.photoCopiesPersonA : Math.ceil((p.photoCopies || 4) / 2);
   state.photoCopiesPersonB = Number.isInteger(p.photoCopiesPersonB) ? p.photoCopiesPersonB : Math.floor((p.photoCopies || 4) / 2);
   state.outputScalePercent = Math.max(25, Math.min(200, Number(p.outputScalePercent) || 100));
+  state.photoPack=!!p.photoPack;
   if (p.mixTwoPhotos !== undefined) state.mixTwoPhotos = !!p.mixTwoPhotos;
 
   if (p.passportOpenOrientation) {

@@ -4,6 +4,17 @@ Este registro describe los avances del código. Un build o un push no acreditan 
 
 ## 3.27.0 - Capturar primero, firmar y entregar
 
+### Mostrador práctico y correcciones de impresión
+
+- Recepción fija: Cámara principal, Archivo y Recibir por QR; accesos INE e infantil sin pasos previos.
+- Reimpresión exacta e historial local, cola con confirmación del resultado y cierre diario por papel/formato con CSV.
+- Asistente por impresora: reglas X/Y de 50 mm, cálculo de corrección y verificación física separada.
+- Infantil de 25 × 30 mm: 8 y 12 en una hoja 4×6; 16 en dos hojas para conservar medidas y márgenes.
+- Enderezado fino con vista previa, original y deshacer; lectura PDF diferida sin bloquear el mostrador.
+- Correcciones de vistas previas móviles, distribución en milímetros, persistencia de packs/perfiles y referencia del trabajo en afterprint.
+- Pruebas nuevas Chromium/WebKit y ejecución fiable de las pruebas en Windows sin omitir sus aserciones.
+
+
 - Entrada «Escanear primero»: captura y elección posterior del servicio, revisión de bordes para DNI/INE y confirmación para sustituir un trabajo abierto.
 - Acabado visual de mostrador y móvil: tarjetas, controles grandes, foco accesible, vista previa proporcional y conservación del original después de ajustar el recorte.
 - Política del alojamiento corregida para procesar imágenes locales; las nuevas pruebas utilizan los encabezados reales de publicación. Mensajes del publicador vinculados a la versión seleccionada.

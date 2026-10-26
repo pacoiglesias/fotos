@@ -81,6 +81,7 @@
         const sourceId=id(),pdf=file.type==='application/pdf'||/\.pdf$/i.test(file.name);
         sourceFiles.push({id:sourceId,name:(file.name||'Captura.jpg').slice(0,180),type:pdf?'application/pdf':file.type,data});
         if(pdf){
+          if(!root.pdfjsLib&&root.ensurePdfReader)await root.ensurePdfReader();
           if(!root.pdfjsLib)throw Error('El lector PDF aún se está preparando. Vuelve a intentarlo.');
           task=pdfjsLib.getDocument({data:await file.arrayBuffer(),isEvalSupported:false,cMapUrl:'vendor/cmaps/',cMapPacked:true,standardFontDataUrl:'vendor/standard_fonts/',wasmUrl:'vendor/wasm/'});
           const ownedTask=task,doc=await ownedTask.promise;

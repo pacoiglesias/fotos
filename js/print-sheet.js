@@ -98,12 +98,13 @@
     const entry=await prepare();
     if(printing)return;
     if(!matches(entry,snapshot()))throw Error('El trabajo cambió. Revisa la hoja antes de imprimir.');
+    const deskId=window.RealScanDesk?.record(entry.frame,{title:entry.layout.spec.shortName,paper:entry.layout.paper.id||state.paperSize,format:state.format,units:entry.layout.pages.reduce((sum,page)=>sum+page.placements.length,0)});
     printing=true;
     const release=()=>{printing=false;clearTimeout(releaseTimer);};
-    entry.frame.contentWindow.addEventListener('afterprint',()=>{release();if(matches(entry,snapshot()))document.dispatchEvent(new Event('realscan:print-dialog-closed'));},{once:true});
+    entry.frame.contentWindow.addEventListener('afterprint',()=>{release();window.RealScanDesk?.finish(deskId,true);if(matches(entry,snapshot()))document.dispatchEvent(new Event('realscan:print-dialog-closed'));},{once:true});
     releaseTimer=setTimeout(release,90000);
     try {entry.frame.contentWindow.focus();entry.frame.contentWindow.print();}
-    catch(error){release();throw error;}
+    catch(error){release();window.RealScanDesk?.setStatus(deskId,'failed').catch(()=>{});throw error;}
   }
   function preview(target, entry) {
     target.replaceChildren();
