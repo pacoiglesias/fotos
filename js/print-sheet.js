@@ -27,14 +27,33 @@
     }
     function line(x1,y1,x2,y2) { svg.append(svgNode('line',{x1,y1,x2,y2,stroke:'#666','stroke-width':.22})); }
     if (!layout.isCleanSheet && page.sheetTitle) text(page.sheetTitle.toUpperCase(),w/2,12,3,'middle');
-    for (const rawItem of page.placements) {
+    /* Marco blanco para recortar (2 mm, limitado por el hueco real): la foto
+       conserva su tamaño 1:1; el marco es margen blanco extra y las guías de
+       corte se desplazan a su borde exterior, así el recorte deja borde blanco. */
+    const FRAME_MM=2;
+    const drawn=page.placements.map(rawItem=>{
       const item=profile ? {...rawItem,xMm:rawItem.xMm*profile.scaleX/100+profile.offsetX,yMm:rawItem.yMm*profile.scaleY/100+profile.offsetY,widthMm:rawItem.widthMm*profile.scaleX/100,heightMm:rawItem.heightMm*profile.scaleY/100}:rawItem;
+      return item;
+    });
+    function frameFor(box){
+      let l=Math.min(FRAME_MM,box.xMm),r=Math.min(FRAME_MM,w-(box.xMm+box.widthMm)),t=Math.min(FRAME_MM,box.yMm),b=Math.min(FRAME_MM,h-(box.yMm+box.heightMm));
+      for(const o of drawn){if(o===box)continue;const v=box.yMm<o.yMm+o.heightMm&&o.yMm<box.yMm+box.heightMm,hz=box.xMm<o.xMm+o.widthMm&&o.xMm<box.xMm+box.widthMm;
+        if(v){if(o.xMm+o.widthMm<=box.xMm)l=Math.min(l,box.xMm-(o.xMm+o.widthMm));else if(o.xMm>=box.xMm+box.widthMm)r=Math.min(r,o.xMm-(box.xMm+box.widthMm));}
+        if(hz){if(o.yMm+o.heightMm<=box.yMm)t=Math.min(t,box.yMm-(o.yMm+o.heightMm));else if(o.yMm>=box.yMm+box.heightMm)b=Math.min(b,o.yMm-(box.yMm+box.heightMm));}}
+      return {l:Math.max(0,l),r:Math.max(0,r),t:Math.max(0,t),b:Math.max(0,b)};
+    }
+    for (const item of drawn) {
       const image = images[item.slot];
+      const f=frameFor(item);
+      if(f.t>0)svg.append(svgNode('rect',{x:item.xMm-f.l,y:item.yMm-f.t,width:item.widthMm+f.l+f.r,height:f.t,fill:'white'}));
+      if(f.b>0)svg.append(svgNode('rect',{x:item.xMm-f.l,y:item.yMm+item.heightMm,width:item.widthMm+f.l+f.r,height:f.b,fill:'white'}));
+      if(f.l>0)svg.append(svgNode('rect',{x:item.xMm-f.l,y:item.yMm,width:f.l,height:item.heightMm,fill:'white'}));
+      if(f.r>0)svg.append(svgNode('rect',{x:item.xMm+item.widthMm,y:item.yMm,width:f.r,height:item.heightMm,fill:'white'}));
       if (image) {
         const box = RealScanLayout.imagePlacement(item,image.naturalWidth,image.naturalHeight);
         svg.append(svgNode('image',{href:image.src,x:box.x,y:box.y,width:box.w,height:box.h,preserveAspectRatio:'none'}));
       }
-      const guide = RealScanLayout.cutGuideGeometry(item);
+      const guide = RealScanLayout.cutGuideGeometry({...item,xMm:item.xMm-f.l,yMm:item.yMm-f.t,widthMm:item.widthMm+f.l+f.r,heightMm:item.heightMm+f.t+f.b});
       const attrs = {fill:'none',stroke:'#666','stroke-width':.22,'stroke-dasharray':'1.5 1.5'};
       if (guide.oval) svg.append(svgNode('ellipse',{...attrs,cx:guide.x+guide.w/2,cy:guide.y+guide.h/2,rx:guide.w/2,ry:guide.h/2}));
       else if (guide.border) svg.append(svgNode('rect',{...attrs,x:guide.x,y:guide.y,width:guide.w,height:guide.h}));

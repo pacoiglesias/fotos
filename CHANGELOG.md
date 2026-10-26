@@ -14,6 +14,18 @@ Este registro describe los avances del código. Un build o un push no acreditan 
 - Correcciones de vistas previas móviles, distribución en milímetros, persistencia de packs/perfiles y referencia del trabajo en afterprint.
 - Pruebas nuevas Chromium/WebKit y ejecución fiable de las pruebas en Windows sin omitir sus aserciones.
 
+### Mostrador 2: marco, respaldo, carga, tema y flujo de entrega
+
+- Marco blanco automático para recortar (2 mm, limitado por el hueco real entre fotos y los márgenes de la hoja): la foto conserva su tamaño 1:1 y las guías de corte se desplazan al borde exterior del marco, así el recorte deja borde blanco. También en documentos, con guía punteada en el borde del marco.
+- Respaldo del historial y los cierres: exportar a JSON e importar (por id, sin duplicar, con validación) desde el diálogo de impresiones recientes. El cierre diario se calcula desde los trabajos, así el respaldo lo cubre.
+- Primera carga completa: los 68 scripts clásicos de index.html ahora usan defer (orden preservado; el módulo del lector PDF ya era diferido). Siete inicios se hicieron compatibles con defer (studio, guided-steps, review-enhancements, app, audio, modern-experience y annotation-workflow): solo inician de inmediato con readyState complete y si no esperan a DOMContentLoaded, porque un setTimeout corto podía dispararse antes de terminar los 68 scripts y dejar la interfaz moderna sin definir. Las páginas del teléfono se dejan como están.
+- Tema general: botones del estudio a 48 px (60 px en modo mostrador), tarjetas con el mismo radio y borde, sin cambiar la estructura ni esconder funciones. Los colores no se tocan: el acento es el sistema de temas del usuario.
+- Nube: cors.json del bucket guardado en el repo (origen https://fotos.cobertores.com; confirmar contra la consola con `gsutil cors get`) y eliminado el fallback que inventaba `<proyecto>.appspot.com` cuando faltaba storageBucket: ahora falla con mensaje visible y el trabajo local sigue a salvo.
+- Etiqueta del trabajo: Cliente y Nota opcionales en la sección de mostrador, se guardan con el trabajo, se ven en el historial y se pueden buscar por nombre, trabajo o nota.
+- Reimprimir solo la hoja que falló: en el diálogo de reimpresión, con más de una hoja, botones Hoja 1, Hoja 2… que preparan solo esa hoja sin tocar el trabajo abierto.
+- Estado Entregado y pendientes de entrega: lo impreso y confirmado que aún no se recoge queda en "Pendientes de entrega"; al marcarlo entregado sigue contando en el cierre del día (ya se imprimió) y ya no pide confirmación.
+
+
 
 - Entrada «Escanear primero»: captura y elección posterior del servicio, revisión de bordes para DNI/INE y confirmación para sustituir un trabajo abierto.
 - Acabado visual de mostrador y móvil: tarjetas, controles grandes, foco accesible, vista previa proporcional y conservación del original después de ajustar el recorte.

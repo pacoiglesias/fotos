@@ -3383,10 +3383,10 @@ function init() {
   window.RealScanDiagnostics?.record('app.ready');
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
+if (document.readyState === 'complete') {
   init();
+} else {
+  document.addEventListener('DOMContentLoaded', init);
 }
 
 // Technical errors are captured by diagnostics.js without customer content.

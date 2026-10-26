@@ -1,0 +1,23 @@
+[
+  {
+    "maxAgeSeconds": 3600,
+    "method": [
+      "GET",
+      "HEAD",
+      "PUT",
+      "POST",
+      "DELETE"
+    ],
+    "origin": [
+      "https://fotos.cobertores.com"
+    ],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "Content-Length",
+      "X-Upload-Content-Type",
+      "X-Upload-Content-Length",
+      "X-Goog-Resumable"
+    ]
+  }
+]

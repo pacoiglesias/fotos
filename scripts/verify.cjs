@@ -11,6 +11,8 @@ try {
     "photo-layout-regression",
     "counter-desk-regression",
     "counter-desk-webkit-regression",
+    "counter-desk-2-regression",
+    "counter-desk-2-webkit-regression",
     "studio-regression",
     "service-flow-regression",
     "workbench-regression",

@@ -24,7 +24,8 @@
   function cfg() { return window.REALSCAN_FIREBASE_CONFIG || null; }
   function bucketName() {
     const c = cfg();
-    return (c && c.storageBucket) || ((c && c.projectId ? c.projectId : 'fotos-cobertores-pro') + '.appspot.com');
+    if (c && c.storageBucket) return c.storageBucket;
+    throw new Error('Falta storageBucket en la configuración de Firebase. Revisa js/firebase-config.js; nunca se usa un bucket inventado.');
   }
   function enabled() { try { return localStorage.getItem(ENABLED_KEY) !== '0'; } catch (e) { return true; } }
   function link() { try { return JSON.parse(localStorage.getItem(LINK_KEY) || 'null'); } catch (e) { return null; } }

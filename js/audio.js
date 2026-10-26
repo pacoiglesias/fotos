@@ -150,10 +150,10 @@
   global.RealScanAudio = RealScanAudio;
 
   if (typeof document !== 'undefined') {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() { RealScanAudio.init(); });
-    } else {
+    if (document.readyState === 'complete') {
       RealScanAudio.init();
+    } else {
+      document.addEventListener('DOMContentLoaded', function() { RealScanAudio.init(); });
     }
   }
 

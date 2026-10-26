@@ -13,3 +13,20 @@ html.dark #deskStart,html.dark .desk-dialog{--desk-ink:#e6effc;--desk-muted:#b8c
 @media(prefers-reduced-motion:reduce){#deskStart *,.desk-dialog *{scroll-behavior:auto!important;transition:none!important}}
 @media print{#deskStart,.desk-dialog,#deskStraighten{display:none!important}}
 html[data-counter="on"] #deskStart button,html[data-counter="on"] .desk-dialog button{font-size:20px!important;min-height:60px!important}html[data-counter="on"] .desk-dialog p{font-size:19px}html[data-counter="on"] .desk-dialog{--desk-ink:#071c32;--desk-muted:#243e58}.photo-finish-preview{height:280px;display:grid;place-items:center;overflow:hidden;background:repeating-linear-gradient(0deg,#edf2f8 0,#edf2f8 19px,#b9c9da 20px);border:1px solid #b9c9da;border-radius:12px}.photo-finish-preview img{max-height:230px;max-width:80%;object-fit:contain}.photo-finish-dialog input[type=range]{width:100%;min-height:48px}
+
+/* Tema general (mostrador 2): el ritmo de la sección de mostrador — botones
+   de 48 px, tarjetas con el mismo radio y borde — se extiende a las
+   pantallas del estudio sin cambiar su estructura ni esconder funciones.
+   Los colores NO se tocan: el acento es el sistema de temas del usuario
+   (polish.css, html[data-theme]) y la sección de mostrador conserva su azul. */
+body.rs-studio .studio-button{min-height:48px;border-radius:11px}
+body.rs-studio .studio-actions,body.rs-studio .studio-preset,body.rs-studio .studio-slot,body.rs-studio .document-history{border-radius:14px;border-color:var(--studio-border)}
+body.rs-studio .studio-section-heading h2{font-size:15px}
+html[data-counter="on"] body.rs-studio .studio-button{font-size:20px!important;min-height:60px!important}
+/* Campos Cliente y Nota de la sección de mostrador. */
+#deskStart .desk-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+#deskStart .desk-fields label{display:block;font-size:14px;font-weight:650;color:var(--desk-muted)}
+#deskStart .desk-fields input{display:block;box-sizing:border-box;width:100%;min-height:48px;border:1px solid #afc2d3;border-radius:9px;background:#fff;color:#142c45;padding:10px;margin-top:6px;font-size:16px}
+#deskStart .desk-fields input:focus-visible{outline:3px solid #3289ff;outline-offset:3px}
+html.dark #deskStart .desk-fields input{background:#223b58;color:#ecf4ff;border-color:#405570}
+@media(max-width:700px){#deskStart .desk-fields{grid-template-columns:1fr}}

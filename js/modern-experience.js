@@ -41,5 +41,5 @@
   root.RealScanModern={update};
  }
  function init(){if(document.body.classList.contains('mobile-experience')){document.body.classList.add('rs-modern-mobile');return;}counter();}
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,10));else setTimeout(init,10);
+ if(document.readyState==='complete')setTimeout(init,10);else document.addEventListener('DOMContentLoaded',()=>setTimeout(init,10));
 })(window);
