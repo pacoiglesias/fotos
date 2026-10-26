@@ -138,7 +138,7 @@ try {
     $releaseHeadExit = $LASTEXITCODE
     $releaseHead = ([string]($releaseHeadOutput | Select-Object -Last 1)).Trim()
     if ($releaseHeadExit -ne 0 -or $releaseHead -notmatch ('^(?<sha>[0-9a-f]{40})\s+' + [regex]::Escape($releaseRef) + '$')) {
-        throw 'No se pudo resolver la version 3.25. Comprueba la conexion y que la rama release/3.27.0 este publicada.'
+        throw "No se pudo resolver la version $releaseVersion. Comprueba la conexion y que la rama $releaseBranch este publicada."
     }
     $releaseCommit = $Matches.sha
     $stage = 'Descargar y comprobar la version'

@@ -2,8 +2,11 @@
 
 Este registro describe los avances del código. Un build o un push no acreditan una publicación: el deploy se confirma comprobando el mismo commit y build en los dominios de ambos sitios. Las pruebas físicas de papel, giro y calidad se realizan con la impresora del establecimiento.
 
-## 3.27.0 - Firmas, sellos y entrega visual
+## 3.27.0 - Capturar primero, firmar y entregar
 
+- Entrada «Escanear primero»: captura y elección posterior del servicio, revisión de bordes para DNI/INE y confirmación para sustituir un trabajo abierto.
+- Acabado visual de mostrador y móvil: tarjetas, controles grandes, foco accesible, vista previa proporcional y conservación del original después de ajustar el recorte.
+- Política del alojamiento corregida para procesar imágenes locales; las nuevas pruebas utilizan los encabezados reales de publicación. Mensajes del publicador vinculados a la versión seleccionada.
 - Firmas manuscritas dibujadas o importadas; eliminación de fondo blanco y guardado opcional en este navegador.
 - Sellos COPIA, RECIBIDO con fecha, REVISADO, ANULADO, CONFIDENCIAL y texto personalizado; tamaño, intensidad, color, posición y marca de agua diagonal.
 - Selección de páginas, deshacer y quitar anotaciones, conservando imágenes originales y capa independiente en PDF, JPG e impresión.
