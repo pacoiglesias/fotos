@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.26.0';
+window.APP_VERSION = 'v3.27.0';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -29,6 +29,7 @@ window.state = {
   includeDocLabels: true, // true (con títulos y mm sobre cada cara) o false
   includeCutMarks: true, // true (con marcas y guías de corte en esquinas) o false (hoja 100% limpia)
   previewActivePage: 1, // Página activa en la vista previa interactiva
+  outputAnnotations: [],
   documentCustomTitle: '', // Nombre o titular personalizado (ej: "DNI de Juan Pérez")
   duplicateCard: false, // true (2 juegos de copias en 1 hoja: Frente+Vuelta x2)
   format: 'card',

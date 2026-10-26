@@ -2,6 +2,16 @@
 
 Este registro describe los avances del código. Un build o un push no acreditan una publicación: el deploy se confirma comprobando el mismo commit y build en los dominios de ambos sitios. Las pruebas físicas de papel, giro y calidad se realizan con la impresora del establecimiento.
 
+## 3.27.0 - Firmas, sellos y entrega visual
+
+- Firmas manuscritas dibujadas o importadas; eliminación de fondo blanco y guardado opcional en este navegador.
+- Sellos COPIA, RECIBIDO con fecha, REVISADO, ANULADO, CONFIDENCIAL y texto personalizado; tamaño, intensidad, color, posición y marca de agua diagonal.
+- Selección de páginas, deshacer y quitar anotaciones, conservando imágenes originales y capa independiente en PDF, JPG e impresión.
+- Copias identificadas por destinatario y folio; registro local de preparación/descarga y comprobación de coincidencia exacta por SHA-256. No detecta fotocopias ni acredita quién las realizó.
+- Entrega de PDF por páginas o rangos, calidad alta/ligera, nombre y tamaño real del archivo, con vista previa del PDF preparado.
+- Comparador deslizante y lupa; accesos visuales a los acabados de captura y cuenta regresiva para captura automática estable.
+- Firma criptográfica con certificado aplazada por decisión del usuario al priorizar estas mejoras. La firma manuscrita y las marcas no se anuncian como certificación.
+
 ## 3.26.0 - Mostrador visual y doble cara guiada
 
 - Interfaz coherente de mostrador y móvil: tarjetas de servicio, contraste, controles táctiles y vista previa de la hoja.

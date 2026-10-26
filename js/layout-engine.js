@@ -65,6 +65,7 @@
     const availH = paper.heightMm - marginTop - marginBottom;
 
     const plan = {
+      annotations: window.RealScanAnnotations ? window.RealScanAnnotations.clean(state.outputAnnotations || []) : [],
       paper: paper,
       spec: spec,
       category: category,

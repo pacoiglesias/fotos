@@ -170,7 +170,7 @@
       $(".scan-filter").hidden = true;
       $(".scan-help").textContent = "Busca luz uniforme, mantén el teléfono quieto y revisa la nitidez. El recorte del retrato se ajusta después en el mostrador.";
     }
-    let stableFrames = 0, lastQuad = null;
+    let stableFrames = 0, lastQuad = null, autoDeadline = 0;
     const autoCapture = $(".scan-auto input");
     if (options.sourceDataUrl) $(".scan-auto").hidden = true;
     let originalData = options.sourceDataUrl || null, pendingResult = null, savedQuad = null;
@@ -346,10 +346,9 @@
           lastQuad = rawQuad?.map((p) => ({ ...p }));
           showQuality(a);
           paint();
+          if(!autoCapture.checked||stableFrames<3)autoDeadline=0;
           if (autoCapture.checked && !options.photoMode && stableFrames >= 3) {
-            status.textContent = "Documento estable. Capturando…";
-            take();
-            return;
+            if(!autoDeadline)autoDeadline=performance.now()+1800; status.textContent="Documento estable. Captura en "+Math.max(1,Math.ceil((autoDeadline-performance.now())/1000))+"… Desmarca Automática para cancelar.";if(performance.now()>=autoDeadline){autoDeadline=0;take();return;}
           }
         }
       } catch {

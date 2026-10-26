@@ -49,6 +49,7 @@
       text('Imprime al 100 % · Tamaño real · Sin ajustar a página',w/2,y+11,2.8,'middle');
       text('La regla debe medir 5 cm. Papel: '+layout.paper.shortName,w/2,y+16,2.5,'middle');
     }
+    const annotations=window.RealScanAnnotations?.svg(window.RealScanAnnotationWorkflow.keyFor(page,layout),w,h,layout.annotations||[]);if(annotations)svg.append(annotations);
     return svg;
   }
   function clear() {
@@ -58,6 +59,7 @@
   }
   async function prepare() {
     const job = snapshot();
+    await window.RealScanAnnotations?.prepare(job.layout.annotations||[]);
     if (cached && matches(cached,job)) return cached.promise;
     if (printing) throw Error('Cierra la ventana de impresión antes de preparar otra hoja.');
     clear();

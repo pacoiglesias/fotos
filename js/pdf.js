@@ -74,7 +74,7 @@ function drawCalibrationFooter(doc, pageW, spec, pageH) {
   doc.text('RealScan — Desarrollado por Paco Iglesias | ' + spec.name + ' • Hoja ' + paper.name, pageW / 2, rulerY + 21.5, { align: 'center' });
 }
 
-function generatePdfDoc() {
+function generatePdfDoc(outputOptions = {}) {
   // Comprobar imágenes disponibles en cualquier ranura
   const hasAnyImage = Object.keys(state.images || {}).some(function(k) {
     return !!(state.images[k] && state.images[k].processedDataUrl);
@@ -136,9 +136,7 @@ function generatePdfDoc() {
       : null;
     page.placements.forEach(function(rawItem) {
       const item = profileTransform ? profileTransform(rawItem) : rawItem;
-      const imgData = (state.images[item.slot] && state.images[item.slot].processedDataUrl)
-        ? state.images[item.slot].processedDataUrl
-        : null;
+      const imgData = outputOptions.imagesOverride?.[item.slot] || state.images[item.slot]?.processedDataUrl || null;
 
       if (imgData) {
         const properties = doc.getImageProperties(imgData);
@@ -164,6 +162,7 @@ function generatePdfDoc() {
     });
 
     // 3. Regla de calibración al pie
+    window.RealScanAnnotations?.drawPdf(doc,window.RealScanAnnotationWorkflow.keyFor(page,layout),pageW,pageH,layout.annotations||[]);
     if (page.hasRuler) {
       drawCalibrationFooter(doc, pageW, spec, pageH);
     }

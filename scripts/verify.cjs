@@ -11,6 +11,7 @@ try {
     "service-flow-regression",
     "workbench-regression",
     "modern-regression",
+    "annotations-regression",
     "print-usability-regression",
     "mobile-workflow-regression",
     "functional-audit-regression",

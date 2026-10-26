@@ -17,7 +17,7 @@
       const paint=()=>{image.src=value;dialog.querySelector('.asset-review-status').textContent=value===options.dataUrl?'Archivo sin cambios. Confirmarlo no modifica sus bytes.':'Ajuste preparado. El archivo recibido se conserva por separado.';};
       find('cancel').onclick=dismiss;find('confirm').onclick=()=>finish(value);
       find('restore').onclick=()=>{value=options.dataUrl;paint();};
-      find('edit').onclick=()=>root.RealScanCapture.open({sourceDataUrl:value,photoMode:!!options.photoMode,onAccept:data=>{if(!done){value=data;paint();}},onError:()=>{dialog.querySelector('.asset-review-status').textContent='No se pudo ajustar. Conserva el archivo o vuelve a intentarlo.';}});
+      find('edit').onclick=()=>root.RealScanCapture.open({sourceDataUrl:value,targetRatio:options.targetRatio,photoMode:!!options.photoMode,onAccept:data=>{if(!done){value=data;paint();}},onError:()=>{dialog.querySelector('.asset-review-status').textContent='No se pudo ajustar. Conserva el archivo o vuelve a intentarlo.';}});
       dialog.addEventListener('cancel',e=>{e.preventDefault();dismiss();});
       dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();dismiss();}});
       document.body.append(dialog);paint();dialog.showModal();

@@ -118,7 +118,7 @@ function prepareWorkspaceForJobSwitch(options) {
 
   // 4. Limpiar título personalizado si no se conserva
   if (typeof state !== 'undefined' && !options.keepTitle) {
-    state.documentCustomTitle = '';state.hideSheetTitle=false;state.sheetPosition='center';
+    state.outputAnnotations = [];state.documentCustomTitle = '';state.hideSheetTitle=false;state.sheetPosition='center';
     const inputTitle = (typeof $ === 'function') ? $('inputDocumentTitle') : null;
     if (inputTitle) inputTitle.value = '';
   }
@@ -217,6 +217,7 @@ async function saveScanToStorage(customTitle, retentionDays) {
       includeRulerFooter: state.includeRulerFooter !== false,
       includeDocLabels: state.includeDocLabels !== false,
       includeCutMarks: state.includeCutMarks !== false,
+      outputAnnotations: window.RealScanAnnotations ? window.RealScanAnnotations.clean(state.outputAnnotations || []) : [],
       customWidth: state.customWidth,
       customHeight: state.customHeight,
       customUnit: state.customUnit || 'cm',
@@ -422,6 +423,7 @@ async function restoreScanToApp(id) {
     if (scan.includeRulerFooter !== undefined) state.includeRulerFooter = scan.includeRulerFooter;
     if (scan.includeDocLabels !== undefined) state.includeDocLabels = scan.includeDocLabels;
     if (scan.includeCutMarks !== undefined) state.includeCutMarks = scan.includeCutMarks;
+  state.outputAnnotations = window.RealScanAnnotations ? window.RealScanAnnotations.clean(scan.outputAnnotations || []) : [];
     if (scan.customWidth) state.customWidth = scan.customWidth;
     if (scan.customHeight) state.customHeight = scan.customHeight;
     if (scan.customUnit) state.customUnit = scan.customUnit;
@@ -1101,6 +1103,7 @@ async function importScansFromJson(file) {
         includeRulerFooter: s.includeRulerFooter !== false,
         includeDocLabels: s.includeDocLabels !== false,
         includeCutMarks: s.includeCutMarks !== false,
+      outputAnnotations: window.RealScanAnnotations ? window.RealScanAnnotations.clean(s.outputAnnotations || []) : [],
         customWidth: s.customWidth,
         customHeight: s.customHeight,
         customUnit: s.customUnit || 'cm',
@@ -1231,6 +1234,7 @@ function snapshotActiveDraft() {
         includeRulerFooter: state.includeRulerFooter,
         includeDocLabels: state.includeDocLabels,
         includeCutMarks: state.includeCutMarks,
+      outputAnnotations: window.RealScanAnnotations ? window.RealScanAnnotations.clean(state.outputAnnotations || []) : [],
         customWidth: state.customWidth,
         customHeight: state.customHeight,
         customUnit: state.customUnit,
@@ -1315,6 +1319,7 @@ async function restoreActiveDraft(suppliedDraft) {
   state.includeRulerFooter = draft.includeRulerFooter !== false;
   state.includeDocLabels = draft.includeDocLabels !== false;
   state.includeCutMarks = draft.includeCutMarks !== false;
+  state.outputAnnotations = window.RealScanAnnotations ? window.RealScanAnnotations.clean(draft.outputAnnotations || []) : [];
   state.customWidth = draft.customWidth || 8.5;
   state.customHeight = draft.customHeight || 5.5;
   state.customUnit = draft.customUnit || 'cm';
@@ -1384,6 +1389,7 @@ function saveUserPreset(presetName) {
     includeRulerFooter: state.includeRulerFooter,
     includeDocLabels: state.includeDocLabels,
     includeCutMarks: state.includeCutMarks,
+      outputAnnotations: window.RealScanAnnotations ? window.RealScanAnnotations.clean(state.outputAnnotations || []) : [],
     customWidth: state.customWidth,
     customHeight: state.customHeight,
     customUnit: state.customUnit,
@@ -1431,6 +1437,7 @@ function applyUserPreset(presetId) {
   if (typeof p.includeRulerFooter === 'boolean') state.includeRulerFooter = p.includeRulerFooter;
   if (typeof p.includeDocLabels === 'boolean') state.includeDocLabels = p.includeDocLabels;
   if (typeof p.includeCutMarks === 'boolean') state.includeCutMarks = p.includeCutMarks;
+  state.outputAnnotations = window.RealScanAnnotations ? window.RealScanAnnotations.clean(p.outputAnnotations || []) : [];
   if (p.customWidth) state.customWidth = p.customWidth;
   if (p.customHeight) state.customHeight = p.customHeight;
   if (p.customUnit) state.customUnit = p.customUnit;

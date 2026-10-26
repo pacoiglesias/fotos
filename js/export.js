@@ -203,7 +203,8 @@ async function handlePrintDirect(reviewed = false) {
  * Dibuja una página completa en un elemento Canvas a 300 DPI calibrados
  * usando las posiciones milimétricas de RealScanLayout
  */
-function renderPageToCanvas(page, layout, loadedImages) {
+async function renderPageToCanvas(page, layout, loadedImages) {
+  await window.RealScanAnnotations?.prepare(layout.annotations||[]);
   window.RealScanDiagnostics?.record('output.raster','info',{count:page.placements.length,guides:layout.includeCutMarks});
   const paper = layout.paper;
   const pxPerMm = 300 / 25.4; // 11.811 px por mm a 300 DPI
@@ -323,6 +324,7 @@ function renderPageToCanvas(page, layout, loadedImages) {
     }
   } catch (e) {}
 
+  const annotations=window.RealScanAnnotations?.raster(window.RealScanAnnotationWorkflow.keyFor(page,layout),paper.widthMm,paper.heightMm,layout.annotations||[]);if(annotations){const layer=await window.RealScanAnnotationWorkflow.image(annotations);ctx.drawImage(layer,0,0,canvas.width,canvas.height);}
   return canvas;
 }
 
@@ -401,7 +403,7 @@ async function downloadA4Image() {
 
   // Caso 1: 1 sola página -> Descarga directa de archivo JPG
   if (layout.totalPages === 1) {
-    const canvas = renderPageToCanvas(layout.pages[0], layout, loadedImages);
+    const canvas = await renderPageToCanvas(layout.pages[0], layout, loadedImages);
     canvas.toBlob(async function(blob) {
       if (!blob) return;
       if (window.RealScanJpeg) blob = await window.RealScanJpeg.blobWithDpi(blob);
@@ -427,8 +429,8 @@ async function downloadA4Image() {
     const zip = new window.JSZip();
     const folder = zip.folder(baseName + '_hojas_300DPI');
 
-    const pageBlobs = layout.pages.map(function(page, idx) {
-      const canvas = renderPageToCanvas(page, layout, loadedImages);
+    const pageBlobs = layout.pages.map(async function(page, idx) {
+      const canvas = await renderPageToCanvas(page, layout, loadedImages);
       return new Promise(function(resolve) {
         canvas.toBlob(async function(blob) {
           if (blob && window.RealScanJpeg) blob = await window.RealScanJpeg.blobWithDpi(blob);
@@ -453,23 +455,13 @@ async function downloadA4Image() {
     showToast('¡Paquete ZIP con ' + layout.totalPages + ' hojas descargado!', 'success');
   } else {
     // Fallback: descargar cada página individualmente
-    layout.pages.forEach(function(page, idx) {
-      const canvas = renderPageToCanvas(page, layout, loadedImages);
-      canvas.toBlob(async function(blob) {
-        if (!blob) return;
-        if (window.RealScanJpeg) blob = await window.RealScanJpeg.blobWithDpi(blob);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = baseName + '_Hoja_' + (idx + 1) + '_300DPI.jpg';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(function() {
-          if (a.parentNode) a.parentNode.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 2000);
-      }, 'image/jpeg', 0.95);
-    });
+    for (const [idx,page] of layout.pages.entries()) {
+      const canvas=await renderPageToCanvas(page,layout,loadedImages);
+      let blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.95));
+      if(!blob)continue;
+      if(window.RealScanJpeg)blob=await window.RealScanJpeg.blobWithDpi(blob);
+      const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=baseName+'_Hoja_'+(idx+1)+'_300DPI.jpg';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(url);},2000);
+    }
     showToast('¡' + layout.totalPages + ' imágenes descargadas!', 'success');
   }
 }

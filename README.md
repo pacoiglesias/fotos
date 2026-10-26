@@ -1,8 +1,8 @@
-# RealScan Pro 3.26.0
+# RealScan Pro 3.27.0
 
 [Registro de cambios](CHANGELOG.md) · [Auditoría 3.25](audit/MOVIL_3_25.md)
 
-La 3.26.0 corrige el cierre de publicación usando la API oficial de Firebase, conserva los fallos reales y mantiene la verificación del build en ambos sitios.
+La 3.27.0 corrige el cierre de publicación usando la API oficial de Firebase, conserva los fallos reales y mantiene la verificación del build en ambos sitios.
 
 La 3.25 mejora los recorridos de escaneo local y envío al mostrador desde el móvil: servicios visuales, frente y reverso, acciones al alcance del pulgar, nombre de PDF, compartir con descarga alternativa y continuación guiada de doble cara manual.
 
@@ -154,3 +154,10 @@ Guía del trabajo en tres pasos con acciones contextuales, avisos de escala y ca
 Abre **Firebase-Acceso.bat** con doble clic. Elige **1** para comprobar la sesión en los dos proyectos de RealScan; si funciona, no necesitas volver a identificarte. La opción **2** renueva el acceso en el navegador y la **3** permite completar un código manual manteniendo abierta la misma ventana. Usa la cuenta que administra los proyectos. El asistente utiliza la herramienta oficial de Firebase, conserva la ventana para leer errores y no publica ni elimina archivos. No copies contraseñas al asistente ni reutilices códigos anteriores. Para comprobarlo sin menú: `Firebase-Acceso.bat -Action Check`.
 
 `autenticar_y_desplegar.bat` prepara el acceso y después ejecuta el mismo publicador. Comprueba Git y la conexión al repositorio, configura Git Credential Manager y abre el acceso de GitHub en el navegador si no está guardada la cuenta `pacoiglesias`. Comprueba Firebase y, si hace falta renovar la sesión, permite elegir navegador o código manual desde la misma ventana. Conserva los archivos y el historial de tu carpeta. El push del código se realiza por separado; este BAT descarga y publica la versión auditada de GitHub.
+## Novedades de la 3.27
+
+Usa **Escanear primero** para capturar una imagen y elegir después identificación, documento o fotografía. La captura se mantiene aparte hasta confirmar; los trabajos abiertos necesitan confirmación de sustitución. Para DNI/INE, revisa y recorta los bordes antes de confirmar, y utiliza 100 % / tamaño real al imprimir.
+
+**Firma y marca tu copia** reúne sellos, firma manuscrita, texto, fecha y destinatario con folio. **PDF para entregar** permite seleccionar páginas y calidad, ver el peso final y descargar la versión preparada. El registro de copias es local; no detecta fotocopias externas. La firma con certificado no forma parte de esta versión.
+
+Consulta `audit/ENTREGA_3_27.md` para el alcance de revisión y los límites de la prueba física.

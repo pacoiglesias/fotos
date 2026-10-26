@@ -129,5 +129,5 @@
     update();
   });
   setInterval(update,10000);
-  window.RealScanCounter={openNewService,update,setOutput(value){if(['digital','print','both'].includes(value)){output=value;update();}},getOutput(){return output;}};
+  window.RealScanCounter={openNewService,update,async startPrepared(kind,confirmed){if(starting||!document.getElementById("loginOverlay").classList.contains("hidden"))throw Error("El puesto no está disponible.");if(!["id","photos","document"].includes(kind))throw Error("Elige el tipo de trabajo.");const occupied=Object.values(state.images).some(i=>i.originalSrc||i.processedDataUrl||i._reading)||RealScanDocuments.status().count||RealScanQrSync.getInboxFiles().length;if(occupied&&!confirmed)throw Error("Guarda el trabajo actual y confirma el cambio.");const before=state._jobRevision;openNewService(kind,"choose");document.getElementById("newServiceConfirm").checked=true;await start();if(before===state._jobRevision||!document.getElementById("newServiceModal").classList.contains("hidden"))throw Error(document.getElementById("newServiceError").textContent||"No se pudo preparar el servicio.");},setOutput(value){if(['digital','print','both'].includes(value)){output=value;update();}},getOutput(){return output;}};
 })();

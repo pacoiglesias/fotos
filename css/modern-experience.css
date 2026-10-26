@@ -51,3 +51,37 @@
  html.dark .rs-modern .flow-stepper .flow-choice{background:#223349!important;color:#edf3fc!important}
  html.dark .rs-modern #workbenchHeaderExample{background:#fff!important;color:#23394e!important}
 }
+/* 3.27: quieter controls, larger previews and a consistent touch interface. */
+@media screen {
+ .rs-modern {--studio-bg:#f3f5f8;--studio-border:#dce3ec;background:radial-gradient(ellipse at 80% 0,#e6eefc 0,transparent 42%),var(--studio-bg);color:var(--studio-ink)}
+ .rs-modern .workbench-bar{background:linear-gradient(115deg,#112337,#203e60);border-color:#304e6c;box-shadow:0 16px 36px #18334d13;position:relative;overflow:hidden}
+ .rs-modern .workbench-bar strong{font-size:clamp(21px,2vw,28px);letter-spacing:-.045em}
+ .rs-modern .studio-services .operator-task{min-height:208px;border:1px solid var(--studio-border);box-shadow:0 7px 24px #17355207;transition:transform .18s,box-shadow .18s,border-color .18s}
+ .rs-modern .studio-services .operator-task:hover{transform:translateY(-3px);box-shadow:0 16px 32px #17355213;border-color:var(--service-color)}
+ .rs-modern .studio-services .operator-task strong{font-size:24px;font-weight:750}
+ .rs-modern .studio-service-art{width:153px;height:106px;right:16px;top:8px}
+ .rs-modern .service-flow{border-radius:24px;padding:24px;box-shadow:0 8px 32px #16355206}
+ .rs-modern #colStageWorkspace>section{border-radius:24px;box-shadow:0 8px 32px #16355206}
+ .rs-modern .stage-canvas-area{border:1px solid var(--studio-border);padding:22px;background-size:16px 16px;background-image:radial-gradient(#a2b2c7 .7px,transparent .7px)}
+ .rs-modern .flow-size-art{border-radius:5px;box-shadow:0 6px 12px #152c4012}
+ .rs-modern .flow-choice{min-height:46px;transition:border-color .15s,background .15s}
+ .rs-modern .flow-choice[aria-pressed=true]{box-shadow:inset 0 0 0 1px var(--rs-accent)}
+ .rs-modern .flow-dock{border-top:1px solid var(--studio-border);box-shadow:0 -12px 36px #16355209}
+ .rs-modern #flowPrimary{background:linear-gradient(120deg,#275ecb,#174aa9);box-shadow:0 5px 16px #275ecb28;font-weight:700}
+ .rs-modern #flowPrimary:disabled{background:var(--studio-soft);box-shadow:none}
+ .rs-modern #annotationTools{grid-column:1/-1;border:1px solid var(--studio-border);border-radius:15px;background:var(--studio-bg);padding:12px;gap:7px;margin:16px 0}
+ .rs-modern #annotationTools>p{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--studio-muted)}
+ .rs-modern #annotationTools button{border-radius:9px;font-size:12px;min-height:40px;background:var(--studio-surface)}
+ .rs-modern :is(button,summary,a,input,select):focus-visible,.rs-modern-mobile :is(button,summary,a,input,select):focus-visible{outline:3px solid var(--rs-accent,#275ecb);outline-offset:3px}
+ .capture-first-entry{display:flex;align-items:center;gap:16px;padding:18px 22px;border:1px solid #b4c9ea;border-radius:18px;background:linear-gradient(100deg,#edf4ff,#f8fbff);color:#183c78;width:100%;text-align:left;margin:16px 0 22px;box-shadow:0 5px 18px #17355206}
+ .capture-first-entry>svg{width:32px;height:32px;flex-shrink:0}.capture-first-entry>span:nth-child(2){display:grid;gap:4px;flex:1}.capture-first-entry strong{font-size:17px;letter-spacing:-.02em}.capture-first-entry small{font-size:12px;color:#4f6685}.capture-first-entry>span:last-child{font-size:24px}.capture-first-entry:disabled{opacity:.55}
+ .capture-first-dialog{width:min(680px,calc(100% - 24px));max-height:90dvh;overflow:auto;border:1px solid var(--studio-border,#dce3ec);border-radius:24px;padding:26px;background:var(--studio-surface,#fff);color:var(--studio-ink,#152538);box-shadow:0 30px 100px #101f4050}
+ .capture-first-dialog::backdrop{background:#0b1b32a8;backdrop-filter:blur(4px)}.capture-first-dialog header{position:static;background:transparent;border:0;box-shadow:none}.capture-first-dialog header small{font-size:10px;letter-spacing:.12em;color:var(--studio-muted,#52657b)}.capture-first-dialog h2{font-size:28px;letter-spacing:-.045em;margin:8px 0}.capture-first-dialog p{font-size:13px;line-height:1.6;margin:10px 0}.capture-first-dialog button{min-height:46px;border:1px solid var(--studio-border,#ccd7e6);border-radius:12px;padding:10px 15px;background:var(--studio-bg,#f4f7fb);color:inherit;font:inherit;cursor:pointer}
+ .capture-first-sources,.capture-first-dialog footer{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}.capture-first-sources button{flex:1}.capture-first-dialog figure{margin:18px 0;background:var(--studio-bg,#f4f7fb);padding:14px;border-radius:15px;text-align:center}.capture-first-dialog figure img{max-height:220px;max-width:100%;object-fit:contain;display:block;margin:auto}.capture-first-dialog figcaption{font-size:11px;margin-top:9px;color:var(--studio-muted,#52657b)}
+ #captureFirstTypes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;border:0;padding:0;margin:20px 0}#captureFirstTypes legend{font-size:13px;font-weight:700;margin-bottom:10px}#captureFirstTypes button{display:grid;gap:7px;text-align:left}#captureFirstTypes small{font-size:11px;line-height:1.5}#captureFirstTypes button[aria-pressed=true]{border-color:#275ecb;box-shadow:inset 0 0 0 1px #275ecb;background:#edf4ff;color:#183c78}#captureFirstTypes:disabled{opacity:.5}#captureFirstReplace{font-size:13px;line-height:1.6}#captureFirstApply{margin-left:auto;background:#275ecb;color:white;border-color:#275ecb}#captureFirstApply:disabled{opacity:.45}
+ html.dark .rs-modern{background:radial-gradient(ellipse at 80% 0,#1a304e,transparent 42%),#0e1724!important}.dark .capture-first-entry{background:linear-gradient(110deg,#203650,#172a41);border-color:#3a5e86;color:#c4dcff}.dark .capture-first-entry small{color:#acc2de}.dark #captureFirstTypes button[aria-pressed=true]{background:#243f63;color:#c4dcff;border-color:#83b4ff}
+ .rs-modern-mobile .mobile-scan-head h1{font-size:32px}.rs-modern-mobile .mobile-scan-card{box-shadow:0 8px 30px #17334d07}.rs-modern-mobile .mobile-primary-actions button{min-height:52px;border-radius:13px}.rs-modern-mobile .mobile-service-cards button{transition:background .15s,border-color .15s}.rs-modern-mobile .mobile-service-cards button[aria-pressed=true]{background:linear-gradient(110deg,#edf4ff,#f6f9ff)}.rs-modern-mobile #mobileDock{box-shadow:0 -10px 30px #17334d0b}
+ @media(max-width:600px){.rs-modern .studio-services .operator-task{min-height:103px;padding-right:96px}.rs-modern .studio-services .operator-task strong{font-size:18px}.rs-modern .studio-service-art{width:100px;height:75px;right:-6px}.rs-modern .service-flow{padding:18px;border-radius:18px}.rs-modern .stage-canvas-area{padding:12px}.capture-first-entry{padding:15px 17px;gap:12px;margin:12px 0 18px}.capture-first-entry strong{font-size:16px}.capture-first-entry small{font-size:11px}.capture-first-dialog{padding:20px;border-radius:19px}.capture-first-dialog h2{font-size:25px}#captureFirstTypes{grid-template-columns:1fr}#captureFirstTypes button{grid-template-columns:1fr 1fr;align-items:center}.capture-first-dialog footer button{flex:1}#captureFirstApply{margin-left:0}.rs-modern-mobile .mobile-scan-head h1{font-size:28px}}
+ @media(prefers-reduced-motion:reduce){.rs-modern .studio-services .operator-task{transition:none}.rs-modern .studio-services .operator-task:hover{transform:none}}
+}
+@media print{.capture-first-entry,.capture-first-dialog{display:none!important}}
