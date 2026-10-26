@@ -540,7 +540,7 @@ const geom = validateDocumentGeometry(p, spec, paper);
   }
 
   // One physical geometry for preview, PDF and raster exports. Marks stay outside the photo.
-  function cutGuideGeometry(item) {
+  function cutGuideGeometry(item, neighbours, paper) {
     const x = item.xMm, y = item.yMm, w = item.widthMm, h = item.heightMm;
     const lines = [], gap = 0.4, tick = 1.2;
     if (item.drawCutMarks) {
@@ -554,7 +554,26 @@ const geom = validateDocumentGeometry(p, spec, paper);
         }
       }
     }
-    return {x,y,w,h,oval:!!item.drawOvalGuide,border:!!item.drawBorder,lines};
+    let safeLines=lines;
+    if(neighbours&&paper){
+      const rectangles=whiteFrameGeometry(item,neighbours,paper),left=Math.min(x,...rectangles.map(r=>r[0])),right=Math.max(x+w,...rectangles.map(r=>r[0]+r[2])),top=Math.min(y,...rectangles.map(r=>r[1])),bottom=Math.max(y+h,...rectangles.map(r=>r[1]+r[3]));
+      const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+      safeLines=lines.map(([x1,y1,x2,y2])=>[clamp(x1,left,right),clamp(y1,top,bottom),clamp(x2,left,right),clamp(y2,top,bottom)]).filter(([x1,y1,x2,y2])=>Math.hypot(x2-x1,y2-y1)>.01);
+    }
+    return {x,y,w,h,oval:!!item.drawOvalGuide,border:!!item.drawBorder,lines:safeLines};
+  }
+
+  // Extra paper whitespace never changes the specified image or the cut size.
+  // Neighbours share each gap; neither frame may paint over the other image.
+  function whiteFrameGeometry(box, placements, paper) {
+    let l=Math.min(2,box.xMm),r=Math.min(2,paper.widthMm-box.xMm-box.widthMm),t=Math.min(2,box.yMm),b=Math.min(2,paper.heightMm-box.yMm-box.heightMm);
+    for(const o of placements){if(o===box)continue;
+      const vertical=box.yMm<o.yMm+o.heightMm&&o.yMm<box.yMm+box.heightMm,horizontal=box.xMm<o.xMm+o.widthMm&&o.xMm<box.xMm+box.widthMm;
+      if(vertical){if(o.xMm+o.widthMm<=box.xMm)l=Math.min(l,(box.xMm-o.xMm-o.widthMm)/2);else if(o.xMm>=box.xMm+box.widthMm)r=Math.min(r,(o.xMm-box.xMm-box.widthMm)/2);}
+      if(horizontal){if(o.yMm+o.heightMm<=box.yMm)t=Math.min(t,(box.yMm-o.yMm-o.heightMm)/2);else if(o.yMm>=box.yMm+box.heightMm)b=Math.min(b,(o.yMm-box.yMm-box.heightMm)/2);}
+    }
+    l=Math.max(0,l);r=Math.max(0,r);t=Math.max(0,t);b=Math.max(0,b);
+    return [[box.xMm-l,box.yMm-t,box.widthMm+l+r,t],[box.xMm-l,box.yMm+box.heightMm,box.widthMm+l+r,b],[box.xMm-l,box.yMm,l,box.heightMm],[box.xMm+box.widthMm,box.yMm,r,box.heightMm]].filter(rect=>rect[2]>0&&rect[3]>0);
   }
 
   // Processed images normally already match the frame. Imported/restored images may not.
@@ -569,7 +588,8 @@ const geom = validateDocumentGeometry(p, spec, paper);
     computeDocumentLayout: computeDocumentLayout,
     validateDocumentGeometry: validateDocumentGeometry,
     cutGuideGeometry: cutGuideGeometry,
-    imagePlacement: imagePlacement
+    imagePlacement: imagePlacement,
+    whiteFrameGeometry: whiteFrameGeometry
   };
 
   if (typeof window !== 'undefined') {

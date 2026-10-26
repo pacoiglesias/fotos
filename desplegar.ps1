@@ -141,6 +141,12 @@ try {
         throw "No se pudo resolver la version $releaseVersion. Comprueba la conexion y que la rama $releaseBranch este publicada."
     }
     $releaseCommit = $Matches.sha
+    $mainHeadOutput = @(& git.exe ls-remote --exit-code 'https://github.com/pacoiglesias/fotos.git' 'refs/heads/main')
+    $mainHeadExit = $LASTEXITCODE
+    $mainHead = ([string]($mainHeadOutput | Select-Object -Last 1)).Trim()
+    if ($mainHeadExit -ne 0 -or $mainHead -notmatch '^(?<mainSha>[0-9a-f]{40})\s+refs/heads/main$') { throw 'No se pudo comprobar main. No se publicara una version anterior.' }
+    if ($Matches.mainSha -ne $releaseCommit) { throw 'Hay mejoras en main pendientes de verificar. Espera al CI en verde y a su respaldo antes de publicar; este BAT no instalara una version anterior.' }
+    Write-Host "Commit respaldado que se va a publicar: $releaseCommit" -ForegroundColor Cyan
     $stage = 'Descargar y comprobar la version'
     Invoke-ReleaseStep 'git.exe' @('clone','--single-branch','--branch',$releaseBranch,'https://github.com/pacoiglesias/fotos.git',$releaseRoot)
     Set-Location -LiteralPath $releaseRoot

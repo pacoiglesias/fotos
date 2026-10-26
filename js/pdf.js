@@ -134,8 +134,10 @@ function generatePdfDoc(outputOptions = {}) {
     const profileTransform = (window.RealScanPrinterProfiles && typeof window.RealScanPrinterProfiles.getTransform === 'function')
       ? window.RealScanPrinterProfiles.getTransform()
       : null;
-    page.placements.forEach(function(rawItem) {
-      const item = profileTransform ? profileTransform(rawItem) : rawItem;
+    const drawn=page.placements.map(rawItem=>profileTransform?profileTransform(rawItem):rawItem);
+    drawn.forEach(function(item) {
+      doc.setFillColor(255,255,255);
+      for(const rect of RealScanLayout.whiteFrameGeometry(item,drawn,paper))doc.rect(...rect,'F');
       const imgData = outputOptions.imagesOverride?.[item.slot] || state.images[item.slot]?.processedDataUrl || null;
 
       if (imgData) {
@@ -144,7 +146,7 @@ function generatePdfDoc(outputOptions = {}) {
         doc.addImage(imgData, 'JPEG', box.x, box.y, box.w, box.h, undefined, 'FAST');
       }
 
-      const guide = RealScanLayout.cutGuideGeometry(item);
+      const guide = RealScanLayout.cutGuideGeometry(item,drawn,layout.paper);
       doc.setDrawColor(102,102,102);doc.setLineWidth(0.22);
       doc.setLineDashPattern([1.5,1.5],0);
       if(guide.oval)doc.ellipse(guide.x+guide.w/2,guide.y+guide.h/2,guide.w/2,guide.h/2,'S');

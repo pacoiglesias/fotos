@@ -56,7 +56,7 @@ if ($Scenario) {
             New-Item -ItemType Directory -Path $fixture | Out-Null
             [IO.File]::WriteAllText((Join-Path $fixture 'package.json'), '{"version":"3.27.0"}')
         }
-        if ($args[0] -eq 'ls-remote') { '8b4d9c4782afa0f0f3f3a924841cd7371a4d4a5b' + "`t" + $args[$args.Count - 1] }
+        if ($args[0] -eq 'ls-remote') { if ($global:publishTestScenario -eq 'unverified-main' -and $args[$args.Count - 1] -eq 'refs/heads/main') { 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' + "`trefs/heads/main" } else { '8b4d9c4782afa0f0f3f3a924841cd7371a4d4a5b' + "`t" + $args[$args.Count - 1] } }
         if ($args[0] -eq 'rev-parse') {
             if ($global:publishTestScenario -eq 'wrong-commit') { '0000000000000000000000000000000000000000' }
             else { '8b4d9c4782afa0f0f3f3a924841cd7371a4d4a5b' }
@@ -89,7 +89,7 @@ foreach ($file in @($testPublisher, (Join-Path $PSScriptRoot 'firebase-access.ps
 }
 New-Item -ItemType Directory -Path (Join-Path $testRoot 'scripts') | Out-Null
 [IO.File]::WriteAllText((Join-Path $testRoot 'scripts\firebase-access.ps1'), 'param([string]$Action) [IO.File]::WriteAllText($env:REALSCAN_TEST_AUTH_MARKER, $Action); exit 0')
-foreach ($case in @('success','prepare-access','auth-failure','wrong-commit','install-failure','publish-failure','old-node','node-24-13','auth-stderr','auth-renew','auth-cancel','missing-gcm','missing-sdk','native-stderr','native-stderr-failure')) {
+foreach ($case in @('success','prepare-access','auth-failure','wrong-commit','install-failure','publish-failure','old-node','node-24-13','auth-stderr','auth-renew','auth-cancel','missing-gcm','missing-sdk','native-stderr','native-stderr-failure','unverified-main')) {
     $caseTrace = Join-Path $testRoot ($case + '.trace')
     $caseOutput = Join-Path $testRoot ($case + '.output')
     $previousPreference = $ErrorActionPreference

@@ -1,3 +1,15 @@
+## 3.27.0 — Pulido de mostrador (revisión del 26 de octubre de 2026)
+
+- Recepción se desbloquea al iniciar sesión; cámara, archivo y QR mantienen su acceso directo.
+- Inicialización ordenada del estudio y selección inmediata de formatos fotográficos.
+- Marco blanco compartido sin aumentar el tamaño de corte; guías limitadas al espacio entre fotos, iguales en PDF e impresión.
+- Documentos: la alternativa PDF de impresión usa la misma calibración que la impresión directa; documentos limpios sin guías añadidas.
+- Respaldo del historial validado y transaccional: 80 MB, 2000 trabajos, cantidades positivas, sin contenido activo; conserva los límites de 12 copias / 48 horas.
+- Confirmación de impresión, entrega y reimpresión exacta desde el resultado; estados sin prometer el estado físico de la impresora.
+- Miniaturas móviles visibles y espacio inferior calculado según la altura real de la barra de impresión.
+- Respaldo Git por commit con etiquetas inmutables y promoción de la rama de publicación solo después del CI; el BAT rechaza publicar una rama atrasada respecto a main.
+- Se conserva el número de versión. Publicación y medición física pendientes de revisión.
+
 # Registro de cambios de RealScan
 
 Este registro describe los avances del código. Un build o un push no acreditan una publicación: el deploy se confirma comprobando el mismo commit y build en los dominios de ambos sitios. Las pruebas físicas de papel, giro y calidad se realizan con la impresora del establecimiento.
