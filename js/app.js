@@ -814,6 +814,7 @@ async function handleGenerateDeliveryQr() {
   }
 
   if (deliverPdf && typeof generatePdfDoc === 'function') {
+      if(typeof ensureJsPdf==='function'&&!await ensureJsPdf())throw Error('No se pudo cargar el generador PDF. Reintenta con conexión o prepara la app para trabajar sin internet.');
     const preflight = runPreflightChecks();
     const fatal = preflight.issues.filter(x=>x.type==='error' && x.code!=='MISSING_SLOT');
     if(fatal.length) throw Error(fatal.map(x=>x.message).join(' '));

@@ -19,6 +19,7 @@ try {
     "service-flow-regression",
     "workbench-regression",
     "modern-regression",
+    "workspace-polish-regression",
     "annotations-regression",
     "print-usability-regression",
     "cloud-recovery-regression",

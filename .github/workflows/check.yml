@@ -42,6 +42,7 @@ jobs:
             .audit/annotations-327/
             .audit/cloud-recovery/
             .audit/image-enhance/
+            .audit/workspace-polish/
             .audit/counter-final/
             .audit/mobile-experience-chromium/
             .audit/mobile-experience-webkit/

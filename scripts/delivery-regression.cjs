@@ -58,6 +58,7 @@ let browser, server;
       }
     }
   });
+  assert.equal(await page.evaluate(()=>!!window.jspdf),false,"The first delivery must exercise a cold PDF generator");
   try {
     for (const format of ["jpg", "png", "pdf"]) {
       console.log("BEGIN " + format);

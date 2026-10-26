@@ -8,6 +8,7 @@ Base: main 396015856742a3145361638e1ddeda2c71ab187a. Se conserva el desarrollo d
 2. La recuperación de nube podía guardar solo las páginas descargadas y anunciar éxito. Ahora valida todas las páginas antes de guardar el trabajo; una página ausente, imagen inválida, falta de espacio o cambio de metadatos conserva el trabajo pendiente. Las solicitudes dobles se agrupan.
 3. Las copias nuevas tienen huella SHA-256 por imagen y estado en proceso/lista. Solo se anuncian listas después de subir todas las imágenes. Se revisan de nuevo los metadatos antes de guardar la recuperación. Las copias antiguas siguen siendo legibles, pero no tienen esa comprobación de huella.
 4. El publicador obtiene la versión desde package.json, conserva el rechazo de un main no aprobado y la comprobación del commit. Sus escenarios de Windows usan la versión de la aplicación sin fijar una entrega antigua.
+5. La entrega digital de una sesión recién abierta intentaba generar la hoja PDF sin cargar primero jsPDF. Ahora espera su carga y comunica un fallo de carga; la regresión empieza explícitamente con esa librería ausente y comprueba la descarga real de JPG, PNG y PDF mediante QR.
 
 ## Acabado visual y operativo
 
@@ -18,6 +19,9 @@ Base: main 396015856742a3145361638e1ddeda2c71ab187a. Se conserva el desarrollo d
 - El procesamiento admite cancelación. La escritura final es atómica: sus controles de cancelación se desactivan brevemente al guardar.
 - La mejora funciona sin internet después de preparar la app; no envía fotos a servicios externos ni utiliza generación de rostros o texto.
 - Se registran solo eventos permitidos y cantidades técnicas; no se registra el contenido, nombre o identificación del cliente.
+- En escritorio, recepción y elección de servicio ocupan la columna izquierda y la hoja permanece visible a la derecha. Se compactan cabeceras, tarjetas y miniaturas. Las herramientas de edición se colocan junto a la hoja. Al cambiar a documento, salida digital o pantalla pequeña se restaura la distribución correspondiente, conservando controles y eventos originales.
+- Se corrige el ancho mínimo heredado de 540 px que impedía ajustar la hoja al espacio disponible. Solo cambia su presentación en pantalla: tamaños físicos, proporciones, contenido exportado y marcas de corte mantienen su motor existente.
+- El móvil comparte una jerarquía visual más clara y controles de al menos 44 px. Su barra fija se oculta cuando la misma acción principal ya está completamente visible y reaparece al desplazarse.
 
 ## Evidencia reproducible
 
@@ -26,6 +30,8 @@ Base: main 396015856742a3145361638e1ddeda2c71ab187a. Se conserva el desarrollo d
 - scripts/image-enhance-regression.cjs: ruido medido, copia intacta, transparencia, cancelación, deshacer, resolución y perfiles sin retoque; Chromium/WebKit y geometría móvil/PC.
 - scripts/mobile-local-regression.cjs: arranque del acabado sin conexión, OCR, PDF a tamaño real, vista previa y borradores en ambos motores.
 - scripts/windows-publish-regression.ps1: dieciséis escenarios con Node y Windows PowerShell reales, servicios externos simulados.
+- scripts/workspace-polish-regression.cjs: escritorio, documento, tamaños de 320/390/768/1440 px, modo oscuro y vista previa móvil confirmada en Chromium y WebKit; capturas en .audit/workspace-polish.
+- scripts/delivery-regression.cjs: generador PDF inicialmente ausente, QR decodificado y descargas reales de los tres formatos, cierre y revocación.
 - npm run verify: conjunto completo antes de publicar. El resultado efectivo, commit, huella, sitios y respaldos se registran en el acta final; este documento no anticipa aprobación.
 
 ## Límites
