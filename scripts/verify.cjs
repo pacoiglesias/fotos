@@ -30,14 +30,16 @@ try {
     ...(process.env.REALSCAN_TEST_RELAY === "1" ? ["delivery-regression"] : []),
     "upgrade-regression",
     "legacy",
-  ])
-    cp.execFileSync(process.execPath, ["scripts/" + script + ".cjs"], {
+  ]) {
+    try { cp.execFileSync(process.execPath, ["scripts/" + script + ".cjs"], {
       stdio: "inherit",
       env: {
         ...process.env,
         ...(script === "legacy" ? { REALSCAN_TEST_RELAY: "0" } : {}),
       },
-    });
+    }); } catch (e) { failures.push(script); console.error("FAIL " + script); if (["check", "build"].includes(script)) throw e; }
+  }
+  if (failures.length) { console.error("Failed checks: " + failures.join(", ")); process.exitCode = 1; }
 } catch (e) {
   process.exitCode = 1;
 }
