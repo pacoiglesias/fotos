@@ -9,6 +9,7 @@ Base: main 396015856742a3145361638e1ddeda2c71ab187a. Se conserva el desarrollo d
 3. Las copias nuevas tienen huella SHA-256 por imagen y estado en proceso/lista. Solo se anuncian listas después de subir todas las imágenes. Se revisan de nuevo los metadatos antes de guardar la recuperación. Las copias antiguas siguen siendo legibles, pero no tienen esa comprobación de huella.
 4. El publicador obtiene la versión desde package.json, conserva el rechazo de un main no aprobado y la comprobación del commit. Sus escenarios de Windows usan la versión de la aplicación sin fijar una entrega antigua.
 5. La entrega digital de una sesión recién abierta intentaba generar la hoja PDF sin cargar primero jsPDF. Ahora espera su carga y comunica un fallo de carga; la regresión empieza explícitamente con esa librería ausente y comprueba la descarga real de JPG, PNG y PDF mediante QR.
+6. Al cambiar de etapa móvil, un desplazamiento suave pendiente podía mover el siguiente botón durante una pulsación rápida. El cambio de etapa ahora posiciona la página inmediatamente; la distribución responde al cambio de anchura sin esperar un temporizador. El desplazamiento normal solo actualiza la barra móvil, sin reorganizar el escritorio.
 
 ## Acabado visual y operativo
 

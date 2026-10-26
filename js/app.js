@@ -76,7 +76,9 @@ function setMobileStep(step) {
   });
 
   if (window.innerWidth < 1024) {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Changing panes must finish before another tap: an unfinished smooth
+    // scroll can move the next control between pointer down and pointer up.
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }
 }
 
