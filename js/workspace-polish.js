@@ -1,6 +1,6 @@
 /* One compact workspace. Existing controls and their handlers are moved, not duplicated. */
 (function(root){'use strict';const $=id=>document.getElementById(id);document.body.classList.add('rs-refined');let mounted=false,anchors=[],timer=null,editorAnchor=null;
- function arrange(){if(!mounted)return;const left=$('colControlPanel'),doc=root.RealScanDocuments?.status().active,wide=innerWidth>=1100&&!doc&&document.body.dataset.outputMode!=='digital';
+ function arrange(){if(!mounted)return;const left=$('colControlPanel'),doc=root.RealScanDocuments?.status().active,wide=!!left&&innerWidth>=1100&&!doc&&document.body.dataset.outputMode!=='digital';
   for(const {element,anchor}of anchors){if(wide){if(element.parentElement!==left)left.append(element);}else if(element.previousSibling!==anchor)anchor.after(element);}
   if(wide){let previous=null;for(const id of ['deskStart','studioWelcome','captureFirstOpen','counterService']){const element=$(id);if(!element)continue;if(previous){if(previous.nextElementSibling!==element)previous.after(element);}else if(left.firstElementChild!==element)left.prepend(element);previous=element;}}
   const tools=$('studioEditorTools'),canvas=document.querySelector('#colStageWorkspace .stage-canvas-area');if(editorAnchor&&tools&&canvas){if(wide){const sheetPanel=canvas.parentElement;if(sheetPanel.nextElementSibling!==tools)sheetPanel.after(tools);}else if(tools.previousSibling!==editorAnchor)editorAnchor.after(tools);}
