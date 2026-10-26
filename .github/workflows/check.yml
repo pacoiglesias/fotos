@@ -37,6 +37,8 @@ jobs:
             .audit/workbench-324/
             .audit/modern-326/
             .audit/annotations-327/
+            .audit/capture-preview-chromium/
+            .audit/capture-preview-webkit/
             .audit/mobile-experience-chromium/
             .audit/mobile-experience-webkit/
             .audit/studio-320/results.json

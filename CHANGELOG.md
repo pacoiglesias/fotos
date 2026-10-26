@@ -2,6 +2,14 @@
 
 Este registro describe los avances del código. Un build o un push no acreditan una publicación: el deploy se confirma comprobando el mismo commit y build en los dominios de ambos sitios. Las pruebas físicas de papel, giro y calidad se realizan con la impresora del establecimiento.
 
+## 3.27.1 - Vistas previas móviles estables
+
+- Espacio de captura reservado antes de decodificar la imagen; se evita depender de alturas porcentuales sobre un contenedor de altura automática.
+- La miniatura se crea con la captura y no depende de que cargue el editor de anotaciones. Reintento visible si una imagen no se puede mostrar.
+- Tras confirmar se lleva la captura a la vista sin depender de un fotograma de animación.
+- Actualizaciones de anotaciones pendientes se repiten y las páginas se identifican por su ID para evitar cruces tras reemplazar u ordenar.
+- Quitar una página conserva el nombre, las opciones OCR y las anotaciones de las demás al recuperar el borrador.
+
 ## 3.27.0 - Capturar primero, firmar y entregar
 
 - Entrada «Escanear primero»: captura y elección posterior del servicio, revisión de bordes para DNI/INE y confirmación para sustituir un trabajo abierto.

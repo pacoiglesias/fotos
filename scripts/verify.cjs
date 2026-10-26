@@ -13,6 +13,8 @@ try {
     "workbench-regression",
     "modern-regression",
     "annotations-regression",
+    "capture-preview-regression",
+    "capture-preview-webkit-regression",
     "print-usability-regression",
     "mobile-workflow-regression",
     "functional-audit-regression",

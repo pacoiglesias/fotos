@@ -2,15 +2,15 @@ param([switch]$PrepararAccesos)
 # Publish the audited application even when this folder has old Git metadata.
 # A new checkout preserves all local files and gives the build its true source SHA.
 $ErrorActionPreference = 'Stop'
-$releaseVersion = '3.27.0'
-$releaseBranch = 'release/3.27.0'
+$releaseVersion = '3.27.1'
+$releaseBranch = 'release/3.27.1'
 $releaseRef = 'refs/heads/' + $releaseBranch
 $releaseCommit = $null
 $originalLocation = Get-Location
 $auditRoot = Join-Path $PSScriptRoot '.audit'
 $publicationId = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [Guid]::NewGuid().ToString('N').Substring(0,8)
-$releaseRoot = Join-Path $auditRoot ('publicacion-327-' + $publicationId)
-$releaseLog = Join-Path $auditRoot ('publicacion-327-' + $publicationId + '.log')
+$releaseRoot = Join-Path $auditRoot ('publicacion-3271-' + $publicationId)
+$releaseLog = Join-Path $auditRoot ('publicacion-3271-' + $publicationId + '.log')
 $transcribing = $false
 $originalPath = $env:PATH
 $result = 1
