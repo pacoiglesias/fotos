@@ -2902,6 +2902,7 @@ function bindEvents() {
   if ($('inputDocumentTitle')) {
     on($('inputDocumentTitle'), 'input', function(e) {
       state.documentCustomTitle = (e.target.value || '').trim();
+      if (state.documentCustomTitle) state.hideSheetTitle = false;
       updatePreviewAnnotations();
       savePreferences();
     });
@@ -2936,6 +2937,10 @@ function bindEvents() {
   // Presets Rápidos de Limpieza / Acabado
   if ($('btnQuickOfficialClean')) {
     on($('btnQuickOfficialClean'), 'click', function() {
+      state.documentCustomTitle = '';
+      state.hideSheetTitle = true;
+      if ($('inputDocumentTitle')) $('inputDocumentTitle').value = '';
+
       state.includeRulerFooter = false;
       state.includeDocLabels = false;
       state.includeCutMarks = false;
@@ -2948,6 +2953,8 @@ function bindEvents() {
 
   if ($('btnQuickStandardChecked')) {
     on($('btnQuickStandardChecked'), 'click', function() {
+      state.hideSheetTitle = false;
+
       state.includeRulerFooter = true;
       state.includeDocLabels = true;
       state.includeCutMarks = true;

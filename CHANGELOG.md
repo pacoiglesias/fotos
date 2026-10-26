@@ -1,3 +1,11 @@
+## 3.28.1 — paneles y acabado de hoja
+
+- Recepción compacta; historial y formatos en un desplegable.
+- Preparación y acabado agrupados; vista previa sin checklist largo ni desplazamiento interno de columna.
+- Resumen de los elementos impresos, controles de acabado plegados y acceso directo a hoja limpia.
+- Hoja limpia elimina el título personalizado; escribir un título nuevo vuelve a mostrarlo.
+- Pruebas de escritorio, móvil, teclado, impresión y conservación de las imágenes.
+
 ## 3.28.0 — acabado local y cierre de auditoría
 
 - Corrige la pérdida del arrastre cuando se actualiza la vista previa; la prueba fuerza esa actualización con el dedo agarrando la foto.
