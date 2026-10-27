@@ -1,3 +1,13 @@
+## En desarrollo — Paperless y operatividad del mostrador (sin publicar, sin cambio de versión)
+
+- Botón "Enviar a Paperless" en la entrega de PDF (junto a "Descargar PDF preparado") y en el historial de cada trabajo con copia guardada; acceso "Enviar a Paperless" en los atajos del mostrador, que abre la entrega de PDF.
+- Ajustes de Paperless (dirección, por defecto https://paperless.iglesiasmurrieta.com, y token de API) guardados solo en localStorage del navegador; el token nunca se escribe en el código (en ejemplos solo el marcador TU_TOKEN). Botón "Comprobar acceso" para validar dirección y token sin enviar nada.
+- El envío es POST multipart a {base}/api/documents/post_document/ con Authorization: Token y campos document y title (título del trabajo, con cliente si lo hay). Progreso, éxito y errores legibles: token rechazado, archivo no aceptado, Paperless sin respuesta o bloqueado por CORS.
+- Desde el historial, el PDF se reconstruye con las imágenes guardadas de la hoja (una por página, proporción conservada); no inventa etiquetas ni tipos.
+- Operatividad: atajos del mostrador con texto centrado y sin recortes en pantallas estrechas; el estado de la entrega mantiene su altura para no mover el diálogo. Sin cambios de color ni de tema, recepción fija intacta, sin precios ni multicliente, sin scripts inline nuevos.
+- Operatividad de Paperless: "Comprobar acceso" guarda primero lo escrito en pantalla y luego comprueba, para no validar un token viejo; el estado de sus ajustes mantiene su altura para no mover el diálogo.
+- En producción la CSP ya incluye el dominio de Paperless en connect-src (firebase.json, sin tocar script-src ni sus hashes); pendiente fuera de este repo: Paperless debe permitir el origen https://fotos.cobertores.com (CORS).
+
 ## 3.28.1 — paneles y acabado de hoja
 
 - Recepción compacta; historial y formatos en un desplegable.

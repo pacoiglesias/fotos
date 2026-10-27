@@ -61,3 +61,13 @@ body.rs-studio #studioImageTray .studio-slot img{object-fit:contain;min-width:0}
 html[data-counter="on"] .flow-dock strong{font-size:19px}
 html[data-counter="on"] .flow-dock #flowPrimary{font-size:20px;min-height:60px}
 html.dark #deskDeliveredInline{background:#163f32;color:#d1f5e5;border-color:#3d8064}
+
+/* Paperless: el acceso del mostrador comparte la cuadrícula; el texto se
+   centra y puede partirse para no recortarse en pantallas estrechas. El
+   estado de la entrega mantiene su altura para no mover el diálogo al
+   cambiar el mensaje. Los colores NO se tocan: todo usa el tema vigente. */
+#deskStart .desk-shortcuts>button{text-align:center;overflow-wrap:anywhere}
+.pdf-delivery-dialog #pdfDeliveryStatus{min-height:1.6em}
+/* Paperless: el estado de sus ajustes mantiene su altura para no mover el
+   diálogo al cambiar el mensaje, igual que el estado de la entrega. */
+#paperlessSettings #paperlessStatus{min-height:1.6em}
