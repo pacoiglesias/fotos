@@ -1,3 +1,7 @@
+### Corrección tras CI del PR #8
+
+La regresión del commit `1a72e1a4f052f56fc20e144850045d0d3ba0ea2c` falló en `workspace-polish-regression`: el resumen visual de Hoja limpia se actualizaba después de la acción. Se mantiene la actualización inmediata de ese resumen y se agrupan únicamente las actualizaciones completas del panel. El despliegue permanece detenido hasta aprobar el nuevo commit.
+
 ## Cierre de implementación 3.29.1 — 27/10/2026
 
 Se amplía el PR #8 con servicios rápidos visibles; acción siguiente contextual; cantidades por +/−; actualización agrupada del panel; búsqueda Paperless con paginación, descarga y apertura de copia con confirmación de trabajo nuevo. No se sobrescriben documentos del NAS. Descargas de PDF/imágenes limitadas a 30 MB, estado y sesión comprobados; sin seguir direcciones de paginación externas.
