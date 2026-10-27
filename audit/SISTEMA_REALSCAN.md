@@ -1,148 +1,71 @@
-# RealScan Pro — referencia técnica y seguimiento
+# Referencia técnica de RealScan Pro · 3.30.0
 
-Última revisión: **27 de octubre de 2026**, zona America/Mexico_City.
-Repositorio: [pacoiglesias/fotos](https://github.com/pacoiglesias/fotos).
+Esta guía describe el código de la nueva entrega. El estado publicado se comprueba en `version.json`; no se deduce del número de versión escrito en un documento.
 
-Este documento es el punto de entrada técnico. Describe capacidades comprobadas en el código y separa publicación, pruebas y propuestas. No garantiza que una integración externa esté configurada en cada dispositivo. Cuando cambie el sistema, actualizarlo junto con el registro de avances y el changelog.
+## Base y estado de la revisión
 
-## 1. Estado verificable
+- Repositorio: `pacoiglesias/fotos`.
+- Base auditada: integración 3.29.1 del PR #10, merge `81f0965b5238a6408b4a4e7c0be3d69b3b36df41`.
+- CI de esa base: [40551089106](https://github.com/pacoiglesias/fotos/actions/runs/40551089106), Windows y regresión aprobados.
+- Publicación anterior comprobada: aplicación 3.29.1, build `realscan-b6c338541ef7eb0c`, sourceCommit `9ac90a5870ce96e129afd3681bae4a851f0cd69a`. Los dos Firebase y `fotos.cobertores.com` sirvieron los mismos archivos.
+- Nueva entrega: rama `codex/mostrador-claro-330`. Su validación y publicación se registran en el PR y en las evidencias de entrega. Durante el desarrollo no se presenta como publicada.
 
-| Elemento | Estado y evidencia |
+## Responsabilidades
+
+| Componente | Función |
 | --- | --- |
-| Producción | **3.29.0**, comprobada de nuevo el 27/10/2026 en `https://fotos.cobertores.com/version.json`, HTTP 200 |
-| Build publicado | `realscan-787bec0e2079b7f7` |
-| Commit publicado | `89da339a365340c3a4cfc57d769d73f9a74c1c86` |
-| Respaldo publicado | Tag `v3.29.0+git.89da339a3653` |
-| CI de la versión publicada | [Run 40455244916](https://github.com/pacoiglesias/fotos/actions/runs/40455244916): regresión, Windows y tag aprobados |
-| Revisión de interfaz | **3.29.1**, [PR #8](https://github.com/pacoiglesias/fotos/pull/8), borrador, sin integrar ni desplegar |
-| Commit de la revisión | `c3667ca432b286f62363d89f71704361b7537fdf` |
-| CI del PR al revisar este documento | [Run 40508687899](https://github.com/pacoiglesias/fotos/actions/runs/40508687899): aprobado para ese commit; las modificaciones posteriores requieren comprobar su propio CI |
-| Pruebas físicas | iPhone real, medición de 50 mm, doble cara y NAS real: pendientes de acta de prueba |
+| `js/workspace-polish.js`, `css/counter-workspace.css` | Composición única del mostrador, recepción persistente, acción contextual y tablero de trabajos |
+| `js/engine.js`, `js/image-processing.js` | Captura, edición y materialización de imágenes conservando originales |
+| `js/layout-engine.js`, `js/print-sheet.js`, `js/document-print.js` | Geometría en milímetros y revisión previa a la impresión |
+| `js/document-job.js`, `js/mobile-scan.js` | Documentos multipágina, edición reversible y PDF móvil |
+| `js/annotations.js`, `js/annotation-workflow.js` | Sellos, firmas y capas de salida |
+| `js/paperless.js`, `js/paperless-metadata.js` | Acceso de origen fijo al NAS y revisión de metadatos antes de enviar |
+| `js/local-ocr.js`, `js/searchable-pdf.js` | OCR local, texto revisable y PDF buscable |
+| `js/job-queue.js`, `js/counter-desk.js` | Pedidos e historial local; estado y confirmación física separados |
+| `js/counter-operations.js` | Tickets, folios, cierre firmado y preparación sin conexión |
+| `js/draft-store.js`, `js/storage.js` | Recuperación y presets, con borradores gráficos en IndexedDB |
+| `js/config.js`, `assets/dialogs/` | Modales compartidos y ayuda secundaria diferida |
+| `js/pwa-update.js`, `sw.js` | Actualización explícita, caché por build y limpieza de versiones antiguas |
+| `scripts/build.cjs`, `scripts/check-build.cjs` | Build limpio, identificadores por contenido, CSP y lista de publicación |
+| `scripts/verify.cjs`, `scripts/publish.cjs` | Verificación completa y publicación controlada en ambos Firebase |
 
-Un push, un build o CI en verde no significan que se haya publicado. El número de versión por sí solo tampoco identifica el contenido: registrar siempre commit y hash del build. Estos datos son una fotografía de la fecha indicada; comprobar GitHub y producción al retomar el trabajo.
+## Invariantes
 
-## 2. Finalidad y flujo operativo
+1. El tamaño físico se calcula en milímetros. La impresión usa papel y escala correctos y necesita medición física del operador.
+2. Un fallo, cancelación o cambio de sesión no confirma una entrega ni borra el trabajo actual.
+3. Un ticket o movimiento de tarjeta Kanban no incrementa producción. Los totales cuentan impresiones confirmadas.
+4. Cambiar de cliente limpia las capturas y anotaciones del espacio nuevo; guardar una copia es una acción explícita.
+5. Los presets no contienen imágenes. Los borradores gráficos no se escriben en localStorage. El guardado reutilizable de firmas se ha retirado y su clave antigua se limpia.
+6. Las descargas y envíos Paperless tienen límite de 30 MB, origen HTTPS fijo, redirecciones prohibidas y comprobación de sesión. Un resultado de otra tarea no confirma el documento enviado.
+7. Las etiquetas y tipos se eligen entre IDs del catálogo real. Las sugerencias locales no crean objetos ni archivan automáticamente.
+8. El QR del ticket es una referencia, no un servicio de seguimiento remoto. No incluye nombre, imagen ni firma del cliente.
+9. El cierre JSON firma totales agregados con una clave ECDSA P-256 no exportable guardada en IndexedDB. La clave pública acompaña el archivo. La firma verifica integridad; para confiar en la identidad se contrasta su huella.
+10. `dist` se reconstruye; sus archivos no se editan. El build genera version.json y verifica las referencias y las políticas CSP.
 
-Aplicación web de mostrador para recibir fotos y documentos, prepararlos e imprimirlos con dimensiones físicas definidas. Funciona en escritorio y dispone de recorridos móviles. No tiene acceso directo al estado físico de una impresora desde el navegador.
+## Actualización y limpieza
 
-1. **Recibir:** cámara, archivo, QR por internet o transferencia Wi-Fi local. La captura inicial puede clasificarse después, conservando la imagen hasta confirmar.
-2. **Preparar:** identificación, fotografía o documento; revisar las imágenes, elegir formato, papel, cantidad y acabado. Confirmar propuestas automáticas y revisar la hoja.
-3. **Entregar:** revisión de impresión, archivo PDF, entrega temporal al celular o archivado opcional en Paperless.
-4. **Cerrar o repetir:** guardar/reanudar trabajos, reimprimir y consultar el cierre diario.
+El reporte del usuario de ver versiones y paneles distintos se contrastó con los archivos públicos: los hosts sirvieron los mismos bytes, pero cada origen conserva su estado local. El worker anterior obtenía HTML de red mientras podía servir JS antiguo desde caché.
 
-## 3. Inventario funcional y límites
+La nueva entrega identifica scripts y estilos por contenido y precachea también esas URLs. El worker consulta únicamente su caché activa. Al activarse retira cachés de versiones RealScan anteriores y conserva otras cachés y almacenamiento de trabajos. La comprobación de actualización compara además la versión remota con la que ejecuta la página. La preparación offline valida que los recursos existan, no solo una marca de estado.
 
-| Área | Implementado en la base publicada | Límites y pendientes |
-| --- | --- | --- |
-| Recepción | Cámara, archivo, portapapeles, QR y Wi-Fi local; captura primero | Cámara y permisos dependen del dispositivo; Wi-Fi local requiere emparejamiento y red compatible |
-| INE/DNI | Frente y reverso en hoja, formato de tarjeta; propuesta de separación cuando se detectan dos caras juntas | Confirmar la detección, el recorte y las medidas; no convertir cualquier proporción en una tarjeta sin revisar |
-| Fotos | Formatos físicos, cantidades, packs, guías, marco y retoques locales | Las cantidades se distribuyen según el espacio real: 16 infantiles pueden requerir más de una hoja |
-| Documentos | Varias páginas, selección, orden, giro, acciones por lotes y PDF único | El tamaño y el número de páginas afectan memoria y tiempo; no prometer PDF idéntico al original si se rasteriza |
-| Impresión | Hoja en milímetros, revisión, perfiles por impresora y calibración guiada | Medir regla de 50 mm al 100 %; el software no mide la hoja impresa |
-| Doble cara | Asistente manual y prueba de orientación | Reinsertado y orientación deben probarse con la impresora concreta |
-| OCR | Reconocimiento local y salida PDF con texto mediante sus recorridos disponibles | Revisar reconocimiento: no garantiza transcripción perfecta, especialmente con imagen borrosa o manuscritos |
-| Sellos y firmas | Capas de COPIA y otros sellos, texto, fecha, firma dibujada/importada y copia identificada | Firma visual, sin firma criptográfica por certificado; un folio no revela quién fotocopió |
-| Historial y trabajos | Guardado/reanudación local, reimpresión, estados y cierre por formatos/cantidades | El navegador no confirma tinta, papel o éxito físico; confirmar el resultado con el operador |
-| Recuperación y nube | Borradores, respaldo/exportación e integración de copia en nube | Historial y ajustes pertenecen al navegador/origen; comprobar restauración y configuración |
-| PWA y sin conexión | Recursos locales, caché, actualización y PDF local | El uso sin conexión requiere haber preparado la caché; QR en internet, nube y Paperless necesitan conexión |
-| Paperless: escritura | Enviar foto individual o PDF revisado; seguimiento de tarea, recibo y prevención de duplicados | Requiere token, permisos y CORS del NAS; las pruebas automáticas utilizan respuestas simuladas |
-| Paperless: lectura | Comprobar acceso y consultar el estado del archivado | Búsqueda/listado paginado y recuperación de PDF/imágenes implementados en la revisión 3.29.1; no están en producción 3.29.0. Prueba real del NAS pendiente. |
-| Móvil y modo mostrador | Diseño adaptable, controles táctiles y modo de letra grande | Pruebas Chromium/WebKit no equivalen a probar cámara/PWA en un iPhone real |
+La ayuda de instalación y escáner se carga al abrirla y se incluye en el precaché. Sus IDs y cierre con teclado se mantienen. Se cancelan aperturas pendientes si el usuario cierra antes de finalizar la carga.
 
-## 4. Mapa del código
+## Memoria y privacidad
 
-Aplicación web de HTML/CSS/JavaScript; compilación y verificación con Node.js 24. No es una app nativa ni un ejecutable de Windows.
+Se liberan canvas temporales después de materializar su imagen o PDF, también en rutas fallidas de render PDF. Los recursos compartidos de vista previa permanecen mientras se necesitan. Se mantienen los límites de imágenes y páginas y se conservan originales de trabajo para deshacer.
 
-| Responsabilidad | Archivos principales |
-| --- | --- |
-| Entradas | `index.html`, `mobile-scan.html`, `phone-upload.html` |
-| Versión y formatos | `package.json`, `package-lock.json`, `js/config.js` |
-| Flujo y distribución de paneles | `js/workspace-polish.js`, `js/service-flow.js`, `js/studio.js`, `css/counter-workspace.css` |
-| Hoja y geometría | `js/layout-engine.js`, `js/engine.js` |
-| Preparación e impresión | `js/print-experience.js`, `js/document-print.js`, `js/printer-profiles.js`, `js/print-archive.js` |
-| Documentos y OCR | `js/document-job.js`, `js/local-ocr.js`, `js/searchable-pdf.js` |
-| Sellos y firmas | `js/annotations.js`, `js/annotation-workflow.js`, `css/annotations.css` |
-| Entrega de archivos y QR | `js/pdf-delivery.js`, `js/qr-sync.js`, `js/share-delivery.js` |
-| Paperless | `js/paperless.js` |
-| Historial, cola y nube | `js/counter-desk.js`, `js/job-queue.js`, `js/storage.js`, `js/cloud-sync.js` |
-| Acceso y diagnóstico | `js/auth.js`, `js/diagnostics.js` |
-| PWA | `sw.js`, `js/pwa-update.js`, `js/offline-setup.js` |
-| Build y auditoría | `scripts/build.cjs`, `scripts/verify.cjs`, `scripts/check-version.cjs`, `scripts/check-build.cjs`, `scripts/check-release.cjs` |
-| Publicación y respaldo | `scripts/firebase-runner.cjs`, `scripts/publish.cjs`, `scripts/backup-tag.cjs`, `.github/workflows/check.yml`, `desplegar.ps1` |
+Las fotos y anotaciones de un borrador siguen existiendo en IndexedDB para recuperación; esta función no se describe como ausencia total de almacenamiento. El cierre exportado contiene exclusivamente métricas. El token de Paperless se configura explícitamente y no se imprime ni se expone a través de la API pública del módulo.
 
-Los originales y las capas de anotación se mantienen separados. No introducir nuevos cambios de disposición en un segundo módulo sin revisar el propietario del layout; mantener el comportamiento de impresión separado del CSS de pantalla.
+## Pruebas y evidencia
 
-## 5. Servicios, datos y credenciales
+`npm run verify` ejecuta chequeo de versiones, sintaxis, build, CSP, autenticación, impresión, recuperación, Paperless, recorrido móvil, OCR sin conexión, actualización y pruebas heredadas.
 
-- Firebase Hosting sirve `dist/`; configuración principal `firebase.json`, proyecto/sitio `fotos-cobertores-pro`. Hay configuración secundaria en `firebase.secondary.json`; no asumir que publicar un proyecto actualiza el otro.
-- Firebase Realtime Database y autenticación anónima sostienen transferencias QR temporales. Una entrega QR no es un respaldo permanente.
-- Paperless permite únicamente el origen HTTPS autorizado en el módulo y en la CSP. El token se configura por administración en el navegador; no escribirlo en documentación, logs ni Git. Su acceso desde JavaScript/localStorage no equivale a un almacén de secretos de servidor.
-- Firmas reutilizables solo se guardan si lo elige el operador. No incluir documentos, firmas, texto OCR, códigos de acceso ni tokens reales en fixtures o evidencias públicas.
-- Credenciales de Firebase para desplegar y token de Paperless son accesos distintos. No asumir que persisten entre entornos o sesiones.
+`operations330-regression.cjs` añade recorridos en Chromium y WebKit para NAS visible, ayuda diferida, ticket estable y PDF real, firma íntegra y alterada, estados Kanban, privacidad local, metadatos confirmados y liberación de canvas tras éxito y error. Las capturas y resultados se guardan en `.audit/operations330/` y en artefactos del CI.
 
-## 6. Mejoras por versión y estado
+La regresión de actualización siembra configuración y aplicación obsoletas, comprueba la versión nueva y la retirada de su caché, y exige conservar un marcador de usuario y una caché ajena a RealScan.
 
-### 3.29.0 — publicada
+Referencia de campos de subida y tareas: [API oficial de Paperless-ngx](https://github.com/paperless-ngx/paperless-ngx/blob/dev/docs/api.md).
 
-Recepción directa, servicio conservando capturas, preferencias por servicio, disposición centralizada, resumen de cantidades, trabajos e impresiones reunidos, revisión de entrega y Paperless opcional. Se reforzaron archivado de hojas completas, control de tareas/duplicados, propuesta de INE y comprobaciones de versión/CSP/build.
+## Pendientes físicos
 
-**Incidencia reportada después de publicar:** interfaz todavía recargada; Paperless poco visible; sellos y firmas poco accesibles; falta medir la agilidad cotidiana. La publicación no cierra esa revisión de usabilidad.
-
-### 3.29.1 — implementada en PR, sin publicar
-
-Paperless pasa a recepción con mensaje de configuración; Sello COPIA y Añadir firma se muestran junto a la hoja. COPIA abre una revisión con la marca preparada, sin confirmar automáticamente. Sellos frecuentes de un toque, pestaña activa y ajustes de precisión agrupados. Se conservan los motores de PDF e impresión.
-
-**Pendiente:** revisión visual comparativa, aceptación del operador, comprobación del CI del commit final y pruebas físicas. La ampliación de 3.29.1 incluye buscador, recuperación de copia con confirmación, accesos a presets, cantidades +/− y acción siguiente contextual. Agrupa actualizaciones repetidas del panel. Se registran tiempos de preparación/reutilización en pruebas; no hay una comparación de rendimiento con hardware del negocio.
-
-### Propuestas todavía no terminadas
-
-| Prioridad | Propuesta | Cómo demostrar que está terminada |
-| --- | --- | --- |
-| Alta | Flujo integral más corto para INE, fotos y documentos | Recorridos completos con pasos/toques antes y después, sin perder capturas o ajustes |
-| Alta | Menos controles repetidos y una preparación coherente | Capturas comparables en escritorio/móvil, botones esenciales visibles y teclado/tacto funcionales |
-| Alta | Medir y reducir esperas | Medir carga, captura, cambio de cantidad y apertura de revisión/impresión con las mismas muestras y dispositivo; registrar resultados reales |
-| Alta | Cambio seguro al siguiente cliente | Guardar o cerrar el trabajo y no reutilizar capturas, firmas, sellos o destinatarios del anterior |
-| En prueba 3.29.1 | Buscar y recuperar desde Paperless | Búsqueda paginada, vista previa y recuperación sin sobrescribir documentos del NAS; probar errores y permisos |
-| Media | Encabezados y firmas más visuales | Plantillas/miniaturas, vista previa, aplicar/deshacer y conservación en PDF e impresión |
-
-No asignar porcentajes de avance ni declarar «perfecto» sin criterios de aceptación y evidencia.
-
-## 7. Verificación y publicación
-
-En un entorno con Node.js 24 y capacidad de ejecutar navegadores:
-
-```sh
-npm ci
-npx playwright install --with-deps chromium webkit
-npm run verify
-```
-
-`verify` ejecuta la lista real de suites de `scripts/verify.cjs`; no mantener aquí un número fijo de suites que pueda quedar obsoleto. CI añade la prueba del publicador en Windows. La prueba opcional de transferencia real y la prueba de reglas tienen requisitos de conexión propios; no presentarlas como ejecutadas si no lo fueron.
-
-Antes de publicar: todas las pruebas requeridas aprobadas para el commit exacto; build de producción; coherencia de versiones y CSP; revisión de código; respaldo Git con tag comprobado. Si cambia un script inline, actualizar los hashes en las configuraciones de Hosting y ejecutar `check-build`. No publicar `audit/`, scripts de mantenimiento, documentación ni credenciales en `dist/`.
-
-El workflow de `main`, después de las pruebas, genera el tag inmutable `vVERSION+git.COMMIT12` y promueve `release/VERSION`. Verificar el resultado; nunca sobrescribir un tag existente para aparentar el mismo respaldo.
-
-Después de desplegar: comprobar `version.json`, portada HTTP 200, coincidencia de commit/build y recursos/CSP; probar recepción, preparación y entrega. Registrar cualquier parte bloqueada por autenticación o falta de hardware. Medición de 50 mm y doble cara solo pueden cerrarse con la impresora real.
-
-## 8. Ficha obligatoria de seguimiento
-
-Copiar esta ficha a [AVANCES.md](AVANCES.md) para cada entrega:
-
-```text
-Versión y fecha:
-Estado: propuesta / implementada / en prueba / publicada
-Problema del operador y criterio de aceptación:
-Cambios visibles y operativos:
-Módulos modificados:
-Commit / rama / PR:
-Pruebas ejecutadas y resultado:
-CI del commit exacto:
-Capturas o mediciones comparables:
-Build / tag verificado:
-Deploy: proyecto, sitio, fecha y resultado:
-URLs y metadatos comprobados:
-Pendientes de iPhone, impresora, NAS y aceptación del operador:
-```
-
-Mantener responsabilidades claras: [CHANGELOG.md](../CHANGELOG.md) resume qué cambió; [AVANCES.md](AVANCES.md) registra ejecución y evidencia; este documento explica qué tiene el sistema y sus límites. Las auditorías históricas conservan su contexto de fecha y no sustituyen el estado actual.
+Cámara y PWA de iPhone real; medición de regla de 50 mm e impresora; reinserción dúplex; acceso, CORS y archivo real en el NAS. Las pruebas automatizadas usan documentos sintéticos y respuestas simuladas y no se presentan como validación física.

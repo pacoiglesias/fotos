@@ -119,7 +119,8 @@ function cameraFixture() {
   assert(Math.abs(dimensions.w/dimensions.h-85.6/53.98)<.01);
   assert.equal(await page.evaluate(()=>state.images.front.fitMode), "fit");
   pass("Camera requests supported continuous focus, controls torch, corrects perspective and preserves confirmed frame");
-  await page.locator("[data-workspace-deliver=print]").click();
+  await page.locator("[data-flow-sides=single]").click();
+  await page.locator("#flowPrimary").click();
   await page.locator("#outputReviewModal").waitFor({ state: "visible" });
   assert((await page.locator("#printReview").innerText()).includes("85.6"));
   assert.equal(await page.evaluate(() => [...document.querySelectorAll("#printReview img")].filter(i => !i.closest(".output-review-sheet")).length), 1);
@@ -174,7 +175,7 @@ function cameraFixture() {
   phone.on("pageerror", (e) => errors.push(e.message));
   await phone.setViewportSize({ width: 390, height: 844 });
   await phone.addInitScript(cameraFixture);
-  await phone.route("**/js/firebase-transfer.js", (r) => r.fulfill({ contentType: "application/javascript", body: 'window.__sent=0;window.RealScanRelay={readSession:async()=>({token:"synthetic1234"}),validate:()=>{},send:async()=>{__sent++}};' }));
+  await phone.route(/\/js\/firebase-transfer\.js(?:\?.*)?$/, (r) => r.fulfill({ contentType: "application/javascript", body: 'window.__sent=0;window.RealScanRelay={readSession:async()=>({token:"synthetic1234"}),validate:()=>{},send:async()=>{__sent++}};' }));
   await phone.goto("http://127.0.0.1:5521/phone-upload.html");
   await phone.locator("#btnSmartScan").click();
   await phone.waitForFunction(() => !document.querySelector(".scan-dialog [data-act=capture]").disabled);

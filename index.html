@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <meta name="application-version" content="3.30.0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>RealScan — Fotos, documentos y entrega digital</title>
   <meta name="description" content="RealScan Pro: estudio fotográfico local para escanear, recortar e imprimir fotos y documentos a escala real 1:1, con entrega digital, respaldo cifrado y prueba de calibración." />
@@ -46,7 +47,7 @@
     })();
   </script>
 
-  <!-- Tailwind CSS CDN -->
+  <!-- CSS local compilado -->
   <link rel="stylesheet" href="css/tailwind.css">
 
   <!-- Google Fonts: Inter -->
@@ -87,7 +88,7 @@
           <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.29.1</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.30.0</span>
           </div>
           <p class="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1 mt-0.5">
             <span class="hidden sm:inline">Desarrollado por</span>
@@ -1802,7 +1803,7 @@
     <footer class="text-center text-xs text-slate-500 space-y-2.5 py-6 border-t border-slate-200 dark:border-slate-800 mt-8">
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.29.1</span>
+        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.30.0</span>
         <span class="text-slate-300 dark:text-slate-600">•</span>
         <span class="font-medium">Desarrollado por <strong class="font-bold text-slate-900 dark:text-white">Paco Iglesias</strong></span>
       </div>
@@ -1889,67 +1890,6 @@
     </div>
   </div>
 
-  <!-- Modal iPhone -->
-  <div id="iphoneHelpModal" role="dialog" aria-modal="true" aria-labelledby="iphoneHelpTitle" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-          </div>
-          <h3 id="iphoneHelpTitle" class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">Instalar y abrir RealScan</h3>
-        </div>
-        <button type="button" data-close-modal="iphoneHelpModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold" aria-label="Cerrar">&times;</button>
-      </div>
-
-      <div class="text-xs text-slate-600 dark:text-slate-300 space-y-3 leading-relaxed">
-        <p>Abre la dirección web de RealScan en el navegador. Usa siempre el mismo dominio para conservar el acceso a tus trabajos guardados en este equipo.</p>
-        <p><strong>Computadora y Android:</strong> pulsa «Instalar App». Si el navegador permite instalarla, aparecerá su ventana de instalación. También puedes buscar la opción de instalación en el menú del navegador.</p>
-        <p><a href="mobile-scan.html" class="text-indigo-600 underline font-bold">Escanear y guardar directamente en este móvil</a></p><button type="button" id="prepareMainOffline" class="p-3 rounded-xl bg-indigo-600 text-white">Preparar app, OCR y exportación sin conexión</button><p id="mainOfflineStatus" role="status"></p><p><strong>iPhone y iPad:</strong> abre la web en Safari, pulsa Compartir y busca «Agregar a pantalla de inicio». Activa «Abrir como app» si aparece y pulsa Agregar. Abre después el icono RealScan y permite la cámara.</p>
-        <p>Si ya está instalada o tu navegador no ofrece instalación, puedes seguir usando la web. No necesitas enviar ni abrir el archivo index.html.</p>
-        <p>La edición puede usarse sin conexión una vez preparados sus recursos. Recibir y entregar por QR requiere internet. Comprueba la captura, descarga e impresión con tu dispositivo.</p>
-      </div>
-
-      <button type="button" data-close-modal="iphoneHelpModal" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs transition-colors">Entendido</button>
-    </div>
-  </div>
-
-  <!-- Modal Scanner -->
-  <div id="scannerHelpModal" role="dialog" aria-modal="true" aria-labelledby="scannerHelpTitle" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-          </div>
-          <h3 id="scannerHelpTitle" class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">¿Cómo conectar tu escáner físico?</h3>
-        </div>
-        <button type="button" data-close-modal="scannerHelpModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold" aria-label="Cerrar">&times;</button>
-      </div>
-
-      <div class="text-xs text-slate-600 dark:text-slate-300 space-y-2.5 leading-relaxed">
-        <p>Por razones de seguridad del navegador, ninguna página web tiene permiso para enviar órdenes directas de hardware a un escáner. Pero tienes <strong>3 formas ultra rápidas</strong>:</p>
-
-        <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-          <p class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5"><span class="text-indigo-600 dark:text-indigo-400">Método 1 (El más rápido):</span> Pegar con Ctrl + V</p>
-          <p>Cuando escanees con el software de tu impresora, haz clic derecho en la imagen escaneada y dale <strong>"Copiar"</strong>. Luego en esta página pulsa el botón <strong>"📋 Pegar"</strong> o presiona <kbd class="px-1 py-0.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded font-mono">Ctrl + V</kbd>.</p>
-        </div>
-
-        <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
-          <p class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5"><span class="text-indigo-600 dark:text-indigo-400">Método 2:</span> Arrastrar y Soltar</p>
-          <p>Arrastra el archivo de imagen que guardó tu escáner directamente sobre el recuadro de Anverso o Reverso.</p>
-        </div>
-
-        <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
-          <p class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5"><span class="text-indigo-600 dark:text-indigo-400">Método 3:</span> Botón "Subir Archivo"</p>
-          <p>Haz clic en "Subir Archivo" y selecciona la imagen escaneada en tu carpeta de Imágenes o Documentos.</p>
-        </div>
-      </div>
-
-      <button type="button" data-close-modal="scannerHelpModal" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs transition-colors">Entendido</button>
-    </div>
-  </div>
-
   <!-- Modal / Overlay de Bloqueo y Acceso Seguro -->
   <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md transition-all duration-300">
     <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
@@ -1958,7 +1898,7 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
         </div>
         <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Acceso al Sistema</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">RealScan Pro <span class="font-bold text-indigo-600 dark:text-indigo-400 font-mono">v3.29.1</span> • Impresión 1:1</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">RealScan Pro <span class="font-bold text-indigo-600 dark:text-indigo-400 font-mono">v3.30.0</span> • Impresión 1:1</p>
       </div>
 
       <form id="loginForm" class="space-y-3.5" autocomplete="on">
@@ -2048,7 +1988,7 @@
             ⚙️
           </div>
           <div>
-            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.29.1</span></h3>
+            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.30.0</span></h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400">Control de acceso y bitácora de auditoría</p>
           </div>
         </div>
@@ -2882,6 +2822,7 @@
 <script defer src="js/annotation-workflow.js"></script>
 <script defer src="js/pdf-delivery.js"></script>
 <script defer src="js/paperless.js"></script>
+<script defer src="js/paperless-metadata.js"></script>
 <script defer src="js/issuance-log.js"></script>
 <script defer src="js/review-enhancements.js"></script>
 <script defer src="js/capture-first.js"></script>
@@ -2889,6 +2830,7 @@
 <script defer src="js/calibration-wizard.js"></script>
 <script defer src="js/print-archive.js"></script>
 <script defer src="js/counter-desk.js"></script>
+<script defer src="js/counter-operations.js"></script>
 <script defer src="js/photo-finish.js"></script>
 <script defer src="js/desk-presets.js"></script>
 <script defer src="js/image-finish-ui.js"></script><script defer src="js/workspace-polish.js"></script>

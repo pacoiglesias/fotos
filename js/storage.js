@@ -1285,7 +1285,7 @@ async function saveActiveDraft() {
       if(epoch!==draftEpoch)return;
       try {
         if(window.RealScanDraftStore){if(snapshot)await window.RealScanDraftStore.write(snapshot);else await window.RealScanDraftStore.remove();}
-        else { const raw=JSON.stringify(snapshot);if(raw.length>262144)throw Error('Borrador grande requiere IndexedDB.');if(snapshot)localStorage.setItem(DRAFT_STORAGE_KEY,raw);else localStorage.removeItem(DRAFT_STORAGE_KEY); }
+        else { if(snapshot)throw Error('Los borradores con imágenes requieren IndexedDB.');localStorage.removeItem(DRAFT_STORAGE_KEY); }
         if(epoch!==draftEpoch)return;
         activeDraftCache=snapshot;
         if(window.RealScanDraftStore)try{localStorage.removeItem(DRAFT_STORAGE_KEY);}catch{}

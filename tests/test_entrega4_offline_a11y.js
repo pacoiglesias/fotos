@@ -50,7 +50,7 @@ assert(
 
 // 1.3 Debe esperar con await el resultado de caches.match en el fallback offline
 assert(
-  swCode.includes('await caches.match') || swCode.includes('then('),
+  swCode.includes('await cache.match') || swCode.includes('await caches.match') || swCode.includes('then('),
   'sw.js resuelve asíncronamente las promesas de caches.match en el fallback'
 );
 

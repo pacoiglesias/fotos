@@ -180,8 +180,7 @@ async function renderPdfPageToDataUrl(page) {
   canvas.width = viewport.width;
   canvas.height = viewport.height;
   const ctx = canvas.getContext('2d');
-  await page.render({ canvasContext: ctx, viewport }).promise;
-  return canvas.toDataURL('image/jpeg', 0.95);
+  try { await page.render({ canvasContext: ctx, viewport }).promise; return canvas.toDataURL('image/jpeg', 0.95); } finally { canvas.width = canvas.height = 0; page.cleanup?.(); }
 }
 
 /* ============================================================
@@ -202,7 +201,7 @@ function detectAndCropCard(img) {
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(img, 0, 0, w, h);
     const imgData = ctx.getImageData(0, 0, w, h);
-    const d = imgData.data;
+    const d = imgData.data; canvas.width = canvas.height = 0;
 
     function getRGB(x, y) {
       const idx = (y * w + x) * 4;
@@ -297,7 +296,7 @@ function detectAndCropCard(img) {
       cropCanvas.height = origHeight;
       const cropCtx = cropCanvas.getContext('2d');
       cropCtx.drawImage(img, origLeft, origTop, origWidth, origHeight, 0, 0, origWidth, origHeight);
-      return cropCanvas.toDataURL('image/jpeg', 0.96);
+      try { return cropCanvas.toDataURL('image/jpeg', 0.96); } finally { cropCanvas.width = cropCanvas.height = 0; }
     }
   } catch (err) {
     console.warn('[RealScan] Error en auto-crop:', err);
@@ -956,8 +955,7 @@ function renderProcessedImage(side) {
       try { applyWhiteBackground(ctx, outW, outH); } catch(e) {}
     }
 
-    imgData.processedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
-    settle();
+    try { imgData.processedDataUrl = canvas.toDataURL('image/jpeg', 0.92); } finally { canvas.width = canvas.height = 0; settle(); }
     updateSidePreview(side);
   };
   img.onerror = function() {
