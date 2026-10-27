@@ -148,8 +148,10 @@ body.rs-next{--work-ink:#172b43;--work-muted:#566980;--work-line:#d8e2eb;--work-
  .rs-next #workspaceDelivery>div{gap:8px}
  .rs-next #workspaceDelivery button{font-size:14px;min-height:50px}
  .rs-next #studioEditorTools button{flex:1 1 30%;font-size:13px!important;padding:9px}
- .rs-next #studioImageTray .studio-slot{display:flex;flex-direction:row;align-items:center;gap:8px;min-width:140px;min-height:64px;max-width:100%;padding:8px}
- .rs-next #studioImageTray .studio-slot img{width:52px;height:52px;object-fit:contain;flex:none}
+ body.rs-next #studioImageTray .studio-slot{display:flex;flex-direction:row;align-items:center;gap:8px;flex:0 0 148px;min-width:148px;min-height:64px;max-width:100%;padding:8px}
+ body.rs-next #studioImageTray .studio-slot img{width:52px;height:52px;object-fit:contain;flex:none}
+ .rs-next #studioImageTray .studio-slot small{display:none}
+ .rs-next #studioReady{display:none}
  .rs-next #studioImageTray:has(>button:only-child){display:flex!important}
 }
 @media(max-width:600px){html[data-counter=on] body.rs-next #counterMore{font-size:14px!important;min-width:0;white-space:normal;overflow-wrap:anywhere}}

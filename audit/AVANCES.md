@@ -44,7 +44,7 @@ CI https://github.com/pacoiglesias/fotos/actions/runs/40449435150, commit `374c1
 
 Commit `4575e2745d4777660d9b4952912602c39e5d28b0`, build `realscan-ba51ae01c6098914`. Aprobados `npm run verify` y publicador Windows tanto en la rama (https://github.com/pacoiglesias/fotos/actions/runs/40450223052) como en el PR (https://github.com/pacoiglesias/fotos/actions/runs/40450296772). La ejecución de la rama registró 317 resultados PASS y ningún FAIL. Se revisaron las capturas de escritorio, WebKit móvil y modo mostrador.
 
-El repaso visual final lleva las herramientas detrás de la hoja también en móvil, compacta la miniatura, conserva oculto el panel de fotos al trabajar documentos en móvil y oculta la ayuda repetida de la vista del cliente hasta que haya aprobación. Se comprueba también que Más opciones no recorte su texto. Estos ajustes se someten de nuevo al CI antes de cerrar el PR. Revisión: https://github.com/pacoiglesias/fotos/pull/7.
+El repaso visual final lleva las herramientas detrás de la hoja también en móvil, compacta la miniatura, conserva oculto el panel de fotos al trabajar documentos en móvil y oculta la ayuda repetida de la vista del cliente hasta que haya aprobación. El acceso secundario se muestra como Más, conservando Más opciones como nombre accesible; las miniaturas se limitan a 52 px en móvil y se conserva un único mensaje principal de estado. Se comprueba que el texto no se recorte y que la miniatura permanezca compacta. Estos ajustes se someten de nuevo al CI antes de cerrar el PR. Revisión: https://github.com/pacoiglesias/fotos/pull/7.
 
 ### Pendientes para cerrar esta entrega
 
