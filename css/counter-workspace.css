@@ -214,8 +214,8 @@ html[data-counter=on] body.rs-next :is(#serviceFlow,#workspaceDelivery,#deskStar
 }
 
 @media screen {
- .rs-next #studioWelcome #deskPresets{margin-top:14px;border-top:1px solid var(--work-line);padding-top:12px}
- .rs-next #studioWelcome #deskPresets h3{font-size:13px;font-weight:650;margin-bottom:8px}
+ .rs-next #studioWelcome #deskPresets{display:block;margin-top:14px;border-top:1px solid var(--work-line);padding-top:12px}
+ .rs-next #studioWelcome #deskPresets h3{display:block;font-size:13px;font-weight:650;margin-bottom:8px}
  .rs-next #studioWelcome #deskPresets>div{display:grid;grid-template-columns:1fr 1fr;gap:8px}
  .rs-next #studioWelcome #deskPresets button{white-space:normal;text-align:left;min-height:48px;padding:10px;border:1px solid var(--work-line);border-radius:10px;background:var(--work-bg);color:var(--work-ink);font-size:13px;line-height:1.4}
  .rs-next #studioWelcome #deskPresets p{font-size:11px;line-height:1.5;margin-top:8px;color:var(--work-muted)}
