@@ -323,3 +323,12 @@
 }
 
 @media screen{body.rs-next.rs-counter330 #workbenchBar #counterOffline{min-height:26px;display:inline-flex;padding:2px 0;border:0;background:none;font-size:11px;color:var(--work-accent)}}
+
+/* Keep the prepared sheet above the fold across platform font metrics. */
+@media screen and (min-width:1100px){
+ body.rs-next.rs-counter330[data-workspace-loaded=true] #counterIntake{margin-bottom:16px}
+ body.rs-next.rs-counter330[data-workspace-loaded=true] #counterIntake>:is(#studioWelcome,#deskStart){padding-block:16px!important}
+ body.rs-next.rs-counter330[data-workspace-loaded=true] #colStageWorkspace{padding:20px!important}
+ body.rs-next.rs-counter330[data-workspace-loaded=true] #colStageWorkspace .studio-work-heading{margin-bottom:10px!important}
+ body.rs-next.rs-counter330[data-workspace-loaded=true] .stage-canvas-area{padding-block:20px!important}
+}
