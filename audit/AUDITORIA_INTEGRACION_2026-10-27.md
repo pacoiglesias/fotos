@@ -61,3 +61,14 @@ Quedan para validación física: cámara/PWA de iPhone real, regla de 50 mm e im
 | Móvil al alcance del pulgar | Implementado y probado en navegadores | Barra adaptativa y objetivos táctiles; falta prueba física de iPhone. |
 
 Prioridades de una siguiente iteración: consolidar la acción principal cuando hay varios accesos visibles; convertir errores generales en avisos junto al control con acción de corrección; unificar estados «Preparando archivo», «Generando PDF», «Recibido por Paperless» y «Archivado» sin porcentajes inventados. No se declaran implementadas esas mejoras futuras.
+
+
+## Cierre de publicación comprobado
+
+- La suite completa del publicador sobre `9ac90a5870ce96e129afd3681bae4a851f0cd69a` terminó sin fallos: 326 mensajes PASS.
+- Build publicado: `realscan-b6c338541ef7eb0c`, aplicación 3.29.1. Ambos sitios y sus dos dominios respondieron HTTP 200 con el mismo build y commit; la hoja `css/ux-accessibility.css` también respondió 200 en los cuatro.
+- `npm run publish` completó la verificación y el primer destino. El segundo predeploy rechazó un cambio concurrente en una prueba. Se guardó aparte ese ajuste, se restauró el árbol limpio y se repitieron `check-release` y únicamente el despliegue secundario por el mismo runner oficial. Después se verificaron los cuatro endpoints, incluida appVersion. No se omitieron controles ni se cambiaron los archivos de la aplicación durante la recuperación.
+- Evidencia local: `.audit/publicacion-3291-verificada.json`, `.audit/publish-integracion-3291.log` y `.audit/annotations-ci-followup.log`.
+- CI de la integración `40548246430`: Windows aprobado; Linux detectó una espera insuficiente en `annotations-regression`. La prueba intentaba reabrir captura antes de finalizar el diálogo anterior. Se espera ahora el cierre efectivo y el fin del procesamiento. Regresión específica repetida: aprobada con todas las aserciones de PDF, firmas, privacidad, móvil y cambio de cliente. El seguimiento modifica únicamente prueba y documentación, no el contenido publicado.
+- CI original `40543343674`: se consultó repetidamente; Windows aprobado y regresión aún en instalación de navegadores en esas consultas. El intento de recuperar sus logs mientras corría devolvió 404. No se presenta como aprobado.
+- La propuesta 3.30.0 se evaluó y se presentó un plan por fases; no se implementó ni se publicó como parte de 3.29.1. Hay guardado explícito de firmas reutilizables en localStorage y borradores en IndexedDB: la versión actual no ofrece una garantía zero-storage.
