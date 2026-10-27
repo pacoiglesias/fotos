@@ -1,105 +1,51 @@
-/* Paperless-ngx: archiva el PDF de un trabajo en el Paperless del negocio.
-   El token de API vive SOLO en localStorage de este navegador: nunca se
-   escribe en el código, en ningún archivo ni en ningún registro. En
-   ejemplos y documentación se escribe únicamente el marcador TU_TOKEN,
-   nunca un valor real. Sin token no hay envío: los ajustes lo piden antes.
-   En producción hace falta un permiso fuera de este repo: CORS de
-   Paperless para https://fotos.cobertores.com. La CSP de la app ya
-   incluye el dominio de Paperless en connect-src (firebase.json). Sin
-   CORS el navegador bloquea el envío y se muestra el error de readableError. */
+/* Explicit uploads with bounded receipts. Credentials never leave the configured HTTPS origin. */
 (function(root){
-'use strict';
-const BASE_KEY='realscan_paperless_base_v1',TOKEN_KEY='realscan_paperless_token_v1';
-const DEFAULT_BASE='https://paperless.iglesiasmurrieta.com';
-const say=message=>root.showToast?.(message,'info');
-function cleanBase(value){
- const base=(value||'').trim().replace(/\/+$/,'');
- if(!/^https?:\/\/[^/]+$/.test(base))throw Error('La dirección de Paperless no es válida. Usa https://paperless.iglesiasmurrieta.com');
- return base;
-}
-function getBase(){try{return cleanBase(localStorage.getItem(BASE_KEY)||DEFAULT_BASE);}catch{return DEFAULT_BASE;}}
-function getToken(){try{return (localStorage.getItem(TOKEN_KEY)||'').trim();}catch{return '';}}
-function hasToken(){return !!getToken();}
-function save(base,token){
- const clean=cleanBase(base);
- try{
-  localStorage.setItem(BASE_KEY,clean);
-  if(token&&token.trim())localStorage.setItem(TOKEN_KEY,token.trim());
-  else localStorage.removeItem(TOKEN_KEY);
- }catch{throw Error('No se pudo guardar en este navegador. Revisa el almacenamiento del sitio.');}
- return clean;
-}
-function fileNameFor(title,blob){
- const ext=blob.type==='image/png'?'png':blob.type==='image/jpeg'?'jpg':blob.type==='image/webp'?'webp':blob.type==='text/plain'?'txt':'pdf';
- const safe=(title||'RealScan_Entrega').replace(/[\x00-\x1f<>:"/\\|?*]/g,'').trim().slice(0,80)||'RealScan_Entrega';
- return safe+'.'+ext;
-}
-function readableError(error,status){
- if(status===401||status===403)return 'Paperless rechazó el token. Revisa el token en Ajustes de Paperless (Paperless → Administración → Tokens).';
- if(status===400)return 'Paperless no aceptó el archivo. Revisa que sea un PDF o una imagen válida.';
- if(status)return 'Paperless respondió con un error ('+status+'). Reintenta en un momento.';
- if(error&&error.name==='AbortError')return 'El envío a Paperless tardó demasiado. Revisa tu conexión y reintenta.';
- return 'No se pudo contactar a Paperless. Revisa que la dirección sea correcta, que Paperless esté en línea y que permita el origen de esta app (CORS).';
-}
-function fail(message){const error=Error(message);error._paperlessReadable=true;return error;}
-async function checkAccess(onStatus){
- const base=getBase(),token=getToken();
- if(!token){onStatus?.('Guarda primero tu token en Ajustes de Paperless.');return false;}
- onStatus?.('Comprobando acceso a Paperless…');
- const control=new AbortController(),timer=setTimeout(()=>control.abort(),30000);
- try{
-  const res=await fetch(base+'/api/documents/?page_size=1',{headers:{Authorization:'Token '+token},signal:control.signal});
-  if(res.ok){onStatus?.('Conexión correcta con Paperless.');return true;}
-  onStatus?.(readableError(null,res.status));return false;
- }catch(e){onStatus?.(readableError(e,0));return false;}
- finally{clearTimeout(timer);}
-}
-async function send(blob,title,onStatus){
- if(!blob||!blob.size)throw fail('No hay archivo preparado para enviar a Paperless.');
- const base=getBase(),token=getToken();
- if(!token){openSettings('Guarda tu token de Paperless para enviar este archivo.');throw fail('Falta el token de Paperless. Guárdalo en Ajustes y vuelve a enviar.');}
- const form=new FormData();
- form.append('document',blob,fileNameFor(title,blob));
- form.append('title',(title||'RealScan_Entrega').slice(0,200));
- onStatus?.('Enviando a Paperless…');
- const control=new AbortController(),timer=setTimeout(()=>control.abort(),180000);
- try{
-  const res=await fetch(base+'/api/documents/post_document/',{method:'POST',headers:{Authorization:'Token '+token},body:form,signal:control.signal});
-  if(!res.ok)throw fail(readableError(null,res.status));
-  let taskId='';
-  try{const data=await res.clone().json();taskId=data.task_id||data.id||'';}catch{try{taskId=(await res.text()).trim();}catch{}}
-  onStatus?.('Enviado a Paperless. Paperless lo procesará en unos momentos.');
-  return {taskId};
- }catch(e){
-  if(e&&e._paperlessReadable)throw e;
-  throw fail(readableError(e,0));
- }finally{clearTimeout(timer);}
-}
-function field(labelText,input){
- const label=document.createElement('label');label.textContent=labelText;label.append(input);return label;
-}
-function openSettings(note){
- let d=document.getElementById('paperlessSettings');
- if(!d){
-  d=document.createElement('dialog');d.id='paperlessSettings';d.className='desk-dialog';d.setAttribute('aria-label','Ajustes de Paperless');
-  const title=document.createElement('h2');title.textContent='Ajustes de Paperless';
-  const noteBox=document.createElement('p');noteBox.id='paperlessNote';noteBox.textContent='El token se guarda solo en este navegador. Se crea en Paperless → Administración → Tokens. Nunca se escribe en el código de la app.';
-  const baseInput=document.createElement('input');baseInput.id='paperlessBase';baseInput.type='url';baseInput.placeholder=DEFAULT_BASE;baseInput.setAttribute('aria-label','Dirección de Paperless');
-  const tokenInput=document.createElement('input');tokenInput.id='paperlessToken';tokenInput.type='password';tokenInput.placeholder='Pega aquí tu token de API';tokenInput.autocomplete='off';tokenInput.setAttribute('aria-label','Token de API de Paperless');
-  const status=document.createElement('p');status.id='paperlessStatus';status.setAttribute('role','status');
-  const saveBtn=document.createElement('button');saveBtn.type='button';saveBtn.id='paperlessSave';saveBtn.textContent='Guardar ajustes';
-  const checkBtn=document.createElement('button');checkBtn.type='button';checkBtn.id='paperlessCheck';checkBtn.textContent='Comprobar acceso';
-  const closeBtn=document.createElement('button');closeBtn.type='button';closeBtn.textContent='Cerrar';
-  saveBtn.onclick=()=>{try{save(baseInput.value,tokenInput.value);status.textContent='Ajustes de Paperless guardados.';say('Ajustes de Paperless guardados.');}catch(e){status.textContent=e.message;}};
-  checkBtn.onclick=async()=>{saveBtn.disabled=true;checkBtn.disabled=true;try{save(baseInput.value,tokenInput.value);status.textContent='Ajustes guardados. Comprobando acceso…';await checkAccess(message=>{status.textContent=message;});}catch(e){status.textContent=e.message;}finally{saveBtn.disabled=false;checkBtn.disabled=false;}};
-  closeBtn.onclick=()=>d.close();
-  d.append(title,noteBox,field('Dirección de Paperless',baseInput),field('Token de API',tokenInput),status,saveBtn,checkBtn,closeBtn);
-  document.body.append(d);
+ 'use strict';
+ const DEFAULT_BASE='https://paperless.iglesiasmurrieta.com',BASE_KEY='realscan_paperless_base_v1',TOKEN_KEY='realscan_paperless_token_v1',RECEIPTS='realscan_paperless_receipts_v2';
+ const running=new Map(),controllers=new Set();let epoch=0;
+ const unlocked=()=>{const login=document.getElementById('loginOverlay'),setup=document.getElementById('setupOverlay');return (!login||login.classList.contains('hidden'))&&(!setup||setup.classList.contains('hidden'));};
+ const say=message=>root.showToast?.(message,'info');
+ function cleanBase(value){let url;try{url=new URL(String(value||'').trim());}catch{throw Error('La dirección de Paperless no es válida.');}if(url.origin!==DEFAULT_BASE||url.username||url.password||url.search||url.hash||!['','/'].includes(url.pathname))throw Error('Usa la dirección HTTPS de Paperless configurada para este negocio.');return url.origin;}
+ function getBase(){try{return cleanBase(localStorage.getItem(BASE_KEY)||DEFAULT_BASE);}catch{return DEFAULT_BASE;}}
+ function getToken(){try{return(localStorage.getItem(TOKEN_KEY)||'').trim();}catch{return '';}}
+ function hasToken(){return !!getToken();}
+ function save(base,token){if(root.isCurrentUserAdmin&&!root.isCurrentUserAdmin())throw Error('Solo administración puede configurar Paperless.');if(!unlocked())throw Error('Desbloquea el puesto.');const value=cleanBase(base);try{localStorage.setItem(BASE_KEY,value);if(token?.trim())localStorage.setItem(TOKEN_KEY,token.trim());else localStorage.removeItem(TOKEN_KEY);}catch{throw Error('No se pudieron guardar los ajustes.');}return value;}
+ function receipts(){try{const r=JSON.parse(localStorage.getItem(RECEIPTS)||'{}');return r&&typeof r==='object'&&!Array.isArray(r)?r:{};}catch{return {};}}
+ function keep(key,value){const all=receipts();all[key]={...value,at:Date.now()};const recent=Object.entries(all).sort((a,b)=>b[1].at-a[1].at).slice(0,100);try{localStorage.setItem(RECEIPTS,JSON.stringify(Object.fromEntries(recent)));}catch{}return all[key];}
+ function readableError(error,status){if(status===401||status===403)return 'Paperless rechazó el acceso. Revisa el token y sus permisos.';if(status===400)return 'Paperless no aceptó el archivo. El trabajo se conserva.';if(status)return 'Paperless respondió con un error ('+status+').';if(error?.name==='AbortError')return 'El envío no se pudo confirmar. Comprueba Paperless antes de repetirlo.';return 'No se pudo contactar a Paperless. Comprueba conexión y el permiso CORS del servidor.';}
+ function fileNameFor(title,blob){const ext=({'image/png':'png','image/jpeg':'jpg','image/webp':'webp','text/plain':'txt'})[blob.type]||'pdf';return (String(title||'RealScan_Entrega').replace(/[\x00-\x1f<>:"/\\|?*]/g,'').trim().slice(0,80)||'RealScan_Entrega')+'.'+ext;}
+ function check(guard,isCurrent){if(!unlocked()||guard!==epoch||!isCurrent())throw Error('El trabajo o la sesión cambió. Se conserva la copia.');}
+ async function request(path,options={},isCurrent=()=>true){const guard=epoch;check(guard,isCurrent);const token=getToken();if(!token)throw Error('Configura primero el acceso a Paperless.');const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),options.method==='POST'?180000:30000);controllers.add(controller);try{const r=await fetch(getBase()+path,{...options,headers:{Authorization:'Token '+token,...options.headers},signal:controller.signal});check(guard,isCurrent);if(!r.ok){const e=Error(readableError(null,r.status));e.status=r.status;throw e;}return r;}finally{clearTimeout(timer);controllers.delete(controller);}}
+ async function checkAccess(onStatus){onStatus?.('Comprobando acceso…');try{await request('/api/documents/?page_size=1');onStatus?.('Conexión correcta con Paperless.');return true;}catch(e){onStatus?.(e.status?e.message:readableError(e));return false;}}
+ async function checkTask(taskId,{isCurrent=()=>true}={}){if(!/^[0-9a-f-]{36}$/i.test(taskId))throw Error('Identificador de archivo pendiente no válido.');const r=await request('/api/tasks/?task_id='+encodeURIComponent(taskId),{},isCurrent),data=await r.json(),list=Array.isArray(data)?data:data.results||[],task=list.find(t=>t.task_id===taskId)||list[0];if(!task)return {taskId,status:'processing'};const status=String(task.status||'').toUpperCase();if(['FAILURE','FAILED','REVOKED'].includes(status))return {taskId,status:'failed',message:'Paperless no pudo procesar el archivo. Revisa su cola de tareas.'};const rawId=task.related_document||task.related_document_id||task.document_id,documentId=Number.isSafeInteger(Number(rawId))&&Number(rawId)>0?Number(rawId):null;return {taskId,status:status==='SUCCESS'?'archived':'processing',documentId};}
+ async function hash(value){const bytes=typeof value==='string'?new TextEncoder().encode(value):await value.arrayBuffer();return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');}
+ async function send(blob,title,onStatus,options={}){
+  if(!blob?.size)throw Error('No hay archivo preparado.');if(blob.size>80*1024*1024)throw Error('El archivo supera 80 MB.');if(!unlocked())throw Error('Desbloquea el puesto.');
+  const guard=epoch,isCurrent=options.isCurrent||(()=>true),fingerprint=await hash(blob),key=await hash(String(options.operationId||fingerprint)+'|'+getBase());check(guard,isCurrent);
+  const existing=running.get(key);if(existing){if(existing.fingerprint!==fingerprint)throw Error('El archivo cambió durante el envío. Espera al resultado anterior.');return existing.promise;}
+  const promise=(async()=>{
+   let receipt=receipts()[key];
+   if(receipt?.fingerprint===fingerprint&&receipt.status==='archived'){onStatus?.('Archivado en Paperless. Este archivo ya se envió.');return receipt;}
+   if(receipt?.status==='unknown'&&!receipt.taskId)throw Error('El envío anterior no se pudo confirmar. Comprueba Paperless antes de volver a enviarlo.');
+   if(!receipt||receipt.fingerprint!==fingerprint||receipt.status==='failed'){
+    if(!hasToken()){openSettings('Configura el acceso y vuelve a enviar.');throw Error('Falta el acceso a Paperless.');}
+    onStatus?.('Enviando a Paperless…');const form=new FormData();form.append('document',blob,fileNameFor(title,blob));form.append('title',String(title||'RealScan_Entrega').slice(0,200));
+    try{const r=await request('/api/documents/post_document/',{method:'POST',body:form},isCurrent);const raw=await r.text();let data;try{data=JSON.parse(raw);}catch{data=raw.trim();}const taskId=typeof data==='string'?data:data?.task_id||data?.id;if(!/^[0-9a-f-]{36}$/i.test(taskId||'')){keep(key,{fingerprint,status:'unknown'});throw Error('Paperless recibió la solicitud sin un identificador válido. Comprueba su cola antes de repetir.');}receipt=keep(key,{fingerprint,taskId,status:'processing'});}catch(e){if(!e.status)keep(key,{fingerprint,status:'unknown'});throw Error(e.status?e.message:e.message?.includes('identificador')?e.message:readableError(e));}
+   }
+   onStatus?.('Recibido por Paperless · procesando…');
+   for(let attempt=0;attempt<12;attempt++){
+    check(guard,isCurrent);let result;try{result=await checkTask(receipt.taskId,{isCurrent});}catch(e){check(guard,isCurrent);onStatus?.('Archivo recibido. Falta confirmar el procesamiento. Puedes comprobarlo de nuevo.');return {...receipt,status:'processing'};}
+    receipt=keep(key,{...result,fingerprint});if(result.status!=='processing'){onStatus?.(result.status==='archived'?'Archivado en Paperless.':result.message);return receipt;}
+    if(attempt<11)await new Promise(resolve=>setTimeout(resolve,2000));
+   }
+   onStatus?.('Sigue procesándose en Paperless. Comprueba su estado de nuevo; el archivo no se reenviará.');return receipt;
+  })().finally(()=>running.delete(key));running.set(key,{fingerprint,promise});return promise;
  }
- document.getElementById('paperlessBase').value=getBase();
- document.getElementById('paperlessToken').value=getToken();
- document.getElementById('paperlessStatus').textContent=note||'';
- if(!d.open)d.showModal();
-}
-root.RealScanPaperless={DEFAULT_BASE,getBase,getToken,hasToken,save,send,checkAccess,openSettings};
+ function openSettings(note=''){
+  if(!unlocked())return;if(root.isCurrentUserAdmin&&!root.isCurrentUserAdmin()){say('Pide a administración que configure Paperless.');return;}let d=document.getElementById('paperlessSettings');if(!d){d=document.createElement('dialog');d.id='paperlessSettings';d.className='desk-dialog';d.setAttribute('aria-label','Ajustes de Paperless');d.innerHTML='<h2>Conectar Paperless</h2><p>El acceso se guarda en este navegador. El servidor debe permitir el origen de RealScan.</p><label>Servidor<input id="paperlessBase" type="url" readonly></label><label>Token de API<input id="paperlessToken" type="password" autocomplete="off" placeholder="Token de Paperless"></label><p id="paperlessStatus" role="status"></p><button id="paperlessSave" type="button">Guardar ajustes</button><button id="paperlessCheck" type="button">Comprobar acceso</button><button id="paperlessClose" type="button">Cerrar</button>';document.body.append(d);const q=id=>document.getElementById(id);q('paperlessSave').onclick=()=>{try{save(q('paperlessBase').value,q('paperlessToken').value);q('paperlessStatus').textContent='Acceso guardado.';}catch(e){q('paperlessStatus').textContent=e.message;}};q('paperlessCheck').onclick=async()=>{q('paperlessCheck').disabled=true;try{save(q('paperlessBase').value,q('paperlessToken').value);await checkAccess(m=>q('paperlessStatus').textContent=m);}catch(e){q('paperlessStatus').textContent=e.message;}finally{q('paperlessCheck').disabled=false;}};q('paperlessClose').onclick=()=>d.close();d.addEventListener('close',()=>q('paperlessToken').value='');}
+  document.getElementById('paperlessBase').value=getBase();document.getElementById('paperlessToken').value=getToken();document.getElementById('paperlessStatus').textContent=note;if(!d.open)d.showModal();
+ }
+ function lock(){epoch++;for(const c of controllers)c.abort();document.getElementById('paperlessSettings')?.close();const token=document.getElementById('paperlessToken');if(token)token.value='';}
+ document.addEventListener('realscan:auth-lock',lock);root.addEventListener('pagehide',lock);document.addEventListener('DOMContentLoaded',()=>{for(const id of ['loginOverlay','setupOverlay']){const el=document.getElementById(id);if(el)new MutationObserver(()=>{if(!unlocked())lock();}).observe(el,{attributes:true,attributeFilter:['class']});}});
+ root.RealScanPaperless={DEFAULT_BASE,getBase,hasToken,save,send,checkAccess,checkTask,openSettings};
 })(window);

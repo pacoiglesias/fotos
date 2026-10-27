@@ -100,8 +100,8 @@
     document.body.dataset.studioHasImages=String(has||active);
     document.body.dataset.studioEngaged=String(engaged||has||active);
     const favorites=$('studioFavorites');
-    if((engaged||has||active)&&favorites.parentElement!==$('colControlPanel'))$('operatorJourney').after(favorites);
-    else if(!(engaged||has||active)&&favorites.parentElement===$('colControlPanel'))$('studioWelcome').after(favorites);
+    if(!document.body.classList.contains('rs-next')&&(engaged||has||active)&&favorites.parentElement!==$('colControlPanel'))$('operatorJourney').after(favorites);
+    else if(!document.body.classList.contains('rs-next')&&!(engaged||has||active)&&favorites.parentElement===$('colControlPanel'))$('studioWelcome').after(favorites);
     $('studioWelcomeHint').textContent=active?'Importa, revisa y organiza las páginas de tu documento.':has?'Tu trabajo está en curso. Ajusta y revisa el resultado antes de imprimir.':'Elige el servicio y agrega tus imágenes. El resultado aparece en la hoja.';
     $('studioJobTitle').textContent=active?'Documento completo':getActiveSpec().shortName;
     $('studioJobMeta').textContent=active?doc.count+' páginas · '+doc.reviewed+' revisadas':PAPER_SPECS[state.paperSize].shortName+' · '+(state.activeCategory==='photos'?state.photoCopies+' fotografías':work.wanted.length+' cara(s)')+' · '+(state.outputScalePercent||100)+' %';
@@ -149,7 +149,7 @@
     const left=$('colControlPanel'),stage=$('colStageWorkspace'),grid=left.parentElement;
     grid.classList.add('studio-grid');stage.classList.add('studio-stage');
     const welcome=node('section','studio-welcome');welcome.id='studioWelcome';
-    welcome.innerHTML='<div class="studio-welcome-heading"><div><p class="studio-eyebrow">TU ESTUDIO DE IMPRESIÓN</p><h1>Un buen trabajo empieza aquí.</h1><p id="studioWelcomeHint"></p></div><span class="studio-version">ESTUDIO 3.28.1</span></div><div class="studio-services"></div>';
+    welcome.innerHTML='<div class="studio-welcome-heading"><div><p class="studio-eyebrow">TU ESTUDIO DE IMPRESIÓN</p><h1>Un buen trabajo empieza aquí.</h1><p id="studioWelcomeHint"></p></div><span class="studio-version">ESTUDIO 3.29.0</span></div><div class="studio-services"></div>';
     $('counterService').before(welcome);
     const art=illustrations();const tasks=document.querySelector('.operator-tasks');
     welcome.querySelector('.studio-services').append(tasks);

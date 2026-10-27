@@ -118,171 +118,31 @@ async function detectPairFromDataUrl(dataUrl){
  return {boxes: boxes, crops: crops};
 }
 
-/* Integración con el flujo del mostrador: se observa la vista previa de
-   cada ranura. Cuando llega una foto nueva a Frente o Reverso y la otra
-   ranura está vacía, se intenta la detección; si acierta, el par se
-   aplica solo, con aviso visible, intercambio y deshacer de un toque. */
-let lastSeen = {}, pairState = null, pairBusy = false, banner = null;
-function jobRev(){try{return (typeof state !== 'undefined' && state && state._jobRevision) || 0;}catch(e){return 0;}}
-function slotOf(side){try{return (typeof state !== 'undefined' && state && state.images && state.images[side]) || null;}catch(e){return null;}}
-function slotEmpty(side){const s = slotOf(side);return !s || !s.originalSrc;}
-function isPairCrop(src){return !!pairState && (src === pairState.front || src === pairState.back || src === pairState.original);}
-function docModeActive(){
- try{return !!(root.RealScanDocuments && root.RealScanDocuments.status && root.RealScanDocuments.status().active);}
- catch(e){return false;}
-}
-function waitForCrops(frontSrc, backSrc, ms){
- const started = Date.now();
- return new Promise(function(resolve){
-  (function tick(){
-   const f = slotOf('front'), b = slotOf('back');
-   if(f && b && f.rawOriginalSrc === frontSrc && b.rawOriginalSrc === backSrc) return resolve(true);
-   if(Date.now() - started > ms) return resolve(false);
-   setTimeout(tick, 100);
-  })();
- });
-}
+/* Detection proposes two sides only for an unlocked CR80 identification job. */
+let lastSeen={},pairState=null,pairBusy=false,banner=null,generation=0;
+const $=id=>document.getElementById(id);
+function eligible(){return root.state?.activeCategory==='docs'&&root.state?.format==='card'&&$('loginOverlay')?.classList.contains('hidden')&&(!$('setupOverlay')||$('setupOverlay').classList.contains('hidden'))&&!root.RealScanDocuments?.status().active;}
+function revision(){return root.state?._jobRevision||0;}
+function valid(value){return eligible()&&value.job===revision()&&value.generation===generation;}
+function closeBanner(){banner?.remove();banner=null;}
+function cancelled(){generation++;pairState=null;pairBusy=false;lastSeen={};closeBanner();}
 function onSlotPreview(side){
- if(pairBusy) return;
- if(side !== 'front' && side !== 'back') return;
- const slot = slotOf(side);
- if(!slot) return;
- if(!slot.originalSrc){if(banner) closeBanner();return;}
- // La foto del par ya aplicado no vuelve a disparar la detección.
- if(isPairCrop(slot.rawOriginalSrc)){lastSeen[side] = slot.rawOriginalSrc;return;}
- if(slot.rawOriginalSrc === lastSeen[side]) return;
- lastSeen[side] = slot.rawOriginalSrc;
- if(banner) closeBanner();
- if(docModeActive()) return;
- const other = side === 'front' ? 'back' : 'front';
- if(!slotEmpty(other)) return;
- const source = slot.rawOriginalSrc || slot.originalSrc, job = jobRev();
- detectPairFromDataUrl(source).then(function(pair){
-  if(!pair || pairBusy) return;
-  if(jobRev() !== job) return;
-  if(slotOf(side) && slotOf(side).rawOriginalSrc !== lastSeen[side]) return;
-  if(!slotEmpty(other)) return;
-  applyPair(source, side, pair);
- }).catch(function(){/* sin par: el flujo sigue exactamente igual */});
+ if(pairBusy||!['front','back'].includes(side)||!eligible())return;
+ const slot=root.state.images[side],other=side==='front'?'back':'front';if(!slot?.originalSrc||root.state.images[other]?.originalSrc)return;
+ const src=slot.rawOriginalSrc||slot.originalSrc;if(src===lastSeen[side]||pairState&&(src===pairState.front||src===pairState.back||src===pairState.original))return;
+ lastSeen[side]=src;closeBanner();const token={job:revision(),generation,side,original:src};
+ detectPairFromDataUrl(src).then(pair=>{if(!pair||!valid(token)||root.state.images[other]?.originalSrc||(root.state.images[side].rawOriginalSrc||root.state.images[side].originalSrc)!==src)return;pairState={...token,front:pair.crops[0],back:pair.crops[1],applied:false};showBanner();}).catch(()=>{});
 }
-async function applyPair(source, loadedSide, pair){
- pairBusy = true;
- try{
-  const first = pair.crops[0], second = pair.crops[1];
-  root.processRawDataUrl(first, 'front', true);
-  root.processRawDataUrl(second, 'back', true);
-  if(!await waitForCrops(first, second, 15000)){
-   // No quedaron las dos: se restaura la foto original, sin cambios.
-   try{root.clearSlot(loadedSide === 'front' ? 'back' : 'front');}catch(e){}
-   root.processRawDataUrl(source, loadedSide, true);
-   root.showToast && root.showToast('No se pudo separar el par; queda la foto original.', 'warning');
-   return;
-  }
-  pairState = {original: source, originalSide: loadedSide, front: first, back: second};
-  lastSeen.front = first;lastSeen.back = second;
-  showBanner();
-  root.showToast && root.showToast('Se detectaron los dos lados del INE: anverso y reverso listos.', 'success');
- }catch(e){
-  try{root.processRawDataUrl(source, loadedSide, true);}catch(err){}
- }finally{pairBusy = false;}
+async function applyPair(swap=false){
+ const value=pairState;if(!value||pairBusy||!valid(value))return;pairBusy=true;
+ try{const front=swap?value.back:value.front,back=swap?value.front:value.back;root.processRawDataUrl(front,'front',true);root.processRawDataUrl(back,'back',true);await root.waitForProcessingComplete?.();if(!valid(value))return;if(root.state.images.front.rawOriginalSrc!==front||root.state.images.back.rawOriginalSrc!==back)throw Error('No se pudieron preparar ambas caras.');Object.assign(value,{front,back,applied:true});lastSeen={front,back};showBanner();root.saveActiveDraft?.();}
+ catch(e){if(valid(value))root.showToast?.('Revisa las capturas. La imagen original sigue disponible en Deshacer.','warning');}
+ finally{pairBusy=false;}
 }
-async function swapPair(){
- if(!pairState || pairBusy) return;
- pairBusy = true;
- try{
-  const f = pairState.front, b = pairState.back;
-  root.processRawDataUrl(b, 'front', true);
-  root.processRawDataUrl(f, 'back', true);
-  if(await waitForCrops(b, f, 15000)){
-   pairState.front = b;pairState.back = f;
-   lastSeen.front = b;lastSeen.back = f;
-   updateBannerThumbs();
-  }
- }finally{pairBusy = false;}
-}
-async function undoPair(){
- if(!pairState || pairBusy) return;
- pairBusy = true;
- const kept = pairState;
- closeBanner();
- pairState = null;
- try{
-  try{root.clearSlot(kept.originalSide === 'front' ? 'back' : 'front');}catch(e){}
-  root.processRawDataUrl(kept.original, kept.originalSide, true);
-  root.showToast && root.showToast('Par deshecho: queda la foto original.', 'info');
- }finally{pairBusy = false;}
-}
-function thumbFigure(src, label){
- const figure = document.createElement('figure');
- const img = document.createElement('img');
- img.src = src;img.alt = label;
- const cap = document.createElement('figcaption');
- cap.textContent = label;
- figure.append(img, cap);
- return figure;
-}
-function showBanner(){
- closeBanner();
- if(!pairState) return;
- const box = document.createElement('div');
- box.className = 'ine-pair-banner';
- box.setAttribute('role', 'status');
- const text = document.createElement('div');
- text.className = 'ine-pair-text';
- const title = document.createElement('strong');
- title.textContent = 'INE: anverso y reverso detectados';
- const note = document.createElement('p');
- note.textContent = 'La foto traía los dos lados y se separaron en Frente y Reverso. Si el orden quedó al revés, intercámbialos con un toque.';
- text.append(title, note);
- const thumbs = document.createElement('div');
- thumbs.className = 'ine-pair-thumbs';
- thumbs.append(thumbFigure(pairState.front, 'Anverso'), thumbFigure(pairState.back, 'Reverso'));
- const actions = document.createElement('div');
- actions.className = 'ine-pair-actions';
- const swap = document.createElement('button');
- swap.type = 'button';swap.textContent = 'Intercambiar';
- swap.onclick = function(){swapPair();};
- const undo = document.createElement('button');
- undo.type = 'button';undo.textContent = 'Deshacer';
- undo.onclick = function(){undoPair();};
- actions.append(swap, undo);
- box.append(text, thumbs, actions);
- const anchor = document.getElementById('slotThumbWrapFront');
- if(anchor && anchor.parentElement) anchor.parentElement.insertBefore(box, anchor);
- else{
-  const tray = document.getElementById('studioImageTray');
-  if(tray && tray.before) tray.before(box);
-  else{
-   const desk = document.getElementById('deskStart');
-   if(desk && desk.after) desk.after(box);
-   else document.body.prepend(box);
-  }
- }
- banner = box;
-}
-function updateBannerThumbs(){
- if(!banner || !pairState) return;
- const imgs = banner.querySelectorAll('.ine-pair-thumbs img');
- if(imgs[0]) imgs[0].src = pairState.front;
- if(imgs[1]) imgs[1].src = pairState.back;
-}
-function closeBanner(){
- if(banner && banner.remove) banner.remove();
- banner = null;
-}
-function install(){
- if(typeof document === 'undefined') return;
- const prev = root.updateSidePreview;
- if(typeof prev !== 'function' || prev._inePairWrapped) return;
- const wrapped = function(side){
-  const result = prev.apply(this, arguments);
-  try{onSlotPreview(side);}catch(e){}
-  return result;
- };
- wrapped._inePairWrapped = true;
- root.updateSidePreview = wrapped;
-}
-root.RealScanInePair = {detectPairRegions: detectPairRegions, detectPairFromDataUrl: detectPairFromDataUrl};
-if(typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', function(){setTimeout(install, 70);});
-if(typeof module !== 'undefined' && module.exports) module.exports = {detectPairRegions: detectPairRegions};
-})(typeof window !== 'undefined' ? window : globalThis);
+function keepOriginal(){const value=pairState;if(!value||!valid(value)||pairBusy)return;closeBanner();pairState=null;if(value.applied){root.clearSlot(value.side==='front'?'back':'front');root.processRawDataUrl(value.original,value.side,true);root.saveActiveDraft?.();}}
+function showBanner(){closeBanner();const value=pairState;if(!value||!valid(value))return;const box=document.createElement('section');box.className='ine-pair-banner';box.setAttribute('aria-label','Revisar las dos caras detectadas');const heading=document.createElement('strong');heading.textContent=value.applied?'Dos caras preparadas · revisa los bordes':'Encontramos dos posibles caras de una identificación';const note=document.createElement('p');note.textContent='Comprueba que las tarjetas estén completas, derechas y en el orden correcto. Las medidas finales siguen siendo 85.60 × 53.98 mm.';const thumbs=document.createElement('div');thumbs.className='ine-pair-thumbs';for(const [src,label]of [[value.front,'Frente'],[value.back,'Reverso']]){const f=document.createElement('figure'),img=document.createElement('img'),c=document.createElement('figcaption');img.src=src;img.alt=label;c.textContent=label;f.append(img,c);thumbs.append(f);}const actions=document.createElement('div');actions.className='ine-pair-actions';for(const [label,fn]of [[value.applied?'Intercambiar':'Usar ambas caras',()=>applyPair(value.applied)],[value.applied?'Deshacer separación':'Conservar foto completa',keepOriginal]]){const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=fn;actions.append(b);}box.append(heading,note,thumbs,actions);const anchor=$('capturePreviewRail')||$('studioImageTray')||$('deskStart');anchor?.after(box);banner=box;}
+function install(){const previous=root.updateSidePreview;if(typeof previous!=='function')return;root.updateSidePreview=function(side){const result=previous.apply(this,arguments);onSlotPreview(side);return result;};document.addEventListener('realscan:auth-lock',cancelled);let job=revision();document.addEventListener('realscan:studio-updated',()=>{if(revision()!==job||!eligible()){job=revision();if(pairState||banner)cancelled();}});}
+root.RealScanInePair={detectPairRegions,detectPairFromDataUrl,cancel:cancelled};
+if(typeof document!=='undefined')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,70));
+if(typeof module!=='undefined'&&module.exports)module.exports={detectPairRegions};
+})(typeof window!=='undefined'?window:globalThis);

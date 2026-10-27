@@ -1,0 +1,164 @@
+/* RealScan 3.29: one quiet counter surface, large controls and content-led actions. */
+body.rs-next{--work-ink:#172b43;--work-muted:#566980;--work-line:#d8e2eb;--work-surface:#fff;--work-bg:#f3f6fa;--work-accent:#155bd5;background:var(--work-bg);color:var(--work-ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+.rs-next main{max-width:1600px;margin:auto;padding-top:14px!important}
+.rs-next header{box-shadow:none;border-bottom:1px solid var(--work-line)}
+.rs-next #guidedStepsBar{position:static!important;top:auto!important;box-shadow:none;background:transparent;border:0;padding:0;margin:0 0 14px;gap:8px}
+.rs-next #guidedStepsBar>span{display:none}
+.rs-next #guidedStepsBar button{min-height:48px;border-radius:12px;font-size:14px;box-shadow:none!important}
+.rs-next #workbenchBar{min-height:0;padding:0 0 14px;margin:0;background:transparent!important;border:0;box-shadow:none;color:var(--work-ink)}
+.rs-next #workbenchBar .workbench-kicker{display:none}
+.rs-next #workbenchBar strong{font-size:19px}
+.rs-next #workbenchBar button{min-height:48px;border:1px solid var(--work-line);background:var(--work-surface);color:var(--work-ink);font-size:14px;padding:10px 16px}
+.rs-next #workbenchQuick{font-size:13px}
+.rs-next #flowWorkspace{grid-template-columns:390px minmax(0,1fr)!important;gap:22px;align-items:start}
+.rs-next #colControlPanel{display:flex!important;flex-direction:column;gap:14px;min-width:0}
+.rs-next #colControlPanel>*{margin:0!important;box-shadow:none!important}
+.rs-next :is(#deskStart,#studioWelcome,#serviceFlow,#colStageWorkspace){border:1px solid var(--work-line)!important;border-radius:18px!important;background:var(--work-surface)!important;box-shadow:none!important}
+.rs-next #deskStart{padding:18px!important}
+.rs-next #deskStart .desk-heading{margin:0 0 12px}
+.rs-next #deskStart .desk-heading :is(span,small){display:none}
+.rs-next #deskStart .desk-heading h2{font-size:19px;letter-spacing:-.025em;margin:0}
+.rs-next #deskReceive #operatorReceiveActions{grid-template-columns:1.15fr 1fr 1fr!important;gap:8px}
+.rs-next #deskReceive #operatorReceiveActions>button{min-height:70px;font-size:15px;flex-direction:column;gap:5px;padding:10px 6px;border-radius:12px;box-shadow:none}
+.rs-next #deskReceive .task-icon{width:24px;height:24px}
+.rs-next #captureFirstOpen{margin:10px 0 0!important;background:transparent!important;border:0!important;min-height:44px;padding:8px 0!important;box-shadow:none}
+.rs-next #captureFirstOpen strong{font-size:13px!important;font-weight:600}
+.rs-next #captureFirstOpen small{display:none}
+.rs-next #workspaceContact{border:0;margin-top:10px}
+.rs-next .panel-disclosure>summary{min-height:48px;font-size:14px!important;padding:12px 0;line-height:1.4}
+.rs-next #workspaceContact .desk-fields{margin:0;padding-bottom:10px}
+.rs-next #workspaceContact label{font-size:13px}
+.rs-next #deskTools{margin-top:6px}
+.rs-next #deskTools .desk-shortcuts{grid-template-columns:1fr 1fr;gap:8px}
+.rs-next #deskStart .desk-shortcuts>button{background:var(--work-surface)!important;color:var(--work-ink)!important;border:1px solid var(--work-line)!important;font-size:13px!important;font-weight:600;min-height:48px!important;box-shadow:none!important;padding:10px!important}
+.rs-next #deskStart .desk-shortcuts>#deskPaperless{grid-column:auto;font-size:13px!important}
+.rs-next #studioWelcome{padding:14px 16px!important}
+.rs-next #studioWelcome .studio-welcome-heading{padding:0 0 10px!important}
+.rs-next #studioWelcome :is(.studio-eyebrow,.studio-version,.modern-service-number,.studio-service-art,.studio-card-arrow){display:none!important}
+.rs-next #studioWelcome h1{font-size:14px!important;font-weight:650}
+.rs-next #studioWelcome .operator-tasks{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.rs-next #studioWelcome .operator-task{min-height:54px!important;padding:10px 5px!important;text-align:center;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--work-surface);box-shadow:none}
+.rs-next #studioWelcome .operator-task strong{font-size:13px!important}
+.rs-next #studioWelcome .operator-task :is(small,.task-icon){display:none}
+.rs-next #studioWelcome .operator-task[aria-pressed=true]{background:#edf4ff;border-color:var(--work-accent);color:#12468e}
+.rs-next #workspaceUndoService{font-size:12px;min-height:44px;margin-top:6px;text-decoration:underline}
+.rs-next #serviceFlow{padding:16px!important;gap:12px}
+.rs-next #flowHeading{font-size:20px!important;letter-spacing:-.025em}
+.rs-next #serviceFlow h3{font-size:14px!important;margin-bottom:8px}
+.rs-next #flowNextHint{font-size:13px;color:var(--work-muted)}
+.rs-next #serviceFlow :is(label,input,select){font-size:14px!important}
+.rs-next #serviceFlow :is(input,select){min-height:48px}
+.rs-next #serviceFlow .flow-choice{min-height:52px;font-size:14px}
+.rs-next #flowSizes{grid-template-columns:repeat(2,minmax(0,1fr))}
+.rs-next #flowSizes .flow-size-art{height:30px}
+.rs-next #flowSizes strong{font-size:14px}
+.rs-next #flowSizes small{font-size:12px}
+.rs-next #flowSides .flow-choice{font-size:12px;min-height:84px}
+.rs-next #capturePreviewRail{padding:0;border:0;background:transparent}
+.rs-next #capturePreviewRail h3{display:none}
+.rs-next .capture-preview-grid button{min-height:84px}
+.rs-next .capture-preview-grid img{height:100px;object-fit:contain}
+.rs-next .workspace-quantity{font-size:14px!important;font-weight:650;padding:12px;background:var(--work-bg);border-radius:10px}
+.rs-next #workspacePrinterOptions label{display:grid;gap:8px}
+.rs-next #workspacePrinterStatus{font-size:13px;line-height:1.5;margin:10px 0;color:var(--work-muted)}
+.rs-next #workspacePrinterOptions button{min-height:48px;padding:8px 12px;border:1px solid var(--work-line);border-radius:10px;font-size:13px}
+.rs-next #colStageWorkspace{position:static!important;overflow:visible!important;max-height:none!important;padding:22px!important}
+.rs-next #colStageWorkspace .studio-work-heading{padding:0!important;margin-bottom:14px;align-items:start}
+.rs-next .studio-work-heading .studio-eyebrow{display:none}
+.rs-next #studioJobTitle{font-size:24px!important;letter-spacing:-.035em}
+.rs-next #studioJobMeta{font-size:14px!important;margin-top:6px}
+.rs-next #studioReady{font-size:12px!important}
+.rs-next .workspace-status{font-size:14px!important;color:var(--work-muted);line-height:1.5;margin-top:8px}
+.rs-next .workspace-status[data-ready=true]{color:#126344}
+.rs-next #colStageWorkspace>.panel-sheet-preview{border:0!important;background:transparent;box-shadow:none;padding:0!important}
+.rs-next :is(#previewMainTitle,#previewSubtext,#previewGestureHelp,.sheet-review-caption,#previewDimensionsTag){display:none!important}
+.rs-next #sheetPreviewControls{justify-content:flex-end;gap:8px;margin-bottom:12px}
+.rs-next .sheet-zoom-btn{min-height:44px;font-size:12px}
+.rs-next .sheet-preview-mat{border:0;padding:0;background:transparent}
+.rs-next .stage-canvas-area{min-height:350px!important;background:#e8edf3!important;border-radius:12px}
+.rs-next #stageSheetWrapper[data-sheet-zoom=fit]>.a4-sheet{width:min(400px,100%)!important;min-width:0!important}
+.rs-next #studioEditorTools{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0!important;padding:0!important}
+.rs-next #studioEditorTools>strong,.rs-next #studioSelectedLabel{display:none}
+.rs-next #studioEditorTools button{font-size:13px!important;min-height:48px!important;border:1px solid var(--work-line);background:var(--work-surface);border-radius:10px;padding:10px 12px}
+.rs-next #studioImageTray{margin:10px 0 14px}
+.rs-next #studioImageTray .studio-slot{min-height:56px}
+.rs-next #studioCompare{border-radius:12px;overflow:hidden}
+.rs-next #workspaceDelivery{border-top:1px solid var(--work-line);margin-top:20px;padding-top:18px}
+.rs-next #workspaceDelivery h3{font-size:17px;font-weight:700}
+.rs-next #workspaceDelivery p{font-size:13px;color:var(--work-muted);margin:5px 0 12px}
+.rs-next #workspaceDelivery>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.rs-next #workspaceDelivery button{min-height:52px;padding:12px;border:1px solid var(--work-line);border-radius:12px;font-size:14px;font-weight:650;background:var(--work-surface);color:var(--work-ink)}
+.rs-next #workspaceDelivery [data-workspace-deliver=print]{background:var(--work-accent);color:#fff;border-color:var(--work-accent)}
+.rs-next #workspaceDelivery button:disabled{opacity:.5}
+.rs-next #flowDock{background:var(--work-surface);border-top:1px solid var(--work-line);box-shadow:0 -4px 18px #172b4308;padding-top:12px;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+.rs-next #flowDock strong{font-size:15px}
+.rs-next #flowDock span{font-size:13px}
+.rs-next #flowRepeat{font-size:12px;min-height:36px;text-decoration:underline}
+.rs-next #flowPrimary{min-height:52px;font-size:15px}
+.rs-next :is(#floatingHudBar,#operatorJourney,#mobileWizardStepper,#operatorNotices,#studioChecks,.studio-actions,#mobileStepper,#counterStart){display:none!important}
+.rs-next #colStageWorkspace>section:not(.panel-sheet-preview):not(#workspaceDelivery):not(.studio-actions){margin-top:12px}
+.rs-next[data-workspace-loaded=false] :is(#studioEditorTools,#studioImageTray,#sheetPreviewControls,#btnPreviewEdit,#workspaceDelivery,#printVerificationPanel){display:none!important}
+.rs-next[data-workspace-loaded=false] #colStageWorkspace .panel-sheet-preview>div:not(.studio-empty){display:none}
+.rs-next[data-workspace-loaded=false] .studio-empty{min-height:240px;background:var(--work-bg);border:1px dashed var(--work-line);border-radius:14px;font-size:14px}
+.rs-next[data-workspace-loaded=false] .studio-empty strong{font-size:20px}
+.rs-next[data-workspace-loaded=false] #flowDock>div{opacity:.7}
+.rs-next .sheet-finish-row :is(strong,small),.rs-next #sheetFinishSummary{font-size:13px!important}
+.rs-next .sheet-finish-note{font-size:12px!important}
+.rs-next #sheetFinishOptions>summary{font-size:14px!important}
+.rs-next #sheetPositionOptions{margin-top:0}
+.rs-next #workspaceSlotOptions{background:transparent;border:0}
+.rs-next #annotationOptions>summary{font-size:14px!important;min-height:48px}
+.rs-next button:focus-visible,.rs-next summary:focus-visible,.rs-next input:focus-visible,.rs-next select:focus-visible{outline:3px solid #5c9aff;outline-offset:3px}
+.pdf-delivery-dialog #pdfDeliveryPhoto{display:block;max-width:100%;max-height:48dvh;object-fit:contain;margin:auto}
+.pdf-delivery-dialog #pdfDeliveryPhoto[hidden],.pdf-delivery-dialog [hidden]{display:none!important}
+.pdf-delivery-dialog header p{font-size:14px;line-height:1.5;margin:8px 0 16px;color:#566980}
+.pdf-delivery-dialog #pdfDeliveryPaperless{background:transparent;color:inherit;border:1px solid #b8c8da;box-shadow:none;font-size:14px;font-weight:650}
+.pdf-delivery-dialog footer button{min-height:48px;border-radius:11px}
+.pdf-delivery-dialog #pdfDeliveryQrResult{padding:16px;background:#f3f6fa;border-radius:12px;text-align:center}
+.pdf-delivery-dialog #pdfDeliveryQrCanvas{max-width:100%;margin:auto}
+.pdf-delivery-dialog #pdfDeliveryQrLink{display:block;padding:10px;color:#155bd5;text-decoration:underline}
+.workspace-jobs article{padding:16px;border:1px solid #d8e2eb;border-radius:12px;margin:12px 0}
+.workspace-jobs strong{font-size:17px}
+.workspace-jobs p{font-size:14px}
+@media(min-width:1100px){.rs-next #colControlPanel #serviceFlow{order:3}.rs-next #colControlPanel #workspaceSlotOptions{order:4}.rs-next #colControlPanel #studioAdvanced{order:5}}
+@media(max-width:1099px){
+ .rs-next #flowWorkspace{display:flex!important;flex-direction:column;gap:14px!important}
+ .rs-next #colControlPanel{width:100%!important;order:1}
+ .rs-next #colStageWorkspace{width:100%;order:0;padding:16px!important}
+ .rs-next #deskStart,.rs-next #studioWelcome{margin-bottom:12px!important}
+ .rs-next #colControlPanel{display:flex!important}
+ .rs-next #colControlPanel>.mob-pane{display:block!important}
+ .rs-next[data-workspace-loaded=false] #colStageWorkspace{display:none!important}
+ .rs-next #deskStart .desk-heading h2{font-size:20px}
+ .rs-next #studioWelcome .operator-task{min-height:50px!important}
+ .rs-next .stage-canvas-area{min-height:260px!important}
+ .rs-next #stageSheetWrapper[data-sheet-zoom=fit]>.a4-sheet{width:min(300px,100%)!important}
+ .rs-next #flowDock{padding-inline:14px}
+ .rs-next #flowDock strong{font-size:14px}
+ .rs-next #flowOrderHint{font-size:12px!important}
+ .rs-next #workspaceDelivery>div{gap:8px}
+ .rs-next #workspaceDelivery button{font-size:14px;min-height:50px}
+ .rs-next #studioEditorTools button{flex:1 1 30%;font-size:13px!important;padding:9px}
+ .rs-next #studioImageTray .studio-slot img{height:76px;object-fit:contain}
+ .rs-next #studioImageTray:has(>button:only-child){display:flex!important}
+}
+@media(max-width:380px){.rs-next main{padding-inline:10px!important}.rs-next #deskStart{padding:14px!important}.rs-next #deskReceive #operatorReceiveActions>button{font-size:13px;min-height:66px}.rs-next #workspaceDelivery>div{grid-template-columns:1fr}.rs-next #flowSides{grid-template-columns:1fr}.rs-next #flowSides button{flex-direction:row;min-height:48px}}
+/* The local mobile scanner has the same hierarchy, with the capture first. */
+body.rs-next-mobile{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+.rs-next-mobile .mobile-service-cards{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px}
+.rs-next-mobile .mobile-service-cards button{min-height:80px!important;padding:10px 4px!important;gap:5px}
+.rs-next-mobile .mobile-service-cards button strong{font-size:12px!important}
+.rs-next-mobile .mobile-service-cards button>span{display:none}
+.rs-next-mobile .mobile-scan-card{box-shadow:none;border-radius:16px}
+.rs-next-mobile .mobile-scan-steps button{font-size:12px;min-height:44px}
+.rs-next-mobile .mobile-page p{font-size:13px}
+.rs-next-mobile .mobile-page-actions>button{font-size:13px;min-height:48px}
+.rs-next-mobile #mobileDock button{font-size:14px;min-height:52px}
+html[data-counter=on] body.rs-next :is(button,input,select){min-height:60px!important;font-size:18px!important}
+html[data-counter=on] body.rs-next :is(p,label,small,summary){font-size:17px!important}
+html.dark body.rs-next{--work-ink:#e7edf7;--work-muted:#b8c6d8;--work-line:#40536b;--work-surface:#18263b;--work-bg:#0f1d2e}
+html.dark .rs-next #studioWelcome .operator-task[aria-pressed=true]{background:#203d65;color:#e9f2ff}
+html.dark .rs-next .stage-canvas-area{background:#26394f!important}
+html.dark .rs-next .workspace-status[data-ready=true]{color:#8adeb6}
+@media(prefers-reduced-motion:reduce){.rs-next *{scroll-behavior:auto!important;transition:none!important}}
+@media print{#workspaceDelivery,#workspaceJobs,#workspaceSlotOptions,#workspacePrinterOptions,#workspaceContact{display:none!important}}
