@@ -2,6 +2,7 @@ const cp = require("child_process");
 const failures = [];
 try {
   for (const script of [
+    "check-version",
     "check",
     "build",
     "auth-regression",
@@ -55,7 +56,7 @@ try {
       console.error("FAIL " + script);
       // An invalid build cannot be audited. Otherwise collect every failure
       // in one pass; publication still requires a zero exit status.
-      if (script === "check" || script === "build") throw e;
+      if (script === "check-version" || script === "check" || script === "build") throw e;
     }
   }
   if (failures.length) { console.error("Failed checks: " + failures.join(", ")); process.exitCode = 1; }

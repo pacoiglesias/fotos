@@ -82,7 +82,7 @@
             : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400');
       const label = btn.querySelector('.guided-step-label');
       if (label) {
-        const base = { 1: 'Elegir', 2: 'Cargar', 3: 'Revisar / Imprimir' }[step];
+        const base = { 1: 'Recibir', 2: 'Preparar', 3: 'Entregar' }[step];
         label.textContent = (isDone && !isCurrent ? '✓ ' : step + ' · ') + base;
       }
     });

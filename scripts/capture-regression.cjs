@@ -1,3 +1,4 @@
+const {openImageTools}=require('./test-ui.cjs');
 const fs = require("fs"), path = require("path"), http = require("http"), assert = require("assert"), { chromium } = require("playwright");
 const root = path.resolve("dist"), out = path.resolve(".audit/capture-evidence"), checks = [];
 fs.mkdirSync(out, { recursive: true });
@@ -94,7 +95,7 @@ function cameraFixture() {
   assert(analysis.low.quad,'Detect a light page on a uniform light background');
   assert(analysis.soft.sharpness<analysis.a.sharpness,'Blur estimate must distinguish the softened image');
   pass("Skewed page edges detected; blank scene and crossed corners rejected");
-  await page.locator('[data-camera="front"]').click();
+  await openImageTools(page);await page.locator('[data-camera="front"]').click();
   await page.locator(".scan-dialog [data-act=capture]").waitFor();
   await page.waitForFunction(() => !document.querySelector(".scan-dialog [data-act=capture]").disabled);
   assert(await page.evaluate(() => __constraints.some((c) => c.advanced[0].focusMode === "continuous")));

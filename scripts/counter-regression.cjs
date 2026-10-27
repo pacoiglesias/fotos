@@ -1,3 +1,4 @@
+const {openImageTools}=require('./test-ui.cjs');
 const fs=require('fs'),path=require('path'),http=require('http'),assert=require('assert'),{chromium}=require('playwright');
 const root=path.resolve('dist'),out=path.resolve('.audit/counter-regression'),checks=[],errors=[];
 fs.mkdirSync(out,{recursive:true});
@@ -17,7 +18,7 @@ function pass(message){checks.push(message);console.log('PASS '+message);}
   await page.evaluate(()=>{$('loginOverlay').classList.add('hidden');document.body.classList.remove('modal-open');window.__revokes=[];RealScanRelay.revoke=async kind=>__revokes.push(kind);RealScanRelay.clearFiles=async()=>{};RealScanRelay.create=async(kind,files)=>({url:location.origin+'/phone-download.html#synthetic',expiresAt:Date.now()+900000,status:'waiting'});});
   const sample=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=400;c.height=300;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,400,300);x.fillStyle='#334155';x.fillRect(40,50,300,200);return c.toDataURL('image/png');});
   await page.evaluate(()=>{switchIntent('id');setPrintMode('both_separate');switchCategory('photos');switchCategory('docs');setMobileStep(2);});
-  assert(await page.locator('#cardBackContainer').isVisible());assert((await page.evaluate(()=>RealScanWorkflow.describe().wanted)).includes('back'));
+  await openImageTools(page);assert(await page.locator('#cardBackContainer').isVisible());assert((await page.evaluate(()=>RealScanWorkflow.describe().wanted)).includes('back'));
   pass('Both separate faces remain visible after switching category');
   await page.evaluate(data=>{switchIntent('photos');RealScanQrSync.addReceivedFile({id:'synthetic-file',name:'sample.png',type:'image/png',dataUrl:data,size:atob(data.split(',')[1]).length});openModal('receiveFromPhoneModal');},sample);
   assert.deepEqual(await page.locator('#qrInboxList [data-slot]').evaluateAll(nodes=>nodes.map(n=>n.dataset.slot)),['front']);

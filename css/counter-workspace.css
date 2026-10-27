@@ -32,7 +32,7 @@ body.rs-next{--work-ink:#172b43;--work-muted:#566980;--work-line:#d8e2eb;--work-
 .rs-next #deskTools .desk-shortcuts{grid-template-columns:1fr 1fr;gap:8px}
 .rs-next #deskStart .desk-shortcuts>button{background:var(--work-surface)!important;color:var(--work-ink)!important;border:1px solid var(--work-line)!important;font-size:13px!important;font-weight:600;min-height:48px!important;box-shadow:none!important;padding:10px!important}
 .rs-next #deskStart .desk-shortcuts>#deskPaperless{grid-column:auto;font-size:13px!important}
-.rs-next #studioWelcome{padding:14px 16px!important}
+.rs-next #studioWelcome{display:block!important;padding:14px 16px!important}
 .rs-next #studioWelcome .studio-welcome-heading{padding:0 0 10px!important}
 .rs-next #studioWelcome :is(.studio-eyebrow,.studio-version,.modern-service-number,.studio-service-art,.studio-card-arrow){display:none!important}
 .rs-next #studioWelcome h1{font-size:14px!important;font-weight:650}
@@ -76,7 +76,7 @@ body.rs-next{--work-ink:#172b43;--work-muted:#566980;--work-line:#d8e2eb;--work-
 .rs-next .sheet-zoom-btn{min-height:44px;font-size:12px}
 .rs-next .sheet-preview-mat{border:0;padding:0;background:transparent}
 .rs-next .stage-canvas-area{min-height:350px!important;background:#e8edf3!important;border-radius:12px}
-.rs-next #stageSheetWrapper[data-sheet-zoom=fit]>.a4-sheet{width:min(400px,100%)!important;min-width:0!important}
+.rs-next #colStageWorkspace #stageSheetWrapper[data-sheet-zoom=fit]>.a4-sheet{width:400px!important;max-width:100%!important;min-width:0!important}
 .rs-next #studioEditorTools{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0!important;padding:0!important}
 .rs-next #studioEditorTools>strong,.rs-next #studioSelectedLabel{display:none}
 .rs-next #studioEditorTools button{font-size:13px!important;min-height:48px!important;border:1px solid var(--work-line);background:var(--work-surface);border-radius:10px;padding:10px 12px}
@@ -95,10 +95,10 @@ body.rs-next{--work-ink:#172b43;--work-muted:#566980;--work-line:#d8e2eb;--work-
 .rs-next #flowDock span{font-size:13px}
 .rs-next #flowRepeat{font-size:12px;min-height:36px;text-decoration:underline}
 .rs-next #flowPrimary{min-height:52px;font-size:15px}
-.rs-next :is(#floatingHudBar,#operatorJourney,#mobileWizardStepper,#operatorNotices,#studioChecks,.studio-actions,#mobileStepper,#counterStart){display:none!important}
+.rs-next :is(#floatingHudBar,#operatorJourney,#mobileWizardStepper,#studioChecks,.studio-actions,#mobileStepper,#counterStart){display:none!important}
 .rs-next #colStageWorkspace>section:not(.panel-sheet-preview):not(#workspaceDelivery):not(.studio-actions){margin-top:12px}
 .rs-next[data-workspace-loaded=false] :is(#studioEditorTools,#studioImageTray,#sheetPreviewControls,#btnPreviewEdit,#workspaceDelivery,#printVerificationPanel){display:none!important}
-.rs-next[data-workspace-loaded=false] #colStageWorkspace .panel-sheet-preview>div:not(.studio-empty){display:none}
+.rs-next[data-workspace-loaded=false] #colStageWorkspace .panel-sheet-preview>div:not(.studio-empty):not(:has(#studioEmpty)){display:none}
 .rs-next[data-workspace-loaded=false] .studio-empty{min-height:240px;background:var(--work-bg);border:1px dashed var(--work-line);border-radius:14px;font-size:14px}
 .rs-next[data-workspace-loaded=false] .studio-empty strong{font-size:20px}
 .rs-next[data-workspace-loaded=false] #flowDock>div{opacity:.7}
@@ -124,7 +124,8 @@ body.rs-next{--work-ink:#172b43;--work-muted:#566980;--work-line:#d8e2eb;--work-
 @media(max-width:1099px){
  .rs-next #flowWorkspace{display:flex!important;flex-direction:column;gap:14px!important}
  .rs-next #colControlPanel{width:100%!important;order:1}
- .rs-next #colStageWorkspace{width:100%;order:0;padding:16px!important}
+ .rs-next #colStageWorkspace{width:100%;min-width:0;order:0;padding:16px!important}
+ .rs-next[data-workspace-loaded=true] #colStageWorkspace{display:block!important}
  .rs-next #deskStart,.rs-next #studioWelcome{margin-bottom:12px!important}
  .rs-next #colControlPanel{display:flex!important}
  .rs-next #colControlPanel>.mob-pane{display:block!important}
@@ -132,7 +133,7 @@ body.rs-next{--work-ink:#172b43;--work-muted:#566980;--work-line:#d8e2eb;--work-
  .rs-next #deskStart .desk-heading h2{font-size:20px}
  .rs-next #studioWelcome .operator-task{min-height:50px!important}
  .rs-next .stage-canvas-area{min-height:260px!important}
- .rs-next #stageSheetWrapper[data-sheet-zoom=fit]>.a4-sheet{width:min(300px,100%)!important}
+ .rs-next #colStageWorkspace #stageSheetWrapper[data-sheet-zoom=fit]>.a4-sheet{width:300px!important;max-width:100%!important}
  .rs-next #flowDock{padding-inline:14px}
  .rs-next #flowDock strong{font-size:14px}
  .rs-next #flowOrderHint{font-size:12px!important}
@@ -148,6 +149,10 @@ body.rs-next-mobile{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Seg
 .rs-next-mobile .mobile-service-cards{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px}
 .rs-next-mobile .mobile-service-cards button{min-height:80px!important;padding:10px 4px!important;gap:5px}
 .rs-next-mobile .mobile-service-cards button strong{font-size:12px!important}
+.rs-next-mobile .mobile-service-cards button{min-width:0;overflow-wrap:anywhere}
+.rs-next-mobile .mobile-service-cards svg{max-width:100%}
+.rs-next-mobile .mobile-page-actions{flex-wrap:wrap}
+.rs-next-mobile .mobile-page-actions>button{min-width:0;white-space:normal;overflow-wrap:anywhere}
 .rs-next-mobile .mobile-service-cards button>span{display:none}
 .rs-next-mobile .mobile-scan-card{box-shadow:none;border-radius:16px}
 .rs-next-mobile .mobile-scan-steps button{font-size:12px;min-height:44px}
@@ -162,3 +167,6 @@ html.dark .rs-next .stage-canvas-area{background:#26394f!important}
 html.dark .rs-next .workspace-status[data-ready=true]{color:#8adeb6}
 @media(prefers-reduced-motion:reduce){.rs-next *{scroll-behavior:auto!important;transition:none!important}}
 @media print{#workspaceDelivery,#workspaceJobs,#workspaceSlotOptions,#workspacePrinterOptions,#workspaceContact{display:none!important}}
+
+.rs-next #workspaceSlotOptions .mob-pane{display:block!important}
+.rs-next #operatorNotices:not([hidden]){display:block;font-size:14px;line-height:1.5;margin:10px 0}

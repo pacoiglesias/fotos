@@ -180,6 +180,7 @@ function copy(src, dst) {
     path.join(dist, "version.json"),
     JSON.stringify({
       version,
+      appVersion: require("../package.json").version,
       sourceCommit,
       builtAt: new Date().toISOString(),
     }),

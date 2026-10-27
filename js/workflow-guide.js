@@ -17,6 +17,9 @@
     setMobileStep(step);
     const target = side ? document.getElementById(targets[side]) : step===3&&document.body.dataset.outputMode==='digital'?document.getElementById('digitalOutput'):document.querySelector('.mob-pane-' + step);
     if (!target) return;
+    for (let parent=target.parentElement; parent; parent=parent.parentElement) {
+      if (parent.tagName === "DETAILS") parent.open = true;
+    }
     target.tabIndex = -1;
     target.focus({preventScroll:true});
     target.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
