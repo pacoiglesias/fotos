@@ -1,0 +1,28 @@
+/* RealScan: mejoras progresivas de accesibilidad y fluidez. Sin alterar la geometría de impresión. */
+:where(button, a, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+:where(button, a, [role="button"]) {
+  touch-action: manipulation;
+}
+:where(button, [role="button"]):disabled,
+:where(button, [role="button"])[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+:where(input, select, textarea) {
+  scroll-margin-bottom: calc(7rem + env(safe-area-inset-bottom));
+}
+@media (pointer: coarse) {
+  :where(button, select, [role="button"]):not(.compact-control) {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
