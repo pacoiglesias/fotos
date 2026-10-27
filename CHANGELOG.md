@@ -1,3 +1,15 @@
+## 3.29.0 — Mostrador, preparación y entrega unificados
+
+- Recepción directa, selector de servicio compacto, herramientas según el trabajo y una zona de entrega con impresión, PDF, QR y Paperless opcional.
+- Un único módulo organiza los paneles; cliente y nota son opcionales; preferencias separadas por servicio y cambio de servicio conservando las capturas, con deshacer.
+- Resumen de fotos/páginas, juegos y hojas; perfil de impresora y verificación física visibles en la preparación.
+- Trabajos reúne pedidos guardados e impresiones con filtros, reanudación y reimpresión exacta.
+- Paperless acepta fotografía individual o PDF revisado. El historial archiva las hojas completas con medidas, guías y capas; no convierte cada imagen en una página A4.
+- Confirmación de tareas asíncronas, recibos locales acotados, prevención de doble envío y tratamiento explícito de respuestas inciertas.
+- Configuración de Paperless reservada a administración, dominio HTTPS autorizado y cancelación de operaciones al bloquear la sesión.
+- La detección de INE queda limitada a identificaciones, propone las caras antes de aplicarlas y permite conservar la foto original o deshacer la separación.
+- Pruebas específicas de Paperless, archivo completo, flujos y geometría, junto a la regresión existente. Publicación pendiente de revisión; iPhone y regla física de 50 mm requieren prueba real.
+
 ## En desarrollo — Paperless y operatividad del mostrador (sin publicar, sin cambio de versión)
 
 - Botón "Enviar a Paperless" en la entrega de PDF (junto a "Descargar PDF preparado") y en el historial de cada trabajo con copia guardada; acceso "Enviar a Paperless" en los atajos del mostrador, que abre la entrega de PDF.

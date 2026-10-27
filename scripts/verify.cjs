@@ -2,11 +2,15 @@ const cp = require("child_process");
 const failures = [];
 try {
   for (const script of [
+    "check-version",
     "check",
     "build",
+    "check-build",
     "auth-regression",
     "firebase-runner-regression",
     "backup-tag-regression",
+    "paperless-regression",
+    "ine-pair-detect-test",
     "regression",
     "photo-layout-regression",
     "counter-desk-regression",
@@ -20,6 +24,7 @@ try {
     "workbench-regression",
     "modern-regression",
     "workspace-polish-regression",
+    "release329-regression",
     "annotations-regression",
     "print-usability-regression",
     "cloud-recovery-regression",
@@ -52,7 +57,7 @@ try {
       console.error("FAIL " + script);
       // An invalid build cannot be audited. Otherwise collect every failure
       // in one pass; publication still requires a zero exit status.
-      if (script === "check" || script === "build") throw e;
+      if (script === "check-version" || script === "check" || script === "build" || script === "check-build") throw e;
     }
   }
   if (failures.length) { console.error("Failed checks: " + failures.join(", ")); process.exitCode = 1; }

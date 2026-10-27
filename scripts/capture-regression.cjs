@@ -1,3 +1,4 @@
+const {openImageTools}=require('./test-ui.cjs');
 const fs = require("fs"), path = require("path"), http = require("http"), assert = require("assert"), { chromium } = require("playwright");
 const root = path.resolve("dist"), out = path.resolve(".audit/capture-evidence"), checks = [];
 fs.mkdirSync(out, { recursive: true });
@@ -94,7 +95,7 @@ function cameraFixture() {
   assert(analysis.low.quad,'Detect a light page on a uniform light background');
   assert(analysis.soft.sharpness<analysis.a.sharpness,'Blur estimate must distinguish the softened image');
   pass("Skewed page edges detected; blank scene and crossed corners rejected");
-  await page.locator('[data-camera="front"]').click();
+  await openImageTools(page);await page.locator('[data-camera="front"]').click();
   await page.locator(".scan-dialog [data-act=capture]").waitFor();
   await page.waitForFunction(() => !document.querySelector(".scan-dialog [data-act=capture]").disabled);
   assert(await page.evaluate(() => __constraints.some((c) => c.advanced[0].focusMode === "continuous")));
@@ -118,7 +119,7 @@ function cameraFixture() {
   assert(Math.abs(dimensions.w/dimensions.h-85.6/53.98)<.01);
   assert.equal(await page.evaluate(()=>state.images.front.fitMode), "fit");
   pass("Camera requests supported continuous focus, controls torch, corrects perspective and preserves confirmed frame");
-  await page.locator("#btnPrintDirect").click();
+  await page.locator("[data-workspace-deliver=print]").click();
   await page.locator("#outputReviewModal").waitFor({ state: "visible" });
   assert((await page.locator("#printReview").innerText()).includes("85.6"));
   assert.equal(await page.evaluate(() => [...document.querySelectorAll("#printReview img")].filter(i => !i.closest(".output-review-sheet")).length), 1);

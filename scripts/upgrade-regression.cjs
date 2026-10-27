@@ -66,6 +66,20 @@ const server = http.createServer((req, res) => {
     "v" + require("../package.json").version,
     { timeout: 45000 },
   );
+  const expectedBuild = JSON.parse(fs.readFileSync("dist/version.json")).version;
+  // Current JS can load before service-worker installation and activation finish.
+  // Require a reply from the worker actually controlling this page, not merely a new cache.
+  await page.waitForFunction(async expected => {
+    const controller = navigator.serviceWorker.controller;
+    if (!controller || controller.state !== 'activated') return false;
+    const info = await new Promise(resolve => {
+      const channel = new MessageChannel();
+      const timeout = setTimeout(() => { channel.port1.close(); resolve(null); }, 1500);
+      channel.port1.onmessage = event => { clearTimeout(timeout); channel.port1.close(); resolve(event.data); };
+      controller.postMessage({type: 'REALSCAN_CACHE_INFO'}, [channel.port2]);
+    });
+    return info?.name === expected;
+  }, expectedBuild, {timeout: 45000, polling: 200});
   const keys = await page.evaluate(() => caches.keys());
   assert(!keys.includes("realscan-cache-v3.3.0"));
   assert(

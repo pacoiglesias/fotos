@@ -14,3 +14,6 @@ apps-*
 provi-*
 auditoria-seguridad-*.md
 tools/
+
+# Dependency directory may be a workspace symlink.
+node_modules
