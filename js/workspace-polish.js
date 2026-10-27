@@ -37,7 +37,7 @@
  function arrange(){if(!mounted)return;const left=$('colControlPanel'),wide=!!left&&innerWidth>=1100&&!doc().active&&document.body.dataset.outputMode!=='digital';
   for(const {element,anchor}of anchors){if(wide){if(element.parentElement!==left)left.append(element);}else if(element.previousSibling!==anchor)anchor.after(element);}
   if(wide){let p=null;for(const id of ['deskStart','studioWelcome']){const e=$(id);if(p){if(p.nextElementSibling!==e)p.after(e);}else if(left.firstElementChild!==e)left.prepend(e);p=e;}}
-  const tools=$('studioEditorTools'),mat=document.querySelector('#colStageWorkspace .stage-canvas-area')?.parentElement;if(editorAnchor&&tools&&mat){if(wide){if(mat.nextElementSibling!==tools)mat.after(tools);}else if(tools.previousSibling!==editorAnchor)editorAnchor.after(tools);}
+  const tools=$('studioEditorTools'),mat=document.querySelector('#colStageWorkspace .stage-canvas-area')?.parentElement;if(editorAnchor&&tools&&mat&&mat.nextElementSibling!==tools)mat.after(tools);
   const delivery=$('workspaceDelivery'),destination=doc().active?$('documentWorkspace'):$('colStageWorkspace');if(delivery&&destination&&delivery.parentElement!==destination)destination.append(delivery);document.body.dataset.refinedLayout=wide?'workspace':'stack';updateDock();update();
  }
  function update(){
@@ -46,6 +46,7 @@
   const favorites=$('studioFavorites');if(favorites&&favorites.parentElement!==$('deskTools'))$('deskTools').append(favorites);
   $('sheetFinishPanel').hidden=!!d.active;const active=[];if(!state.hideSheetTitle&&(state.includeDocLabels!==false||(state.documentCustomTitle||'').trim()))active.push('Título');if(state.includeDocLabels!==false)active.push('Rótulos');if(state.includeRulerFooter!==false)active.push('Regla');if(state.includeCutMarks!==false)active.push('Marcas');$('sheetFinishSummary').textContent=active.length?active.join(' · '):'Sin elementos auxiliares';$('sheetFinishPanel').dataset.clean=String(!active.length);for(const id of ['btnQuickOfficialClean','btnQuickStandardChecked'])$(id).setAttribute('aria-pressed',String(id==='btnQuickOfficialClean'?!active.length:state.includeDocLabels!==false&&state.includeRulerFooter!==false&&state.includeCutMarks!==false));
   const status=$('workspaceStatus');status.textContent=!allowed?'Inicia sesión para comenzar':busy()?'Preparando tu archivo…':!loaded?'Recibe una imagen. Puedes elegir el servicio después.':d.active?d.reviewed+' de '+d.count+' páginas revisadas':ready?'Capturas listas. Revisa la hoja antes de entregar.':'Falta '+work.missing.map(s=>s==='back'?'el reverso':s==='front'?'el frente':'una página').join(' y ');status.dataset.ready=String(ready);
+  $('studioApprovalNote').hidden=!$('studioApprovalNote').textContent.includes('aprobó');
   $('workspaceUndoService').hidden=!previousService;$('workspaceUndoService').disabled=!allowed||busy();
   for(const b of document.querySelectorAll('[data-task]'))b.disabled=!allowed||busy()||changing;
   for(const b of document.querySelectorAll('[data-workspace-deliver]'))b.disabled=!allowed||busy()||!(b.dataset.workspaceDeliver==='print'&&!d.active?loaded:ready);

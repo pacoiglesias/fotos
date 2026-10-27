@@ -133,7 +133,7 @@ body.rs-next{--work-ink:#172b43;--work-muted:#566980;--work-line:#d8e2eb;--work-
  .rs-next #flowWorkspace{display:flex!important;flex-direction:column;gap:14px!important}
  .rs-next #colControlPanel{width:100%!important;order:1}
  .rs-next #colStageWorkspace{width:100%;min-width:0;order:0;padding:16px!important}
- .rs-next[data-workspace-loaded=true] #colStageWorkspace{display:block!important}
+ .rs-next[data-workspace-loaded=true]:not([data-document-job=true]):not([data-output-mode=digital]) #colStageWorkspace{display:block!important}
  .rs-next #deskStart,.rs-next #studioWelcome{margin-bottom:12px!important}
  .rs-next #colControlPanel{display:flex!important}
  .rs-next #colControlPanel>.mob-pane{display:block!important}
@@ -148,9 +148,11 @@ body.rs-next{--work-ink:#172b43;--work-muted:#566980;--work-line:#d8e2eb;--work-
  .rs-next #workspaceDelivery>div{gap:8px}
  .rs-next #workspaceDelivery button{font-size:14px;min-height:50px}
  .rs-next #studioEditorTools button{flex:1 1 30%;font-size:13px!important;padding:9px}
- .rs-next #studioImageTray .studio-slot img{height:76px;object-fit:contain}
+ .rs-next #studioImageTray .studio-slot{display:flex;flex-direction:row;align-items:center;gap:8px;min-width:140px;min-height:64px;max-width:100%;padding:8px}
+ .rs-next #studioImageTray .studio-slot img{width:52px;height:52px;object-fit:contain;flex:none}
  .rs-next #studioImageTray:has(>button:only-child){display:flex!important}
 }
+@media(max-width:600px){html[data-counter=on] body.rs-next #counterMore{font-size:14px!important;min-width:0;white-space:normal;overflow-wrap:anywhere}}
 @media(max-width:380px){.rs-next main{padding-inline:10px!important}.rs-next #deskStart{padding:14px!important}.rs-next #deskReceive #operatorReceiveActions>button{font-size:13px;min-height:66px}.rs-next #workspaceDelivery>div{grid-template-columns:1fr}.rs-next #flowSides{grid-template-columns:1fr}.rs-next #flowSides button{flex-direction:row;min-height:48px}}
 /* The local mobile scanner has the same hierarchy, with the capture first. */
 body.rs-next-mobile{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -182,6 +184,7 @@ html.dark .rs-next .workspace-status[data-ready=true]{color:#8adeb6}
 .rs-next #workspaceSlotOptions .mob-pane{display:block!important}
 .rs-next #operatorNotices:not([hidden]){display:block;font-size:14px;line-height:1.5;margin:10px 0}
 
+.rs-next[data-document-job=true] #flowWorkspace{display:none!important}
 .rs-next #workspaceDocumentTools{display:flex;flex-wrap:wrap;gap:8px}
 .rs-next #workspaceDelivery [hidden]{display:none!important}
 .rs-next .document-actions:empty{display:none}

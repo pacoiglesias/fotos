@@ -40,6 +40,12 @@ CI https://github.com/pacoiglesias/fotos/actions/runs/40448538690, commit `ff42b
 
 CI https://github.com/pacoiglesias/fotos/actions/runs/40449435150, commit `374c16c6d2e1889914c0eda0678798fed07ff715`: Windows aprobado; pasaron la sincronización del acabado, la revisión de captura incompleta, el PDF alternativo y el modo mostrador a 390 px en Chromium. La ejecución completa señaló tres comprobaciones a ajustar: la entrega de un documento vacío está oculta y deshabilitada por diseño, WebKit debe esperar a que termine la separación antes de buscar Deshacer, y la actualización PWA debe esperar al nuevo service worker activo antes de verificar limpieza de cachés. Se conserva la exigencia de todas las comprobaciones, incluidos medidas, archivos reales y borrado de la caché antigua. Se añadió también protección para que deshacer INE no vuelva a proponer el mismo recorte.
 
+### Quinto checkpoint: regresión completa aprobada
+
+Commit `4575e2745d4777660d9b4952912602c39e5d28b0`, build `realscan-ba51ae01c6098914`. Aprobados `npm run verify` y publicador Windows tanto en la rama (https://github.com/pacoiglesias/fotos/actions/runs/40450223052) como en el PR (https://github.com/pacoiglesias/fotos/actions/runs/40450296772). La ejecución de la rama registró 317 resultados PASS y ningún FAIL. Se revisaron las capturas de escritorio, WebKit móvil y modo mostrador.
+
+El repaso visual final lleva las herramientas detrás de la hoja también en móvil, compacta la miniatura, conserva oculto el panel de fotos al trabajar documentos en móvil y oculta la ayuda repetida de la vista del cliente hasta que haya aprobación. Se comprueba también que Más opciones no recorte su texto. Estos ajustes se someten de nuevo al CI antes de cerrar el PR. Revisión: https://github.com/pacoiglesias/fotos/pull/7.
+
 ### Pendientes para cerrar esta entrega
 
 1. Corregir y repetir todas las regresiones fallidas, distinguiendo cambios intencionados de interfaz de fallos reales.
