@@ -7,6 +7,8 @@
 - Operatividad: atajos del mostrador con texto centrado y sin recortes en pantallas estrechas; el estado de la entrega mantiene su altura para no mover el diálogo. Sin cambios de color ni de tema, recepción fija intacta, sin precios ni multicliente, sin scripts inline nuevos.
 - Operatividad de Paperless: "Comprobar acceso" guarda primero lo escrito en pantalla y luego comprueba, para no validar un token viejo; el estado de sus ajustes mantiene su altura para no mover el diálogo.
 - En producción la CSP ya incluye el dominio de Paperless en connect-src (firebase.json, sin tocar script-src ni sus hashes); pendiente fuera de este repo: Paperless debe permitir el origen https://fotos.cobertores.com (CORS).
+- Botón \"Enviar a Paperless\" mucho más visible en los tres sitios: acción primaria azul a todo lo ancho en los atajos del mostrador, botón primario en cada trabajo del historial y botón primario grande en el diálogo de entrega PDF. El estado deshabilitado (por ejemplo, antes de preparar el PDF) sigue visible y legible, solo atenuado. Sin cambio de texto ni de flujo: sigue enviando lo mismo.
+- INE en una sola foto: si la foto (o el documento subido) trae los dos lados del INE juntos, la app detecta las dos tarjetas en el cliente (canvas, sin servicios externos ni enderezado), las separa en Frente y Reverso y muestra un aviso visible con miniaturas, \"Intercambiar\" y \"Deshacer\" de un toque. Si no detecta exactamente dos tarjetas, la foto se usa como antes, sin cambios. El par se imprime y se envía a Paperless como hasta ahora (dos páginas en el PDF).
 
 ## 3.28.1 — paneles y acabado de hoja
 

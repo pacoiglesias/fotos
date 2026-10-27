@@ -71,3 +71,39 @@ html.dark #deskDeliveredInline{background:#163f32;color:#d1f5e5;border-color:#3d
 /* Paperless: el estado de sus ajustes mantiene su altura para no mover el
    diálogo al cambiar el mensaje, igual que el estado de la entrega. */
 #paperlessSettings #paperlessStatus{min-height:1.6em}
+
+/* Paperless muy visible: el botón es acción primaria en los tres sitios
+   (atajos del mostrador, historial y diálogo de entrega). Ocupa toda la
+   fila de atajos del mostrador para que no se pierda entre botones
+   secundarios. El estado deshabilitado se mantiene visible (opacidad
+   alta, texto legible): nunca invisible, solo atenuado. Los colores
+   siguen el azul del mostrador; en modo oscuro se aclara un poco. */
+#deskStart .desk-shortcuts>#deskPaperless{grid-column:1/-1;background:#155bd5;color:#fff;border-color:#155bd5;box-shadow:0 6px 18px #155bd533;font-size:17px;font-weight:800;min-height:60px}
+#deskStart .desk-shortcuts>#deskPaperless:disabled{opacity:.75}
+#deskStart .desk-shortcuts>#deskPaperless:hover:not(:disabled){filter:brightness(1.05)}
+.desk-dialog .desk-paperless{background:#155bd5;color:#fff;border-color:#155bd5;font-weight:800}
+.desk-dialog .desk-paperless:disabled{opacity:.75}
+html.dark #deskStart .desk-shortcuts>#deskPaperless,html.dark .desk-dialog .desk-paperless{background:#2f7de1;color:#fff;border-color:#2f7de1}
+.pdf-delivery-dialog #pdfDeliveryPaperless{min-height:56px;padding:12px 20px;font-size:15px;font-weight:800}
+.pdf-delivery-dialog #pdfDeliveryPaperless:disabled{opacity:.7}
+@media(max-width:700px){
+ #deskStart .desk-shortcuts>#deskPaperless{font-size:17px!important;min-height:56px}
+ .pdf-delivery-dialog #pdfDeliveryPaperless{flex:1 1 100%}
+}
+
+/* INE anverso + reverso: aviso visible cuando una sola foto trae los dos
+   lados y se separan en Frente y Reverso, con miniaturas y acciones de
+   un toque (intercambiar, deshacer). */
+.ine-pair-banner{display:grid;gap:10px;border:2px solid #155bd5;border-radius:14px;padding:14px 16px;margin:0 0 16px;background:#eef5ff;color:#142c45}
+.ine-pair-banner strong{font-size:16px}
+.ine-pair-banner p{font-size:14px;margin:4px 0 0;color:#52667d}
+.ine-pair-thumbs{display:flex;gap:12px}
+.ine-pair-thumbs figure{margin:0;text-align:center}
+.ine-pair-thumbs img{display:block;width:120px;height:76px;object-fit:cover;border:1px solid #b9cedd;border-radius:8px;background:#fff}
+.ine-pair-thumbs figcaption{font-size:12px;font-weight:700;margin-top:4px}
+.ine-pair-actions{display:flex;gap:9px;flex-wrap:wrap}
+.ine-pair-actions button{min-height:48px;border-radius:11px;padding:10px 16px;font-weight:750;font-size:14px;border:1px solid #155bd5;background:#155bd5;color:#fff}
+.ine-pair-actions button:last-child{background:#fff;color:#142c45}
+html.dark .ine-pair-banner{background:#16283f;color:#e6effc;border-color:#2f7de1}
+html.dark .ine-pair-banner p{color:#b8c9dc}
+html.dark .ine-pair-actions button:last-child{background:#223b58;color:#ecf4ff;border-color:#405570}
