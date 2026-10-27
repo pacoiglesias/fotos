@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.29.1';
+window.APP_VERSION = 'v3.30.0';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -445,9 +445,16 @@ function focusModal(modal) {
   else { modal.setAttribute('tabindex', '-1'); modal.focus(); }
 }
 
+const deferredModalLoads = new Map(), deferredModalEpoch = new Map();
 function openModal(id) {
   const modal = $(id);
-  if (!modal) return;
+  if (!modal) {
+    const files={iphoneHelpModal:'iphone-help',scannerHelpModal:'scanner-help'};
+    if(!files[id])return;
+    const generation=(deferredModalEpoch.get(id)||0)+1;deferredModalEpoch.set(id,generation);
+    if(!deferredModalLoads.has(id))deferredModalLoads.set(id,fetch('assets/dialogs/'+files[id]+'.html').then(r=>{if(!r.ok)throw Error('help');return r.text();}).then(html=>{if(!$(id)){const t=document.createElement('template');t.innerHTML=html;document.body.append(t.content);}}).catch(()=>{deferredModalLoads.delete(id);showToast('No se pudo abrir la ayuda. Comprueba conexión o prepara la app para usarla sin internet.','warning');}));
+    return deferredModalLoads.get(id).then(()=>{if($(id)&&deferredModalEpoch.get(id)===generation)openModal(id);});
+  }
   const previous = modalFocusStack.find(function(entry) { return entry.id === id; });
   // Reopening or renewing a dialog is idempotent: one entry per dialog.
   modalFocusStack = modalFocusStack.filter(function(entry) { return entry.id !== id; });
@@ -460,6 +467,7 @@ function openModal(id) {
 }
 
 function closeModal(id) {
+  deferredModalEpoch.set(id,(deferredModalEpoch.get(id)||0)+1);
   if(id==="localOcrModal")window.RealScanOcr?.cancel();
   if(id==="localTransferModal")window.RealScanLocalTransfer?.stopCamera();
   const modal = $(id);

@@ -7,7 +7,7 @@ let phase = "old",
   browser;
 const root = path.resolve("dist");
 const oldWorker =
-  "const C='realscan-cache-v3.3.0';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['/js/app.js'])).then(()=>self.skipWaiting())));self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>{if(e.request.mode==='navigate')e.respondWith(fetch(e.request));else e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});";
+  "const C='realscan-cache-v3.3.0';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['/js/app.js','/js/config.js'])).then(()=>self.skipWaiting())));self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>{if(e.request.mode==='navigate')e.respondWith(fetch(e.request));else e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});";
 const server = http.createServer((req, res) => {
   const pathname = new URL(req.url, "http://localhost").pathname;
   res.setHeader("Cache-Control", "no-store");
@@ -19,8 +19,7 @@ const server = http.createServer((req, res) => {
     return res.end(
       pathname === "/sw.js"
         ? oldWorker
-        : pathname === "/js/app.js"
-          ? "}"
+        : pathname === "/js/config.js" ? "window.APP_VERSION='v3.28.1';window.__OLD_CONFIG_EXECUTED=true;" : pathname === "/js/app.js" ? "}"
           : '<html><script>navigator.serviceWorker.register("/sw.js")</script><body>Old broken cache</body></html>',
     );
   }
@@ -59,6 +58,7 @@ const server = http.createServer((req, res) => {
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
   assert(await page.evaluate(async () => !!(await caches.match("/js/app.js"))));
+  await page.evaluate(async()=>{localStorage.setItem('user-private-test-marker','keep');const c=await caches.open('unrelated-cache-for-test');await c.put('/unrelated-test',new Response('keep'));});
   phase = "new";
   await page.reload();
   await page.waitForFunction(
@@ -80,8 +80,13 @@ const server = http.createServer((req, res) => {
     });
     return info?.name === expected;
   }, expectedBuild, {timeout: 45000, polling: 200});
-  const keys = await page.evaluate(() => caches.keys());
-  assert(!keys.includes("realscan-cache-v3.3.0"));
+  assert.equal(await page.evaluate(()=>window.__OLD_CONFIG_EXECUTED),undefined,'Old cached configuration must never execute in the new page');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('user-private-test-marker')),'keep');
+  // Observe CacheStorage from the caller too: activation may still be completing.
+  let keys=[];const cleanupDeadline=Date.now()+10000;
+  do{keys=await page.evaluate(()=>caches.keys());if(!keys.includes("realscan-cache-v3.3.0"))break;await page.waitForTimeout(100);}while(Date.now()<cleanupDeadline);
+  assert(keys.includes('unrelated-cache-for-test'),'Unrelated application caches must be preserved');
+  assert(!keys.includes("realscan-cache-v3.3.0"), "Obsolete cache remains: "+keys.join(", "));
   assert(
     keys.includes(JSON.parse(fs.readFileSync("dist/version.json")).version),
   );

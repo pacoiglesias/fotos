@@ -117,6 +117,8 @@ function createBrowserSandbox() {
     updateUI: () => {},
     updatePreviewAnnotations: () => {}
   };
+  let storedDraft=null;
+  sandbox.RealScanDraftStore={write:async value=>{storedDraft=JSON.parse(JSON.stringify(value));},read:async()=>storedDraft,remove:async()=>{storedDraft=null;}};
   sandbox.window = sandbox;
   return sandbox;
 }
@@ -133,7 +135,8 @@ async function runTests() {
     vm.runInContext(code, sb);
 
     await sb.saveActiveDraft();
-    const draft = sb.getActiveDraft();
+    const draft = await sb.loadActiveDraft();
+    assert(!Object.values(sb.localStorage._dump()).some(v=>v.includes("data:image")), "Las imágenes no deben persistirse en localStorage");
     assert(draft !== null, 'El borrador guardado no debe ser null');
     assert.strictEqual(draft.format, 'card');
     assert.strictEqual(draft.documentCustomTitle, 'Mi Credencial');

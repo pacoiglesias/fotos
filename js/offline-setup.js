@@ -21,7 +21,7 @@
   return new Promise((resolve,reject)=>{const channel=new MessageChannel(),timer=setTimeout(()=>{channel.port1.close();reject(Error('Actualiza la app con conexión antes de preparar el modo local.'));},8000);channel.port1.onmessage=e=>{clearTimeout(timer);channel.port1.close();/^realscan-[a-f0-9]{16}$/.test(e.data?.name)?resolve(e.data):reject(Error('No se pudo identificar esta versión.'));};registration.active.postMessage({type:'REALSCAN_CACHE_INFO'},[channel.port2]);});
  }
  async function readMarker(cache){const marker=await cache.match('offline-ready.json');if(!marker)return null;try{return await marker.json();}catch{return null;}}
- async function status(){const current=await info(),cache=await caches.open(current.name),data=await readMarker(cache);return {core:true,ocr:!!data,exports:data?.export===true,segment:data?.segment===true,version:current.name};}
+ async function status(){const current=await info(),cache=await caches.open(current.name),data=await readMarker(cache),has=async list=>(await Promise.all(list.map(asset=>cache.match(asset)))).every(Boolean);return {core:true,ocr:!!data&&await has(OCR),exports:data?.export===true&&await has(EXPORT),segment:data?.segment===true&&await has(SEGMENT),version:current.name};}
  async function prepare(progress){
   if(preparing)throw Error('La preparación ya está en curso.');preparing=true;
   try{const current=await info(),cache=await caches.open(current.name),estimate=await navigator.storage?.estimate?.();if(estimate?.quota&&estimate.quota-estimate.usage<30*1024*1024)throw Error('Libera al menos 30 MB en el navegador y vuelve a intentar.');

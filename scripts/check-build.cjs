@@ -17,6 +17,15 @@ for (const file of files(dist)) {
   const relative = path.relative(dist, file).replaceAll(path.sep, '/');
   assert(!/(^|\/)(audit|\.audit|scripts|node_modules|\.git)(\/|$)|\.(md|log|bat|ps1)$/.test(relative), 'Unexpected published file: ' + relative);
 }
+// The URL hash must identify the exact bytes shipped, including through an old worker.
+for (const file of files(dist).filter(f => f.endsWith('.html') || f.endsWith('.css'))) {
+  const source = fs.readFileSync(file,'utf8');
+  for (const match of source.matchAll(/["']([^"']+\.(?:js|mjs|css))\?v=([a-f0-9]{16})["']/g)) {
+    const target = path.resolve(path.dirname(file),match[1]);
+    assert(target.startsWith(dist + path.sep) && fs.existsSync(target),'Missing fingerprinted asset: ' + match[1]);
+    assert.equal(crypto.createHash('sha256').update(fs.readFileSync(target)).digest('hex').slice(0,16),match[2],'Stale asset URL: ' + match[1]);
+  }
+}
 // CSS imports must be shipped too; a successful build can otherwise hide a 404.
 for (const file of files(dist).filter(f => f.endsWith('.css'))) {
   const source = fs.readFileSync(file, 'utf8');

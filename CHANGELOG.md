@@ -1,3 +1,17 @@
+## 3.30.0 — Mostrador rediseñado, trabajos y actualización consistente
+
+- Nueva composición de servicio, recepción y preparación, con hoja protagonista y ajustes agrupados; estilos consolidados para escritorio, móvil y modo oscuro.
+- Cámara, Archivo, Cargar desde NAS y Recibir QR en la misma zona; acceso NAS permanente en la cabecera.
+- Acción principal contextual, revisión de páginas pendientes y avisos junto a los ajustes. Guardar el trabajo antes de cambiar de cliente.
+- Kanban y lista de pedidos: Pendiente, En preparación, Listo para entregar y Entregado; cambios persistidos sin inventar confirmaciones físicas.
+- Comprobante con folio estable, fecha, resumen, ticket PDF e impresión independiente. QR de referencia sin datos personales ni seguimiento remoto ficticio.
+- Cierre JSON firmado por el navegador, verificación de integridad y CSV protegido contra fórmulas; métricas agregadas sin imágenes ni datos de clientes.
+- Paperless: revisión de título, fecha, tipos y etiquetas existentes; sugerencias locales a partir del texto reconocido; límite de 30 MB y protección frente a duplicados y cambios de sesión.
+- Canvas temporales liberados tras materializar sus resultados, incluidas rutas fallidas de render PDF; ayuda secundaria diferida.
+- Se retiran firmas reutilizables en localStorage y el respaldo de imágenes en ese almacenamiento; se conserva recuperación mediante IndexedDB.
+- Build limpio con referencias por contenido; caché aislada por versión y retirada de cachés antiguas sin limpiar trabajos. Estado offline basado en recursos realmente presentes.
+- Documentación de uso y referencia técnica actualizadas. Regresión nueva en Chromium y WebKit para la entrega; la actualización comprueba conservación de datos del usuario.
+
 ## 3.29.1 — Paperless visible y sellos y firmas al alcance
 
 - Servicios rápidos visibles, acción contextual para continuar y cantidades con botones +/−.

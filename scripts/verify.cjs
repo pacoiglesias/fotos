@@ -25,6 +25,7 @@ try {
     "modern-regression",
     "workspace-polish-regression",
     "release329-regression",
+    "operations330-regression",
     "annotations-regression",
     "print-usability-regression",
     "cloud-recovery-regression",

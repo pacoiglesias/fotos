@@ -101,6 +101,8 @@
       if (!reg) return null;
       registration = reg;
       await reg.update();
+      try { const response=await fetch('version.json?check='+Date.now(),{cache:'no-store',signal:AbortSignal.timeout(8000)});if(response.ok){const remote=await response.json(),local=String(window.APP_VERSION||'').replace(/^v/,'');if(remote.appVersion&&local&&remote.appVersion!==local){const el=banner();el.querySelector('span').textContent='Nueva versión '+remote.appVersion+' disponible · guarda tu trabajo y actualiza';showBanner();}} } catch {}
+
       if (reg.waiting && navigator.serviceWorker.controller) markUpdateReady(reg.waiting);
       return reg;
     } catch (e) { return null; }

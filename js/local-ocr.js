@@ -1,9 +1,9 @@
 (function(root) {
   "use strict";
-  let worker = null, epoch = 0, busy = false, externalSource=null;
+  let worker = null, epoch = 0, busy = false, externalSource=null,lastSuggestion=null,externalRequestId=null;
   function open(options = {}) {
       cancel(true);
-    externalSource=options.dataUrl || null;
+    externalSource=options.dataUrl || null;externalRequestId=options.requestId||null;
     let modal = document.getElementById("localOcrModal");
     if (!modal) {
       modal = document.createElement("div");
@@ -38,7 +38,7 @@
     openModal("localOcrModal");
   }
   async function cancel(clearText = false) {
-    if(clearText===true)externalSource=null;
+    if(clearText===true){externalSource=null;lastSuggestion=null;}
     if(clearText===true){const text=document.getElementById("ocrText");if(text)text.value="";}
     const cancelledRevision = ++epoch;
     busy = false;
@@ -60,14 +60,14 @@
     }
     busy = true;
     $("ocrRun").disabled = true;
-    const revision = ++epoch, job = state._jobRevision || 0;
-    let owned = null, timeout = null, stage = 'image';
+    const revision = ++epoch, job = state._jobRevision || 0, documentRevision=root.RealScanDocuments?.status().revision,requestId=externalRequestId;
+    let owned = null, timeout = null, canvas = null, stage = 'image';
     try {
       $("ocrStatus").textContent = "Preparando imagen para leer el texto…";
       const image = new Image(); image.src = source; await image.decode();
       if (revision !== epoch) return;
       const scale = Math.min(1, 2600 / Math.max(image.naturalWidth, image.naturalHeight));
-      const canvas = document.createElement('canvas');
+      canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
       canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
       const context = canvas.getContext('2d'); context.fillStyle = 'white';
@@ -96,8 +96,9 @@
       worker = w;
       stage = 'recognition';
       const result = await Promise.race([w.recognize(canvas), new Promise((_, reject) => { timeout = setTimeout(() => reject(Error('timeout')), 90000); })]);
-      if (revision !== epoch || job !== (state._jobRevision || 0)) return;
+      if (revision !== epoch || job !== (state._jobRevision || 0)||documentRevision!==root.RealScanDocuments?.status().revision) return;
       $("ocrText").value = result.data.text;
+      lastSuggestion={job:state._jobRevision,documentRevision,suggestion:suggestDocument(result.data.text)};document.dispatchEvent(new CustomEvent('realscan:ocr-completed',{detail:{requestId,suggestion:structuredClone(lastSuggestion.suggestion)}}));
       $("ocrStatus").textContent = result.data.text.trim() ? "Texto listo para revisar. Confianza estimada: " + Math.round(result.data.confidence) + " %. Comprueba los datos contra la imagen." : "No se encontró texto legible. Endereza la página, mejora la luz y vuelve a intentar.";
       root.RealScanDiagnostics?.record('ocr.completed', 'info', {language: $("ocrLanguage").value, confidence: Math.round(result.data.confidence)});
     } catch {
@@ -108,6 +109,7 @@
     } finally {
       clearTimeout(timeout);
       await owned?.terminate().catch(() => {});
+      if(canvas)canvas.width=canvas.height=0;
       if (revision === epoch) {
         worker = null;
         busy = false;
@@ -115,7 +117,16 @@
       }
     }
   }
-  root.RealScanOcr = { open, cancel };
+  function suggestDocument(text='',date=new Date()) {
+    const value=String(text).slice(0,60000).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+    const day=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
+    let type='Documento',tags=[];
+    if(/INSTITUTO NACIONAL ELECTORAL|CREDENCIAL PARA VOTAR|\bINE\b|\bDNI\b/.test(value)){type='Identificación';tags=['Identificación','INE'];}
+    else if(/ACTA.{0,35}NACIMIENTO|REGISTRO CIVIL/.test(value)){type='Acta de nacimiento';tags=['Actas','Nacimiento'];}
+    else if(/COMPROBANTE.{0,25}DOMICILIO|COMISION FEDERAL DE ELECTRICIDAD|RECIBO.{0,20}(LUZ|AGUA|TELEFONO)/.test(value)){type='Comprobante de domicilio';tags=['Comprobantes','Domicilio'];}
+    return {title:type+' · '+day,documentType:type,tags,source:'local-suggestion'};
+  }
+  root.RealScanOcr = { open, cancel, suggestDocument, getSuggestion(){return lastSuggestion&&lastSuggestion.job===state._jobRevision&&lastSuggestion.documentRevision===root.RealScanDocuments?.status().revision?structuredClone(lastSuggestion.suggestion):null;} };
   document.addEventListener('realscan:modal-closed',event=>{if(event.detail?.id==='localOcrModal')cancel();});
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) cancel();

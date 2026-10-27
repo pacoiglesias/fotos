@@ -28,6 +28,7 @@ function copy(src, dst) {
   ])
     copy(path.join(root, file), path.join(dist, file));
   copy(path.join(root, "js"), path.join(dist, "js"));
+  copy(path.join(root, "assets/dialogs"), path.join(dist, "assets/dialogs"));
   copy(path.join(root, "css/styles.css"), path.join(dist, "css/styles.css"));
   copy(path.join(root, "css/scan-assist.css"), path.join(dist, "css/scan-assist.css"));
   copy(path.join(root, "css/mobile-scan.css"), path.join(dist, "css/mobile-scan.css"));
@@ -133,6 +134,30 @@ function copy(src, dst) {
     [cli, "-i", "css/tailwind.css", "-o", "dist/css/tailwind.css", "--minify"],
     { cwd: root, stdio: "inherit" },
   );
+  // Content-addressed URLs cannot be mistaken for scripts from an older worker.
+  // Keep both URL forms offline: dynamic loaders still use their stable paths.
+  const versionedAssets = new Set();
+  function versionAsset(reference, directory) {
+    if (/^(?:[a-z]+:|\/\/|#)/i.test(reference)) return reference;
+    const clean = reference.split(/[?#]/)[0];
+    if (!/\.(?:js|mjs|css)$/.test(clean)) return reference;
+    const target = path.resolve(directory, clean);
+    if (!target.startsWith(dist + path.sep) || !fs.existsSync(target)) throw Error('Missing build asset: ' + reference);
+    const digest = crypto.createHash('sha256').update(fs.readFileSync(target)).digest('hex').slice(0,16);
+    const versioned = clean + '?v=' + digest;
+    versionedAssets.add('./' + path.relative(dist,target).replaceAll('\\','/') + '?v=' + digest);
+    return versioned;
+  }
+  // Imported styles are fingerprinted before the stylesheet that references them.
+  for (const name of fs.readdirSync(path.join(dist,'css')).filter(n=>n.endsWith('.css'))) {
+    const file = path.join(dist,'css',name);
+    const source = fs.readFileSync(file,'utf8');
+    fs.writeFileSync(file,source.replace(/(@import\s+(?:url\(\s*)?["'])([^"']+)(["'])/gi,(_,before,reference,after)=>before+versionAsset(reference,path.dirname(file))+after));
+  }
+  for (const name of fs.readdirSync(dist).filter(n=>n.endsWith('.html'))) {
+    const file=path.join(dist,name),source=fs.readFileSync(file,'utf8');
+    fs.writeFileSync(file,source.replace(/(<(?:script|link)\b[^>]*?\b(?:src|href)=["'])([^"']+)(["'])/gi,(_,before,reference,after)=>before+versionAsset(reference,dist)+after));
+  }
   const files = [];
   function walk(dir) {
     for (const x of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -163,7 +188,7 @@ function copy(src, dst) {
     // vendor-loader.js (jsPDF 420 KB, JSZip 98 KB y el lector jsQR 257 KB;
     // −775 KB de instalación): se descargan la primera vez que una función
     // las necesita y el SW las cachea en ese primer uso, igual que el OCR.
-    .replace("__CORE_ASSETS__", JSON.stringify(files.filter(f =>
+    .replace("__CORE_ASSETS__", JSON.stringify([...new Set([...files.filter(f =>
       !f.startsWith("vendor/ocr/") &&
       !f.startsWith("vendor/cmaps/") &&
       !f.startsWith("vendor/wasm/") &&
@@ -171,7 +196,7 @@ function copy(src, dst) {
       f !== "vendor/jspdf.umd.min.js" &&
       f !== "vendor/jszip.min.js" &&
       f !== "vendor/jsqr.js"
-    ).map((f) => "./" + f)));
+    ).map((f) => "./" + f), ...versionedAssets])])) ;
   const sourceCommit = cp
     .execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })
     .trim();
