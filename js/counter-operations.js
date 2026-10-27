@@ -15,7 +15,7 @@
   check();const d=root.RealScanDocuments.status(),w=root.RealScanWorkflow.describe();if(d.busy||w.busy)throw Error('Espera a que termine la preparación de las imágenes.');
   const count=d.active?d.count:Object.values(state.images).filter(v=>v.processedDataUrl).length;if(!count)throw Error('Recibe al menos una imagen antes de emitir un comprobante.');
   if(receiptJob!==state._jobRevision){receiptJob=state._jobRevision;receipt={folio:'RS-'+crypto.randomUUID().toUpperCase(),createdAt:new Date().toISOString()};}
-  const sets=d.active?d.options.sets:state.outputSets||1,units=d.active?d.count:(state.mixTwoPhotos?(state.photoCopiesPersonA||0)+(state.photoCopiesPersonB||0):state.photoCopies||1)*sets;
+  const sets=d.active?d.options.sets:state.outputSets||1,units=d.active?d.count*sets:w.layout.pages.reduce((total,page)=>total+page.placements.length,0);
   return {...receipt,service:d.active?'Documento':getActiveSpec().shortName,paper:d.active?(PAPER_SPECS[d.options.paper]?.shortName||'Papel'):(w.layout.paper.shortName||'Papel'),units,sets,sheets:d.active?Math.ceil(d.count/(d.options.duplex==='manual'?2:1))*sets:w.layout.pages.length,status:(d.active?d.ready:w.ready)?'Pendiente de entrega':'Pendiente de revisión'};
  }
  function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
