@@ -1,3 +1,13 @@
+# Estado vigente del seguimiento — 27/10/2026
+
+Consultar [la referencia técnica](SISTEMA_REALSCAN.md) antes de retomar. Producción confirmada: 3.29.0, build `realscan-787bec0e2079b7f7`, commit `89da339a365340c3a4cfc57d769d73f9a74c1c86`, tag `v3.29.0+git.89da339a3653`. El `version.json` público volvió a responder 200 con esos metadatos.
+
+3.29.1 permanece en el PR #8, sin integrar ni publicar. El CI del PR 40508687899 aprobó el commit `c3667ca432b286f62363d89f71704361b7537fdf`; cambios posteriores deben validar su propio commit. No hay mediciones nuevas de rendimiento ni validación física de iPhone, regla o NAS.
+
+Las secciones antiguas de este archivo describen su fecha de creación: las menciones de 3.29.0 «sin publicar» quedaron superadas por el despliegue registrado arriba. Las propuestas de optimización integral y recuperación desde Paperless siguen pendientes.
+
+---
+
 ## 3.29.1 — Revisión de acceso y preparación; pendiente de publicar
 
 La 3.29.0 se publicó con build realscan-787bec0e2079b7f7, commit 89da339a3653 y tag v3.29.0+git.89da339a3653. El operador reportó poca visibilidad de Paperless y dificultad con sellos y firmas.
