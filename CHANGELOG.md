@@ -1,5 +1,11 @@
 ## 3.29.1 — Paperless visible y sellos y firmas al alcance
 
+- Servicios rápidos visibles, acción contextual para continuar y cantidades con botones +/−.
+- Actualizaciones del panel agrupadas para evitar recalcularlo inmediatamente y otra vez en el mismo ciclo.
+- Búsqueda paginada en Paperless, descarga y apertura de copia como trabajo nuevo con confirmación; sin modificar el original del NAS.
+- Descarga limitada a PDF/imágenes de 30 MB, sin seguir redirecciones y con comprobación de sesión.
+- Pruebas nuevas de recorrido, búsqueda y tiempos de preparación/reutilización de impresión.
+
 - Paperless pasa a recepción con estado de conexión y revisión antes del envío.
 - Sello COPIA y Añadir firma visibles junto a la hoja; otras herramientas agrupadas.
 - Sellos de un toque, pestaña activa y ajustes de precisión desplegables.

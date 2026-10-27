@@ -46,7 +46,7 @@ Aplicación web de mostrador para recibir fotos y documentos, prepararlos e impr
 | Recuperación y nube | Borradores, respaldo/exportación e integración de copia en nube | Historial y ajustes pertenecen al navegador/origen; comprobar restauración y configuración |
 | PWA y sin conexión | Recursos locales, caché, actualización y PDF local | El uso sin conexión requiere haber preparado la caché; QR en internet, nube y Paperless necesitan conexión |
 | Paperless: escritura | Enviar foto individual o PDF revisado; seguimiento de tarea, recibo y prevención de duplicados | Requiere token, permisos y CORS del NAS; las pruebas automáticas utilizan respuestas simuladas |
-| Paperless: lectura | Comprobar acceso y consultar el estado del archivado | **No hay todavía búsqueda, listado ni recuperación de documentos del NAS en RealScan** |
+| Paperless: lectura | Comprobar acceso y consultar el estado del archivado | Búsqueda/listado paginado y recuperación de PDF/imágenes implementados en la revisión 3.29.1; no están en producción 3.29.0. Prueba real del NAS pendiente. |
 | Móvil y modo mostrador | Diseño adaptable, controles táctiles y modo de letra grande | Pruebas Chromium/WebKit no equivalen a probar cámara/PWA en un iPhone real |
 
 ## 4. Mapa del código
@@ -92,7 +92,7 @@ Recepción directa, servicio conservando capturas, preferencias por servicio, di
 
 Paperless pasa a recepción con mensaje de configuración; Sello COPIA y Añadir firma se muestran junto a la hoja. COPIA abre una revisión con la marca preparada, sin confirmar automáticamente. Sellos frecuentes de un toque, pestaña activa y ajustes de precisión agrupados. Se conservan los motores de PDF e impresión.
 
-**Pendiente:** revisión visual comparativa, aceptación del operador, comprobación del CI del commit final y pruebas físicas. No incluye buscador de Paperless ni una optimización integral de rendimiento ya medida.
+**Pendiente:** revisión visual comparativa, aceptación del operador, comprobación del CI del commit final y pruebas físicas. La ampliación de 3.29.1 incluye buscador, recuperación de copia con confirmación, accesos a presets, cantidades +/− y acción siguiente contextual. Agrupa actualizaciones repetidas del panel. Se registran tiempos de preparación/reutilización en pruebas; no hay una comparación de rendimiento con hardware del negocio.
 
 ### Propuestas todavía no terminadas
 
@@ -102,7 +102,7 @@ Paperless pasa a recepción con mensaje de configuración; Sello COPIA y Añadir
 | Alta | Menos controles repetidos y una preparación coherente | Capturas comparables en escritorio/móvil, botones esenciales visibles y teclado/tacto funcionales |
 | Alta | Medir y reducir esperas | Medir carga, captura, cambio de cantidad y apertura de revisión/impresión con las mismas muestras y dispositivo; registrar resultados reales |
 | Alta | Cambio seguro al siguiente cliente | Guardar o cerrar el trabajo y no reutilizar capturas, firmas, sellos o destinatarios del anterior |
-| Media | Buscar y recuperar desde Paperless | Búsqueda paginada, vista previa y recuperación sin sobrescribir documentos del NAS; probar errores y permisos |
+| En prueba 3.29.1 | Buscar y recuperar desde Paperless | Búsqueda paginada, vista previa y recuperación sin sobrescribir documentos del NAS; probar errores y permisos |
 | Media | Encabezados y firmas más visuales | Plantillas/miniaturas, vista previa, aplicar/deshacer y conservación en PDF e impresión |
 
 No asignar porcentajes de avance ni declarar «perfecto» sin criterios de aceptación y evidencia.

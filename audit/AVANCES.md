@@ -1,3 +1,9 @@
+## Cierre de implementación 3.29.1 — 27/10/2026
+
+Se amplía el PR #8 con servicios rápidos visibles; acción siguiente contextual; cantidades por +/−; actualización agrupada del panel; búsqueda Paperless con paginación, descarga y apertura de copia con confirmación de trabajo nuevo. No se sobrescriben documentos del NAS. Descargas de PDF/imágenes limitadas a 30 MB, estado y sesión comprobados; sin seguir direcciones de paginación externas.
+
+Código, build y pruebas unitarias se verifican antes del respaldo. Regresión completa y revisión visual del nuevo commit: pendientes hasta registrar su CI. Las mediciones de tiempos de impresión se guardan en evidencia de la prueba; no se promete un porcentaje universal de velocidad. Sin validación física de iPhone, regla de 50 mm ni NAS real. Despliegue pendiente del CI y del cierre de revisión.
+
 # Estado vigente del seguimiento — 27/10/2026
 
 Consultar [la referencia técnica](SISTEMA_REALSCAN.md) antes de retomar. Producción confirmada: 3.29.0, build `realscan-787bec0e2079b7f7`, commit `89da339a365340c3a4cfc57d769d73f9a74c1c86`, tag `v3.29.0+git.89da339a3653`. El `version.json` público volvió a responder 200 con esos metadatos.
