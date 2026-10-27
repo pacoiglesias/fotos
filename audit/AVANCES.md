@@ -32,6 +32,10 @@ Respaldo `c7014a3ddd5329684358181ec85fa68b410e4584`. CI: https://github.com/paco
 
 Se añadió comprobación automática de versiones; la siguiente corrección agrupa también los botones existentes de documentos en la misma zona de entrega, conserva sus motores de PDF/QR/impresión y agrupa alternativas de exportación, añade iconos con texto, lleva OCR y doble cara a las herramientas, y comprueba metadatos, CSP y exclusión de archivos de trabajo en el build.
 
+### Tercer checkpoint de pruebas
+
+CI https://github.com/pacoiglesias/fotos/actions/runs/40448538690, commit `ff42bd5a1bb3b5a1bea5dc4584ac8c54a3dbc7db`: Windows aprobado. Pasaron los nuevos flujos de INE y archivo completo a Paperless en Chromium y WebKit, OCR/PDF sin conexión y navegación. La regresión completa señaló tres pendientes: sincronización del resumen de acabado, acceso a revisión de impresión con una sola cara y prueba de PDF alternativo dentro del nuevo desplegable. Se corrigen en el siguiente checkpoint, junto con tamaños de controles en modo mostrador y campos de iPhone. No se declara aprobada la entrega mientras no pase la ejecución completa.
+
 ### Pendientes para cerrar esta entrega
 
 1. Corregir y repetir todas las regresiones fallidas, distinguiendo cambios intencionados de interfaz de fallos reales.

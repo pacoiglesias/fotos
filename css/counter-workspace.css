@@ -1,3 +1,4 @@
+@media screen{
 /* RealScan 3.29: one quiet counter surface, large controls and content-led actions. */
 body.rs-next{--work-ink:#172b43;--work-muted:#566980;--work-line:#d8e2eb;--work-surface:#fff;--work-bg:#f3f6fa;--work-accent:#155bd5;background:var(--work-bg);color:var(--work-ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
 .rs-next main{max-width:1600px;margin:auto;padding-top:14px!important}
@@ -176,7 +177,7 @@ html.dark .rs-next #studioWelcome .operator-task[aria-pressed=true]{background:#
 html.dark .rs-next .stage-canvas-area{background:#26394f!important}
 html.dark .rs-next .workspace-status[data-ready=true]{color:#8adeb6}
 @media(prefers-reduced-motion:reduce){.rs-next *{scroll-behavior:auto!important;transition:none!important}}
-@media print{#workspaceDelivery,#workspaceJobs,#workspaceSlotOptions,#workspacePrinterOptions,#workspaceContact{display:none!important}}
+
 
 .rs-next #workspaceSlotOptions .mob-pane{display:block!important}
 .rs-next #operatorNotices:not([hidden]){display:block;font-size:14px;line-height:1.5;margin:10px 0}
@@ -186,3 +187,10 @@ html.dark .rs-next .workspace-status[data-ready=true]{color:#8adeb6}
 .rs-next .document-actions:empty{display:none}
 
 .rs-next #workspaceDelivery #documentDirectPrint{background:var(--work-accent);border-color:var(--work-accent);color:#fff}
+
+@media(max-width:1099px){.rs-next #serviceFlow :is(input,select,textarea){font-size:16px!important}}
+html[data-counter=on] body.rs-next :is(#serviceFlow,#workspaceDelivery,#deskStart,#colStageWorkspace) :is(button,input,select){font-size:18px!important;min-height:60px!important}
+html[data-counter=on] body.rs-next :is(#serviceFlow,#workspaceDelivery,#deskStart,#colStageWorkspace) :is(p,label,small,summary){font-size:17px!important}
+
+}
+@media print{#workspaceDelivery,#workspaceJobs,#workspaceSlotOptions,#workspacePrinterOptions,#workspaceContact{display:none!important}}
