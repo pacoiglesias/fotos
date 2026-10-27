@@ -36,6 +36,10 @@ Se añadió comprobación automática de versiones; la siguiente corrección agr
 
 CI https://github.com/pacoiglesias/fotos/actions/runs/40448538690, commit `ff42bd5a1bb3b5a1bea5dc4584ac8c54a3dbc7db`: Windows aprobado. Pasaron los nuevos flujos de INE y archivo completo a Paperless en Chromium y WebKit, OCR/PDF sin conexión y navegación. La regresión completa señaló tres pendientes: sincronización del resumen de acabado, acceso a revisión de impresión con una sola cara y prueba de PDF alternativo dentro del nuevo desplegable. Se corrigen en el siguiente checkpoint, junto con tamaños de controles en modo mostrador y campos de iPhone. No se declara aprobada la entrega mientras no pase la ejecución completa.
 
+### Cuarto checkpoint de pruebas
+
+CI https://github.com/pacoiglesias/fotos/actions/runs/40449435150, commit `374c16c6d2e1889914c0eda0678798fed07ff715`: Windows aprobado; pasaron la sincronización del acabado, la revisión de captura incompleta, el PDF alternativo y el modo mostrador a 390 px en Chromium. La ejecución completa señaló tres comprobaciones a ajustar: la entrega de un documento vacío está oculta y deshabilitada por diseño, WebKit debe esperar a que termine la separación antes de buscar Deshacer, y la actualización PWA debe esperar al nuevo service worker activo antes de verificar limpieza de cachés. Se conserva la exigencia de todas las comprobaciones, incluidos medidas, archivos reales y borrado de la caché antigua. Se añadió también protección para que deshacer INE no vuelva a proponer el mismo recorte.
+
 ### Pendientes para cerrar esta entrega
 
 1. Corregir y repetir todas las regresiones fallidas, distinguiendo cambios intencionados de interfaz de fallos reales.
