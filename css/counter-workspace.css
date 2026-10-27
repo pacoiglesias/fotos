@@ -199,3 +199,33 @@ html[data-counter=on] body.rs-next :is(#serviceFlow,#workspaceDelivery,#deskStar
 
 }
 @media print{#workspaceDelivery,#workspaceJobs,#workspaceSlotOptions,#workspacePrinterOptions,#workspaceContact{display:none!important}}
+
+@media screen {
+ .rs-next #workspaceNas{display:grid;gap:5px;margin:12px 0;padding:12px;border:1px solid var(--work-line);border-radius:14px;background:var(--work-bg)}
+ .rs-next #workspaceNas #deskPaperless{display:flex;gap:10px;align-items:center;justify-content:center;width:100%;min-height:52px;border-radius:11px;border:1px solid #3f7774;background:#eaf7f4;color:#17594f;font-size:15px;font-weight:750}
+ .rs-next #workspaceNas small{display:block;text-align:center;font-size:12px;line-height:1.5;color:var(--work-muted,#566980)}
+ .rs-next #annotationTools{margin:16px 0;padding:16px;border-radius:16px;background:var(--work-surface);border:1px solid var(--work-line)}
+ .rs-next #annotationTools>h3{font-size:18px}
+ .rs-next #workspaceDelivery>div>[data-workspace-deliver=paperless]{background:#eaf7f4;color:#17594f;border:1px solid #3f7774}
+ .rs-next[data-workspace-loaded=false] #annotationTools{display:none!important}
+ html[data-counter=on] .rs-next .annotation-primary-actions>button,html[data-counter=on] .rs-next #workspaceNas #deskPaperless{min-height:60px;font-size:18px}
+ html.dark .rs-next #workspaceNas #deskPaperless,html.dark .rs-next #workspaceDelivery>div>[data-workspace-deliver=paperless]{background:#173c38;color:#ccf4e8;border-color:#5d9c93}
+ html.dark .annotation-primary-actions>button:first-child{background:#203650;color:#cce0ff;border-color:#6f9dd5}
+}
+
+@media screen {
+ .rs-next #studioWelcome #deskPresets{display:block;margin-top:14px;border-top:1px solid var(--work-line);padding-top:12px}
+ .rs-next #studioWelcome #deskPresets h3{display:block;font-size:13px;font-weight:650;margin-bottom:8px}
+ .rs-next #studioWelcome #deskPresets>div{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .rs-next #studioWelcome #deskPresets button{white-space:normal;text-align:left;min-height:48px;padding:10px;border:1px solid var(--work-line);border-radius:10px;background:var(--work-bg);color:var(--work-ink);font-size:13px;line-height:1.4}
+ .rs-next #studioWelcome #deskPresets p{font-size:11px;line-height:1.5;margin-top:8px;color:var(--work-muted)}
+ .rs-next #workspaceNext{min-height:48px;width:100%;margin:8px 0 12px;border:1px solid var(--work-line);border-radius:12px;background:var(--work-bg);color:var(--work-ink);font-size:15px;font-weight:700}
+ .rs-next .workspace-stepper{display:grid;grid-template-columns:48px minmax(55px,1fr) 48px;gap:6px;align-items:center}
+ .rs-next .workspace-stepper>button{min-height:48px;border:1px solid var(--work-line);border-radius:10px;background:var(--work-bg);font-size:22px;color:var(--work-ink)}
+ .rs-next .workspace-stepper>input{width:100%;text-align:center;min-height:48px}
+ .rs-next #workspaceNasSearch{min-height:44px;background:var(--work-surface);color:var(--work-ink);border:1px solid var(--work-line);border-radius:10px;font-size:14px;font-weight:650}
+ .paperless-browser{width:min(800px,96vw)}.paperless-browser header{display:flex;justify-content:space-between;gap:12px;align-items:center}.paperless-browser h2{font-size:24px;font-weight:750}.paperless-browser form{display:flex;align-items:end;gap:10px;margin-block:16px}.paperless-browser label{display:grid;gap:7px;flex:1}.paperless-browser input{min-height:48px;width:100%;min-width:0;font-size:16px;border:1px solid #aabccd;border-radius:10px;padding:10px;color:inherit;background:var(--studio-surface,#fff)}.paperless-browser button{min-height:46px}.paperless-browser #nasResults{display:grid;grid-template-columns:1fr 1fr;gap:8px}.paperless-browser .nas-result{text-align:left;overflow-wrap:anywhere}.paperless-browser nav{display:flex;gap:10px;margin-block:14px}.paperless-browser #nasPreview :is(iframe,img){width:100%;height:40dvh;object-fit:contain;border:0;background:#e6edf4}.paperless-browser #nasStatus{font-size:14px;line-height:1.5;margin:10px 0}.paperless-browser #nasSelected{border-top:1px solid #b8c8d6;padding-top:16px}.paperless-browser #nasSelected[hidden]{display:none}.paperless-browser #nasSelected p{font-size:13px;margin:8px 0}
+ @media(max-width:600px){.paperless-browser #nasResults{grid-template-columns:1fr}.paperless-browser form{align-items:stretch;flex-direction:column}.paperless-browser #nasSelected>button{width:100%;margin-top:8px}}
+ html[data-counter=on] .rs-next #workspaceNext,html[data-counter=on] .rs-next #deskPresets button{min-height:60px;font-size:18px}
+}
+@media print{.paperless-browser,#workspaceNext,#workspaceNas{display:none!important}}

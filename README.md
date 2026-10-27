@@ -1,4 +1,10 @@
-# RealScan Pro 3.28.1
+# RealScan Pro
+
+[Referencia técnica y estado actual](audit/SISTEMA_REALSCAN.md) · [Seguimiento de avances](audit/AVANCES.md) · [Registro de cambios](CHANGELOG.md)
+
+Estado documentado el 27/10/2026: **3.29.0 publicada**, **3.29.1 en revisión (PR #8)**. Antes de retomar, comprobar los commits y la versión en vivo. La referencia técnica distingue funciones existentes, pruebas y propuestas pendientes.
+
+> El material que sigue contiene procedimientos y notas de versiones anteriores. Para el estado actual, los comandos de verificación y las limitaciones, consultar primero la referencia técnica enlazada arriba.
 
 [Registro de cambios](CHANGELOG.md) · [Auditoría 3.25](audit/MOVIL_3_25.md)
 

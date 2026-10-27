@@ -1,3 +1,31 @@
+### Corrección tras CI del PR #8
+
+La regresión del commit `1a72e1a4f052f56fc20e144850045d0d3ba0ea2c` falló en `workspace-polish-regression`: el resumen visual de Hoja limpia se actualizaba después de la acción. Se mantiene la actualización inmediata de ese resumen y se agrupan únicamente las actualizaciones completas del panel. El despliegue permanece detenido hasta aprobar el nuevo commit.
+
+## Cierre de implementación 3.29.1 — 27/10/2026
+
+Se amplía el PR #8 con servicios rápidos visibles; acción siguiente contextual; cantidades por +/−; actualización agrupada del panel; búsqueda Paperless con paginación, descarga y apertura de copia con confirmación de trabajo nuevo. No se sobrescriben documentos del NAS. Descargas de PDF/imágenes limitadas a 30 MB, estado y sesión comprobados; sin seguir direcciones de paginación externas.
+
+Código, build y pruebas unitarias se verifican antes del respaldo. Regresión completa y revisión visual del nuevo commit: pendientes hasta registrar su CI. Las mediciones de tiempos de impresión se guardan en evidencia de la prueba; no se promete un porcentaje universal de velocidad. Sin validación física de iPhone, regla de 50 mm ni NAS real. Despliegue pendiente del CI y del cierre de revisión.
+
+# Estado vigente del seguimiento — 27/10/2026
+
+Consultar [la referencia técnica](SISTEMA_REALSCAN.md) antes de retomar. Producción confirmada: 3.29.0, build `realscan-787bec0e2079b7f7`, commit `89da339a365340c3a4cfc57d769d73f9a74c1c86`, tag `v3.29.0+git.89da339a3653`. El `version.json` público volvió a responder 200 con esos metadatos.
+
+3.29.1 permanece en el PR #8, sin integrar ni publicar. El CI del PR 40508687899 aprobó el commit `c3667ca432b286f62363d89f71704361b7537fdf`; cambios posteriores deben validar su propio commit. No hay mediciones nuevas de rendimiento ni validación física de iPhone, regla o NAS.
+
+Las secciones antiguas de este archivo describen su fecha de creación: las menciones de 3.29.0 «sin publicar» quedaron superadas por el despliegue registrado arriba. Las propuestas de optimización integral y recuperación desde Paperless siguen pendientes.
+
+---
+
+## 3.29.1 — Revisión de acceso y preparación; pendiente de publicar
+
+La 3.29.0 se publicó con build realscan-787bec0e2079b7f7, commit 89da339a3653 y tag v3.29.0+git.89da339a3653. El operador reportó poca visibilidad de Paperless y dificultad con sellos y firmas.
+
+En 3.29.1: acceso Paperless en recepción; conexión visible; sellos y firma fuera del panel cerrado, junto a la hoja tanto para documentos como para fotos; COPIA precargado en un editor con confirmación; sellos frecuentes de un toque y controles secundarios agrupados. No se envían archivos automáticamente ni se guardan firmas sin elección del operador.
+
+Validación pendiente: pruebas de navegador del nuevo recorrido; iPhone físico, impresión de la regla de 50 mm y NAS real. Esta revisión no equivale a haber validado físicamente la escala.
+
 # Seguimiento de RealScan Pro
 
 ## 3.29.0 — En desarrollo, sin publicar
