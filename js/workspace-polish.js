@@ -38,7 +38,7 @@
   for(const {element,anchor}of anchors){if(wide){if(element.parentElement!==left)left.append(element);}else if(element.previousSibling!==anchor)anchor.after(element);}
   if(wide){let p=null;for(const id of ['deskStart','studioWelcome']){const e=$(id);if(p){if(p.nextElementSibling!==e)p.after(e);}else if(left.firstElementChild!==e)left.prepend(e);p=e;}}
   const tools=$('studioEditorTools'),mat=document.querySelector('#colStageWorkspace .stage-canvas-area')?.parentElement;if(editorAnchor&&tools&&mat&&mat.nextElementSibling!==tools)mat.after(tools);
-  const delivery=$('workspaceDelivery'),destination=doc().active?$('documentWorkspace'):$('colStageWorkspace');if(delivery&&destination&&delivery.parentElement!==destination)destination.append(delivery);document.body.dataset.refinedLayout=wide?'workspace':'stack';updateDock();update();
+  const delivery=$('workspaceDelivery'),destination=doc().active?$('documentWorkspace'):$('colStageWorkspace');if(delivery&&destination&&delivery.parentElement!==destination)destination.append(delivery);if(delivery&&$('annotationTools')&&delivery.previousElementSibling!==$('annotationTools'))delivery.before($('annotationTools'));document.body.dataset.refinedLayout=wide?'workspace':'stack';updateDock();update();
  }
  function update(){
   if(!mounted||!root.state||!$('workspaceStatus'))return;const allowed=unlocked(),d=doc(),work=RealScanWorkflow.describe(),loaded=d.active?!!d.count:Object.values(state.images).some(i=>i.originalSrc),ready=d.active?d.ready:work.ready&&!work.layout.errors.length;
@@ -59,7 +59,7 @@
   if(document.activeElement!==$('workspacePrinter')){const options=RealScanPrinterProfiles.list(),signature=JSON.stringify(options.map(p=>[p.id,p.name]));if($('workspacePrinter').dataset.profiles!==signature){$('workspacePrinter').replaceChildren(new Option('Sin perfil de corrección',''),...options.map(p=>new Option(p.name,p.id)));$('workspacePrinter').dataset.profiles=signature;}$('workspacePrinter').value=profile?.id||'';}
   const count=d.active?d.count:state.mixTwoPhotos?(state.photoCopiesPersonA||0)+(state.photoCopiesPersonB||0):state.photoCopies||1,sets=d.active?d.options.sets:state.outputSets||1,sheets=d.active?Math.ceil(d.count/(d.options.duplex==='manual'?2:1))*sets:work.layout.pages.length;
   $('workspaceQuantity').textContent=d.active?count+' páginas · '+sets+' juego(s) · '+sheets+' hojas de papel':state.activeCategory==='photos'?count*sets+' fotos en total · '+sheets+' hoja(s) de papel':work.wanted.length+' cara(s) · '+sheets+' hoja(s) de papel';
-  if($('deskPaperless'))$('deskPaperless').disabled=!allowed||!ready||busy();updateDock();
+  if($('deskPaperless')){$('deskPaperless').disabled=!allowed||busy();const connected=!!root.RealScanPaperless?.hasToken();$('workspaceNasStatus').textContent=!allowed?'Inicia sesión para conectar tu archivo':connected?'Revisa y envía una copia de este trabajo':'Conecta Paperless una vez en este navegador';$('deskPaperless').setAttribute('aria-describedby','workspaceNasStatus');}updateDock();
  }
  function schedule(){if(timer!==null)return;timer=setTimeout(()=>{timer=null;arrange();},25);}
  async function openJobs(filter='all'){
@@ -70,6 +70,7 @@
  function mountPanels(){
   const flow=$('serviceFlow'),finish=$('sheetFinishPanel'),desk=$('deskStart'),annotations=$('annotationOptions'),position=document.querySelector('.workbench-finishing');
   const shortcuts=desk.querySelector('.desk-shortcuts'),tools=disclosure('deskTools','Servicios frecuentes y herramientas',shortcuts);tools.append($('deskPresets'),$('studioFavorites'));
+  const nas=document.createElement('section');nas.id='workspaceNas';nas.setAttribute('aria-label','Archivo en tu NAS');const nasHint=document.createElement('small');nasHint.id='workspaceNasStatus';const nasButton=$('deskPaperless');nasButton.textContent='Enviar a Paperless · NAS';addIcon(nasButton,'paperless');nasButton.onclick=()=>{if(!unlocked()||busy())return;if(!root.RealScanPaperless?.hasToken()){root.RealScanPaperless?.openSettings();return;}deliver('paperless');};nas.append(nasButton,nasHint);$('deskReceive').after(nas);
   const capture=$('captureFirstOpen');$('deskReceive').after(capture);capture.querySelector('strong').textContent='Capturar y elegir el tipo después';capture.querySelector('small').textContent='Conserva la imagen completa hasta confirmar.';
   $('deskReceive').querySelector('#operatorReceiveActions').children[2].lastChild.textContent='Recibir QR';$('studioWelcome').querySelector('h1').textContent='¿Qué vas a preparar?';document.querySelector('[data-task=id] strong').textContent='INE / DNI';
   const hint=finish.nextElementSibling;if(hint?.textContent.includes('Escala: 100%')){hint.classList.add('sheet-print-hint');$('sheetFinishBody').append(hint);}flow.append(finish);if($('flowAdvice'))flow.append($('flowAdvice'));flow.append(disclosure('sheetPositionOptions','Posición y encabezado',position),$('annotationTools'));annotations.open=false;$('flowHeading').after($('counterService'));
@@ -100,5 +101,5 @@
   const baseUpdateUI=root.updateUI;root.updateUI=function(){const result=baseUpdateUI.apply(this,arguments);update();schedule();return result;};
   mounted=true;root.RealScanWorkspacePolish={update:arrange,choose,deliver,openJobs,undoService,remember,isChanging:()=>changing};root.RealScanPanelLayout={update};arrange();
  }
- for(const e of ['realscan:studio-updated','realscan:document-updated','realscan:mobile-updated'])document.addEventListener(e,()=>{update();schedule();});root.addEventListener('resize',schedule);root.addEventListener('scroll',updateDock,{passive:true});root.visualViewport?.addEventListener('resize',schedule);document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,140));
+ for(const e of ['realscan:studio-updated','realscan:document-updated','realscan:mobile-updated','realscan:paperless-changed'])document.addEventListener(e,()=>{update();schedule();});root.addEventListener('resize',schedule);root.addEventListener('scroll',updateDock,{passive:true});root.visualViewport?.addEventListener('resize',schedule);document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,140));
 })(window);

@@ -1,3 +1,10 @@
+## 3.29.1 — Paperless visible y sellos y firmas al alcance
+
+- Paperless pasa a recepción con estado de conexión y revisión antes del envío.
+- Sello COPIA y Añadir firma visibles junto a la hoja; otras herramientas agrupadas.
+- Sellos de un toque, pestaña activa y ajustes de precisión desplegables.
+- Se conservan los motores de impresión, PDF, medidas y capas originales.
+
 ## 3.29.0 — Mostrador, preparación y entrega unificados
 
 - Recepción directa, selector de servicio compacto, herramientas según el trabajo y una zona de entrega con impresión, PDF, QR y Paperless opcional.

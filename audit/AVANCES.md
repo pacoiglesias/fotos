@@ -1,3 +1,11 @@
+## 3.29.1 — Revisión de acceso y preparación; pendiente de publicar
+
+La 3.29.0 se publicó con build realscan-787bec0e2079b7f7, commit 89da339a3653 y tag v3.29.0+git.89da339a3653. El operador reportó poca visibilidad de Paperless y dificultad con sellos y firmas.
+
+En 3.29.1: acceso Paperless en recepción; conexión visible; sellos y firma fuera del panel cerrado, junto a la hoja tanto para documentos como para fotos; COPIA precargado en un editor con confirmación; sellos frecuentes de un toque y controles secundarios agrupados. No se envían archivos automáticamente ni se guardan firmas sin elección del operador.
+
+Validación pendiente: pruebas de navegador del nuevo recorrido; iPhone físico, impresión de la regla de 50 mm y NAS real. Esta revisión no equivale a haber validado físicamente la escala.
+
 # Seguimiento de RealScan Pro
 
 ## 3.29.0 — En desarrollo, sin publicar

@@ -199,3 +199,16 @@ html[data-counter=on] body.rs-next :is(#serviceFlow,#workspaceDelivery,#deskStar
 
 }
 @media print{#workspaceDelivery,#workspaceJobs,#workspaceSlotOptions,#workspacePrinterOptions,#workspaceContact{display:none!important}}
+
+@media screen {
+ .rs-next #workspaceNas{display:grid;gap:5px;margin:12px 0;padding:12px;border:1px solid var(--work-line);border-radius:14px;background:var(--work-bg)}
+ .rs-next #workspaceNas #deskPaperless{display:flex;gap:10px;align-items:center;justify-content:center;width:100%;min-height:52px;border-radius:11px;border:1px solid #3f7774;background:#eaf7f4;color:#17594f;font-size:15px;font-weight:750}
+ .rs-next #workspaceNas small{display:block;text-align:center;font-size:12px;line-height:1.5;color:var(--work-muted,#566980)}
+ .rs-next #annotationTools{margin:16px 0;padding:16px;border-radius:16px;background:var(--work-surface);border:1px solid var(--work-line)}
+ .rs-next #annotationTools>h3{font-size:18px}
+ .rs-next #workspaceDelivery>div>[data-workspace-deliver=paperless]{background:#eaf7f4;color:#17594f;border:1px solid #3f7774}
+ .rs-next[data-workspace-loaded=false] #annotationTools{display:none!important}
+ html[data-counter=on] .rs-next .annotation-primary-actions>button,html[data-counter=on] .rs-next #workspaceNas #deskPaperless{min-height:60px;font-size:18px}
+ html.dark .rs-next #workspaceNas #deskPaperless,html.dark .rs-next #workspaceDelivery>div>[data-workspace-deliver=paperless]{background:#173c38;color:#ccf4e8;border-color:#5d9c93}
+ html.dark .annotation-primary-actions>button:first-child{background:#203650;color:#cce0ff;border-color:#6f9dd5}
+}
