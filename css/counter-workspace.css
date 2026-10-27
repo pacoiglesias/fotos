@@ -5,6 +5,7 @@ body.rs-next{--work-ink:#172b43;--work-muted:#566980;--work-line:#d8e2eb;--work-
 .rs-next #guidedStepsBar{position:static!important;top:auto!important;box-shadow:none;background:transparent;border:0;padding:0;margin:0 0 14px;gap:8px}
 .rs-next #guidedStepsBar>span{display:none}
 .rs-next #guidedStepsBar button{min-height:48px;border-radius:12px;font-size:14px;box-shadow:none!important}
+.rs-next #guidedStepsBar button[aria-current=step],.rs-next #flowPrimary,.rs-next #btnNewProject{background:var(--work-accent)!important;border-color:var(--work-accent)!important;color:white!important}
 .rs-next #workbenchBar{min-height:0;padding:0 0 14px;margin:0;background:transparent!important;border:0;box-shadow:none;color:var(--work-ink)}
 .rs-next #workbenchBar .workbench-kicker{display:none}
 .rs-next #workbenchBar strong{font-size:19px}
@@ -179,3 +180,9 @@ html.dark .rs-next .workspace-status[data-ready=true]{color:#8adeb6}
 
 .rs-next #workspaceSlotOptions .mob-pane{display:block!important}
 .rs-next #operatorNotices:not([hidden]){display:block;font-size:14px;line-height:1.5;margin:10px 0}
+
+.rs-next #workspaceDocumentTools{display:flex;flex-wrap:wrap;gap:8px}
+.rs-next #workspaceDelivery [hidden]{display:none!important}
+.rs-next .document-actions:empty{display:none}
+
+.rs-next #workspaceDelivery #documentDirectPrint{background:var(--work-accent);border-color:var(--work-accent);color:#fff}

@@ -2,7 +2,7 @@
 
 ## 3.29.0 — En desarrollo, sin publicar
 
-Fecha de actualización: 2026-10-27 (UTC).
+Fecha de actualización: 2026-10-26 (America/Mexico_City).
 Base revisada: 3.28.1, commit `78db4226a9a3f866c7f4d30f294b4df13c501524`.
 Primer respaldo de implementación: `d8b577fe0cbb734de0aaa07366ff90566c6deb69`, rama `codex/realscan-329`.
 
@@ -30,7 +30,7 @@ CI: https://github.com/pacoiglesias/fotos/actions/runs/40445282427
 
 Respaldo `c7014a3ddd5329684358181ec85fa68b410e4584`. CI: https://github.com/pacoiglesias/fotos/actions/runs/40447371712 (Windows aprobado; regresión completa falló en tres grupos: acabado, archivo en WebKit y conteo de documentos). Se corrigió la apertura de paneles al navegar a una captura, el tamaño de la hoja, el selector de servicio en móvil y la revisión de INE tras cambiar de servicio. Las pruebas usan los controles visibles correspondientes al flujo actualizado.
 
-Se añadió comprobación automática de versiones; la siguiente corrección agrupa alternativas de exportación, añade iconos con texto, lleva OCR y doble cara a las herramientas, y comprueba metadatos, CSP y exclusión de archivos de trabajo en el build.
+Se añadió comprobación automática de versiones; la siguiente corrección agrupa también los botones existentes de documentos en la misma zona de entrega, conserva sus motores de PDF/QR/impresión y agrupa alternativas de exportación, añade iconos con texto, lleva OCR y doble cara a las herramientas, y comprueba metadatos, CSP y exclusión de archivos de trabajo en el build.
 
 ### Pendientes para cerrar esta entrega
 
