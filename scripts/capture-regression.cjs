@@ -119,7 +119,7 @@ function cameraFixture() {
   assert(Math.abs(dimensions.w/dimensions.h-85.6/53.98)<.01);
   assert.equal(await page.evaluate(()=>state.images.front.fitMode), "fit");
   pass("Camera requests supported continuous focus, controls torch, corrects perspective and preserves confirmed frame");
-  await page.locator("#btnPrintDirect").click();
+  await page.locator("[data-workspace-deliver=print]").click();
   await page.locator("#outputReviewModal").waitFor({ state: "visible" });
   assert((await page.locator("#printReview").innerText()).includes("85.6"));
   assert.equal(await page.evaluate(() => [...document.querySelectorAll("#printReview img")].filter(i => !i.closest(".output-review-sheet")).length), 1);

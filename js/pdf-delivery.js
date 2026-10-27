@@ -17,7 +17,7 @@
   function close(){disposed=true;prepared=null;task?.destroy?.()?.catch?.(()=>{});active=null;dialog.close();dialog.remove();}
   function stateButtons(){for(const id of ['pdfDeliveryDownload','pdfDeliveryQr','pdfDeliveryPaperless'])q(id).disabled=!prepared||!current()||(id==='pdfDeliveryPaperless'&&paperlessBusy)||(id==='pdfDeliveryQr'&&qrBusy);}
   function invalidate(){const individual=q('pdfDeliveryAsset').value==='photo';q('pdfDeliveryQuality').closest('label').hidden=individual;q('pdfDeliveryScope').closest('label').hidden=individual;prepared=null;stateButtons();q('pdfDeliveryPreview').hidden=true;q('pdfDeliveryPhoto').hidden=true;q('pdfDeliveryEmpty').hidden=false;q('pdfDeliveryEmpty').textContent='Actualiza la vista previa con estas opciones.';q('pdfDeliveryStatus').textContent='Las opciones cambiaron. El original se conserva.';}
-  q('pdfDeliveryAssetRow').hidden=!photo;q('pdfDeliveryAsset').value=photo&&options.destination==='paperless'?'photo':'sheet';
+  q('pdfDeliveryAssetRow').hidden=!photo;q('pdfDeliveryAsset').value=photo&&!state.outputAnnotations?.length&&options.destination==='paperless'?'photo':'sheet';
   const selectedSide=root.RealScanStudio?.getSelected()||'front';
   for(const id of ['pdfDeliveryAsset','pdfDeliveryQuality'])q(id).onchange=invalidate;
   q('pdfDeliveryScope').onchange=()=>{q('pdfDeliveryRangeRow').hidden=q('pdfDeliveryScope').value!=='range';invalidate();};q('pdfDeliveryRange').onchange=invalidate;

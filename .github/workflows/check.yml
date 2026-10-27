@@ -44,6 +44,8 @@ jobs:
             .audit/image-enhance/
             .audit/workspace-polish/
             .audit/release329/
+            .audit/mobile-local-evidence/
+            .audit/mobile-local-webkit-evidence/
             .audit/counter-final/
             .audit/mobile-experience-chromium/
             .audit/mobile-experience-webkit/

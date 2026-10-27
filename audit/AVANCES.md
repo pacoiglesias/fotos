@@ -26,6 +26,12 @@ CI: https://github.com/pacoiglesias/fotos/actions/runs/40445282427
 - La prueba nueva en Chromium comprobó conservación de la captura al cambiar servicio, PDF de historial 4×6 con ocho fotos visibles, prevención de doble envío y entrega de foto individual a Paperless mediante servidor simulado.
 - Fallaron pruebas de presentación y navegación, captura y recepción local, entre otras; la prueba nueva se detuvo antes de completar INE y WebKit.
 
+### Segundo checkpoint de correcciones
+
+Respaldo `c7014a3ddd5329684358181ec85fa68b410e4584`. CI: https://github.com/pacoiglesias/fotos/actions/runs/40447371712 (Windows aprobado; regresión completa falló en tres grupos: acabado, archivo en WebKit y conteo de documentos). Se corrigió la apertura de paneles al navegar a una captura, el tamaño de la hoja, el selector de servicio en móvil y la revisión de INE tras cambiar de servicio. Las pruebas usan los controles visibles correspondientes al flujo actualizado.
+
+Se añadió comprobación automática de versiones; la siguiente corrección agrupa alternativas de exportación, añade iconos con texto, lleva OCR y doble cara a las herramientas, y comprueba metadatos, CSP y exclusión de archivos de trabajo en el build.
+
 ### Pendientes para cerrar esta entrega
 
 1. Corregir y repetir todas las regresiones fallidas, distinguiendo cambios intencionados de interfaz de fallos reales.
