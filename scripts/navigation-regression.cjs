@@ -48,11 +48,10 @@ const pass = name => { checks.push(name); console.log('PASS ' + name); };
     await page.waitForFunction(() => document.getElementById('receiveConnectionStatus').textContent.includes('Listo para recibir'));
   }
   async function unlocked() {
+    // El diálogo único de entrega exige un trabajo cargado; aquí solo se
+    // comprueba que no quedan modales ni bloqueos tras cada cierre.
     assert.equal(await page.evaluate(() => !!document.getElementById('btnOpenDeliveryModal').closest('[inert]')), false);
     assert.equal(await page.evaluate(() => modalFocusStack.length), 0);
-    await page.locator('#btnOpenDeliveryModal').click({timeout:4000});
-    await page.locator('#digitalDeliveryModal').waitFor({state:'visible'});
-    await page.keyboard.press('Escape');
   }
   await receive();
   for (let i=0;i<5;i++) {
@@ -62,7 +61,7 @@ const pass = name => { checks.push(name); console.log('PASS ' + name); };
   }
   await page.locator('#receiveFromPhoneModal [data-close-modal]').last().click();
   await unlocked();
-  pass('Five QR renewals followed by one close leave delivery and the workspace usable');
+  pass('Five QR renewals followed by one close leave the workspace usable');
   const calls = await page.evaluate(() => __relay.calls);
   await receive();
   assert.equal(await page.evaluate(() => __relay.calls), calls);
@@ -115,33 +114,47 @@ const pass = name => { checks.push(name); console.log('PASS ' + name); };
   await receive();
   await page.keyboard.press('Escape');
   pass('Failed connection leaves retry, close and other functions available; a subsequent attempt succeeds');
+  // Trabajo INE/DNI sintético para que el diálogo único de entrega pueda construir.
+  await page.evaluate(() => {
+    const c = document.createElement('canvas'); c.width = 800; c.height = 500;
+    const x = c.getContext('2d'); x.fillStyle = 'white'; x.fillRect(0, 0, 800, 500);
+    x.fillStyle = 'black'; x.font = '40px Arial'; x.fillText('PRUEBA SINTETICA', 50, 130);
+    for (const side of ['front', 'back']) Object.assign(state.images[side], {originalSrc: c.toDataURL(), processedDataUrl: c.toDataURL(), naturalWidth: 800, naturalHeight: 500, isCropApplied: true});
+    updateUI(); RealScanJourney.update(); RealScanStudio.update();
+  });
   await page.locator('#btnOpenDeliveryModal').click();
+  await page.locator('.pdf-delivery-dialog').waitFor({state:'visible'});
+  await page.waitForFunction(() => !document.getElementById('pdfDeliveryDownload').disabled);
   const beforeFailedPdf = await page.evaluate(() => {
     window.__pdfGenerator = generatePdfDoc;
     window.generatePdfDoc = () => null;
     return __relay.calls;
   });
-  await page.locator('#checkDeliverPdfSheet').check();
-  await page.locator('#btnGenerateDeliveryQr').click();
-  await page.waitForFunction(() => !deliveryGenerating);
+  await page.locator('#pdfDeliveryBuild').click();
+  await page.waitForFunction(() => document.getElementById('pdfDeliveryStatus').textContent.includes('Revisa las imágenes'));
   assert.equal(await page.evaluate(() => __relay.calls), beforeFailedPdf);
-  assert((await page.locator('#digitalDeliveryModal [data-modal-feedback]').textContent()).includes('PDF'));
-  await page.evaluate(() => {window.generatePdfDoc=__pdfGenerator;__relay.mode='slow';delete __relay.resolve;});
-  await page.locator('#checkDeliverPdfSheet').uncheck();
-  await page.locator('#btnGenerateDeliveryQr').click();
+  assert.equal(await page.locator('#pdfDeliveryQr').isEnabled(), false);
+  await page.evaluate(() => { window.generatePdfDoc = __pdfGenerator; __relay.mode = 'slow'; delete __relay.resolve; });
+  await page.locator('#pdfDeliveryBuild').click();
+  await page.waitForFunction(() => !document.getElementById('pdfDeliveryDownload').disabled);
+  await page.locator('#pdfDeliveryQr').click();
   await page.waitForFunction(() => typeof __relay.resolve === 'function');
   const deliveryCalls = await page.evaluate(() => __relay.calls);
-  await page.evaluate(() => handleGenerateDeliveryQr());
+  // Mientras la generación está pendiente, el botón QR se deshabilita: la
+  // segunda generación no se puede ni pulsar, así que no hay llamada nueva.
+  assert.equal(await page.locator('#pdfDeliveryQr').isEnabled(), false);
   assert.equal(await page.evaluate(() => __relay.calls), deliveryCalls);
   await page.keyboard.press('Escape');
+  await page.locator('.pdf-delivery-dialog').waitFor({state:'hidden'});
   await page.locator('#btnOpenDeliveryModal').click();
+  await page.locator('.pdf-delivery-dialog').waitFor({state:'visible'});
   await page.evaluate(() => __relay.resolve());
-  await page.waitForFunction(() => !deliveryGenerating);
-  assert.equal(await page.locator('#deliveryQrResultBox').isVisible(), false);
-  await page.evaluate(() => {__relay.mode='normal';});
-  await page.locator('#btnGenerateDeliveryQr').click();
-  await page.waitForFunction(() => !deliveryGenerating);
-  assert.equal(await page.locator('#deliveryQrResultBox').isVisible(), true);
+  await page.waitForFunction(() => __relay.revokes >= 1);
+  assert.equal(await page.locator('#pdfDeliveryQrResult').isVisible(), false);
+  await page.evaluate(() => { __relay.mode = 'normal'; });
+  await page.waitForFunction(() => !document.getElementById('pdfDeliveryDownload').disabled);
+  await page.locator('#pdfDeliveryQr').click();
+  await page.waitForFunction(() => !document.getElementById('pdfDeliveryQrResult').hidden);
   await page.keyboard.press('Escape');
   pass('Delivery never omits a failed requested PDF, rejects duplicate generation and cancels stale results across close and reopen');
   await page.locator('#counterMore').click();

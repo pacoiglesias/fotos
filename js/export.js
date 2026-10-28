@@ -49,7 +49,14 @@ window.RealScanFolio = (function() {
    Desarrollado por Paco Iglesias • Escala 1:1 Físicamente Calibrada
    ============================================================ */
 
-async function createDigitalFile(side, format, maxPx) {
+/* Peso real de un dataUrl base64 (con corrección del relleno '=' final),
+   igual que el cálculo del módulo de entrega retirado: así el tamaño
+   declarado coincide con los bytes reales del archivo. */
+function deliveryBytes(data) {
+  return Math.floor(data.split(",")[1].length * 0.75) - (data.endsWith("==") ? 2 : data.endsWith("=") ? 1 : 0);
+}
+
+async function createDigitalFileBase(side, format, maxPx) {
   const source = state.images[side]?.processedDataUrl;
   if (!source) throw Error('No hay imagen procesada en la cara seleccionada.');
   const image = new Image(); image.src = source; await image.decode();
@@ -80,6 +87,48 @@ async function createDigitalFile(side, format, maxPx) {
     if (type === 'image/jpeg' && window.RealScanJpeg) dataUrl = window.RealScanJpeg.dataUrlWithDpi(dataUrl);
   }
   return {name:'RealScan_'+(side==='front'?'Frente':'Reverso')+'_'+Date.now()+'.'+extension,type,dataUrl,size:Math.floor((dataUrl.length-dataUrl.indexOf(',')-1)*.75)};
+}
+
+/* Límite de peso de la entrega digital (antes en el módulo de entrega
+   retirado con el modal legacy; ahora vive aquí, junto al exportador).
+   Sin límite (sin 4º argumento y sin política digital del perfil) no
+   cambia nada: solo actúa cuando se pide un tope o el perfil lo impone.
+   El PNG nunca se convierte en silencio: si supera el tope, se avisa. */
+async function createDigitalFile(side, format, maxPx, maxBytes) {
+  const first = await createDigitalFileBase(side, format, maxPx);
+  first.size = deliveryBytes(first.dataUrl);
+  const policy = getActiveSpec().digital, cap = Math.min(maxBytes || Infinity, policy?.maxBytes || Infinity);
+  if (first.size <= cap) return first;
+  if (format === "png") throw Error("El PNG supera el peso elegido. Elige JPG para comprimir o aumenta el límite; no se cambiará el formato automáticamente.");
+  if (format === "pdf") {
+    let limit = maxPx === "original" ? Math.max(state.images[side].naturalWidth, state.images[side].naturalHeight) : Number(maxPx);
+    for (let attempt = 0; attempt < 12; attempt++) {
+      limit = Math.floor(limit * 0.85);
+      if (limit < 600) break;
+      const file = await createDigitalFileBase(side, format, String(limit));
+      file.size = deliveryBytes(file.dataUrl);
+      if (file.size <= cap) return file;
+    }
+    throw Error("No se pudo reducir este PDF al peso elegido conservando resolución suficiente. Aumenta el límite o entrega una imagen JPG.");
+  }
+  const image = new Image();
+  image.src = first.dataUrl;
+  await image.decode();
+  const canvas = document.createElement("canvas"), min = policy?.minPixels || 300;
+  for (let factor = 1; factor > 0.1; factor *= 0.85) {
+    canvas.width = Math.floor(image.naturalWidth * factor);
+    canvas.height = Math.floor(image.naturalHeight * factor);
+    if (Math.min(canvas.width, canvas.height) < min) break;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    for (const quality of [0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55]) {
+      const dataUrl = canvas.toDataURL("image/jpeg", quality), size = deliveryBytes(dataUrl);
+      if (size <= cap) return { ...first, dataUrl, size };
+    }
+  }
+  throw Error("No se pudo cumplir el peso sin reducir demasiado la resolución. Elige un límite mayor. El original se conserva.");
 }
 
 /**

@@ -60,59 +60,64 @@ let browser, server;
   });
   assert.equal(await page.evaluate(()=>!!window.jspdf),false,"The first delivery must exercise a cold PDF generator");
   try {
-    for (const format of ["jpg", "png", "pdf"]) {
-      console.log("BEGIN " + format);
-      await page.locator("#btnOpenDeliveryModal").click();
-      await page.locator("#checkDeliverPdfSheet").check();
-      await page.locator("#checkDeliverFrontJpg").check();
-      await page.locator("#checkDeliverBackJpg").check();
-      await page.locator("#selectDeliveryFormat").selectOption(format);
-      await page.locator("#selectDeliveryMaxPx").selectOption("600");
-      await page.locator("#btnGenerateDeliveryQr").click();
-      await page.waitForFunction(() => !deliveryGenerating && !document.getElementById("deliveryQrResultBox").classList.contains("hidden"), {}, { timeout: 45e3 });
+    // El diálogo único entrega un activo por QR: hoja PDF y cada cara JPG.
+    // Se verifica cada QR (decodificado con jsQR), su descarga en el teléfono
+    // y, al final, la revocación desde el propio diálogo.
+    await page.locator("#btnOpenDeliveryModal").click();
+    await page.locator(".pdf-delivery-dialog").waitFor({ state: "visible" });
+    await page.waitForFunction(() => !document.getElementById("pdfDeliveryDownload").disabled);
+    for (const [asset, side] of [["sheet", null], ["side:front", "front"], ["side:back", "back"]]) {
+      console.log("BEGIN " + asset);
+      const files = [];
+      await page.locator("#pdfDeliveryAsset").selectOption(asset);
+      await page.locator("#pdfDeliveryBuild").click();
+      await page.waitForFunction(() => !document.getElementById("pdfDeliveryDownload").disabled);
+      const prevHref = await page.evaluate(() => document.getElementById("pdfDeliveryQrLink").getAttribute("href"));
+      await page.locator("#pdfDeliveryQr").click();
+      await page.waitForFunction((prev) => !document.getElementById("pdfDeliveryQrResult").hidden && document.getElementById("pdfDeliveryQrLink").getAttribute("href") !== prev, prevHref, { timeout: 45e3 });
       const session = await page.evaluate(() => RealScanQrSync.getActiveDeliverySession());
-      const qr = await page.locator("#canvasDeliveryQr").evaluate((c) => ({ w: c.width, h: c.height, data: Array.from(c.getContext("2d").getImageData(0, 0, c.width, c.height).data) }));
+      const qr = await page.locator("#pdfDeliveryQrCanvas").evaluate((c) => ({ w: c.width, h: c.height, data: Array.from(c.getContext("2d").getImageData(0, 0, c.width, c.height).data) }));
       assert.equal(jsQR(new Uint8ClampedArray(qr.data), qr.w, qr.h)?.data, session.url);
       await phone.goto(session.url);
       try {
-        await phone.waitForFunction(() => document.querySelectorAll("a[download]").length === 3, {}, { timeout: 3e4 });
+        await phone.waitForFunction(() => document.querySelectorAll("a[download]").length === 1, {}, { timeout: 3e4 });
       } catch (error) {
         console.log("PHONE STATE " + await phone.locator("#deliveryFilesList").textContent());
         console.log("OPERATOR FILES " + JSON.stringify(await page.evaluate(() => RealScanQrSync.getActiveDeliverySession()?.files?.map((f) => ({ type: f.type, size: f.size })))));
         throw error;
       }
-      const files = [];
-      for (let i = 0; i < 3; i++) {
-        const event = phone.waitForEvent("download");
-        await phone.locator("a[download]").nth(i).click();
-        const d = await event;
-        const target = path.join(out, format + "-" + i + "-" + d.suggestedFilename());
-        await d.saveAs(target);
-        const bytes = fs.readFileSync(target), isPdf = bytes.subarray(0, 4).toString() === "%PDF";
-        if (i === 2 || format === "pdf") {
-          assert(isPdf);
-          const numPages = await page.evaluate(async (data) => (await pdfjsLib.getDocument({ data: new Uint8Array(data) }).promise).numPages, Array.from(bytes));
-          assert(numPages >= 1);
-          files.push({ type: "pdf", bytes: bytes.length, pages: numPages });
-        } else {
-          assert(format === "jpg" ? bytes[0] === 255 && bytes[1] === 216 : bytes.subarray(1, 4).toString() === "PNG");
-          const dims = await page.evaluate(async (data) => {
-            const image = await createImageBitmap(new Blob([new Uint8Array(data)]));
-            const result = { w: image.width, h: image.height };
-            image.close();
-            return result;
-          }, Array.from(bytes));
-          assert.equal(Math.max(dims.w, dims.h), 600);
-          files.push({ type: format, bytes: bytes.length, ...dims });
-        }
+      const event = phone.waitForEvent("download");
+      await phone.locator("a[download]").first().click();
+      const d = await event;
+      const target = path.join(out, asset.replace(":", "-") + "-" + d.suggestedFilename());
+      await d.saveAs(target);
+      const bytes = fs.readFileSync(target);
+      if (side === null) {
+        assert(bytes.subarray(0, 4).toString() === "%PDF");
+        const numPages = await page.evaluate(async (data) => (await pdfjsLib.getDocument({ data: new Uint8Array(data) }).promise).numPages, Array.from(bytes));
+        assert(numPages >= 1);
+        files.push({ type: "pdf", bytes: bytes.length, pages: numPages });
+      } else {
+        assert(bytes[0] === 255 && bytes[1] === 216, "La cara debe descargarse como JPG intacto");
+        const expected = await page.evaluate(async (s) => { const r = await fetch(state.images[s].processedDataUrl); return Array.from(new Uint8Array(await r.arrayBuffer())); }, side);
+        assert.deepEqual(Array.from(bytes), expected, "El JPG descargado debe ser byte a byte la cara preparada");
+        const dims = await page.evaluate(async (data) => {
+          const image = await createImageBitmap(new Blob([new Uint8Array(data)]));
+          const result = { w: image.width, h: image.height };
+          image.close();
+          return result;
+        }, Array.from(bytes));
+        files.push({ type: "jpg", bytes: bytes.length, ...dims });
       }
-      await page.locator("#btnRevokeDeliverySession").click();
-      await phone.waitForFunction(() => !document.querySelector("a[download]"), {}, { timeout: 2e4 });
-      await page.locator("#digitalDeliveryModal [data-close-modal]").first().click();
-      assert.equal(await page.evaluate(() => !!document.getElementById("btnOpenDeliveryModal").closest("[inert]")), false);
-      results.push({ format, qrDecoded: true, files, revoked: true });
-      console.log("PASS real QR " + format + ": front, back and sheet downloaded; revoke and close work");
+      results.push({ asset, qrDecoded: true, files, revoked: false });
+      console.log("PASS real QR " + asset + ": QR decodificado y archivo descargado en el teléfono");
     }
+    await page.locator("#pdfDeliveryRevoke").click();
+    await phone.waitForFunction(() => !document.querySelector("a[download]"), {}, { timeout: 2e4 });
+    await page.locator("#pdfDeliveryClose").click();
+    assert.equal(await page.evaluate(() => !!document.getElementById("btnOpenDeliveryModal").closest("[inert]")), false);
+    for (const r of results) r.revoked = true;
+    console.log("PASS revoke and close work");
   } finally {
     await page.evaluate(() => RealScanQrSync.revokeDeliverySession()).catch(() => {
     });
@@ -121,7 +126,7 @@ let browser, server;
   assert.deepEqual(errors, []);
   const version = await page.evaluate(() => fetch("version.json").then((r) => r.json()));
   fs.writeFileSync(path.join(out, (base.startsWith("http://127.") ? "local" : new URL(base).hostname) + ".json"), JSON.stringify({ base, version, results, errors }, null, 2));
-  console.log(JSON.stringify({ base, version, formats: results.map((x) => x.format), errors }));
+  console.log(JSON.stringify({ base, version, assets: results.map((x) => x.asset), errors }));
 })().catch((e) => {
   console.error(e);
   process.exitCode = 1;

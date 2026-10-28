@@ -117,6 +117,40 @@
       }
     }
   }
+  /* Reconocimiento sin modal: para nombrar archivos y comparar CURP.
+     No toca la interfaz ni el worker del modal; si el modal está en curso,
+     devuelve null (el operador ya está leyendo esa imagen). Nunca lanza. */
+  async function recognizeText(dataUrl, lang='spa') {
+    if (busy || !dataUrl) return null;
+    let owned = null, timeout = null, canvas = null;
+    try {
+      const image = new Image(); image.src = dataUrl; await image.decode();
+      const scale = Math.min(1, 2600 / Math.max(image.naturalWidth, image.naturalHeight));
+      canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext('2d'); context.fillStyle = 'white';
+      context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      if (!root.Tesseract) await new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "vendor/ocr/tesseract.min.js";
+        const timer = setTimeout(() => { script.remove(); reject(Error('resources')); }, 20000);
+        script.onload = () => { clearTimeout(timer); resolve(); };
+        script.onerror = () => { clearTimeout(timer); script.remove(); reject(Error('resources')); };
+        document.head.append(script);
+      });
+      const pending = Tesseract.createWorker(lang, 1, { workerPath: new URL("vendor/ocr/worker.min.js", location.href).href, corePath: new URL("vendor/ocr/core/", location.href).href, langPath: new URL("vendor/ocr/lang/", location.href).href, workerBlobURL: false, errorHandler: () => {}, logger: () => {} });
+      const w = await Promise.race([pending, new Promise((_, reject) => { timeout = setTimeout(() => reject(Error('resources')), 60000); })]);
+      clearTimeout(timeout); owned = w;
+      const result = await Promise.race([w.recognize(canvas), new Promise((_, reject) => { timeout = setTimeout(() => reject(Error('timeout')), 90000); })]);
+      return { text: result.data.text || '', confidence: Math.round(result.data.confidence || 0) };
+    } catch { return null; }
+    finally {
+      clearTimeout(timeout);
+      await owned?.terminate().catch(() => {});
+      if (canvas) canvas.width = canvas.height = 0;
+    }
+  }
   function suggestDocument(text='',date=new Date()) {
     const value=String(text).slice(0,60000).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
     const day=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
@@ -126,7 +160,7 @@
     else if(/COMPROBANTE.{0,25}DOMICILIO|COMISION FEDERAL DE ELECTRICIDAD|RECIBO.{0,20}(LUZ|AGUA|TELEFONO)/.test(value)){type='Comprobante de domicilio';tags=['Comprobantes','Domicilio'];}
     return {title:type+' · '+day,documentType:type,tags,source:'local-suggestion'};
   }
-  root.RealScanOcr = { open, cancel, suggestDocument, getSuggestion(){return lastSuggestion&&lastSuggestion.job===state._jobRevision&&lastSuggestion.documentRevision===root.RealScanDocuments?.status().revision?structuredClone(lastSuggestion.suggestion):null;} };
+  root.RealScanOcr = { open, cancel, suggestDocument, recognizeText, getSuggestion(){return lastSuggestion&&lastSuggestion.job===state._jobRevision&&lastSuggestion.documentRevision===root.RealScanDocuments?.status().revision?structuredClone(lastSuggestion.suggestion):null;} };
   document.addEventListener('realscan:modal-closed',event=>{if(event.detail?.id==='localOcrModal')cancel();});
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) cancel();

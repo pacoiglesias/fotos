@@ -357,18 +357,19 @@ html[data-counter="on"] .rs-counter-switch { height: 48px; }
 html[data-counter="on"] .rs-counter-switch::after { top: 9px; }
 
 /* Aviso persistente de actualización (pieza D, js/pwa-update.js) */
+/* C5: aviso de versión nueva, prominente arriba y actualización en un toque
+   (el mecanismo ya existe en js/pwa-update.js). */
 #pwaUpdateBanner {
-  position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 95;
-  display: flex; align-items: center; gap: 12px;
-  max-width: min(92vw, 520px); padding: 10px 14px; border-radius: 14px;
-  background: #0f172a; color: #f8fafc; border: 1px solid #334155;
-  box-shadow: var(--rs-shadow-lg); font-size: 14px; font-weight: 600;
+  position: fixed; left: 0; right: 0; top: 0; z-index: 95;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: calc(10px + env(safe-area-inset-top)) 14px 12px; border-radius: 0 0 16px 16px;
+  background: #0f172a; color: #f8fafc; border-bottom: 3px solid var(--rs-accent, #275ecb);
+  box-shadow: var(--rs-shadow-lg); font-size: 16px; font-weight: 700;
 }
 #pwaUpdateBanner[hidden] { display: none; }
 #pwaUpdateBanner button {
-  flex: none; min-height: 44px; padding: 8px 16px; border-radius: 10px;
-  background: var(--rs-accent); color: #fff; font-weight: 800; cursor: pointer; border: 0;
+  flex: none; min-height: 52px; padding: 10px 22px; border-radius: 12px;
+  background: var(--rs-accent); color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; border: 0;
 }
 html[data-counter="on"] #pwaUpdateBanner { font-size: 16px; }
 html[data-counter="on"] #pwaUpdateBanner button { min-height: 48px; }

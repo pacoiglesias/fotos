@@ -19,7 +19,7 @@
   const note=document.createElement('small');note.textContent='El dibujo muestra la hoja al entrar en la bandeja. '+(placement.flip==='book'?'Lectura final: como un libro.':'Lectura final: como un calendario.');text.append(title,edge,note);container.append(figure,text);
   if(placement.name){const profile=document.createElement('p');profile.className='duplex-placement-profile';profile.textContent='Tu prueba: '+placement.name+' · '+(PAPER_SPECS[placement.paper]?.shortName||placement.paper);container.append(profile);}
  }
- function placement(){return {face:$('duplexFace').value,edge:$('duplexEdge').value,flip:$('duplexFlip').value};}
+ function placement(){const face=$('duplexFace'),edge=$('duplexEdge'),flip=$('duplexFlip');return {face:face?.value||'',edge:edge?.value||'',flip:flip?.value||'book'};}
  function invalidate(){ $('duplexVerified').checked=false;firstPass=null;$('duplexJobReinserted').checked=false;update(); }
  function update(){
   const p=placement(),complete=['up','down'].includes(p.face)&&['top','bottom'].includes(p.edge);
@@ -65,17 +65,55 @@
   doc.setFontSize(10);doc.text(doc.splitTextToSize('Una hoja comun - misma impresora y bandeja - escala 100%',w-20),w/2,h-32,{align:'center'});doc.text(doc.splitTextToSize('A y B deben quedar en caras diferentes y leerse derechas.',w-20),w/2,h-18,{align:'center'});
   downloadPdfBlob(doc,'RealScan_Prueba_Duplex_'+face+'.pdf');$('duplexStatus').textContent='Prueba '+face+' descargada. Descargar no confirma que la impresora haya impreso.';
  }
- function signature(){return JSON.stringify([state._jobRevision,paperKey(),RealScanLayout.computeDocumentLayout(state),state.hideSheetTitle,state.documentCustomTitle,state.outputScalePercent,state.images.front.rotation,state.images.back.rotation,state.images.front.processedDataUrl,state.images.back.processedDataUrl,placement()]);}
+ function signature(placementOverride){return JSON.stringify([state._jobRevision,paperKey(),RealScanLayout.computeDocumentLayout(state),state.hideSheetTitle,state.documentCustomTitle,state.outputScalePercent,state.images.front.rotation,state.images.back.rotation,state.images.front.processedDataUrl,state.images.back.processedDataUrl,placementOverride||placement()]);}
+ /* Núcleo compartido: descarga una cara del trabajo como PDF de una página,
+    sin depender de los controles del modal. Lo usan los botones del modal
+    y el flujo guiado de un toque. */
+ async function downloadJobFace(face,placementOverride){
+  if(state.activeCategory==='photos'||state.documentPageCount>2||!state.images.front.processedDataUrl||!state.images.back.processedDataUrl)throw Error('Carga frente y reverso de una identificación. Para documentos de varias páginas usa la guía de impares y pares.');
+  const preparedSignature=signature(placementOverride);if(typeof ensureJsPdf==='function')await ensureJsPdf();if(!unlocked()||preparedSignature!==signature(placementOverride))throw Error('El trabajo cambió. Revisa de nuevo antes de descargar.');
+  const old={printMode:state.printMode,duplicateCard:state.duplicateCard,documentPageCount:state.documentPageCount};
+  try{Object.assign(state,{printMode:'both_separate',duplicateCard:false,documentPageCount:2});const doc=generatePdfDoc();if(!doc||doc.getNumberOfPages()!==2)throw Error('Revisa medidas, papel y las dos caras.');doc.deletePage(face===1?2:1);downloadPdfBlob(doc,'RealScan_Duplex_'+(face===1?'Frente':'Reverso')+'.pdf');}
+  finally{Object.assign(state,old);}
+ }
  async function jobPdf(face){
   const status=$('duplexStatus');if(!unlocked())return;
   if(!$('duplexVerified').checked||!$('duplexFace').value||!$('duplexEdge').value){status.textContent='Completa primero la prueba con papel común.';return;}
   if(face===2&&(firstPass!==signature()||!$('duplexJobReinserted').checked)){status.textContent='Imprime el frente y confirma la recolocación. Si cambió el trabajo, prepara otra vez el frente.';firstPass=null;update();return;}
-  if(state.activeCategory==='photos'||state.documentPageCount>2||!state.images.front.processedDataUrl||!state.images.back.processedDataUrl){status.textContent='Carga frente y reverso de una identificación. Para documentos de varias páginas usa la guía de impares y pares.';return;}
-  const preparedSignature=signature();if(typeof ensureJsPdf==='function')await ensureJsPdf();if(!unlocked()||preparedSignature!==signature())return;
-  const old={printMode:state.printMode,duplicateCard:state.duplicateCard,documentPageCount:state.documentPageCount};
-  try{Object.assign(state,{printMode:'both_separate',duplicateCard:false,documentPageCount:2});const doc=generatePdfDoc();if(!doc||doc.getNumberOfPages()!==2)throw Error('Revisa medidas, papel y las dos caras.');doc.deletePage(face===1?2:1);downloadPdfBlob(doc,'RealScan_Duplex_'+(face===1?'Frente':'Reverso')+'.pdf');status.textContent='Imprime a tamaño real 100 %. Sigue el dibujo de cara y borde.';}
-  catch(e){fail(e);return;}finally{Object.assign(state,old);}
+  try{await downloadJobFace(face);status.textContent='Imprime a tamaño real 100 %. Sigue el dibujo de cara y borde.';}
+  catch(e){fail(e);return;}
   if(face===1){firstPass=signature();$('duplexJobReinserted').checked=false;}else firstPass=null;update();
  }
- root.RealScanDuplex={open,getGuide:guide,renderGuide};
+ /* Dúplex de un toque para trabajos con colocación ya verificada: descarga
+    el frente, muestra el dibujo de recolocación y, al confirmar, descarga
+    el reverso. Sin colocación verificada abre el asistente (nunca adivina).
+    El navegador no puede saber si la impresora soporta dúplex ni cómo toma
+    el papel: la prueba física guardada es la única fuente de verdad. */
+ function confirmReinsert(placementValue){
+  return new Promise(resolve=>{
+   let dialog=$('duplexReinsertDialog');
+   if(dialog)dialog.remove();
+   dialog=document.createElement('dialog');dialog.id='duplexReinsertDialog';dialog.className='desk-dialog';dialog.setAttribute('aria-label','Recolocar el papel para el reverso');
+   dialog.innerHTML='<h2>Frente descargado</h2><p>Imprime el frente a tamaño real 100 %. Después recoloca esa misma hoja siguiendo el dibujo y descarga el reverso.</p><div id="duplexReinsertGuide"></div><div class="document-actions"><button type="button" id="duplexReinsertContinue" class="counter-primary">Ya reinserté la hoja: descargar reverso</button><button type="button" id="duplexReinsertCancel">Cancelar</button></div>';
+   document.body.append(dialog);
+   renderGuide(dialog.querySelector('#duplexReinsertGuide'),placementValue);
+   dialog.querySelector('#duplexReinsertContinue').onclick=()=>{dialog.close();dialog.remove();resolve(true);};
+   dialog.querySelector('#duplexReinsertCancel').onclick=()=>{dialog.close();dialog.remove();resolve(false);};
+   dialog.addEventListener('cancel',e=>{e.preventDefault();dialog.close();dialog.remove();resolve(false);});
+   dialog.showModal();
+  });
+ }
+ async function printJobGuided(){
+  if(!unlocked())return;
+  const verified=guide();
+  if(!verified){open();return;}
+  if(state.activeCategory==='photos'||state.documentPageCount>2||!state.images.front.processedDataUrl||!state.images.back.processedDataUrl){root.showToast?.('Carga frente y reverso de una identificación para usar el dúplex.','info');open();return;}
+  try{await downloadJobFace(1,verified);}
+  catch(e){root.showToast?.(e.message||'No se pudo preparar el frente.','warning');return;}
+  const reinserted=await confirmReinsert(verified);
+  if(!reinserted||!unlocked())return;
+  try{await downloadJobFace(2,verified);root.showToast?.('Reverso descargado. Imprime a 100 % por la segunda cara.','success');}
+  catch(e){root.showToast?.(e.message||'No se pudo preparar el reverso.','warning');}
+ }
+ root.RealScanDuplex={open,getGuide:guide,renderGuide,printJobGuided};
 })(window);

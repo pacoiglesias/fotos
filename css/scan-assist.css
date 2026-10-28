@@ -292,7 +292,7 @@
 .scan-dialog [hidden].scan-switch-cam,.scan-switch-cam[hidden]{display:none!important}
 .scan-actions [data-act=original]{color:#fff;border-color:#047857;}
 .scan-dialog[data-phase=review] .scan-stage{overflow:visible;}
-.scan-guidance{flex:none;font-size:.72rem;line-height:1.45;color:#c7d2fe;margin:0;padding:5px 9px;border-left:2px solid #818cf8;background:#312e8133;border-radius:0 8px 8px 0}
+.scan-guidance{flex:none;font-size:.78rem;line-height:1.5;color:#fff;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.7);margin:0;padding:8px 12px;border-left:3px solid #818cf8;background:rgba(15,23,42,.85);border-radius:0 10px 10px 0}
 @media(orientation:landscape) and (max-height:540px){.scan-guidance{display:none}}
 
 /* v3.12.0 — Revisión previa: vista de la hoja y selector de perfil */

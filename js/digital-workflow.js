@@ -12,7 +12,10 @@
     $('digitalDownload').disabled=$('digitalQr').disabled=busy||!RealScanWorkflow.describe().ready;
   }
   function settings(){return {format:$('digitalFormat').value,max:$('digitalPixels').value,bytes:Number($('digitalBytes').value)||0};}
-  function openQr(){const chosen=settings(),wanted=slots();$('selectDeliveryFormat').value=chosen.format;$('selectDeliveryMaxPx').value=chosen.max;$('selectDeliveryMaxBytes').value=String(chosen.bytes);$('checkDeliverPdfSheet').checked=false;for(const [side,id]of [['front','checkDeliverFrontJpg'],['back','checkDeliverBackJpg'],['page3','checkDeliverPage3'],['page4','checkDeliverPage4']])$(id).checked=wanted.includes(side);$('btnOpenDeliveryModal').click();}
+  /* La entrega por QR vive ahora en el diálogo ÚNICO (PDF + caras JPG + QR +
+     WhatsApp + Paperless): el botón de la cabecera lo abre. Los ajustes de
+     formato/píxeles/peso de este panel siguen valiendo para su descarga. */
+  function openQr(){if(window.RealScanPdfDelivery)window.RealScanPdfDelivery.open();}
   async function download(){
     if(busy||!RealScanWorkflow.describe().ready)return;busy=true;render();const revision=state._jobRevision||0,wanted=slots(),sources=wanted.map(s=>state.images[s].processedDataUrl),chosen=settings();
     try{const files=[];for(const side of wanted)files.push(await createDigitalFile(side,chosen.format,chosen.max,chosen.bytes?chosen.bytes-1:0));

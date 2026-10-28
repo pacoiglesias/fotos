@@ -1,0 +1,102 @@
+/* Modo rápido INE/DNI — capa de presentación.
+   Se carga tras counter-workspace.css. Fuera del modo rápido estas secciones no
+   existen en pantalla; dentro del modo rápido, todo lo demás se esconde para
+   dejar solo: huecos, hoja a tamaño real y dos botones gigantes. Sin animaciones. */
+#quickMode,#quickActions{display:none}
+body.rs-quick #quickMode,body.rs-quick #quickActions{display:block}
+/* En modo rápido se esconde todo menos la salida, los huecos, la hoja y la entrega. */
+body.rs-next.rs-counter330.rs-quick #counterIntake>:not(#quickMode),
+body.rs-next.rs-counter330.rs-quick #colStageWorkspace .studio-work-heading,
+body.rs-next.rs-counter330.rs-quick #colStageWorkspace #studioImageTray,
+body.rs-next.rs-counter330.rs-quick #colStageWorkspace #studioEditorTools,
+body.rs-next.rs-counter330.rs-quick #colStageWorkspace #studioCompare,
+body.rs-next.rs-counter330.rs-quick #colStageWorkspace #studioChecks,
+body.rs-next.rs-counter330.rs-quick #colStageWorkspace #studioEmpty,
+body.rs-next.rs-counter330.rs-quick #colStageWorkspace #workspaceDelivery,
+body.rs-next.rs-counter330.rs-quick #colStageWorkspace .studio-actions,
+body.rs-next.rs-counter330.rs-quick #serviceFlow,
+body.rs-next.rs-counter330.rs-quick #flowDock,
+body.rs-next.rs-counter330.rs-quick #guidedStepsBar,
+body.rs-next.rs-counter330.rs-quick #workspacePrinterOptions,
+body.rs-next.rs-counter330.rs-quick #sheetFinishPanel,
+body.rs-next.rs-counter330.rs-quick #workspaceSlotOptions,
+body.rs-next.rs-counter330.rs-quick #studioAdvanced,
+body.rs-next.rs-counter330.rs-quick #studioFavorites,
+body.rs-next.rs-counter330.rs-quick #deskPresets,
+body.rs-next.rs-counter330.rs-quick #documentAdvanced,
+body.rs-next.rs-counter330.rs-quick #annotationTools,
+body.rs-next.rs-counter330.rs-quick #annotationOptions,
+body.rs-next.rs-counter330.rs-quick #workspaceLegacyExports,
+body.rs-next.rs-counter330.rs-quick #workspaceExportOptions,
+body.rs-next.rs-counter330.rs-quick .workbench-finishing,
+body.rs-next.rs-counter330.rs-quick .workbench-batch,
+body.rs-next.rs-counter330.rs-quick .workbench-document-help,
+body.rs-next.rs-counter330.rs-quick #counterService,
+body.rs-next.rs-counter330.rs-quick #operatorJourney,
+body.rs-next.rs-counter330.rs-quick #capturePreviewRail,
+body.rs-next.rs-counter330.rs-quick #floatingHudBar,
+body.rs-next.rs-counter330.rs-quick #mobileWizardStepper,
+body.rs-next.rs-counter330.rs-quick #mobileStepper,
+body.rs-next.rs-counter330.rs-quick #counterStart{display:none!important}
+/* En la columna del escenario solo quedan la tarjeta de la hoja y la entrega rápida:
+   fuera quedan escaneos guardados, panel Hoy, cierre diario, calibración y resto. */
+body.rs-next.rs-counter330.rs-quick #colStageWorkspace>:not(.panel-sheet-preview):not(#quickActions){display:none!important}
+/* Secciones de página fuera de la rejilla: guardados, cuidado diario, guía,
+   panel Hoy y nota de borrador (todo vuelve en modo completo). */
+body.rs-next.rs-counter330.rs-quick #sectionSavedScansDashboard,
+body.rs-next.rs-counter330.rs-quick #dailyCare,
+body.rs-next.rs-counter330.rs-quick #workflowGuide,
+body.rs-next.rs-counter330.rs-quick #rsTodayPanel,
+body.rs-next.rs-counter330.rs-quick #draftStorageStatus{display:none!important}
+/* La barra de trabajo (salida + Trabajos) y la tarjeta de la hoja se conservan. */
+#quickMode{font-family:inherit;color:var(--work-ink,#0f172a)}
+#quickMode .quick-kicker{display:inline-block;margin:0 0 10px;padding:6px 14px;border-radius:999px;background:#0f172a;color:#fff;font-size:12px;font-weight:800;letter-spacing:.18em}
+#quickMode h2{margin:0 0 10px;font-size:32px;line-height:1.15;font-weight:800;color:var(--work-ink,#0f172a)}
+#quickMode .quick-steps{display:flex;gap:8px;margin:0 0 12px}
+#quickMode .quick-step{flex:1;text-align:center;padding:11px 4px;border-radius:12px;border:1.5px solid var(--work-line,#cbd5e1);background:var(--work-surface,#fff);color:var(--work-muted,#475569);font-size:13px;font-weight:800;white-space:nowrap}
+#quickMode .quick-step[data-state="current"]{background:#0f172a;border-color:#0f172a;color:#fff}
+#quickMode .quick-step[data-state="done"]{background:#ecfdf5;border-color:#047857;color:#065f46}
+#quickMode .quick-meta{margin:0 0 10px;font-size:15px;color:var(--work-muted,#475569)}
+#quickMode .quick-status{margin:0 0 14px;padding:14px 16px;border-radius:14px;background:#0f172a;color:#fff;font-size:17px;font-weight:700;line-height:1.35}
+#quickMode .quick-status.is-ready{background:#047857}
+html.dark body.rs-quick #quickMode .quick-kicker,html.dark body.rs-quick #quickMode .quick-step[data-state="current"]{background:#e2e8f0;border-color:#e2e8f0;color:#0f172a}
+html.dark body.rs-quick #quickMode .quick-status{background:#1e293b}
+html.dark body.rs-quick #quickMode .quick-status.is-ready{background:#047857}
+#quickMode .quick-slots{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 12px}
+#quickMode .quick-slot{min-width:0}
+#quickMode .quick-slot-btn{display:block;width:100%;padding:12px;border:2px dashed #94a3b8;border-radius:18px;background:var(--work-surface,#fff);color:var(--work-ink,#0f172a);cursor:pointer;text-align:center}
+#quickMode .quick-slot-btn[data-filled="true"]{border-style:solid;border-color:#047857}
+#quickMode .quick-slot-thumb{display:block;width:100%;aspect-ratio:1.586;border-radius:12px;background:var(--work-soft,#f1f5f9);overflow:hidden;position:relative}
+#quickMode .quick-slot-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+#quickMode .quick-slot-thumb img[hidden]{display:none}
+#quickMode .quick-slot-check{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:#047857;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800}
+#quickMode .quick-slot-check[hidden]{display:none}
+#quickMode .quick-slot-plus{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:800;color:#94a3b8}
+#quickMode .quick-slot-btn strong{display:block;margin-top:10px;font-size:18px;font-weight:800}
+#quickMode .quick-slot-btn small{display:block;margin-top:2px;font-size:14px;color:var(--work-muted,#475569)}
+#quickMode .quick-slot-tools{display:flex;gap:8px;margin-top:8px}
+#quickMode .quick-slot-tools button{flex:1;min-height:48px;padding:8px 6px;border:1px solid var(--work-line,#e2e8f0);border-radius:12px;background:var(--work-surface,#fff);color:var(--work-ink,#0f172a);font-size:14px;font-weight:700;cursor:pointer}
+#quickMode .quick-slot-tools button:disabled{opacity:.45;cursor:default}
+#quickMode #quickPairHost:empty{display:none}
+#quickMode #quickPairHost{margin:0 0 12px}
+#quickMode .quick-giant{display:block;width:100%;min-height:80px;padding:14px 18px;border:0;border-radius:18px;font-size:21px;font-weight:800;line-height:1.2;cursor:pointer;text-align:center}
+#quickMode .quick-giant-main{display:block}
+#quickMode .quick-giant-sub{display:block;margin-top:2px;font-size:14px;font-weight:600;opacity:.85}
+#quickMode .quick-scan{background:#1d4ed8;color:#fff}
+#quickMode .quick-link{display:block;width:100%;min-height:48px;padding:10px;border:0;background:none;color:var(--work-accent,#1d4ed8);font-size:16px;font-weight:700;cursor:pointer;text-align:center}
+#quickMode .quick-name{display:block;margin:14px 0 4px;font-size:15px;font-weight:700;color:var(--work-ink,#0f172a)}
+#quickMode .quick-name input{display:block;width:100%;min-height:52px;margin-top:6px;padding:12px 14px;border:1px solid var(--work-line,#cbd5e1);border-radius:12px;background:var(--work-surface,#fff);color:var(--work-ink,#0f172a);font-size:16px;font-weight:400}
+#quickMode .quick-foot{display:flex;align-items:center;gap:6px}
+#quickMode .quick-foot .quick-link{width:auto;flex:1}
+#quickMode .quick-gear{flex:0 0 auto;width:48px;height:48px;padding:0;border:1px solid var(--work-line,#e2e8f0);border-radius:12px;background:var(--work-surface,#fff);font-size:22px;cursor:pointer}
+#quickActions{margin-top:16px}
+#quickActions .quick-stamp{margin:0 0 8px;padding:12px 14px;border:1px solid #a7f3d0;border-radius:12px;background:#ecfdf5;color:#065f46;font-size:17px;font-weight:800;text-align:center}
+#quickActions .quick-printer{margin:0 0 12px;font-size:14px;color:var(--work-muted,#475569);text-align:center}
+#quickActions .quick-giant{display:block;width:100%;min-height:80px;padding:14px 18px;border:0;border-radius:18px;font-size:21px;font-weight:800;line-height:1.2;cursor:pointer;text-align:center}
+#quickActions .quick-print{background:#047857;color:#fff;margin-bottom:12px}
+#quickActions .quick-pdf{background:var(--work-surface,#fff);color:var(--work-ink,#0f172a);border:2px solid var(--work-ink,#0f172a)}
+#quickActions .quick-giant:disabled{opacity:.45;cursor:default}
+#quickActions .quick-hint{margin:12px 0 0;font-size:14px;color:var(--work-muted,#475569);text-align:center}
+#quickActions .quick-link{display:block;width:100%;min-height:48px;padding:10px;border:0;background:none;color:var(--work-accent,#1d4ed8);font-size:16px;font-weight:700;cursor:pointer;text-align:center}
+#quickActions .quick-postprint .quick-print{margin-bottom:4px}
+body.dark #quickActions .quick-stamp,body.rs-next.dark #quickActions .quick-stamp{background:#052e16;border-color:#166534;color:#a7f3d0}

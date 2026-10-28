@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="application-version" content="3.30.0">
+  <meta name="application-version" content="3.32.0">
   <title>RealScan — Enviar Archivos al Mostrador</title>
   <link rel="stylesheet" href="css/tailwind.css">
   <link rel="stylesheet" href="css/scan-assist.css">
@@ -50,8 +50,8 @@
       <!-- Lista de Archivos Seleccionados -->
       <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Preparación de los próximos archivos
         <select id="selectTransferPolicy" class="block w-full mt-2 p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm">
-          <option value="optimize">Optimizar imagen · JPG, hasta 3000 px, sin ubicación</option>
-          <option value="preserve">Conservar archivo · sin cambiar bytes, formato ni resolución</option>
+          <option value="optimize">Optimizar (recomendado: más rápido)</option>
+          <option value="preserve">Conservar original (sin cambios)</option>
         </select>
       </label>
       <p id="transferPolicyHelp" class="text-xs text-slate-500" role="status">Máximo 6 MB por archivo y 8 archivos. Los PDF se conservan. Revisa orientación y bordes antes de enviar.</p>

@@ -7,8 +7,8 @@
 (function () {
   'use strict';
 
-  async function sharePdfBlob(blob, fileName, title) {
-    const file = new File([blob], fileName, { type: 'application/pdf' });
+  async function sharePdfBlob(blob, fileName, title, type) {
+    const file = new File([blob], fileName, { type: type || blob.type || 'application/pdf' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: title || 'RealScan — tu documento', text: 'Documento a escala real 1:1, listo para imprimir al 100%.' });
       return true;

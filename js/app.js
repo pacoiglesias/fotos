@@ -679,7 +679,6 @@ let receiveOpening = false;
 let receiveOpenRevision = 0;
 document.addEventListener('realscan:modal-closed', function(event) {
   if (event.detail.id === 'receiveFromPhoneModal') receiveOpenRevision++;
-  if (event.detail.id === 'digitalDeliveryModal') deliveryDialogRevision++;
 });
 async function openReceiveFromPhoneModal(options) {
   if (receiveOpening || !window.RealScanQrSync) return false;
@@ -776,94 +775,6 @@ function updateQrInboxUI() {
   });
 }
 window.updateQrInboxUI = updateQrInboxUI;
-
-let deliveryDialogRevision = 0;
-function openDigitalDeliveryModal() {
-  if(window.RealScanDocuments?.status().active){$('documentWorkspace').scrollIntoView({block:'start'});$('docQr').focus();showToast('Prepara el PDF completo desde el panel del documento.','info');return;}
-  if (!window.RealScanQrSync) return;
-  deliveryDialogRevision++;
-  const policy = getActiveSpec().digital;
-  const formatSelect = $('selectDeliveryFormat');
-  for(const option of formatSelect.options) option.disabled = !!policy && !policy.formats.includes(option.value);
-  if(policy) {formatSelect.value='jpg';$('selectDeliveryMaxPx').value='600';}
-  const resultBox = $('deliveryQrResultBox');
-  if (resultBox) resultBox.classList.add('hidden');
-  if (typeof updateDeliveryReview === 'function') updateDeliveryReview();
-  openModal('digitalDeliveryModal');
-}
-
-let deliveryGenerating = false;
-async function handleGenerateDeliveryQr() {
-  if (deliveryGenerating) return;
-  deliveryGenerating = true;
-  const button = $('btnGenerateDeliveryQr');
-  if (button) button.disabled = true;
-  const job = state._jobRevision || 0, dialogRevision = deliveryDialogRevision;
-  window.RealScanDiagnostics?.record('delivery.start');
-  try {
-  if (!await waitForProcessingComplete(15000)) return;
-  const format = $('selectDeliveryFormat')?.value || 'jpg';
-  const maxPx = $('selectDeliveryMaxPx')?.value || '1920';
-  if (!window.RealScanQrSync) return;
-  const deliverPdf = $('checkDeliverPdfSheet') ? $('checkDeliverPdfSheet').checked : true;
-  const deliverFront = $('checkDeliverFrontJpg') ? $('checkDeliverFrontJpg').checked : true;
-  const deliverBack = $('checkDeliverBackJpg') ? $('checkDeliverBackJpg').checked : false;
-
-  const files = [];
-
-  for (const [side, selected] of [['front', deliverFront], ['back', deliverBack],['page3',$('checkDeliverPage3')?.checked],['page4',$('checkDeliverPage4')?.checked]]) {
-    if (selected && state.images[side]?.processedDataUrl) files.push(await createDigitalFile(side, format, maxPx));
-  }
-
-  if (deliverPdf && typeof generatePdfDoc === 'function') {
-      if(typeof ensureJsPdf==='function'&&!await ensureJsPdf())throw Error('No se pudo cargar el generador PDF. Reintenta con conexión o prepara la app para trabajar sin internet.');
-    const preflight = runPreflightChecks();
-    const fatal = preflight.issues.filter(x=>x.type==='error' && x.code!=='MISSING_SLOT');
-    if(fatal.length) throw Error(fatal.map(x=>x.message).join(' '));
-    const missing = preflight.issues.filter(x=>x.code==='MISSING_SLOT');
-    if(missing.length && !confirm('Faltan caras para la hoja PDF. ¿Entregar solo las disponibles dejando vacíos los espacios faltantes?')) return;
-    try {
-      const doc = await generatePdfDoc(true);
-      if (!doc) throw new Error('No se pudo generar la hoja solicitada.');
-      if (doc) {
-        const pdfDataUri = doc.output('datauristring');
-        files.push({
-          name: 'RealScan_Hoja_Impresion_' + Date.now() + '.pdf',
-          type: 'application/pdf',
-          dataUrl: 'data:application/pdf;base64,' + pdfDataUri.split(',')[1],
-          size: Math.floor(pdfDataUri.split(',')[1].length * .75)
-        });
-      }
-    } catch(e) {
-      throw new Error('No se pudo preparar la hoja PDF. Reintenta o desmarca esa opción para entregar sólo las imágenes.');
-    }
-  }
-
-  if (files.length === 0) {
-    showToast('⚠️ No hay archivos procesados seleccionados para entregar.', 'warning');
-    return;
-  }
-
-
-  if (job !== (state._jobRevision || 0) || dialogRevision !== deliveryDialogRevision || $('digitalDeliveryModal').classList.contains('hidden')) { window.RealScanDiagnostics?.record('delivery.cancelled'); return; }
-  const previousDelivery=RealScanQrSync.getActiveDeliverySession();
-  if(previousDelivery && !['revoked','expired'].includes(previousDelivery.status) && Date.now()<previousDelivery.expiresAt && !confirm('Este puesto tiene una entrega vigente. Generar este QR cerrará el enlace anterior. Confirma que el cliente anterior terminó de descargar antes de reemplazarlo.'))return;
-  const session = await window.RealScanQrSync.createDeliverySession(files, { format: format, maxPx: maxPx });
-  if (job !== (state._jobRevision || 0) || dialogRevision !== deliveryDialogRevision || $('digitalDeliveryModal').classList.contains('hidden')) { await RealScanQrSync.revokeDeliverySession(); window.RealScanDiagnostics?.record('delivery.cancelled'); return; }
-  window.RealScanDiagnostics?.record('delivery.ready');
-  const canvas = $('canvasDeliveryQr');
-  if (canvas) {
-    window.RealScanQrSync.renderQrToCanvas(session.url, canvas, 5);
-  }
-
-  const resultBox = $('deliveryQrResultBox');
-  if (resultBox) resultBox.classList.remove('hidden');
-
-  showToast('Entrega disponible durante 15 minutos mientras este puesto siga abierto.', 'success');
-  window.RealScanCounter?.update();
-  } catch(e) { window.RealScanDiagnostics?.record('delivery.failed','error',{errorType:e.name,code:e.code}); showToast(e.message || 'No se pudo preparar la entrega.', 'error'); }
-  finally { deliveryGenerating = false; if (button) button.disabled = false; }
-}
 
 function openFormatRequirementsModal() {
   const activeSpec = (typeof getActiveSpec === 'function') ? getActiveSpec() : (window.FORMAT_SPECS[state.format] || window.FORMAT_SPECS.card);
@@ -3195,9 +3106,16 @@ function bindEvents() {
 
   // Botones de Sincronización QR y Trámites Oficiales
   on($('btnOpenReceiveModal'), 'click', openReceiveFromPhoneModal);
-  on($('btnOpenDeliveryModal'), 'click', openDigitalDeliveryModal);
+  // Botón «Entregar» de la cabecera y de los flujos: abre el diálogo ÚNICO de
+  // entrega (PDF + caras JPG + QR + WhatsApp + Paperless), igual que el resto
+  // de llamadores que pulsan este botón. Con documento activo, el PDF se
+  // prepara desde el panel del documento.
+  function openDeliveryDialog() {
+    if (window.RealScanDocuments?.status().active) { $('documentWorkspace').scrollIntoView({block:'start'}); $('docQr').focus(); showToast('Prepara el PDF completo desde el panel del documento.', 'info'); return; }
+    if (window.RealScanPdfDelivery) window.RealScanPdfDelivery.open();
+  }
+  on($('btnOpenDeliveryModal'), 'click', openDeliveryDialog);
   on($('btnOpenFormatRequirements'), 'click', openFormatRequirementsModal);
-  on($('btnGenerateDeliveryQr'), 'click', handleGenerateDeliveryQr);
 
   // Acciones en modal de recepción
   on($('btnCopyReceiveUrl'), 'click', function() {
@@ -3229,28 +3147,6 @@ function bindEvents() {
       showToast('Bandeja de archivos vaciada.', 'info');
     }
     } catch(e){showToast('No se pudo vaciar la bandeja. Comprueba la conexión.', 'error');}
-  });
-
-  // Acciones en modal de entrega digital
-  on($('btnCopyDeliveryUrl'), 'click', function() {
-    if (window.RealScanQrSync) {
-      const s = window.RealScanQrSync.getActiveDeliverySession();
-      if (s && navigator.clipboard) {
-        navigator.clipboard.writeText(s.url);
-        showToast('📋 Enlace de descarga copiado al portapapeles.', 'success');
-      }
-    }
-  });
-
-  on($('btnRevokeDeliverySession'), 'click', async function() {
-    try {
-    if (window.RealScanQrSync) {
-      await window.RealScanQrSync.revokeDeliverySession();
-      const resultBox = $('deliveryQrResultBox');
-      if (resultBox) resultBox.classList.add('hidden');
-      showToast('🔒 Enlace de entrega revocado por seguridad.', 'warning');
-    }
-    } catch(e){showToast('No se confirmó la revocación. Comprueba la conexión.', 'error');}
   });
 
   // Pestaña y Controles de Sonido (Web Audio API)

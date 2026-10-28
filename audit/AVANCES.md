@@ -1,5 +1,16 @@
 # Avances de RealScan Pro
 
+## 3.32.0 — Entrega única, mostrador completo y escaneo más inteligente
+
+Diálogo único de entrega (PDF + caras JPG + QR + WhatsApp + Paperless, con "Confirmar y archivar" en un toque y reanudación automática tras guardar el token), par INE manual con consejo de fondo oscuro, sellos junto a la hoja, semáforo del mostrador, recuperación por código/QR, aviso de listo para recoger, respaldo automático a Paperless, impresión en lote, avisos de calidad y mismo documento antes de imprimir, bordes de tarjeta en la vista ampliada, Visa USA de un toque y dúplex guiado desde la revisión. Carga perezosa de dúplex, calibración y enderezado. Trabajo en curso local, sin publicar: la publicación la confirma el revisor con push y deploy tras revisar este commit.
+
+## 3.31.0 — Modo rápido INE / DNI
+
+Modo rápido real sobre el botón existente del mostrador (sin motores nuevos): pantalla con dos huecos grandes Frente/Reverso, un solo botón gigante de escaneo con avance automático al reverso, hoja Carta a tamaño real con sello "85.60 × 53.98 mm · 100%" y solo dos botones gigantes, Imprimir y Guardar PDF. Corrección de la regla CSS que volvía a mostrar los ajustes avanzados en modo rápido; en modo rápido solo quedan los huecos, la hoja y la entrega (el resto sigue en modo completo a un toque). Guardarraíles: nunca imprime sin vista previa, nunca pierde capturas al cambiar de modo, y el banner par INE se aloja dentro de la pantalla rápida. Trabajo en curso local, sin publicar: la publicación la confirma el revisor con push y deploy tras revisar este commit.
+
+- Recorrido en emulación iPhone: 19 comprobaciones, 0 errores JS (escanear frente, auto-avance a reverso, hoja lista, PDF directo, impresión con revisión previa, Nuevo escaneo, par INE, salida y re-entrada sin perder capturas).
+- Comparativa visual antes/después guardada junto al recorrido (misma pantalla 3.30.0 y 3.31.0 lado a lado).
+
 ## 3.30.0 — Nueva entrega en validación
 
 Rama: codex/mostrador-claro-330. Incluye rediseño del mostrador, NAS visible, Kanban, ticket con folio, cierre verificable, metadatos revisados de Paperless, mejoras de memoria, privacidad y actualización. La publicación se confirma con los endpoints version.json y con la evidencia de entrega, no con este título.

@@ -62,6 +62,18 @@
     saveAll(list().filter(function (p) { return p.id !== id; }));
     if (getActiveId() === id) setActive(null);
   }
+  /* A12: única fuente de verdad de «impresora verificada»: la marca que el
+     asistente de calibración deja tras medir la regla de 50 mm, con las
+     escalas que coinciden con el perfil actual. Si el perfil cambia, la
+     verificación caduca y hay que volver a medir. */
+  function isVerified(profile) {
+    try {
+      const p = profile || getActive();
+      if (!p) return false;
+      const v = JSON.parse(localStorage.getItem('realscan_calibration_verified_' + p.id) || 'null');
+      return !!v && v.scaleX === p.scaleX && v.scaleY === p.scaleY;
+    } catch (e) { return false; }
+  }
   function isIdentity(p) {
     return !p || (Math.abs(p.scaleX - 100) < 0.001 && Math.abs(p.scaleY - 100) < 0.001 &&
       Math.abs(p.offsetX) < 0.001 && Math.abs(p.offsetY) < 0.001);
@@ -101,6 +113,7 @@
     setActive: setActive,
     upsert: upsert,
     remove: remove,
+    isVerified: isVerified,
     isIdentity: isIdentity,
     getTransform: getTransform,
     correctionFromMeasurement: correctionFromMeasurement,

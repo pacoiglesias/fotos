@@ -31,3 +31,11 @@
  .annotation-editor #annSignaturePad{height:150px}
  @media(max-width:700px){.annotation-tools{margin:12px 0;padding:14px}.annotation-editor{width:100%;max-height:100dvh;border-radius:16px 16px 0 0}.annotation-layout nav{grid-template-columns:repeat(3,minmax(0,1fr))}.annotation-editor>footer{padding-bottom:max(12px,env(safe-area-inset-bottom))}.annotation-editor>footer>button{min-height:52px;font-size:16px}#annCanvasWrap{max-height:30dvh}}
 }
+/* A3: sellos rápidos junto a la hoja, siempre visibles sin desplegar. */
+.sheet-quick-stamps{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;margin:0}
+.sheet-quick-stamps>button{min-height:44px;padding:9px 14px;border:1px solid var(--studio-border,#dbe4ef);border-radius:10px;background:var(--studio-surface,#fff);color:var(--studio-ink,#172b40);font-size:12px;font-weight:700;white-space:nowrap}
+@media screen and (max-width:600px){.sheet-quick-stamps>button{min-height:38px;padding:7px 10px;font-size:11px}}
+.sheet-quick-stamps>button:first-child{background:#275ecb;color:#fff;border-color:#275ecb}
+@media print{.sheet-quick-stamps{display:none!important}}
+/* D: borde de la tarjeta detectada en la vista ampliada. */
+.capture-preview-frame{position:absolute;border:3px solid #16a34a;border-radius:6px;box-shadow:0 0 0 2px rgba(255,255,255,.65);pointer-events:none;z-index:2}

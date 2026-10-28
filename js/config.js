@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.30.0';
+window.APP_VERSION = 'v3.32.0';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -14,7 +14,7 @@ window.DEFAULT_USER = 'admin';
 window.AUTH_GUARD_KEY = 'realscan_auth_guard_v1';
 window.AUTH_MAX_FAILED_ATTEMPTS = 5;
 window.AUTH_LOCKOUT_MS = 5 * 60 * 1000; // bloqueo temporal tras 5 intentos fallidos
-window.IDLE_LOCK_DEFAULT_MINUTES = 10; // bloqueo automático del mostrador por inactividad
+window.IDLE_LOCK_DEFAULT_MINUTES = 30; // bloqueo automático del mostrador por inactividad (30 min; el ajuste ofrece también Nunca)
 window.CALIBRATION_LOG_KEY = 'realscan_calibration_log_v1';
 window.TARGET_DPI = 300;
 window.MAX_OUT_PX = 4000;

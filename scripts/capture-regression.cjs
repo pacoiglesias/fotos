@@ -128,11 +128,15 @@ function cameraFixture() {
   await page.locator("#outputReviewModal").screenshot({path:path.join(out,"print-review.png")});
   await page.locator("#outputReviewModal [data-close-modal]").click();
   await page.locator("#btnOpenDeliveryModal").click();
-  await page.selectOption("#selectDeliveryFormat", "png");
-  await page.selectOption("#selectDeliveryMaxPx", "600");
-  assert((await page.locator("#deliveryReview").innerText()).includes("PNG \xB7 600 px"));
+  await page.locator(".pdf-delivery-dialog").waitFor({ state: "visible" });
+  await page.waitForFunction(() => !document.getElementById("pdfDeliveryDownload").disabled);
+  assert((await page.locator("#pdfDeliveryStatus").innerText()).includes("MB"));
+  await page.locator("#pdfDeliveryAsset").selectOption("side:front");
+  await page.locator("#pdfDeliveryBuild").click();
+  await page.waitForFunction(() => !document.getElementById("pdfDeliveryDownload").disabled);
+  assert(await page.locator("#pdfDeliveryPhoto").isVisible());
   await page.keyboard.press("Escape");
-  pass("Actual print button opens visual review; delivery summary tracks selected format and dimensions");
+  pass("Actual print button opens visual review; the unified delivery dialog builds the sheet PDF and each face");
   await page.evaluate(() => {
     window.ImageCapture = undefined;
     RealScanCapture.open({ photoMode: true, onAccept: () => {

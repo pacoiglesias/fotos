@@ -1,15 +1,15 @@
 (function() {
   "use strict";
-  function render(target, delivery = false, mode) {
+  function render(target, mode) {
     if (!target) return;
     target.replaceChildren();
     target.className = "output-review";
     const layout = RealScanLayout.computeDocumentLayout(state), spec = getActiveSpec(), facts = document.createElement("div");
     facts.className = "output-review-facts";
     const scale = (Number(state.outputScalePercent) || 100) / 100;
-    const pairs = [["Tama\xF1o de cada pieza", (spec.widthMm * scale).toFixed(2) + " \xD7 " + (spec.heightMm * scale).toFixed(2) + " mm"], ["Papel y hojas", layout.paper.shortName + " \xB7 " + layout.pages.length + " hoja(s)"], ["Contenido", layout.summary || spec.shortName], ["Destino", delivery ? "Descarga privada por QR" : (mode === "pdf" ? "Descarga de PDF a escala real" : "Impresora · Hoja a tamaño real")]];
+    const pairs = [["Tama\xF1o de cada pieza", (spec.widthMm * scale).toFixed(2) + " \xD7 " + (spec.heightMm * scale).toFixed(2) + " mm"], ["Papel y hojas", layout.paper.shortName + " \xB7 " + layout.pages.length + " hoja(s)"], ["Contenido", layout.summary || spec.shortName], ["Destino", mode === "pdf" ? "Descarga de PDF a escala real" : "Impresora · Hoja a tamaño real"]];
     pairs.push(['Guías de corte',layout.includeCutMarks ? 'Visibles en la hoja' : 'Sin marcas'], ['Acabado',layout.isCleanSheet ? 'Hoja limpia' : 'Con anotaciones activas']);
-    if (!delivery) {
+    {
       if (state.activeCategory === 'photos') {
         const perSet=state.mixTwoPhotos?(Number(state.photoCopiesPersonA)||0)+(Number(state.photoCopiesPersonB)||0):(Number(state.photoCopies)||1),sets=Math.max(1,Math.min(10,Math.round(Number(state.outputSets)||1)));pairs.push(['Fotos por juego',state.mixTwoPhotos?(state.photoCopiesPersonA||0)+' de A + '+(state.photoCopiesPersonB||0)+' de B':String(perSet)],['Juegos completos',String(sets)],['Total de fotos',String(perSet*sets)],['Copias en la impresora','1 · los juegos ya están incluidos']);
       } else {
@@ -17,13 +17,10 @@
       }
       const activeProfile = window.RealScanPrinterProfiles?.getActive();
       pairs.push(["Perfil de impresora", activeProfile ? activeProfile.name : "Sin corrección"]);
+      /* A12: estado de impresora siempre visible junto a Imprimir. */
+      const verified = activeProfile && window.RealScanPrinterProfiles?.isVerified?.(activeProfile);
+      pairs.push(["Estado de impresora", activeProfile ? (verified ? "Medición registrada · imprime al 100 %" : "Falta medir la regla de 50 mm") : "Sin perfil · imprime al 100 %"]);
     }
-    if (delivery) {
-      const format = $("selectDeliveryFormat").value.toUpperCase(), max = $("selectDeliveryMaxPx").value;
-      pairs.push(["Peso máximo por archivo", Number($("selectDeliveryMaxBytes")?.value)?(Number($("selectDeliveryMaxBytes").value)/1000000)+" MB":"Sin límite adicional"]);
-      pairs.push(["Archivos individuales", format + " \xB7 " + (max === "original" ? "Resoluci\xF3n original" : max + " px m\xE1ximo")], ["Hoja completa", $("checkDeliverPdfSheet").checked ? "Incluida como PDF" : "No incluida"]);
-    }
-    if(delivery&&!$('checkDeliverPdfSheet').checked)pairs.splice(0,3);
     for (const [label, value] of pairs) {
       const box = document.createElement("div"), small = document.createElement("small"), strong = document.createElement("strong");
       box.className = "output-review-fact";
@@ -33,7 +30,7 @@
       facts.append(box);
     }
     target.append(facts);
-    if (!delivery) {
+    {
       // Vista previa de la hoja tal como saldrá (clon a escala de la hoja real).
       const sheet = document.querySelector('.a4-sheet');
       if (sheet && !window.RealScanPrint) {
@@ -66,18 +63,14 @@
         profileSelect.value = window.RealScanPrinterProfiles.getActiveId() || '';
         profileSelect.addEventListener('change', () => {
           window.RealScanPrinterProfiles.setActive(profileSelect.value || null);
-          render(target, false, mode);
+          render(target, mode);
         });
         profileRow.append(profileText, profileSelect);
         target.append(profileRow);
       }
     }
     const sheetSlots = new Set(layout.pages.flatMap(page => page.placements.map(placement => placement.slot)));
-    const wanted = delivery ? new Set([
-      ...($("checkDeliverPdfSheet").checked ? sheetSlots : []),
-      ...($("checkDeliverFrontJpg").checked ? ['front'] : []),
-      ...($("checkDeliverBackJpg").checked ? ['back'] : []),...($("checkDeliverPage3").checked ? ['page3'] : []),...($("checkDeliverPage4").checked ? ['page4'] : [])
-    ]) : sheetSlots;
+    const wanted = sheetSlots;
     const names = {front:'Frente',back:'Reverso',page3:'Página 3',page4:'Página 4'};
     const missing = [...wanted].filter(side => !state.images[side]?.processedDataUrl);
     if (missing.length) {
@@ -91,8 +84,7 @@
     for (const [side, label] of [["front", "Frente"], ["back", "Reverso"], ["page3", "P\xE1gina 3"], ["page4", "P\xE1gina 4"]]) {
       const src = state.images[side]?.processedDataUrl;
       if (!src) continue;
-      if (!delivery && !sheetSlots.has(side)) continue;
-      if (delivery && !($("checkDeliverPdfSheet").checked && sheetSlots.has(side)) && !(side === "front" && $("checkDeliverFrontJpg").checked) && !(side === "back" && $("checkDeliverBackJpg").checked) && !(side === "page3" && $("checkDeliverPage3").checked) && !(side === "page4" && $("checkDeliverPage4").checked)) continue;
+      if (!sheetSlots.has(side)) continue;
       const figure = document.createElement("figure"), image = document.createElement("img"), caption = document.createElement("figcaption");
       image.src = src;
       image.alt = label + " preparado";
@@ -101,13 +93,43 @@
       thumbs.append(figure);
     }
     target.append(thumbs);
+    /* D: avisos ANTES de imprimir (calidad + mismo documento). Se rellenan en
+       segundo plano; la guarda de revisión evita pintar resultados de una
+       revisión anterior. Nunca bloquean: sin evidencia, no hay aviso. */
+    const warningsBox = document.createElement("div");
+    warningsBox.className = "output-review-warnings";
+    target.append(warningsBox);
+    const revision = ++renderRevision;
+    (async () => {
+      const lines = [];
+      try {
+        for (const [side, label] of [["front", "Frente"], ["back", "Reverso"]]) {
+          const src = state.images[side]?.processedDataUrl;
+          if (!src || !window.RealScanQuality?.analyze) continue;
+          const check = await window.RealScanQuality.analyze(src);
+          if (check?.blurry) lines.push(label + ": se ve borrosa. Repite la foto con más luz y sin mover el teléfono.");
+          else if (check?.washed) lines.push(label + ": se ve lavada (demasiada luz). Baja la luz o acerca la tarjeta.");
+        }
+        if (state.images.front?.originalSrc && state.images.back?.originalSrc && window.RealScanOcrAssist?.verifySameDocument) {
+          const same = await window.RealScanOcrAssist.verifySameDocument(state.images.front.originalSrc, state.images.back.originalSrc);
+          if (same?.match === false) lines.push("Las caras parecen de documentos distintos. Revisa que frente y reverso sean del mismo documento antes de imprimir.");
+        }
+      } catch (e) {}
+      if (revision !== renderRevision || !warningsBox.isConnected) return;
+      for (const text of lines) {
+        const p = document.createElement("p");
+        p.className = "output-review-warning";
+        p.textContent = text;
+        warningsBox.append(p);
+      }
+    })();
     const note = document.createElement("p");
     note.className = "output-review-note";
-    note.textContent = delivery ? "Comprueba las caras seleccionadas y el formato antes de generar el enlace. Las medidas f\xEDsicas se conservan en el PDF; los archivos de imagen se entregan en p\xEDxeles." : "Comprueba recortes y copias. En la impresora selecciona \xABTama\xF1o real / 100 %\xBB, sin ajustar a p\xE1gina. " + ((Number(state.outputScalePercent) || 100) !== 100 ? "Atenci\xF3n: has aplicado una escala de " + state.outputScalePercent + " % dentro del proyecto." : "");
+    note.textContent = "Comprueba recortes y copias. En la impresora selecciona \xABTama\xF1o real / 100 %\xBB, sin ajustar a p\xE1gina. " + ((Number(state.outputScalePercent) || 100) !== 100 ? "Atenci\xF3n: has aplicado una escala de " + state.outputScalePercent + " % dentro del proyecto." : "");
     target.append(note);
     const checklist=document.createElement('ul');checklist.className='operator-checklist';checklist.setAttribute('aria-label','Revisión del operador');for(const value of ['Todas las caras necesarias y en el orden correcto','Orientación correcta y bordes completos','Texto o rostro nítido al ampliar la imagen']){const li=document.createElement('li');li.textContent=value;checklist.append(li);}target.append(checklist);
   }
-  window.updateDeliveryReview = () => render($("deliveryReview"), true);
+  let renderRevision = 0;
   window.showPrintReview = (callback, options) => {
     const opts = options || {};
     let modal = $("outputReviewModal");
@@ -118,17 +140,18 @@
       modal.setAttribute("role", "dialog");
       modal.setAttribute("aria-modal", "true");
       modal.setAttribute("aria-labelledby", "outputReviewTitle");
-      modal.innerHTML = '<div class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto space-y-4"><h2 id="outputReviewTitle" class="text-lg font-bold">Revisa antes de imprimir</h2><div id="printReview"></div><div id="reviewPassportRow" class="hidden flex flex-wrap items-center gap-2"><span class="text-xs font-bold flex-1 min-w-[150px]">🪪 Hoja de fotos tamaño pasaporte (35 × 45 mm), escala real:</span><button type="button" data-passport-count="4" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-xs font-bold min-h-[44px]">Hoja de 4</button><button type="button" data-passport-count="6" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-xs font-bold min-h-[44px]">Hoja de 6</button></div><div class="flex flex-wrap gap-3"><button type="button" data-close-modal="outputReviewModal" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800">Volver a corregir</button><button type="button" id="confirmPrintReview" class="px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold min-h-[44px]">Continuar a imprimir</button></div><div class="flex flex-wrap gap-3"><button type="button" id="btnReviewClient" class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-bold min-h-[44px]">👀 Mostrar al cliente</button><button type="button" id="btnReviewWhatsapp" class="px-4 py-2.5 rounded-xl border border-emerald-500 text-emerald-700 dark:text-emerald-300 text-xs font-bold min-h-[44px]">📲 Enviar por WhatsApp</button></div></div>';
+      modal.innerHTML = '<div class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto space-y-4"><h2 id="outputReviewTitle" class="text-lg font-bold">Revisa antes de imprimir</h2><div id="printReview"></div><div id="reviewPassportRow" class="hidden flex flex-wrap items-center gap-2"><span class="text-xs font-bold flex-1 min-w-[150px]">🪪 Hoja de fotos tamaño pasaporte (35 × 45 mm), escala real:</span><button type="button" data-passport-count="4" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-xs font-bold min-h-[44px]">Hoja de 4</button><button type="button" data-passport-count="6" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-xs font-bold min-h-[44px]">Hoja de 6</button></div><div class="flex flex-wrap gap-3"><button type="button" data-close-modal="outputReviewModal" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800">Volver a corregir</button><button type="button" id="confirmPrintReview" class="px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold min-h-[44px]">Continuar a imprimir</button></div><div class="flex flex-wrap gap-3"><button type="button" id="btnReviewClient" class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-bold min-h-[44px]">👀 Mostrar al cliente</button><button type="button" id="btnReviewClientScreen" class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-bold min-h-[44px]">🖥️ Pantalla para el cliente</button><button type="button" id="btnReviewDuplex" class="px-4 py-2.5 rounded-xl border border-indigo-500 text-indigo-700 dark:text-indigo-300 text-xs font-bold min-h-[44px] hidden">Guía dúplex</button><button type="button" id="btnReviewWhatsapp" class="px-4 py-2.5 rounded-xl border border-emerald-500 text-emerald-700 dark:text-emerald-300 text-xs font-bold min-h-[44px]">📲 Enviar por WhatsApp</button></div></div>';
       document.body.append(modal);
       wireReviewExtras(modal);
     }
     reviewMode = opts.mode || null;
     $("outputReviewTitle").textContent = opts.title || "Revisa antes de imprimir";
     $("confirmPrintReview").textContent = opts.confirmLabel || "Continuar a imprimir";
-    render($("printReview"), false, opts.mode);
+    render($("printReview"), opts.mode);
     const passportRow = $("reviewPassportRow");
     if (passportRow) passportRow.classList.toggle("hidden", state.activeCategory !== "photos");
     if (passportRow) passportRow.classList.toggle("flex", state.activeCategory === "photos");
+    updateDuplexButton();
     $("confirmPrintReview").onclick = () => {
       if (window.RealScanPolish) window.RealScanPolish.successCheck(opts.mode === "pdf" ? "Revisión completada: generando el PDF" : "Revisión completada");
       closeModal("outputReviewModal");
@@ -140,16 +163,83 @@
   /* Extras v3.13.0: WhatsApp (9.3), aprobación del cliente (10.3) y hoja de
      fotos tamaño pasaporte (9.4). */
   let reviewMode = null;
+  /* E3: dúplex en la revisión. Solo para tarjeta con impresión frente/reverso
+     en hojas separadas: con colocación verificada descarga frente, guía la
+     reinserción y descarga el reverso; sin ella abre el asistente (nunca
+     adivina la colocación). */
+  function updateDuplexButton() {
+    const btn = $("btnReviewDuplex");
+    if (!btn) return;
+    const isCard = (typeof getActiveSpec === "function" ? getActiveSpec() : {}).id === "card" || state.format === "card";
+    const duplexMode = state.printMode === "both_separate";
+    btn.classList.toggle("hidden", !(isCard && duplexMode));
+    if (isCard && duplexMode) {
+      let guide = null;
+      try { guide = window.RealScanDuplex?.getGuide?.(); } catch (e) {}
+      btn.textContent = guide ? "Dúplex: frente y reverso en una hoja" : "Guía dúplex";
+    }
+  }
+  async function runDuplexFromReview() {
+    closeModal("outputReviewModal");
+    try {
+      await window.RealScanLazy?.ensureDuplex?.();
+      const guide = window.RealScanDuplex?.getGuide?.();
+      if (guide) await window.RealScanDuplex.printJobGuided();
+      else window.RealScanDuplex?.open?.();
+    } catch (e) {
+      if (typeof showToast === "function") showToast("No se pudo abrir la guía dúplex.", "error");
+    }
+  }
+  /* C6: pantalla para el cliente: solo su trabajo y su hoja, sin aprobar, sin
+     repetir, sin navegar a ajustes ni a otros trabajos. */
+  function showClientScreen() {
+    let overlay = $("clientScreen");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "clientScreen";
+      overlay.className = "hidden fixed inset-0 z-[70] bg-slate-950 flex flex-col items-center justify-center p-4 gap-4";
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-modal", "true");
+      overlay.innerHTML = '<p class="text-white/80 text-sm font-semibold">Tu trabajo, listo para recoger</p><div id="clientScreenSheet" class="client-approval-sheet w-full max-w-2xl max-h-[70vh] overflow-hidden flex items-start justify-center"></div><p id="clientScreenMeta" class="text-white/70 text-sm"></p><button type="button" id="btnClientScreenClose" class="px-6 py-4 rounded-2xl bg-white text-slate-900 text-base font-black min-h-[56px]">Cerrar</button>';
+      document.body.append(overlay);
+      overlay.querySelector("#btnClientScreenClose").addEventListener("click", () => closeModal("clientScreen"));
+    }
+    const holder = overlay.querySelector("#clientScreenSheet");
+    holder.replaceChildren();
+    const sheets = Array.from(document.querySelectorAll("#printSheetPreview svg"));
+    const sheet = document.querySelector(".a4-sheet");
+    if (sheets.length || sheet) {
+      for (const original of (sheets.length ? sheets : [sheet])) {
+        const figure = document.createElement("figure"), clone = original.cloneNode(true);
+        clone.removeAttribute("id");
+        clone.querySelectorAll("[id]").forEach(node => node.removeAttribute("id"));
+        figure.append(clone);
+        holder.append(figure);
+      }
+    } else if (state.images.front && state.images.front.processedDataUrl) {
+      const img = document.createElement("img");
+      img.src = state.images.front.processedDataUrl;
+      img.alt = "Trabajo del cliente";
+      img.className = "max-h-[70vh] w-auto rounded-xl";
+      holder.append(img);
+    }
+    const spec = (typeof getActiveSpec === "function") ? getActiveSpec() : null;
+    overlay.querySelector("#clientScreenMeta").textContent = (spec ? spec.shortName + " · " : "") + "Escala real 1:1 · Imprimir al 100 %";
+    openModal("clientScreen");
+  }
+  window.showClientScreen = showClientScreen;
   function wireReviewExtras(modal) {
     modal.querySelector("#btnReviewWhatsapp").addEventListener("click", () => {
       closeModal("outputReviewModal");
       if (window.RealScanShare) window.RealScanShare.shareCurrentJob();
     });
     modal.querySelector("#btnReviewClient").addEventListener("click", showClientApproval);
+    modal.querySelector("#btnReviewClientScreen").addEventListener("click", () => { closeModal("outputReviewModal"); showClientScreen(); });
+    modal.querySelector("#btnReviewDuplex").addEventListener("click", runDuplexFromReview);
     modal.querySelectorAll("[data-passport-count]").forEach(btn => {
       btn.addEventListener("click", () => {
         preparePassportSheet(parseInt(btn.getAttribute("data-passport-count"), 10) || 6);
-        render($("printReview"), false, reviewMode);
+        render($("printReview"), reviewMode);
       });
     });
   }
@@ -224,7 +314,4 @@
   }
   window.preparePassportSheet = preparePassportSheet;
   window.showClientApproval = showClientApproval;
-  document.addEventListener("DOMContentLoaded", () => {
-    for (const id of ["checkDeliverPdfSheet", "checkDeliverFrontJpg", "checkDeliverBackJpg", "selectDeliveryFormat", "selectDeliveryMaxPx", "selectDeliveryMaxBytes"]) $(id)?.addEventListener("change", window.updateDeliveryReview);
-  });
 })();
