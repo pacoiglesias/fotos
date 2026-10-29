@@ -20,7 +20,25 @@
   if(placement.name){const profile=document.createElement('p');profile.className='duplex-placement-profile';profile.textContent='Tu prueba: '+placement.name+' · '+(PAPER_SPECS[placement.paper]?.shortName||placement.paper);container.append(profile);}
  }
  function placement(){const face=$('duplexFace'),edge=$('duplexEdge'),flip=$('duplexFlip');return {face:face?.value||'',edge:edge?.value||'',flip:flip?.value||'book'};}
- function invalidate(){ $('duplexVerified').checked=false;firstPass=null;$('duplexJobReinserted').checked=false;update(); }
+ /* 3.33.0 (O9): con colocación verificada, la guía se recoge como ayuda
+    colapsable y la acción del trabajo queda fija al pie; sin verificar, los
+    pasos se muestran desplegados para hacer la prueba. Solo presentación:
+    los botones y sus manejadores no cambian. */
+ function syncGuideCollapse(){
+  const modal=$('duplexAssistantModal');if(!modal)return;
+  const dialog=modal.querySelector('.duplex-dialog');if(!dialog)return;
+  const steps=[...dialog.querySelectorAll('.duplex-step')];if(!steps.length)return;
+  const wrap=dialog.querySelector('#duplexGuideSteps');
+  const verified=!!guide()&&!!$('duplexVerified')?.checked;
+  if(verified&&!wrap){
+   const details=document.createElement('details');details.id='duplexGuideSteps';
+   const sum=document.createElement('summary');sum.textContent='Guía de colocación verificada · Ver los pasos';
+   details.append(sum);steps[0].before(details);steps.forEach(s=>details.append(s));
+  }else if(!verified&&wrap){
+   steps.forEach(s=>wrap.before(s));wrap.remove();
+  }
+ }
+ function invalidate(){ $('duplexVerified').checked=false;firstPass=null;$('duplexJobReinserted').checked=false;update();syncGuideCollapse(); }
  function update(){
   const p=placement(),complete=['up','down'].includes(p.face)&&['top','bottom'].includes(p.edge);
   $('duplexVerified').disabled=!complete;$('duplexSave').disabled=!complete||!$('duplexVerified').checked;
@@ -30,6 +48,7 @@
   $('duplexSheet').dataset.flip=p.flip;
   $('duplexInstruction').textContent=p.flip==='book'?'Comprueba A y B leyéndolas como un libro.':'Comprueba A y B leyéndolas como un calendario.';
   renderGuide($('duplexPlacementPreview'),complete?p:null);
+  syncGuideCollapse();
  }
  function refresh(){const select=$('duplexProfiles');select.replaceChildren();const empty=document.createElement('option');empty.value='';empty.textContent='Nueva prueba de una hoja';select.append(empty);for(const p of profiles){const o=document.createElement('option');o.value=p.name;o.textContent=p.name+(structured(p)?' · probada':' · repetir prueba');select.append(o);}}
  function load(){const p=profiles.find(p=>p.name===$('duplexProfiles').value);activeName=p?.name||'';firstPass=null;$('duplexJobReinserted').checked=false;
@@ -51,8 +70,15 @@
    $('duplexSave').onclick=()=>{
     if(!unlocked())return;const p=placement();if(!$('duplexVerified').checked||!$('duplexName').value.trim()||!p.face||!p.edge){$('duplexStatus').textContent='Elige cara y borde, escribe el nombre y comprueba ambas caras antes de guardar.';return;}
     const profile={name:$('duplexName').value.trim(),notes:$('duplexNotes').value.trim(),...p,paper:paperKey(),verifiedAt:Date.now()};const next=[...profiles.filter(p=>p.name!==profile.name),profile].slice(-20);
-    try{localStorage.setItem(key,JSON.stringify(next));localStorage.setItem(activeKey,profile.name);profiles=next;activeName=profile.name;refresh();$('duplexProfiles').value=profile.name;$('duplexStatus').textContent='Colocación guardada. La próxima vez verás el dibujo de esta impresora, bandeja y papel.';document.dispatchEvent(new Event('realscan:duplex-profile-updated'));}catch{$('duplexStatus').textContent='No se pudo guardar en este navegador. Conserva cara y borde por escrito; la prueba no se guardó.';}
+    try{localStorage.setItem(key,JSON.stringify(next));localStorage.setItem(activeKey,profile.name);profiles=next;activeName=profile.name;refresh();$('duplexProfiles').value=profile.name;$('duplexStatus').textContent='Colocación guardada. La próxima vez verás el dibujo de esta impresora, bandeja y papel.';document.dispatchEvent(new Event('realscan:duplex-profile-updated'));syncGuideCollapse();}catch{$('duplexStatus').textContent='No se pudo guardar en este navegador. Conserva cara y borde por escrito; la prueba no se guardó.';}
    };
+   /* 3.33.0 (O9): la acción del trabajo dúplex sale del <details> de ayuda a
+      una barra fija al pie del diálogo; mover los nodos conserva los
+      manejadores y el estado de los botones. */
+   const jobBar=document.createElement('div');jobBar.id='duplexJobBar';
+   const jobHint=document.createElement('p');jobHint.className='rs-duplex-job-hint';jobHint.textContent='Verifica la colocación para activar el dúplex del trabajo.';
+   jobBar.append(jobHint,$('duplexJobA'),$('duplexJobReinserted').closest('label'),$('duplexJobB'));
+   modal.querySelector('.duplex-dialog').append(jobBar);
   }
   refresh();$('duplexProfiles').value=activeName;load();openModal('duplexAssistantModal');
  }

@@ -145,7 +145,7 @@
  body.rs-next.rs-counter330 #flowPrimary:disabled{background:var(--work-bg)!important;color:var(--work-muted)!important;border:1px solid var(--work-line)!important;box-shadow:none!important;opacity:1}
  body.rs-next.rs-counter330 #flowRepeat{font-size:11px;min-height:30px;color:var(--work-muted);text-decoration:none}
  body.rs-next.rs-counter330 #flowRepeat:hover{text-decoration:underline;color:var(--work-accent)}
- body.rs-next.rs-counter330 :is(#floatingHudBar,#operatorJourney,#mobileWizardStepper,#studioChecks,.studio-actions,#mobileStepper,#counterStart){display:none!important}
+ body.rs-next.rs-counter330 :is(#floatingHudBar,#operatorJourney,#mobileWizardStepper,#studioChecks,.studio-actions,#mobileStepper){display:none!important}
  body.rs-next.rs-counter330 #operatorNotices:not([hidden]){display:block;font-size:12px;line-height:1.6;margin:10px 0}
  body.rs-next.rs-counter330 #workspaceDelivery [hidden],body.rs-next.rs-counter330 [hidden]{display:none!important}
  body.rs-next.rs-counter330[data-workspace-loaded=false] :is(#studioImageTray,#studioEditorTools,#sheetPreviewControls,#btnPreviewEdit,#workspaceDelivery,#annotationTools,#printVerificationPanel){display:none!important}

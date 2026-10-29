@@ -1,5 +1,9 @@
 # Avances de RealScan Pro
 
+## 3.33.0 — Rediseño del mostrador: más grande, más claro, menos scroll
+
+Rediseño completo (25 ítems): suelo tipográfico 12/13 px, barra de dos niveles en teléfono, enlaces legibles en oscuro, Paperless con jerarquía nueva, miniaturas grandes con estado, pantalla cliente solo con hoja y Cerrar, par INE apilado, sin truncados, crédito único en el pie, lenguaje del modo rápido en mostrador y diálogos, ilustraciones de vacío sin red, iconos de línea unificados, semáforo gráfico siempre visible, vista previa a ancho completo con zoom a toque, barras de acción fijas con avisos encima, mostrador por secciones colapsadas, herramientas directas fuera de acordeones, lenguaje llano, cola con jerarquía, una sola entrada por acción, horizontal compacto, aviso de perfil en semáforo y dock, dúplex de 1 toque con colocación verificada y nota del historial en llano. Sin cambios de lógica de negocio. Trabajo en curso local, sin publicar: la publicación la confirma el revisor con push y deploy tras revisar este commit.
+
 ## 3.32.0 — Entrega única, mostrador completo y escaneo más inteligente
 
 Diálogo único de entrega (PDF + caras JPG + QR + WhatsApp + Paperless, con "Confirmar y archivar" en un toque y reanudación automática tras guardar el token), par INE manual con consejo de fondo oscuro, sellos junto a la hoja, semáforo del mostrador, recuperación por código/QR, aviso de listo para recoger, respaldo automático a Paperless, impresión en lote, avisos de calidad y mismo documento antes de imprimir, bordes de tarjeta en la vista ampliada, Visa USA de un toque y dúplex guiado desde la revisión. Carga perezosa de dúplex, calibración y enderezado. Trabajo en curso local, sin publicar: la publicación la confirma el revisor con push y deploy tras revisar este commit.

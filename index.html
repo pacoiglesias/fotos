@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="application-version" content="3.32.0">
+  <meta name="application-version" content="3.33.0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>RealScan — Fotos, documentos y entrega digital</title>
   <meta name="description" content="RealScan Pro: estudio fotográfico local para escanear, recortar e imprimir fotos y documentos a escala real 1:1, con entrega digital, respaldo cifrado y prueba de calibración." />
@@ -73,6 +73,7 @@
   <link rel="stylesheet" href="css/counter-desk.css">
 <link rel="stylesheet" href="css/counter-workspace.css">
 <link rel="stylesheet" href="css/quick-mode.css">
+<link rel="stylesheet" href="css/redesign-333.css">
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen antialiased selection:bg-indigo-100 dark:selection:bg-indigo-900 selection:text-indigo-700 dark:selection:text-indigo-300 transition-colors duration-200">
 
@@ -89,12 +90,9 @@
           <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">RealScan</h1>
             <span class="text-[9px] font-semibold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800">Pro</span>
-            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.32.0</span>
+            <span id="appVersionHeader" class="text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">v3.33.0</span>
           </div>
           <p class="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium truncate flex items-center gap-1 mt-0.5">
-            <span class="hidden sm:inline">Desarrollado por</span>
-            <strong class="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/70 px-1 py-0.2 rounded border border-indigo-200/60 dark:border-indigo-800/60">Paco Iglesias</strong>
-            <span class="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
             <span class="text-[9.5px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1 py-0.2 rounded border border-emerald-200/60 dark:border-emerald-800/60 hidden sm:inline">Escala 1:1</span>
           </p>
         </div>
@@ -961,7 +959,7 @@
             <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
             </svg>
-            <span>📋 Pegar</span>
+            <span>Pegar</span>
           </button>
         </div>
 
@@ -991,7 +989,7 @@
               </button><button type="button" data-warp="front" class="warp-btn px-2 py-0.5 rounded border border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/80 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 font-bold text-[10px] text-indigo-800 dark:text-indigo-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
                 <span>📐</span><span>Enderezar 4 Esquinas</span>
               </button><button type="button" data-undo="front" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button></div>
-          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>📐 Ajuste y zoom</span><span id="accHintFitFront" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+          <div class="slot-direct-tools"><button type="button" id="btnToggleCropFront" data-crop="front" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button></div><details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>📐 Ajuste y zoom</span><span id="accHintFitFront" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
             <div class="px-3 pb-3 pt-1 flex flex-col gap-2.5">
               <div class="flex flex-wrap items-center gap-1.5"><span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span><button type="button" id="btnFitModeFront" data-fit-mode="front:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa dentro del marco sin cortar nada (ideal para imágenes grandes)">📐 Encajar Todo</button><button type="button" id="btnCoverModeFront" data-fit-mode="front:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button><button type="button" data-autofit="front" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Centrar y encajar la imagen completa sin recortar">Centrar y encajar</button></div>
               <div class="flex flex-wrap items-center gap-1.5"><div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
@@ -1018,7 +1016,7 @@
               </div></div>
           </details>
           <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>🧰 Herramientas</span><span id="accHintToolsFront" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
-            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5"><button type="button" id="btnToggleCropFront" data-crop="front" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button><button type="button" id="btnToggleMmGridFront" data-grid="front" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Superponer cuadrícula milimétrica en pantalla para verificar medidas">📏 Regla mm</button><button type="button" data-guide="front" class="guide-btn px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 transition-colors" title="Guía facial OACI para pasaporte">👤 OACI</button><button type="button" data-autolight="front" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5"><button type="button" id="btnToggleMmGridFront" data-grid="front" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Superponer cuadrícula milimétrica en pantalla para verificar medidas">📏 Regla mm</button><button type="button" data-guide="front" class="guide-btn px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/70 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 transition-colors" title="Guía facial OACI para pasaporte">👤 OACI</button><button type="button" data-autolight="front" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
                 <span>🪄</span><span>Auto-Luz</span>
               </button><button type="button" data-swap="front:back" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con el Reverso">
                 <span>⇄</span><span>Intercambiar con Reverso</span>
@@ -1060,7 +1058,7 @@
             <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
             </svg>
-            <span>📋 Pegar</span>
+            <span>Pegar</span>
           </button>
         </div>
 
@@ -1090,7 +1088,7 @@
               </button><button type="button" data-warp="back" class="warp-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar reverso tomado en ángulo">
                 <span>📐</span><span>Enderezar 4 Esquinas</span>
               </button><button type="button" data-undo="back" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button></div>
-          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>📐 Ajuste y zoom</span><span id="accHintFitBack" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+          <div class="slot-direct-tools"><button type="button" id="btnToggleCropBack" data-crop="back" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button></div><details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>📐 Ajuste y zoom</span><span id="accHintFitBack" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
             <div class="px-3 pb-3 pt-1 flex flex-col gap-2.5">
               <div class="flex flex-wrap items-center gap-1.5"><span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span><button type="button" id="btnFitModeBack" data-fit-mode="back:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa dentro del marco sin cortar nada (ideal para imágenes grandes)">📐 Encajar Todo</button><button type="button" id="btnCoverModeBack" data-fit-mode="back:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button><button type="button" data-autofit="back" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition-colors" title="Centrar y encajar la imagen completa sin recortar">Centrar y encajar</button></div>
               <div class="flex flex-wrap items-center gap-1.5"><div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
@@ -1117,7 +1115,7 @@
               </div></div>
           </details>
           <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>🧰 Herramientas</span><span id="accHintToolsBack" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
-            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5"><button type="button" id="btnToggleCropBack" data-crop="back" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button><button type="button" id="btnToggleMmGridBack" data-grid="back" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Superponer cuadrícula milimétrica en pantalla para verificar medidas">📏 Regla mm</button><button type="button" data-guide="back" class="guide-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/70 text-[10px] font-semibold text-amber-800 dark:text-amber-300 transition-colors" title="Guía facial OACI para pasaporte">👤 OACI</button><button type="button" data-autolight="back" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5"><button type="button" id="btnToggleMmGridBack" data-grid="back" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors" title="Superponer cuadrícula milimétrica en pantalla para verificar medidas">📏 Regla mm</button><button type="button" data-guide="back" class="guide-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/70 text-[10px] font-semibold text-amber-800 dark:text-amber-300 transition-colors" title="Guía facial OACI para pasaporte">👤 OACI</button><button type="button" data-autolight="back" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
                 <span>🪄</span><span>Auto-Luz</span>
               </button><button type="button" data-swap="back:front" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con el Frente">
                 <span>⇄</span><span>Intercambiar con Frente</span>
@@ -1151,7 +1149,7 @@
           </button>
           <button type="button" data-paste="page3" class="paste-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-900 dark:text-purple-200 font-medium text-xs active:scale-95 transition-all" title="Copia la imagen y pégala aquí">
             <svg class="w-4 h-4 text-purple-700 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-            <span>📋 Pegar</span>
+            <span>Pegar</span>
           </button>
         </div>
 
@@ -1179,7 +1177,7 @@
           <div class="flex flex-wrap items-center gap-1.5 px-0.5"><button type="button" data-rotate="page3" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200"><span>🔄</span><span>Rotar</span></button><button type="button" data-warp="page3" class="warp-btn px-2 py-0.5 rounded border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/80 hover:bg-purple-100 dark:hover:bg-purple-900/80 font-bold text-[10px] text-purple-800 dark:text-purple-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
                 <span>📐</span><span>Enderezar 4 Esquinas</span>
               </button><button type="button" data-undo="page3" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button></div>
-          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>📐 Ajuste y zoom</span><span id="accHintFitPage3" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+          <div class="slot-direct-tools"><button type="button" id="btnToggleCropPage3" data-crop="page3" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-800 text-purple-800 dark:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button></div><details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>📐 Ajuste y zoom</span><span id="accHintFitPage3" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
             <div class="px-3 pb-3 pt-1 flex flex-col gap-2.5">
               <div class="flex flex-wrap items-center gap-1.5"><span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span><button type="button" id="btnFitModePage3" data-fit-mode="page3:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa sin cortar nada">📐 Encajar Todo</button><button type="button" id="btnCoverModePage3" data-fit-mode="page3:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button><button type="button" data-autofit="page3" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">Centrar y encajar</button></div>
               <div class="flex flex-wrap items-center gap-1.5"><div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
@@ -1201,7 +1199,7 @@
               </div></div>
           </details>
           <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>🧰 Herramientas</span><span id="accHintToolsPage3" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
-            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5"><button type="button" id="btnToggleCropPage3" data-crop="page3" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-800 text-purple-800 dark:text-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button><button type="button" id="btnToggleMmGridPage3" data-grid="page3" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200">📏 Regla mm</button><button type="button" data-guide="page3" class="guide-btn px-2 py-0.5 rounded border border-purple-300 dark:border-purple-800 bg-white dark:bg-slate-800 hover:bg-purple-50 text-[10px] font-semibold text-purple-800 dark:text-purple-300">👤 OACI</button><button type="button" data-autolight="page3" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5"><button type="button" id="btnToggleMmGridPage3" data-grid="page3" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200">📏 Regla mm</button><button type="button" data-guide="page3" class="guide-btn px-2 py-0.5 rounded border border-purple-300 dark:border-purple-800 bg-white dark:bg-slate-800 hover:bg-purple-50 text-[10px] font-semibold text-purple-800 dark:text-purple-300">👤 OACI</button><button type="button" data-autolight="page3" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
                 <span>🪄</span><span>Auto-Luz</span>
               </button><button type="button" data-swap="page3:page4" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con la Página 4">
                 <span>⇄</span><span>Intercambiar con Pág 4</span>
@@ -1235,7 +1233,7 @@
           </button>
           <button type="button" data-paste="page4" class="paste-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-teal-300 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900/60 text-teal-900 dark:text-teal-200 font-medium text-xs active:scale-95 transition-all" title="Copia la imagen y pégala aquí">
             <svg class="w-4 h-4 text-teal-700 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-            <span>📋 Pegar</span>
+            <span>Pegar</span>
           </button>
         </div>
 
@@ -1263,7 +1261,7 @@
           <div class="flex flex-wrap items-center gap-1.5 px-0.5"><button type="button" data-rotate="page4" class="rotate-btn inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200"><span>🔄</span><span>Rotar</span></button><button type="button" data-warp="page4" class="warp-btn px-2 py-0.5 rounded border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/80 hover:bg-teal-100 dark:hover:bg-teal-900/80 font-bold text-[10px] text-teal-800 dark:text-teal-200 transition-colors flex items-center gap-1" title="Corregir perspectiva y enderezar documento tomado en ángulo">
                 <span>📐</span><span>Enderezar 4 Esquinas</span>
               </button><button type="button" data-undo="page4" class="undo-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 font-bold text-slate-700 dark:text-slate-200 text-[10px]" title="Deshacer último cambio">↩️ Deshacer</button></div>
-          <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>📐 Ajuste y zoom</span><span id="accHintFitPage4" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
+          <div class="slot-direct-tools"><button type="button" id="btnToggleCropPage4" data-crop="page4" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-teal-300 dark:border-teal-700 bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-200 hover:bg-teal-50 dark:hover:bg-teal-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button></div><details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>📐 Ajuste y zoom</span><span id="accHintFitPage4" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
             <div class="px-3 pb-3 pt-1 flex flex-col gap-2.5">
               <div class="flex flex-wrap items-center gap-1.5"><span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Ajuste:</span><button type="button" id="btnFitModePage4" data-fit-mode="page4:fit" class="fit-mode-btn px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Ajustar imagen completa sin cortar nada">📐 Encajar Todo</button><button type="button" id="btnCoverModePage4" data-fit-mode="page4:cover" class="fit-mode-btn is-active px-2 py-0.5 rounded text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-colors" title="Llena el marco manteniendo la proporción; puede recortar los bordes. Revisa la vista previa.">🔲 Rellenar y recortar</button><button type="button" data-autofit="page4" class="autofit-btn px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">Centrar y encajar</button></div>
               <div class="flex flex-wrap items-center gap-1.5"><div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
@@ -1285,7 +1283,7 @@
               </div></div>
           </details>
           <details class="slot-acc rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 overflow-hidden"><summary class="flex items-center gap-2 min-h-[44px] px-3 py-2 cursor-pointer font-bold text-[13px] text-slate-800 dark:text-slate-100 select-none"><span>🧰 Herramientas</span><span id="accHintToolsPage4" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300"></span><span class="slot-acc-chevron ml-auto text-slate-400" aria-hidden="true">▾</span></summary>
-            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5"><button type="button" id="btnToggleCropPage4" data-crop="page4" class="crop-trigger-btn px-2 py-0.5 rounded text-[10px] font-bold border border-teal-300 dark:border-teal-700 bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-200 hover:bg-teal-50 dark:hover:bg-teal-950/70 transition-colors" title="Recortar área específica de la imagen">✂️ Recorte</button><button type="button" id="btnToggleMmGridPage4" data-grid="page4" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200">📏 Regla mm</button><button type="button" data-guide="page4" class="guide-btn px-2 py-0.5 rounded border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-800 hover:bg-teal-50 text-[10px] font-semibold text-teal-800 dark:text-teal-300">👤 OACI</button><button type="button" data-autolight="page4" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
+            <div class="px-3 pb-3 pt-1 flex flex-wrap items-center gap-1.5"><button type="button" id="btnToggleMmGridPage4" data-grid="page4" class="grid-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-[10px] font-semibold text-slate-700 dark:text-slate-200">📏 Regla mm</button><button type="button" data-guide="page4" class="guide-btn px-2 py-0.5 rounded border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-800 hover:bg-teal-50 text-[10px] font-semibold text-teal-800 dark:text-teal-300">👤 OACI</button><button type="button" data-autolight="page4" class="autolight-btn px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900/80 font-bold text-[10px] text-amber-800 dark:text-amber-200 transition-colors flex items-center gap-1" title="Compensar sombras o reflejos de flash automáticamente">
                 <span>🪄</span><span>Auto-Luz</span>
               </button><button type="button" data-swap="page4:page3" class="swap-btn px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-[10px] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1" title="Intercambiar con la Página 3">
                 <span>⇄</span><span>Intercambiar con Pág 3</span>
@@ -1340,7 +1338,7 @@
       <!-- Navegación Móvil Paso 3 -> 2 -->
       <div class="lg:hidden pb-1">
         <button type="button" class="btn-mob-nav px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all active:scale-95" data-mob-nav-step="2">
-          <span>◀ Volver a Cargar / Editar Ranuras</span>
+          <span>◀ Cambiar fotos / Editar frente y reverso</span>
         </button>
       </div>
 
@@ -1400,7 +1398,7 @@
             </select>
           </div>
           <button type="button" id="btnOpenFormatRequirements" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
-            <span>📋</span><span>Ver Guía del formato</span>
+            <span>Ver Guía del formato</span>
           </button>
         </div>
 
@@ -1804,7 +1802,7 @@
     <footer class="text-center text-xs text-slate-500 space-y-2.5 py-6 border-t border-slate-200 dark:border-slate-800 mt-8">
       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.32.0</span>
+        <span id="appVersionFooter" class="font-bold text-indigo-600 dark:text-indigo-400">RealScan Pro v3.33.0</span>
         <span class="text-slate-300 dark:text-slate-600">•</span>
         <span class="font-medium">Desarrollado por <strong class="font-bold text-slate-900 dark:text-white">Paco Iglesias</strong></span>
       </div>
@@ -1899,7 +1897,7 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
         </div>
         <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Acceso al Sistema</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">RealScan Pro <span class="font-bold text-indigo-600 dark:text-indigo-400 font-mono">v3.32.0</span> • Impresión 1:1</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">RealScan Pro <span class="font-bold text-indigo-600 dark:text-indigo-400 font-mono">v3.33.0</span> • Impresión 1:1</p>
       </div>
 
       <form id="loginForm" class="space-y-3.5" autocomplete="on">
@@ -1989,7 +1987,7 @@
             ⚙️
           </div>
           <div>
-            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.32.0</span></h3>
+            <h3 id="settingsModalTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ajustes y Seguridad <span id="labelActiveVersionSettings" class="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold ml-1.5">v3.33.0</span></h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400">Control de acceso y bitácora de auditoría</p>
           </div>
         </div>
@@ -1999,7 +1997,7 @@
       <!-- Navegación de pestañas de ajustes -->
       <div class="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl gap-1 shrink-0 flex-wrap">
         <button type="button" id="tabBtnCreds" class="settings-tab-btn is-active flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">👥 Usuarios</button>
-        <button type="button" id="tabBtnLog" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">📋 Auditoría</button>
+        <button type="button" id="tabBtnLog" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">Auditoría</button>
         <button type="button" id="tabBtnStorage" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">💾 Almacenamiento</button>
         <button type="button" id="tabBtnAudio" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">🔊 Sonido</button>
         <button type="button" id="tabBtnCloud" class="settings-tab-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all">🌐 Nube</button>
@@ -2318,7 +2316,7 @@
         <input
           type="text"
           id="inputSearchHistory"
-          placeholder="🔍 Buscar por nombre o fecha (ej. INE, Licencia, 2026)..."
+          placeholder="Buscar por nombre o fecha"
           class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs"
         />
       </div>
@@ -2540,7 +2538,7 @@
             <p class="text-slate-600 dark:text-slate-300">Pide al cliente que apunte la cámara de su celular al código QR para abrir el portal de carga sin instalar aplicaciones.</p>
             <div class="flex flex-wrap items-center gap-2 pt-1">
               <button type="button" id="btnCopyReceiveUrl" class="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs hover:bg-slate-100 transition-colors flex items-center gap-1">
-                <span>📋</span><span>Copiar Enlace</span>
+                <span>Copiar Enlace</span>
               </button>
               <button type="button" id="btnTestOpenReceiveUrl" class="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs hover:bg-slate-100 transition-colors flex items-center gap-1">
                 <span>↗️</span><span>Abrir en nueva pestaña</span>
@@ -2588,7 +2586,7 @@
     <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
         <div class="flex items-center gap-2">
-          <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-lg">📋</div>
+          <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg></div>
           <div>
             <h3 id="formatReqTitle" class="font-bold text-base text-slate-900 dark:text-white leading-tight">Ficha Oficial de Trámite</h3>
             <p id="formatReqSubtitle" class="text-[11px] text-slate-500 dark:text-slate-400">Comprueba los requisitos vigentes del trámite</p>
@@ -2749,5 +2747,5 @@
 <script defer src="js/desk-presets.js"></script>
 <script defer src="js/image-finish-ui.js"></script><script defer src="js/workspace-polish.js"></script>
 
-<script defer src="js/ine-pair-detect.js"></script><script defer src="js/quick-mode.js"></script></body>
+<script defer src="js/ine-pair-detect.js"></script><script defer src="js/quick-mode.js"></script><script defer src="js/redesign-333.js"></script></body>
 </html>

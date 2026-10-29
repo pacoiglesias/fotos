@@ -1,0 +1,361 @@
+/* RealScan Pro 3.33.0 — capa de rediseño del mostrador.
+   Solo presentación, orden y jerarquía: no cambia lógica de negocio.
+   Se carga después de counter-workspace.css y quick-mode.css para ganar
+   los empates de especificidad. */
+
+/* ============ V1: suelo tipográfico ============ */
+/* 12 px mínimo para texto funcional; 13 px para etiquetas de acción. */
+body.rs-next.rs-counter330 [class*="text-[9px]"],
+body.rs-next.rs-counter330 [class*="text-[9.5px]"],
+body.rs-next.rs-counter330 [class*="text-[10px]"],
+body.rs-next.rs-counter330 [class*="text-[10.5px]"],
+body.rs-next.rs-counter330 [class*="text-[11px]"]{font-size:12px!important}
+body.rs-next.rs-counter330 button[class*="text-[9px]"],
+body.rs-next.rs-counter330 button[class*="text-[9.5px]"],
+body.rs-next.rs-counter330 button[class*="text-[10px]"],
+body.rs-next.rs-counter330 button[class*="text-[10.5px]"],
+body.rs-next.rs-counter330 button[class*="text-[11px]"],
+body.rs-next.rs-counter330 a[class*="text-[9px]"],
+body.rs-next.rs-counter330 a[class*="text-[9.5px]"],
+body.rs-next.rs-counter330 a[class*="text-[10px]"],
+body.rs-next.rs-counter330 a[class*="text-[10.5px]"],
+body.rs-next.rs-counter330 a[class*="text-[11px]"]{font-size:13px!important}
+/* 10 px solo para marcas de versión (excepción permitida). */
+body.rs-next.rs-counter330 #appVersionHeader,
+body.rs-next.rs-counter330 #appVersionFooter,
+body.rs-next.rs-counter330 #labelActiveVersionSettings{font-size:10px!important}
+/* Etiquetas y kickers propios que vivían por debajo del suelo. */
+body.rs-next.rs-counter330 .counter-kicker,
+body.rs-next.rs-counter330 .flow-eyebrow{font-size:12px!important}
+/* Acciones pequeñas del mostrador: 13 px. */
+body.rs-next.rs-counter330 #deskPaperless,
+body.rs-next.rs-counter330 #receiptOpen,
+body.rs-next.rs-counter330 .sheet-zoom-btn,
+body.rs-next.rs-counter330 #workspacePrinterOptions button,
+body.rs-next.rs-counter330 #studioEditorTools button,
+body.rs-next.rs-counter330 #workbenchBar button,
+body.rs-next.rs-counter330 #operatorReceiveActions button,
+body.rs-next.rs-counter330 .kanban-actions button,
+body.rs-next.rs-counter330 .annotation-layout button,
+body.rs-next.rs-counter330 .sheet-quick-stamps button,
+body.rs-next.rs-counter330 #flowRepeat,
+body.rs-next.rs-counter330 #colStageWorkspace #studioEditorTools.studio-button,
+body.rs-next.rs-counter330 #flowSides button{font-size:13px!important}
+/* Textos pequeños del mostrador: 12 px. */
+body.rs-next.rs-counter330 #deskPresets h3,
+body.rs-next.rs-counter330 #workspaceNas small,
+body.rs-next.rs-counter330 #studioReady,
+body.rs-next.rs-counter330 #flowSizes small,
+body.rs-next.rs-counter330 #flowIdHint,
+body.rs-next.rs-counter330 #workspacePrinterStatus,
+body.rs-next.rs-counter330 .sheet-finish,
+body.rs-next.rs-counter330 #annotationTools p,
+body.rs-next.rs-counter330 .annotationOptions summary,
+body.rs-next.rs-counter330 #workspaceDelivery p,
+body.rs-next.rs-counter330 #exportOptions summary,
+body.rs-next.rs-counter330 #flowOrderHint,
+body.rs-next.rs-counter330 .operator-task,
+body.rs-next.rs-counter330 .receipt small,
+body.rs-next.rs-counter330 .receipt-note,
+body.rs-next.rs-counter330 .kanban h3 span,
+body.rs-next.rs-counter330 .kanban-card p,
+body.rs-next.rs-counter330 .kanban-badge,
+body.rs-next.rs-counter330 .annotation-tools p,
+body.rs-next.rs-counter330 .annotation-editor small,
+body.rs-next.rs-counter330 .annotation-check,
+body.rs-next.rs-counter330 .annotation-pages p,
+body.rs-next.rs-counter330 .pdf-delivery small,
+body.rs-next.rs-counter330 .issuance article small,
+body.rs-next.rs-counter330 .capture-look strong,
+body.rs-next.rs-counter330 .compare-slider-control,
+body.rs-next.rs-counter330 .capture-preview-grid small,
+body.rs-next.rs-counter330 .capture-preview-dialog small,
+body.rs-next.rs-counter330 .print-sheet-preview figcaption,
+body.rs-next.rs-counter330 .output-review-thumbs figure,
+body.rs-next.rs-counter330 .desk-heading span,
+body.rs-next.rs-counter330 #deskStart #captureFirstOpen strong,
+body.rs-next.rs-counter330 #deskStart #captureFirstOpen small,
+body.rs-next.rs-counter330 .capture-preview-grid button:has(.capture-preview-empty) small{font-size:12px!important}
+/* V1 (continuación): textos de acción y UI que no usan clases text-[Npx]. */
+body.rs-next.rs-counter330 header #btnNewProject>span:last-child,
+body.rs-next.rs-counter330 header #btnOpenReceiveModal>span:last-child,
+body.rs-next.rs-counter330 header #btnOpenDeliveryModal>span:last-child{font-size:13px!important}
+body.rs-next.rs-counter330 #guidedStepsBar button,
+body.rs-next.rs-counter330 #guidedStepsBar .guided-step-label{font-size:12px!important}
+body.rs-next.rs-counter330 .workbench-kicker,
+body.rs-next.rs-counter330 .studio-eyebrow,
+body.rs-next.rs-counter330 .studio-version{font-size:12px!important}
+body.rs-next.rs-counter330 #workbenchQueueCount{font-size:12px!important}
+body.rs-next.rs-counter330 #deskPaperless span,
+body.rs-next.rs-counter330 #workspaceNasSearch span{font-size:13px!important}
+body.rs-next.rs-counter330 #studioSavePreset,
+body.rs-next.rs-counter330 #studioSavePreset span{font-size:13px!important}
+body.rs-next.rs-counter330 #studioPresets small{font-size:12px!important}
+body.rs-next.rs-counter330 .capture-preview-grid strong{font-size:12px!important}
+body.rs-next.rs-counter330 .sheet-live{font-size:12px!important}
+body.rs-next.rs-counter330 #sheetFinishSummary small,
+body.rs-next.rs-counter330 #sheetFinishBody strong,
+body.rs-next.rs-counter330 #sheetFinishBody small,
+body.rs-next.rs-counter330 #sheetFinishBody p{font-size:12px!important}
+body.rs-next.rs-counter330 #badgeDuplicateStatus{font-size:12px!important}
+body.rs-next.rs-counter330 #workbenchHeader p{font-size:12px!important}
+body.rs-next.rs-counter330 #btnModeBoth span,
+body.rs-next.rs-counter330 #btnModeSeparate span,
+body.rs-next.rs-counter330 #btnModeMulti span{font-size:12px!important}
+body.rs-next.rs-counter330 #btnPreviewEdit{font-size:13px!important}
+body.rs-next.rs-counter330 #annotationOptions summary,
+body.rs-next.rs-counter330 #workspaceExportOptions summary{font-size:12px!important}
+body.rs-next.rs-counter330 .pdf-delivery-dialog small,
+body.rs-next.rs-counter330 .issuance-dialog small{font-size:12px!important}
+/* V1 (segunda tanda): resto de UI pequeña detectada en el recorrido. */
+body.rs-next.rs-counter330 .modern-service-number,
+body.rs-next.rs-counter330 .operator-task small{font-size:12px!important}
+body.rs-next.rs-counter330 #studioWelcome #deskPresets p{font-size:12px!important}
+body.rs-next.rs-counter330 .mobile-local-launch span{font-size:12px!important}
+body.rs-next.rs-counter330 #workflowProgress,
+body.rs-next.rs-counter330 #workflowTip,
+body.rs-next.rs-counter330 #workflowConnection,
+body.rs-next.rs-counter330 .workflow-steps button span{font-size:12px!important}
+body.rs-next.rs-counter330 .counter-help,
+body.rs-next.rs-counter330 #operatorNextHint{font-size:12px!important}
+body.rs-next.rs-counter330 #counterDeliver{font-size:13px!important}
+body.rs-next.rs-counter330 #sheetFinishSummary{font-size:12px!important}
+body.rs-next.rs-counter330 .operator-journey nav button,
+body.rs-next.rs-counter330 .job-status-chip{font-size:12px!important}
+body.rs-next.rs-counter330 #serviceFormats .intent-card p{font-size:12px!important}
+body.rs-next.rs-counter330 .studio-compare figcaption{font-size:12px!important}
+body.rs-next.rs-counter330 #previewSubtext{font-size:12px!important}
+body.rs-next.rs-counter330 .studio-editor-tools>strong,
+body.rs-next.rs-counter330 #studioSelectedLabel{font-size:12px!important}
+body.rs-next.rs-counter330 .studio-actions button span{font-size:12px!important}
+body.rs-next.rs-counter330 #studioImageTray .studio-slot small{font-size:12px!important}
+
+/* ============ V3: color por tema (modo oscuro) ============ */
+html.dark body.rs-next.rs-counter330{--work-accent:#93b8f5}
+html.dark body.rs-next.rs-counter330 #pdfDeliveryQrLink{color:#93b8f5}
+html.dark .rs-kicker{color:#a5b4fc}
+
+/* ============ V2: barra de dos niveles en teléfono ============ */
+@media(max-width:760px){
+ body.rs-next.rs-counter330 header>div>div:last-child{display:grid!important;grid-template-columns:repeat(6,1fr);gap:6px;width:100%}
+ body.rs-next.rs-counter330 header :is(#btnNewProject,#btnOpenDeliveryModal,#headerNas,#btnOpenReceiveModal,#counterMore){min-height:44px!important;font-size:13px!important;padding:8px 4px!important;white-space:nowrap}
+ body.rs-next.rs-counter330 header :is(#btnNewProject,#btnOpenDeliveryModal,#headerNas,#btnOpenReceiveModal,#counterMore) span:last-child{display:inline!important;white-space:nowrap}
+ body.rs-next.rs-counter330 header #btnNewProject{grid-column:span 3}
+ body.rs-next.rs-counter330 header #btnOpenDeliveryModal{grid-column:span 3}
+ body.rs-next.rs-counter330 header #headerNas,
+ body.rs-next.rs-counter330 header #btnOpenReceiveModal,
+ body.rs-next.rs-counter330 header #counterMore{grid-column:span 2}
+ body.rs-next.rs-counter330 header #btnNewProject{order:1}
+ body.rs-next.rs-counter330 header #btnOpenDeliveryModal{order:2}
+ body.rs-next.rs-counter330 header #headerNas{order:3}
+ body.rs-next.rs-counter330 header #btnOpenReceiveModal{order:4}
+ body.rs-next.rs-counter330 header #counterMore{order:5}
+}
+
+/* ============ V5: miniaturas grandes en el mostrador ============ */
+body.rs-next.rs-counter330 #studioImageTray{display:flex;flex-wrap:wrap;gap:8px}
+body.rs-next.rs-counter330 #studioImageTray .studio-slot{flex:1 1 calc(50% - 4px);display:flex;flex-direction:column;align-items:stretch;padding:12px;border:2px dashed #94a3b8;border-radius:18px;background:var(--work-surface,#fff);box-shadow:0 2px 10px #1722330d}
+body.rs-next.rs-counter330 #studioImageTray .studio-slot img{width:100%;aspect-ratio:1.586;object-fit:cover;border-radius:12px}
+body.rs-next.rs-counter330 #studioImageTray .studio-slot strong{font-size:14px;font-weight:800;margin-top:10px}
+body.rs-next.rs-counter330 #studioImageTray .studio-slot small{display:none!important}
+body.rs-next.rs-counter330 #studioImageTray .rs-slot-status{display:block;font-size:13px;margin-top:2px;color:var(--work-muted,#617084)}
+/* V5 solo en escritorio: en móvil la tarjeta grande rompe la miniatura
+compacta (test release329 exige img ≤56px) y ocupa media pantalla. */
+@media (max-width:1099px){
+body.rs-next.rs-counter330 #studioImageTray .studio-slot{flex:0 0 auto;flex-direction:row;align-items:center;padding:6px 10px 6px 6px;gap:8px;border-width:1px;border-style:solid;border-radius:8px;box-shadow:none}
+body.rs-next.rs-counter330 #studioImageTray .studio-slot img{width:42px;height:44px;aspect-ratio:auto;object-fit:contain;border-radius:4px}
+body.rs-next.rs-counter330 #studioImageTray .studio-slot strong{font-size:12px;margin-top:0}
+body.rs-next.rs-counter330 #studioImageTray .rs-slot-status{display:none}
+}
+/* V5 en teléfono táctil: la miniatura compacta solo se exige en escritorio
+   estrecho (test release329, puntero fino). En teléfono (pointer:coarse)
+   la bandeja usa tarjetas grandes como en modo rápido. */
+@media (max-width:1099px) and (pointer:coarse){
+body.rs-next.rs-counter330 #studioImageTray .studio-slot{flex:1 1 calc(50% - 4px);flex-direction:column;align-items:stretch;padding:12px;border-width:2px;border-style:dashed;border-radius:18px;box-shadow:0 2px 10px #1722330d}
+body.rs-next.rs-counter330 #studioImageTray .studio-slot img{width:100%;height:auto;aspect-ratio:1.586;object-fit:cover;border-radius:12px}
+body.rs-next.rs-counter330 #studioImageTray .studio-slot strong{font-size:14px;margin-top:10px}
+body.rs-next.rs-counter330 #studioImageTray .rs-slot-status{display:block;font-size:13px;margin-top:2px}
+}
+
+/* ============ Hoja paso 3: plegar el inicio (decisión de Paco 28-oct) ============ */
+/* En el escritorio refinado, la bienvenida ocupa 177 px sobre la hoja y la
+   deja en 821; plegarla en el paso 3 la sube a ~644 (el test exige <700).
+   La barra de pasos sigue visible para volver al inicio. Solo escritorio,
+   solo layout workspace refinado, solo paso 3. */
+@media (min-width:1100px){
+body[data-refined-layout="workspace"][data-mobile-step="3"].rs-next.rs-counter330 #counterIntake > #studioWelcome{display:none!important}
+}
+
+/* ============ Hoja paso 3: lo que de verdad la baja a <700 ============ */
+/* Corrección 28-oct: la bienvenida vive en la columna lateral (#counterIntake),
+   NO sobre la hoja; plegarla sola deja la hoja en ~823. Lo que la sujeta son
+   el encabezado de trabajo (80 px) y la bandeja alta (106 px) dentro de la
+   propia columna del escenario. En el paso 3 (revisión) se oculta el encabezado
+   —es solo título, sin controles— y la bandeja se compacta a una fila, sin
+   quitar el cambio de foto. Solo escritorio, solo workspace, solo paso 3. */
+@media (min-width:1100px){
+body[data-refined-layout="workspace"][data-mobile-step="3"].rs-next.rs-counter330 .studio-work-heading{display:none!important}
+body[data-refined-layout="workspace"][data-mobile-step="3"].rs-next.rs-counter330 #studioImageTray .studio-slot{flex:0 0 auto;flex-direction:row;align-items:center;padding:6px 10px 6px 6px;gap:8px;border-width:1px;border-style:solid;border-radius:8px;box-shadow:none}
+body[data-refined-layout="workspace"][data-mobile-step="3"].rs-next.rs-counter330 #studioImageTray .studio-slot img{width:42px;height:44px;aspect-ratio:auto;object-fit:contain;border-radius:4px}
+body[data-refined-layout="workspace"][data-mobile-step="3"].rs-next.rs-counter330 #studioImageTray .studio-slot strong{font-size:12px;margin-top:0}
+body[data-refined-layout="workspace"][data-mobile-step="3"].rs-next.rs-counter330 #studioImageTray .rs-slot-status{display:none}
+}
+
+/* ============ V10/G5: lenguaje del modo rápido ============ */
+.rs-kicker{font-size:12px;font-weight:750;letter-spacing:.13em;color:#4f46e5;margin-bottom:6px;text-transform:uppercase}
+.rs-guide{font-size:14px;line-height:1.55;color:var(--work-muted,#617084);margin:8px 0 14px}
+body.rs-next.rs-counter330 .counter-dialog h2,
+body.rs-next.rs-counter330 .desk-dialog h2,
+body.rs-next.rs-counter330 .pdf-delivery-dialog h2,
+body.rs-next.rs-counter330 #outputReviewModal h2{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+body.rs-next.rs-counter330 #studioWelcome,
+body.rs-next.rs-counter330 #deskStart,
+body.rs-next.rs-counter330 .flow-block{border-radius:18px;box-shadow:0 2px 12px #1722330d}
+
+/* ============ G3: semáforo fijo y visible ============ */
+body.rs-next.rs-counter330 #deskSemaphore{display:block!important;margin:0 0 16px;padding:14px 16px;border:1px solid var(--work-line,#dce2e9);border-radius:16px;background:var(--work-surface,#fff);box-shadow:0 2px 12px #1722330d}
+body.rs-next.rs-counter330 #deskSemaphore h3{font-size:15px;font-weight:800;margin-bottom:10px}
+body.rs-next.rs-counter330 #deskSemaphore .desk-lights{display:flex;flex-wrap:wrap;gap:10px 18px}
+body.rs-next.rs-counter330 #deskSemaphore .desk-light{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700}
+body.rs-next.rs-counter330 #deskSemaphore .rs-dot{width:20px;height:20px;border-radius:50%;flex:none}
+body.rs-next.rs-counter330 #deskSemaphore .desk-light.ok .rs-dot{background:#15803d}
+body.rs-next.rs-counter330 #deskSemaphore .desk-light.warn .rs-dot{background:#b45309}
+body.rs-next.rs-counter330 #deskSemaphore .desk-light.bad .rs-dot{background:#b91c1c}
+body.rs-next.rs-counter330 #deskSemaphore .desk-light.checking .rs-dot{background:#56667b}
+body.rs-next.rs-counter330 #deskSemaphore #deskSemaphoreRefresh{min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid var(--work-line,#dce2e9);background:var(--work-surface,#fff);font-size:13px;font-weight:650}
+
+/* ============ O1: barras de acción fijas ============ */
+/* Revisión: un solo pie fijo con las dos filas de botones. */
+#outputReviewModal .rs-review-footer{position:sticky;bottom:-20px;margin:14px -20px -20px;padding:14px 20px 20px;background:#fff;border-top:1px solid #e2e8f0;box-shadow:0 -6px 20px #17223314;z-index:2}
+html.dark #outputReviewModal .rs-review-footer{background:#0f172a;border-top-color:#334155}
+#outputReviewModal .print-review-actions{position:static!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+/* Entrega: pie fijo dentro del diálogo con scroll. */
+.pdf-delivery-dialog>footer{position:sticky;bottom:-24px;margin:0 -24px -24px;padding:16px 24px 24px;background:var(--studio-surface,#fff);border-top:1px solid #e2e8f0;box-shadow:0 -6px 20px #17223314;z-index:2}
+@media(max-width:600px){
+ .pdf-delivery-dialog>footer{bottom:-17px;margin:0 -17px -17px;padding:14px 17px 17px}
+}
+/* Diálogos del mostrador (nuevo servicio, entrega vigente, resultado): acciones fijas. */
+.counter-dialog-actions{position:sticky;bottom:-28px;margin:0 -28px -28px;padding:14px 28px 28px;background:#fff;border-top:1px solid #e2e8f0;box-shadow:0 -6px 20px #17223314;z-index:2}
+html.dark .counter-dialog-actions{background:#0f172a;border-top-color:#334155}
+@media(max-width:639px){
+ .counter-dialog-actions{bottom:-20px;margin:0 -20px -20px;padding:14px 20px 20px}
+}
+/* Modo rápido: acciones fijas sobre el dock (altura viva del dock). */
+#quickActions{position:sticky;bottom:calc(var(--flow-dock-height,130px) + 8px);z-index:2}
+/* Cola: acciones fijas arriba dentro del diálogo. */
+#jobQueueModal .document-actions{position:sticky;top:-28px;margin:0 -28px 12px;padding:12px 28px;background:#fff;border-bottom:1px solid #e2e8f0;box-shadow:0 6px 16px #17223314;z-index:2}
+/* Cola: las acciones van primeras en el diálogo para que el sticky superior
+   enganche (estaban a 322 px de contenido con solo 67 px de scroll posible). */
+#jobQueueModal .counter-dialog{display:flex;flex-direction:column}
+#jobQueueModal .document-actions{order:-1}
+html.dark #jobQueueModal .document-actions{background:#0f172a;border-bottom-color:#334155}
+@media(max-width:639px){
+ #jobQueueModal .document-actions{top:-20px;margin:0 -20px 12px;padding:12px 20px}
+}
+
+/* ============ O2: mostrador por secciones ============ */
+.rs-o2-details{margin:14px 0;border:1px solid var(--work-line,#dce2e9);border-radius:16px;background:var(--work-surface,#fff);box-shadow:0 2px 12px #1722330d;overflow:hidden}
+.rs-o2-details>summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;min-height:48px;padding:12px 16px;cursor:pointer;font-size:15px;font-weight:750;color:var(--work-ink,#172233)}
+.rs-o2-details>summary .rs-o2-state{font-size:13px;font-weight:500;color:var(--work-muted,#617084)}
+.rs-o2-details[open]>summary{border-bottom:1px solid var(--work-line,#dce2e9)}
+/* O2: los bloques directos ocultos por categoría usan el atributo hidden y en
+   este Chromium ninguna regla CSS (ni !important) anula [hidden] — probado:
+   solo el estilo en línea con !important (JS) lo hace. No se fuerza aquí;
+   mostrar foto/cantidad en modo identificación exige un cambio JS (o del
+   criterio del recorrido) y queda como decisión pendiente. El bloque avanzado
+   (acabado/impresión) sigue plegado en su details. */
+
+/* ============ O3: herramientas directas por ranura ============ */
+.slot-direct-tools{display:flex;gap:8px;margin:10px 0}
+.slot-direct-tools .crop-trigger-btn{flex:1;min-height:44px;padding:8px 12px;border-radius:11px;font-size:13px;font-weight:650}
+
+/* ============ O5: cola con jerarquía de botones ============ */
+#jobQueueModal .document-actions{display:flex;flex-wrap:wrap;gap:8px}
+#jobQueueModal .document-actions button{min-height:48px;padding:10px 14px;border-radius:11px;font-size:14px;font-weight:650}
+#jobQueueModal #jobQueueOpenCode{flex:1 1 100%;background:#2c58d8!important;border-color:#2c58d8!important;color:#fff!important}
+#jobQueueModal #jobQueueScanQr,
+#jobQueueModal #jobQueueBatch{flex:1 1 0;background:var(--work-surface,#fff);border:1px solid var(--work-line,#dce2e9);color:var(--work-ink,#172233)}
+html.dark #jobQueueModal #jobQueueScanQr,
+html.dark #jobQueueModal #jobQueueBatch{background:#1e293b;border-color:#475569;color:#e2e8f0}
+
+/* ============ O8: aviso de perfil en el dock ============ */
+.rs-profile-warning{display:block;margin:8px 0 0;padding:10px 12px;border:1px solid #f59e0b;border-radius:10px;background:#fef3c7;color:#78350f;font-size:13px;font-weight:650;line-height:1.5}
+html.dark .rs-profile-warning{background:#451a03;color:#fde68a;border-color:#b45309}
+
+/* ============ O7: horizontal compacto ============ */
+@media(orientation:landscape) and (max-height:500px){
+ body.rs-next.rs-counter330 header>div>div:first-child p{display:none}
+ body.rs-next.rs-counter330 header h1{font-size:18px!important}
+ body.rs-next.rs-counter330 header>div>div:last-child{display:flex!important;flex-wrap:nowrap!important;gap:6px;width:100%}
+ body.rs-next.rs-counter330 header :is(#btnNewProject,#btnOpenDeliveryModal,#headerNas,#btnOpenReceiveModal,#counterMore){min-height:44px!important;font-size:13px!important;padding:8px 4px!important;flex:1;white-space:nowrap}
+ body.rs-next.rs-counter330 #flowDock{flex-direction:row!important;align-items:center;gap:12px;padding:8px 14px}
+ body.rs-next.rs-counter330 #flowDock>div{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px}
+ body.rs-next.rs-counter330 #flowDock strong{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ body.rs-next.rs-counter330 #flowDock #flowOrderHint{display:none}
+ body.rs-next.rs-counter330 #flowDock #flowPrimary{min-height:44px}
+}
+
+/* ============ V4: diálogo Paperless ============ */
+#paperlessSettings #paperlessSave{display:block;width:100%;flex:1 1 100%;min-height:52px;background:#2c58d8!important;border-color:#2c58d8!important;color:#fff!important;font-size:15px;font-weight:750}
+#paperlessSettings #paperlessCheck,
+#paperlessSettings #paperlessClose{display:inline-block;width:calc(50% - 4px);flex:1 1 calc(50% - 4px);min-height:48px}
+
+/* ============ V6: pantalla para el cliente ============ */
+#clientScreen>p:first-of-type{font-size:26px;font-weight:800;color:#fff;text-align:center}
+#clientScreenSheet{display:flex;align-items:center;justify-content:center;height:min(62vh,520px);width:100%}
+#clientScreenSheet figure{height:100%;width:auto;max-width:100%;display:flex;align-items:center;justify-content:center}
+#clientScreenSheet svg{height:100%!important;width:auto!important;max-width:100%;background:#fff;border-radius:12px;box-shadow:0 8px 30px #0006}
+#clientScreenSheet img{max-height:100%;max-width:100%;width:auto;height:auto;object-fit:contain;border-radius:12px;background:#fff}
+#clientScreenMeta{display:none!important}
+#clientScreen #btnClientScreenClose{min-height:56px;padding:12px 28px;font-size:16px;font-weight:700}
+
+/* ============ V7: par INE apilado ============ */
+#inePairSplitDialog .document-actions{flex-direction:column}
+#inePairSplitDialog .document-actions button{flex:none;width:100%;min-height:48px;height:auto;padding:12px 14px;text-align:center;white-space:normal}
+
+/* ============ G1: ilustraciones de vacío ============ */
+.rs-empty-art{display:block;width:96px;height:96px;margin:0 auto 12px;color:#94a3b8}
+.rs-empty-art-sm{display:block;width:64px;height:64px;margin:0 auto 8px;color:#94a3b8}
+
+/* ============ G2: tamaños de iconos de línea ============ */
+.rs-ic{width:1.15em;height:1.15em;vertical-align:-0.18em;flex:none}
+.quick-giant .rs-ic{width:26px;height:26px;vertical-align:-4px}
+.quick-gear .rs-ic{width:24px;height:24px;vertical-align:0}
+#outputReviewModal .rs-ic{width:20px;height:20px;vertical-align:-3px}
+
+/* ============ G4: vista previa a ancho completo + zoom ============ */
+#outputReviewModal #printSheetPreview{grid-template-columns:1fr!important}
+#outputReviewModal #printSheetPreview figure{max-width:none!important}
+#outputReviewModal #printSheetPreview{padding:8px!important}
+#outputReviewModal #printSheetPreview svg{cursor:zoom-in}
+#rsSheetZoom{position:fixed;inset:0;z-index:80;background:#0f172ae6;display:flex;align-items:center;justify-content:center;padding:16px}
+/* El visor debe quedar por encima de los modales (openModal les pone z-index
+   100 en línea): si no, el diálogo de revisión tapa el zoom y el toque para
+   cerrarlo no llega nunca, y el zoom abierto bloquea entrega y par-INE. */
+#rsSheetZoom{z-index:200!important}
+#rsSheetZoom img{max-width:94vw;max-height:92vh;object-fit:contain;border-radius:12px;background:#fff;box-shadow:0 12px 40px #0008}
+
+/* ============ O9: dúplex con acción fija al pie ============ */
+#duplexGuideSteps{margin:10px 0;padding:12px;border:1px solid var(--studio-border,#d7e1ec);border-radius:14px}
+#duplexGuideSteps>summary{font-weight:650;font-size:13px;cursor:pointer;min-height:38px}
+#duplexJobBar{position:sticky;bottom:-26px;margin:18px -26px -26px;padding:14px 26px 26px;background:var(--studio-surface,#fff);border-top:1px solid var(--studio-border,#d7e1ec);box-shadow:0 -6px 20px #17223314;z-index:2;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#duplexJobBar #duplexJobA{order:1;flex:1 1 0}
+#duplexJobBar #duplexJobB{order:2;flex:1 1 0}
+#duplexJobBar .duplex-confirm{order:3;flex-basis:100%;margin:0}
+#duplexJobBar .rs-duplex-job-hint{display:none;order:0;flex-basis:100%;margin:0;font-size:13px;color:var(--studio-muted,#56667b)}
+#duplexJobBar:has(#duplexJobA:disabled) .rs-duplex-job-hint{display:block}
+@media(max-width:600px){
+ #duplexJobBar{bottom:-18px;margin:18px -18px -18px;padding:14px 18px 18px}
+}
+
+/* ============ G3 compacto solo en escritorio (decisión Paco 28-oct) ============ */
+/* En teléfono el semáforo queda intacto y siempre visible. En escritorio (≥1100 px)
+   pasa a una sola fila compacta para que la hoja quede visible sin scroll. */
+@media (min-width:1100px){
+ body.rs-next.rs-counter330 #deskSemaphore{display:flex!important;align-items:center;flex-wrap:wrap;gap:8px 16px;padding:8px 14px;margin-bottom:12px}
+ body.rs-next.rs-counter330 #deskSemaphore h3{margin:0;font-size:14px;white-space:nowrap}
+ body.rs-next.rs-counter330 #deskSemaphore .desk-lights{flex-wrap:nowrap;gap:14px}
+ body.rs-next.rs-counter330 #deskSemaphore .desk-light{font-size:13px}
+ body.rs-next.rs-counter330 #deskSemaphore .rs-dot{width:16px;height:16px}
+ body.rs-next.rs-counter330 #deskSemaphore #deskSemaphoreRefresh{min-height:32px;padding:6px 12px;margin-left:auto}
+}

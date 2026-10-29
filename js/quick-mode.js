@@ -61,11 +61,11 @@ function build(){
  +'<p id="quickMeta" class="quick-meta"></p><p id="quickStatus" class="quick-status" role="status"></p>'
  +'<div class="quick-slots">'+slotHTML('front','Frente')+slotHTML('back','Reverso')+'</div>'
  +'<div id="quickPairHost"></div>'
- +'<button type="button" id="quickScanBtn" class="quick-giant quick-scan"><span class="quick-giant-main">📷 Escanear frente</span><span class="quick-giant-sub">Toca para abrir la cámara</span></button>'
+ +'<button type="button" id="quickScanBtn" class="quick-giant quick-scan"><span class="quick-giant-main"><svg class="rs-ic" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8h3l2-2h6l2 2h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2v-9a2 2 0 012-2z"/><circle cx="12" cy="13" r="3.5"/></svg> Escanear frente</span><span class="quick-giant-sub">Toca para abrir la cámara</span></button>'
  +'<button type="button" id="quickFileBtn" class="quick-link">o subir un archivo</button>'
  +'<label class="quick-name">Nombre (opcional)<input id="quickName" type="text" maxlength="48" placeholder="Ej. INE de Juan Pérez" autocomplete="off"></label>'
  +'<div class="quick-foot"><button type="button" id="quickOtherService" class="quick-link">Otro servicio (fotos/documento)</button>'
- +'<button type="button" id="quickSettingsBtn" class="quick-gear" aria-label="Ajustes">⚙️</button>'
+ +'<button type="button" id="quickSettingsBtn" class="quick-gear" aria-label="Ajustes"><svg class="rs-ic" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h.01a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h.01a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.01a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>'
  +'<button type="button" id="quickFullModeBtn" class="quick-link">Modo completo</button></div>'
  +'</div>'
  +'<div class="quick-blocked" hidden><p class="quick-kicker">MODO RÁPIDO</p><h2>INE / DNI — tamaño real</h2>'
@@ -78,11 +78,11 @@ function build(){
  '<p class="quick-stamp">✓ Tamaño real · 85.60 × 53.98 mm · <span id="quickScale">100%</span></p>'
  +'<p id="quickPrinter" class="quick-printer"></p>'
  +'<div class="quick-deliver">'
- +'<button type="button" id="quickPrintBtn" class="quick-giant quick-print">🖨 Imprimir</button>'
- +'<button type="button" id="quickPdfBtn" class="quick-giant quick-pdf">💾 Guardar PDF</button>'
+ +'<button type="button" id="quickPrintBtn" class="quick-giant quick-print"><svg class="rs-ic" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg> Imprimir</button>'
+ +'<button type="button" id="quickPdfBtn" class="quick-giant quick-pdf"><svg class="rs-ic" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8M7 3v5h8"/></svg> Guardar PDF</button>'
  +'<p id="quickDeliverHint" class="quick-hint"></p></div>'
  +'<div class="quick-postprint" hidden>'
- +'<button type="button" id="quickNewScanBtn" class="quick-giant quick-print">➕ Nuevo escaneo</button>'
+ +'<button type="button" id="quickNewScanBtn" class="quick-giant quick-print"><svg class="rs-ic" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg> Nuevo escaneo</button>'
  +'<button type="button" id="quickHistoryBtn" class="quick-link">Ver historial</button>'
  +'<button type="button" id="quickKeepBtn" class="quick-link">Seguir con este trabajo</button></div>';
  const card=document.querySelector('#colStageWorkspace .stage-canvas-area')?.closest('section');
@@ -193,7 +193,7 @@ function update(){
   renderSlot('front','Frente',front);renderSlot('back','Reverso',back);
   const scan=$('quickScanBtn');
   if(scan){
-   if(miss.length){scan.hidden=false;const main=scan.querySelector('.quick-giant-main');if(main)main.textContent=miss[0]==='back'?'📷 Escanear reverso':'📷 Escanear frente';scan.dataset.side=miss[0];}
+   if(miss.length){scan.hidden=false;const main=scan.querySelector('.quick-giant-main');if(main)main.innerHTML=miss[0]==='back'?'<svg class="rs-ic" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8h3l2-2h6l2 2h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2v-9a2 2 0 012-2z"/><circle cx="12" cy="13" r="3.5"/></svg> Escanear reverso':'<svg class="rs-ic" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8h3l2-2h6l2 2h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2v-9a2 2 0 012-2z"/><circle cx="12" cy="13" r="3.5"/></svg> Escanear frente';scan.dataset.side=miss[0];}
    else scan.hidden=true;
   }
   const fileBtn=$('quickFileBtn');if(fileBtn)fileBtn.hidden=!miss.length;

@@ -190,7 +190,7 @@
     if (syncing) return;
     if (!enabled()) { setStatus('desactivada en Ajustes'); return; }
     const l = link();
-    if (!l) { setStatus('sin vincular — pulsa «Vincular / Sincronizar ahora» en Ajustes'); renderRestoreBanner(); return; }
+    if (!l) { setStatus('Respaldo en NAS: sin conectar. Conéctalo en Ajustes'); renderRestoreBanner(); return; }
     syncing = true;
     setStatus('sincronizando…');
     try {
@@ -361,7 +361,7 @@
     if (restoreBtn) restoreBtn.addEventListener('click', restoreCloudOnly);
     const dismissBtn = document.getElementById('btnCloudRestoreDismiss');
     if (dismissBtn) dismissBtn.addEventListener('click', function () { cloudOnlyIds = []; renderRestoreBanner(); });
-    setStatus(link() ? 'vinculada (' + (link().email || '') + ')' : 'sin vincular — pulsa «Vincular / Sincronizar ahora» en Ajustes');
+    setStatus(link() ? 'vinculada (' + (link().email || '') + ')' : 'Respaldo en NAS: sin conectar. Conéctalo en Ajustes');
     if (link() && enabled()) setTimeout(syncNow, 2500);
   });
 
