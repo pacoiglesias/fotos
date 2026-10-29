@@ -1,11 +1,12 @@
 {
   "name": "realscan",
-  "version": "3.33.0",
+  "version": "3.34.0",
   "private": true,
   "scripts": {
     "build": "node scripts/build.cjs",
     "check": "node scripts/check.cjs",
     "test": "node scripts/regression.cjs",
+    "test:diagnostics": "node scripts/diagnostics-regression.cjs",
     "verify": "node scripts/verify.cjs",
     "test:auth": "node scripts/auth-regression.cjs",
     "test:legacy": "node scripts/legacy.cjs",

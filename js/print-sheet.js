@@ -102,10 +102,10 @@
     const deskId=window.RealScanDesk?.record(entry.frame,{title:entry.layout.spec.shortName,paper:entry.layout.paper.id||state.paperSize,format:state.format,units:entry.layout.pages.reduce((sum,page)=>sum+page.placements.length,0)});
     printing=true;
     const release=()=>{printing=false;clearTimeout(releaseTimer);};
-    entry.frame.contentWindow.addEventListener('afterprint',()=>{release();window.RealScanDesk?.finish(deskId,true);if(matches(entry,snapshot()))document.dispatchEvent(new Event('realscan:print-dialog-closed'));},{once:true});
+    entry.frame.contentWindow.addEventListener('afterprint',()=>{release();window.RealScanDesk?.finish(deskId,true);window.RealScanDiagnostics?.record('print.completed');if(matches(entry,snapshot()))document.dispatchEvent(new Event('realscan:print-dialog-closed'));},{once:true});
     releaseTimer=setTimeout(release,90000);
-    try {entry.frame.contentWindow.focus();entry.frame.contentWindow.print();}
-    catch(error){release();window.RealScanDesk?.setStatus(deskId,'failed').catch(()=>{});throw error;}
+    try {window.RealScanDiagnostics?.record('print.started');entry.frame.contentWindow.focus();entry.frame.contentWindow.print();}
+    catch(error){release();window.RealScanDiagnostics?.record('print.failed','error',{errorType:error.name});window.RealScanDesk?.setStatus(deskId,'failed').catch(()=>{});throw error;}
   }
   function preview(target, entry) {
     target.replaceChildren();

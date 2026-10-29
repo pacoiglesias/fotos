@@ -1,4 +1,11 @@
-/* Local technical diagnostics: deliberately excludes free text and customer data. */
+/* Local technical diagnostics: deliberately excludes free text and customer data.
+   3.34.0 extends the log (same bounded store, same privacy rule) with print jobs,
+   Paperless sends, batch runs, code/QR recovery, camera permission and first frame,
+   plus Copy and Refresh in the viewer and a counter shortcut (diagnostics-menu.js).
+   Privacy is structural: cleanDetails() only copies allowlisted technical keys, so
+   Paperless URLs and tokens, client names, phones, notes, titles, photos, document
+   contents and decoded codes can never land in the log, even if a caller passes
+   them by mistake. */
 (function(global) {
   'use strict';
   const KEY = 'realscan_diagnostics_v1', MAX = 200, TTL = 14 * 86400000;
@@ -7,7 +14,7 @@
   for(const id of ['counterStart','counterDeliver','counterMore','counterShowDelivery','newServiceStart','newServiceModal','counterMoreModal','pendingDeliveryModal','pendingDeliveryRevoke'])staticIds.add(id);
   const session = global.crypto?.randomUUID?.() || String(Date.now());
   const allowedEvents = new Set(['draft.failed','camera.open','camera.close','camera.failed','camera.corrected','camera.full_frame','app.start','app.ready','ui.click','ui.feedback','modal.open','modal.close','modal.recover','receive.start','receive.ready','receive.failed','receive.cancelled','delivery.start','delivery.ready','delivery.failed','delivery.cancelled','pwa.request','pwa.accepted','pwa.dismissed','pwa.failed','pwa.fallback','pwa.installed','pwa.worker_failed','runtime.error','runtime.rejection','runtime.resource_failed','network.online','network.offline']);
-  for (const event of ['layout.guides','image.fit','output.pdf','output.raster','camera.focus','camera.ready','camera.quality','counter.new-service','document.output','camera.suspended','ocr.completed','ocr.failed','ocr.pdf','cloud.restore','cloud.restore.failed','image.enhance','image.enhance.failed']) allowedEvents.add(event);
+  for (const event of ['layout.guides','image.fit','output.pdf','output.raster','camera.focus','camera.ready','camera.quality','counter.new-service','document.output','camera.suspended','ocr.completed','ocr.failed','ocr.pdf','cloud.restore','cloud.restore.failed','image.enhance','image.enhance.failed','print.prepared','print.started','print.completed','print.failed','paperless.send','paperless.sent','paperless.failed','batch.started','batch.completed','batch.failed','recovery.code','recovery.qr','recovery.failed','camera.permission','camera.first_frame','preview.failed','annotations.preview','pwa.worker_blocked']) allowedEvents.add(event);
   function cleanDetails(details) {
     const result = {};
     if (!details || typeof details !== 'object') return result;
@@ -20,6 +27,7 @@
     if (['choose','qr','camera','file'].includes(details.source)) result.source=details.source;
     if (['print','digital','both'].includes(details.output)) result.output=details.output;
     if (typeof details.keepDelivery==='boolean') result.keepDelivery=details.keepDelivery;
+    if (['granted','denied','prompt'].includes(details.permission)) result.permission=details.permission;
     for (const key of ['depth','line','column','durationMs','count','widthPx','heightPx','brightness','sharpness']) if (Number.isFinite(details[key])) result[key] = Math.max(0, Math.min(100000000, Math.round(details[key])));
     for (const key of ['modal','control']) {
       const value = details[key], element = typeof value === 'string' ? document.getElementById(value) : null;
@@ -73,7 +81,7 @@
       };
     } catch (_) { return null; }
   }
-  const labels = {"draft.failed":"No se pudo guardar el borrador","camera.open":"Cámara abierta","camera.close":"Cámara cerrada","camera.failed":"Cámara no disponible","camera.corrected":"Encuadre confirmado","camera.full_frame":"Foto completa confirmada","app.start":"Inicio del sistema","app.ready":"Sistema preparado","ui.click":"Control seleccionado","ui.feedback":"Aviso mostrado","modal.open":"Ventana abierta","modal.close":"Ventana cerrada","modal.recover":"Controles recuperados","receive.start":"Conectando recepción","receive.ready":"Recepción preparada","receive.failed":"Falló la conexión de recepción","receive.cancelled":"Recepción cancelada","delivery.start":"Preparando entrega","delivery.ready":"Entrega preparada","delivery.failed":"Falló la entrega","delivery.cancelled":"Entrega cancelada","pwa.request":"Instalación solicitada","pwa.accepted":"Instalación aceptada","pwa.dismissed":"Instalación cancelada","pwa.failed":"Falló la instalación","pwa.fallback":"Ayuda de instalación abierta","pwa.installed":"Aplicación instalada","pwa.worker_failed":"No se pudo preparar el uso sin conexión","runtime.error":"Error de funcionamiento","runtime.rejection":"Operación sin completar","runtime.resource_failed":"No se pudo cargar un recurso","network.online":"Conexión recuperada","network.offline":"Sin conexión"};
+  const labels = {"draft.failed":"No se pudo guardar el borrador","camera.open":"Cámara abierta","camera.close":"Cámara cerrada","camera.failed":"Cámara no disponible","camera.corrected":"Encuadre confirmado","camera.full_frame":"Foto completa confirmada","app.start":"Inicio del sistema","app.ready":"Sistema preparado","ui.click":"Control seleccionado","ui.feedback":"Aviso mostrado","modal.open":"Ventana abierta","modal.close":"Ventana cerrada","modal.recover":"Controles recuperados","receive.start":"Conectando recepción","receive.ready":"Recepción preparada","receive.failed":"Falló la conexión de recepción","receive.cancelled":"Recepción cancelada","delivery.start":"Preparando entrega","delivery.ready":"Entrega preparada","delivery.failed":"Falló la entrega","delivery.cancelled":"Entrega cancelada","pwa.request":"Instalación solicitada","pwa.accepted":"Instalación aceptada","pwa.dismissed":"Instalación cancelada","pwa.failed":"Falló la instalación","pwa.fallback":"Ayuda de instalación abierta","pwa.installed":"Aplicación instalada","pwa.worker_failed":"No se pudo preparar el uso sin conexión","runtime.error":"Error de funcionamiento","runtime.rejection":"Operación sin completar","runtime.resource_failed":"No se pudo cargar un recurso","network.online":"Conexión recuperada","network.offline":"Sin conexión","print.prepared":"Hoja de impresión preparada","print.started":"Impresión iniciada","print.completed":"Impresión completada","print.failed":"Falló la impresión","paperless.send":"Enviando a Paperless","paperless.sent":"Archivado en Paperless","paperless.failed":"Falló el envío a Paperless","batch.started":"Lote iniciado","batch.completed":"Lote terminado","batch.failed":"Falló el lote","recovery.code":"Trabajo recuperado por código","recovery.qr":"Trabajo recuperado por QR","recovery.failed":"No se pudo recuperar el trabajo","camera.permission":"Permiso de cámara","camera.first_frame":"Primera imagen de cámara","preview.failed":"No se pudo mostrar la vista previa","annotations.preview":"Vista previa de anotaciones","pwa.worker_blocked":"Trabajo sin conexión bloqueado"};
   function render() {
     const summary = document.getElementById('diagnosticsSummary'), list = document.getElementById('diagnosticsEvents');
     if (summary) summary.textContent = events.length + ' eventos · ' + events.filter(e => e.level === 'error').length + ' errores · ' + (navigator.onLine ? 'Con conexión' : 'Sin conexión') + (persistent ? '' : ' · Registro temporal: almacenamiento no disponible');
@@ -97,7 +105,33 @@
     try { await navigator.share({files:[file],title:'Diagnóstico RealScan'}); }
     catch(error) {if(error.name!=='AbortError'){exportReport();global.showToast?.('Se descargó el diagnóstico para compartirlo como archivo.','info');}}
   }
-  global.RealScanDiagnostics = {record,snapshot,render,exportReport,recover};
+  function reload() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(KEY) || '[]');
+      if (Array.isArray(stored)) events = stored.filter(e => e && Number.isFinite(e.at) && allowedEvents.has(e.event)).map(e => ({at:e.at, event:e.event, level:['info','warning','error'].includes(e.level)?e.level:'info', details:cleanDetails(e.details),build:typeof e.build==='string'&&/^realscan-[a-f0-9]{16}$/.test(e.build)?e.build:null}));
+    } catch (_) { /* Se conserva el registro en memoria. */ }
+    render();
+  }
+  function copyText() {
+    prune();
+    const lines = ['RealScan ' + (global.APP_VERSION || document.querySelector('meta[name="application-version"]')?.content || 'sin versión') + ' — diagnóstico técnico',
+      'Agente: ' + (typeof navigator !== 'undefined' ? navigator.userAgent : 'desconocido'),
+      'Eventos: ' + events.length + ' (los más recientes al final)',
+      ''];
+    for (const e of events) lines.push(new Date(e.at).toISOString() + ' · ' + e.level + ' · ' + e.event + ' ' + JSON.stringify(e.details));
+    return lines.join('\n');
+  }
+  async function copyReport() {
+    const text = copyText();
+    try { await navigator.clipboard.writeText(text); global.showToast?.('Diagnóstico copiado. Pégalo en el chat para revisarlo.','success'); return; }
+    catch (_) { /* Respaldo sin portapapeles. */ }
+    try {
+      const area = document.createElement('textarea'); area.value = text; area.style.position = 'fixed'; area.style.opacity = '0';
+      document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove();
+      global.showToast?.('Diagnóstico copiado. Pégalo en el chat para revisarlo.','success');
+    } catch (_) { exportReport(); }
+  }
+  global.RealScanDiagnostics = {record,snapshot,render,exportReport,copyReport,reload,recover};
   global.addEventListener('error',function(e) {
     if (e.target && e.target !== global && ['SCRIPT','LINK'].includes(e.target.tagName)) record('runtime.resource_failed','error',{file:e.target.src || e.target.href});
     else record('runtime.error','error',{errorType:e.error?.name,file:e.filename,line:e.lineno,column:e.colno});
@@ -112,6 +146,8 @@
     document.getElementById('btnShareDiagnostics')?.addEventListener('click',shareReport);
     document.getElementById('btnRecoverControls')?.addEventListener('click',recover);
     document.getElementById('btnClearDiagnostics')?.addEventListener('click',()=>{if(confirm('¿Borrar sólo el diagnóstico técnico? Tus trabajos se conservan.')){events=[];persist();render();}});
+    document.getElementById('btnCopyDiagnostics')?.addEventListener('click',copyReport);
+    document.getElementById('btnRefreshDiagnostics')?.addEventListener('click',reload);
     render();
     fetch('version.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(value=>{if(value && /^realscan-[a-f0-9]{16}$/.test(value.version) && /^[a-f0-9]{40}$/.test(value.sourceCommit))build={version:value.version,sourceCommit:value.sourceCommit};}).catch(()=>{});
   });

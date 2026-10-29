@@ -27,17 +27,17 @@
   const existing=running.get(key);if(existing){if(existing.fingerprint!==fingerprint)throw Error('El archivo cambió durante el envío. Espera al resultado anterior.');return existing.promise;}
   const promise=(async()=>{
    let receipt=receipts()[key];
-   if(receipt?.fingerprint===fingerprint&&receipt.status==='archived'){onStatus?.('Archivado en Paperless. Este archivo ya se envió.');return receipt;}
+   if(receipt?.fingerprint===fingerprint&&receipt.status==='archived'){root.RealScanDiagnostics?.record('paperless.sent');onStatus?.('Archivado en Paperless. Este archivo ya se envió.');return receipt;}
    if(receipt?.status==='unknown'&&!receipt.taskId)throw Error('El envío anterior no se pudo confirmar. Comprueba Paperless antes de volver a enviarlo.');
    if(!receipt||receipt.fingerprint!==fingerprint||receipt.status==='failed'){
     if(!hasToken()){openSettings('Configura el acceso y vuelve a enviar.');throw Error('Falta el acceso a Paperless.');}
-    onStatus?.('Enviando a Paperless…');const form=new FormData();form.append('document',blob,fileNameFor(title,blob));form.append('title',metadata.title||String(title||'RealScan_Entrega').slice(0,200));for(const tag of metadata.tags)form.append('tags',String(tag));if(metadata.documentType)form.append('document_type',String(metadata.documentType));if(metadata.created)form.append('created',metadata.created);
-    try{const r=await request('/api/documents/post_document/',{method:'POST',body:form},isCurrent);const raw=await r.text();let data;try{data=JSON.parse(raw);}catch{data=raw.trim();}const taskId=typeof data==='string'?data:data?.task_id||data?.id;if(!/^[0-9a-f-]{36}$/i.test(taskId||'')){keep(key,{fingerprint,status:'unknown'});throw Error('Paperless recibió la solicitud sin un identificador válido. Comprueba su cola antes de repetir.');}receipt=keep(key,{fingerprint,taskId,status:'processing'});}catch(e){if(!e.status)keep(key,{fingerprint,status:'unknown'});throw Error(e.status?e.message:e.message?.includes('identificador')?e.message:readableError(e));}
+    root.RealScanDiagnostics?.record('paperless.send');onStatus?.('Enviando a Paperless…');const form=new FormData();form.append('document',blob,fileNameFor(title,blob));form.append('title',metadata.title||String(title||'RealScan_Entrega').slice(0,200));for(const tag of metadata.tags)form.append('tags',String(tag));if(metadata.documentType)form.append('document_type',String(metadata.documentType));if(metadata.created)form.append('created',metadata.created);
+    try{const r=await request('/api/documents/post_document/',{method:'POST',body:form},isCurrent);const raw=await r.text();let data;try{data=JSON.parse(raw);}catch{data=raw.trim();}const taskId=typeof data==='string'?data:data?.task_id||data?.id;if(!/^[0-9a-f-]{36}$/i.test(taskId||'')){keep(key,{fingerprint,status:'unknown'});throw Error('Paperless recibió la solicitud sin un identificador válido. Comprueba su cola antes de repetir.');}receipt=keep(key,{fingerprint,taskId,status:'processing'});}catch(e){if(!e.status)keep(key,{fingerprint,status:'unknown'});root.RealScanDiagnostics?.record('paperless.failed','error',{errorType:e.name});throw Error(e.status?e.message:e.message?.includes('identificador')?e.message:readableError(e));}
    }
    onStatus?.('Recibido por Paperless · procesando…');
    for(let attempt=0;attempt<12;attempt++){
     check(guard,isCurrent);let result;try{result=await checkTask(receipt.taskId,{isCurrent});}catch(e){check(guard,isCurrent);onStatus?.('Archivo recibido. Falta confirmar el procesamiento. Puedes comprobarlo de nuevo.');return {...receipt,status:'processing'};}
-    receipt=keep(key,{...result,fingerprint});if(result.status!=='processing'){onStatus?.(result.status==='archived'?'Archivado en Paperless.':result.message);return receipt;}
+    receipt=keep(key,{...result,fingerprint});if(result.status!=='processing'){if(result.status==='archived')root.RealScanDiagnostics?.record('paperless.sent');else root.RealScanDiagnostics?.record('paperless.failed','error',{errorType:'Error'});onStatus?.(result.status==='archived'?'Archivado en Paperless.':result.message);return receipt;}
     if(attempt<11)await new Promise(resolve=>setTimeout(resolve,2000));
    }
    onStatus?.('Sigue procesándose en Paperless. Comprueba su estado de nuevo; el archivo no se reenviará.');return receipt;

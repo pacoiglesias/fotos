@@ -381,6 +381,8 @@
       btn("capture").disabled = true;
       syncSwitchLabel();
       status.textContent = "Preparando la cámara…";
+      const openedAt = performance.now();
+      try { if (navigator.permissions?.query) navigator.permissions.query({ name: "camera" }).then((p) => root.RealScanDiagnostics?.record("camera.permission", { permission: p.state }), () => {}).catch(() => {}); } catch (_) { /* El permiso se sabrá al abrir la cámara. */ }
       try {
         if (!navigator.mediaDevices?.getUserMedia) throw Error("unsupported");
         const portrait = innerWidth < innerHeight;
@@ -394,6 +396,7 @@
         video.muted=true;video.playsInline=true;
         await bounded(video.play(),8000,"No se pudo iniciar el visor.");
         await readyFrame(r);
+        root.RealScanDiagnostics?.record("camera.first_frame", { durationMs: Math.round(performance.now() - openedAt) });
         if (disposed || r !== revision) return;
         const track = s.getVideoTracks()[0];
         let caps = {};

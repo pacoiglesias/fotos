@@ -1,5 +1,9 @@
 # Avances de RealScan Pro
 
+## 3.34.0 — Log de diagnóstico en todo el flujo
+
+Extensión del registro técnico existente (Ajustes → Auditoría, 200 eventos, 14 días, solo en este navegador) a cámara (permiso y primera imagen), impresión (inicio/éxito/fallo), Paperless (inicio/éxito/fallo), lotes (inicio/fin/fallo) y recuperación por código/QR, con botones Copiar y Actualizar en el visor y entrada «Diagnóstico» en el menú «Más» del mostrador (sin tocar counter-desk.js). Privacidad estructural: la lista blanca del registro impide guardar URL/token de Paperless, datos de clientes, fotos, contenidos y códigos. Trabajo en curso local, sin publicar: la publicación la confirma el revisor con push y deploy tras revisar este commit.
+
 ## 3.33.0 — Rediseño del mostrador: más grande, más claro, menos scroll
 
 Rediseño completo (25 ítems): suelo tipográfico 12/13 px, barra de dos niveles en teléfono, enlaces legibles en oscuro, Paperless con jerarquía nueva, miniaturas grandes con estado, pantalla cliente solo con hoja y Cerrar, par INE apilado, sin truncados, crédito único en el pie, lenguaje del modo rápido en mostrador y diálogos, ilustraciones de vacío sin red, iconos de línea unificados, semáforo gráfico siempre visible, vista previa a ancho completo con zoom a toque, barras de acción fijas con avisos encima, mostrador por secciones colapsadas, herramientas directas fuera de acordeones, lenguaje llano, cola con jerarquía, una sola entrada por acción, horizontal compacto, aviso de perfil en semáforo y dock, dúplex de 1 toque con colocación verificada y nota del historial en llano. Sin cambios de lógica de negocio. Trabajo en curso local, sin publicar: la publicación la confirma el revisor con push y deploy tras revisar este commit.

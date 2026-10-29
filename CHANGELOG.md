@@ -1,3 +1,11 @@
+## 3.34.0 — Log de diagnóstico en todo el flujo: cámara, impresión, Paperless, lotes y recuperación
+
+El registro técnico que ya existía en Ajustes → Auditoría ahora cubre todo el flujo de trabajo y se abre desde el mostrador, con el mismo patrón de Alacena 3.9.5 (últimos 200 eventos en este navegador, sin fotos, sin datos de clientes y sin credenciales).
+- Nuevos eventos: apertura de cámara con permiso y primera imagen (con su tiempo), inicio/éxito/fallo de impresión, inicio/éxito/fallo de envío a Paperless, inicio/fin/fallo de lotes, recuperación de trabajos por código o por QR (con sus fallos) y preparación de hoja. También quedan vivos eventos que ya se registraban pero se descartaban por no estar en la lista permitida (hoja preparada, vista previa fallida, vista previa de anotaciones, trabajo sin conexión bloqueado).
+- Visor: en Ajustes → Auditoría, nuevos botones «Copiar diagnóstico» (texto plano para pegar en el chat) y «Actualizar» (relee el registro guardado), junto a los ya existentes Descargar, Compartir, Borrar y Recuperar controles.
+- Acceso desde el mostrador: nueva entrada «Diagnóstico» en el menú «Más», que abre Ajustes directamente en la pestaña Auditoría. No se toca counter-desk.js: la entrada se añade en tiempo de ejecución.
+- Privacidad: el registro solo admite claves técnicas en lista blanca; la URL y el token de Paperless, los nombres de clientes, teléfonos, notas, títulos, fotos, contenidos y códigos decodificados no pueden quedar guardados aunque algún llamador los pase por error. Sin cambios en impresión, PDF, medidas ni flujos de entrega.
+
 ## 3.33.0 — Rediseño del mostrador: más grande, más claro, menos scroll
 
 Rediseño completo del mostrador y sus diálogos: la app hace lo mismo, pero se ve y se alcanza mejor. Sin cambios de lógica de negocio, sin precios y sin multicliente.
