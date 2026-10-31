@@ -25,7 +25,7 @@
     const iw=op===OPS.paintImageXObject?args[1]:args[0]?.width,ih=op===OPS.paintImageXObject?args[2]:args[0]?.height;
     if(!cardLike(box)||!Number.isFinite(iw)||!Number.isFinite(ih)||iw<160||ih<100)continue;
     if(box.x<view[0]-.5||box.y<view[1]-.5||box.x+box.w>view[2]+.5||box.y+box.h>view[3]+.5)continue;
-    if(Math.min(box.w,box.h)*MM<15||Math.max(box.w,box.h)*MM>210)continue;
+    if(Math.min(box.w,box.h)*MM<15||Math.max(box.w,box.h)*MM>420)continue;
     found.push({...box,pixels:Math.max(iw,ih),page});if(found.length>8)return [];
    }
   }
@@ -93,7 +93,7 @@
   q('idPdfCancel').onclick=()=>{if(!busy)dismiss();};dialog.addEventListener('cancel',e=>{e.preventDefault();if(!busy)dismiss();});
   q('idPdfWhole').onclick=()=>{if(!current()||busy)return;dismiss();root.RealScanDocuments.activate();root.RealScanDocuments.addFiles([original],{skipIdentity:true}).then(added=>{if(added)onAssigned?.('document');});};
   for(const [id,action]of [['idPdfPrepare','prepare'],['idPdfSave','save'],['idPdfPrint','print']])q(id).onclick=()=>apply(action);
-  active={dialog,cards:value.cards,current};draw();buttons();document.body.append(dialog);dialog.showModal();return true;
+  active={dialog,cards:value.cards,current};if(value.boxes.some(box=>Math.abs(Math.max(box.w,box.h)/Math.min(box.w,box.h)/RATIO-1)>.01))q('idPdfStatus').textContent='Se conservará la proporción del escaneo. Revisa que no tenga bordes sobrantes antes de imprimir.';draw();buttons();document.body.append(dialog);dialog.showModal();return true;
  }
  function removeFocus(){if(originalPanel&&panelAnchor?.isConnected)panelAnchor.after(originalPanel);$('idSheetView')?.remove();focus?.remove();focus=null;originalPanel=null;panelAnchor?.remove();panelAnchor=null;delete document.body.dataset.idFocus;lastFocus=[];}
  function syncFocus(){

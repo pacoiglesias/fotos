@@ -65,3 +65,11 @@ La preconsulta OPTIONS autoriza https://fotos.cobertores.com. En ambas direccion
 
 ## Correcciones del primer CI 3.35
 El primer CI detectó cuatro fallos y se detuvo el publicador local antes de ejecutar Firebase. Se corrigió el espacio de la hoja preparada en escritorio, se evitó un segundo encabezado global en la vista ampliada y se compactaron textos auxiliares en teléfonos pequeños para conservar imagen y acciones. La prueba dúplex espera ahora la apertura real del módulo diferido, manteniendo su aserción de visibilidad y la comprobación del modo de impresión. La prueba de cámara conserva sus umbrales y añade evidencia de geometría por viewport.
+
+## Casos reales adicionales y adaptación de documentos
+- Se amplía la detección de tarjetas a imágenes ampliadas dentro de páginas grandes: una INE con una cara por página debe proponer ambas aunque cada imagen ocupe una hoja completa. No se usa el tamaño físico del escaneo como tamaño final de la credencial.
+- La validación privada del nuevo PDF de dos páginas pasó en Chromium y WebKit. Se conservan las proporciones del escaneo y se comprueban los rectángulos de salida ID-1 del PDF generado. Si la proporción de origen difiere, el diálogo pide revisar bordes; no se estira la imagen ni se inventan partes ausentes.
+- El servicio Documentos ofrece Carta, A4, Oficio México (215.9 × 340 mm) y Legal USA (215.9 × 355.6 mm) como acciones directas, sincronizadas con el selector existente. El encaje conserva todo el contenido y su proporción; el original sigue disponible.
+- Las doce conversiones dirigidas entre los cuatro papeles se comprobaron en ambos navegadores con el PDF real generado y con conservación de la imagen.
+- Identificaciones mantienen su formato físico y fotografías su tamaño elegido; cambiar el papel no las convierte en una imagen a página completa.
+- Token del NAS comprobado contra su servidor: respuesta HTTP 200. Pendiente aplicarlo en el formulario de la versión nueva. No se incluye el token ni información de documentos en esta auditoría. Perfil HP guardado en el navegador, nominal 100 %, pendiente de medición física.
