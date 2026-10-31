@@ -24,6 +24,7 @@ El primer CI detectó un desfase al pedir el reverso: el estado del trabajo ya e
 
 - Se elimina el doble manejo de los pasos de navegación cuando está activo el propietario actual del mostrador. «Preparar» vuelve a sus opciones; «Entregar» muestra destinos y no abre automáticamente la impresión.
 - Se corrige la regla de la interfaz móvil anterior que ocultaba el panel de preparación al activar el paso de la hoja. Las opciones de identificación permanecen accesibles durante la revisión.
+- La navegación a captura termina su desplazamiento inmediatamente. La prueba local detectó una pulsación rápida interferida por el desplazamiento animado pendiente; se conserva la misma prueba y pasó junto con 1.256 distribuciones fotográficas y la comprobación de círculos sin deformación.
 - Al aplicar firmas o sellos, la vista de identificación abre la hoja completa para mostrar el resultado impreso, además de las capturas originales ampliadas. Se mantiene el recorte y el original por separado.
 - Se retiran 18 PNG/JSON generados de auditorías anteriores (1.969.410 bytes). No son fixtures ni recursos publicados; los cinco scripts originales se conservan y escriben en `.audit/`, fuera de Git. Los documentos de auditoría y el historial del repositorio permanecen disponibles.
 
