@@ -1,3 +1,10 @@
+## 3.35.1 — Ajustar la hoja desde la revisión
+
+- Controles compartidos de márgenes, encabezado, rótulos, regla y líneas de corte dentro de la revisión y de la entrega PDF, organizados en Hoja, Encabezado y Acabado.
+- Cambios con regeneración de la vista previa en el mismo diálogo; las descargas anteriores se invalidan. Se mantienen las medidas físicas de fotografías y tarjetas y se avisa si no caben.
+- Margen automático compatible con los presets existentes, margen mínimo manual y conservación del ajuste en el borrador. El siguiente cliente restablece el margen automático.
+- Pruebas nuevas en Chromium y WebKit para edición, regeneración y medidas ID-1. Publicación pendiente de verificación completa.
+
 ## 3.35.0 — Identificaciones prácticas, conexiones claras y entrega directa
 
 - Modo rápido con Solo frente o Frente y reverso sin perder capturas; imprimir, PDF, enviar y guardar en NAS a la vista.

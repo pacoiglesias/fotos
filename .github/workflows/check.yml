@@ -46,6 +46,7 @@ jobs:
             .audit/release329/
             .audit/operations330/
             .audit/counter335/
+            .audit/review-settings/
             .audit/id-pdf-intake/
             .audit/mobile-local-evidence/
             .audit/mobile-local-webkit-evidence/
