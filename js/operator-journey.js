@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  let signature = '';
+  let signature = '', focusGeneration = 0;
   const unlocked = () => $('loginOverlay')?.classList.contains('hidden') && (!$('setupOverlay') || $('setupOverlay').classList.contains('hidden'));
   const icons={id:'M4 5h16v14H4z M8 9a2 2 0 1 0 0 4a2 2 0 1 0 0-4 M5 17c0-4 6-4 6 0 M14 9h3 M14 13h3',photos:'M4 4h16v16H4z M4 16l5-5 4 4 3-3 4 4 M15 8h.01',document:'M6 3h8l4 4v14H6z M14 3v5h4 M9 12h6 M9 16h6',camera:'M3 7h4l2-3h6l2 3h4v13H3z M16 13a4 4 0 1 1-8 0a4 4 0 1 1 8 0',file:'M3 7h7l2 2h9v11H3z M3 7V4h7l2 3',qr:'M3 3h6v6H3z M15 3h6v6h-6z M3 15h6v6H3z M15 15h3v3h3v3h-6z'};
   function icon(kind){const span=document.createElement('span');span.className='task-icon';span.setAttribute('aria-hidden','true');span.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+icons[kind]+'"/></svg>';return span;}
@@ -11,13 +11,14 @@
     b.className = className; b.onclick = () => { if (unlocked()) action(); }; return b;
   }
   function go(step) {
+    const focusTicket=++focusGeneration;
     const doc = window.RealScanDocuments?.status();
     if (step === 'receive') {
       const target = doc?.active ? $('docImport') : document.querySelector('[data-camera="' + (RealScanWorkflow.describe().missing[0] || 'front') + '"]');
       if (!doc?.active) RealScanWorkflow.moveTo(2, RealScanWorkflow.describe().missing[0]);
       target?.focus(); target?.scrollIntoView({block:'center'});
     } else if (step === 'review' || step === 'adjust') {
-      if (doc?.active) { const target=step==='adjust'?$('docPaper'):$('docPages');target.scrollIntoView({block:'center'});(target.querySelector('button')||target).focus(); }
+      if (doc?.active) { const target=step==='adjust'?$('docPaper'):$('docPages'),trigger=document.activeElement,job=state._jobRevision;target.scrollIntoView({block:'center'});const focus=()=>{if(focusTicket!==focusGeneration||!unlocked()||state._jobRevision!==job||!RealScanDocuments.status().active)return;const current=step==='adjust'?$('docPaper'):document.querySelector('#docPages button');current?.focus({preventScroll:true});};focus();requestAnimationFrame(()=>requestAnimationFrame(()=>{const current=document.activeElement;if(current===trigger||current===document.body||target.contains(current))focus();})); }
       else RealScanWorkflow.moveTo(step === 'adjust' ? 3 : 2, step === 'review' ? RealScanWorkflow.describe().missing[0]||RealScanWorkflow.describe().wanted[0] : null);
     } else if (doc?.active) { if(doc.ready&&document.body.dataset.outputMode!=='digital'&&window.RealScanDocumentPrint){RealScanDocumentPrint.review();return;}$('docPdf').scrollIntoView({block:'center'}); $('docPdf').focus(); }
     else if(document.body.dataset.outputMode==='digital')$('btnOpenDeliveryModal').click();

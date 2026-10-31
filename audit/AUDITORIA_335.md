@@ -73,3 +73,6 @@ El primer CI detectó cuatro fallos y se detuvo el publicador local antes de eje
 - Las doce conversiones dirigidas entre los cuatro papeles se comprobaron en ambos navegadores con el PDF real generado y con conservación de la imagen.
 - Identificaciones mantienen su formato físico y fotografías su tamaño elegido; cambiar el papel no las convierte en una imagen a página completa.
 - Token del NAS comprobado contra su servidor: respuesta HTTP 200. Pendiente aplicarlo en el formulario de la versión nueva. No se incluye el token ni información de documentos en esta auditoría. Perfil HP guardado en el navegador, nominal 100 %, pendiente de medición física.
+
+## Foco después de colocar paneles
+La batería local completa terminó con un único fallo de foco en la navegación de documentos; el CI de la entrega funcional había pasado. Se restaura el foco después de la colocación de paneles con guardas de sesión, trabajo e intención, sin robarlo a un control elegido posteriormente. El recorrido espera el fin del procesamiento y comprueba el foco después de la transición con movimiento reducido. La publicación permaneció detenida al fallar verify.
