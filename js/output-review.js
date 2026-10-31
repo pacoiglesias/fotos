@@ -30,6 +30,13 @@
       facts.append(box);
     }
     target.append(facts);
+    if(window.RealScanWorkflow&&!RealScanDocuments.status().active){
+      const controls=document.createElement('fieldset');controls.className='review-edit-options';const legend=document.createElement('legend');legend.textContent='Cambiar sin volver a empezar';controls.append(legend);
+      function choose(label,values,current,mutate){const row=document.createElement('label'),select=document.createElement('select');row.append(document.createTextNode(label));select.setAttribute('aria-label',label);for(const [value,text]of values)select.append(new Option(text,value));select.value=String(current);select.onchange=()=>{if(!$('loginOverlay')?.classList.contains('hidden')||RealScanWorkflow.describe().busy)return;mutate(select.value);updateUI();RealScanStudio.update();RealScanServiceFlow.update();saveActiveDraft?.();render(target,mode);};row.append(select);controls.append(row);}
+      if(state.activeCategory!=='photos'&&state.format==='card')choose('Caras de la identificación',[['single','Solo frente'],['both','Ambas juntas'],['both_separate','Una cara por hoja']],state.printMode,setPrintMode);
+      choose('Papel de salida',Object.entries(PAPER_SPECS).filter(([key])=>['letter','a4','legal','oficio','photo_4x6','photo_5x7','photo_8x10'].includes(key)).map(([key,value])=>[key,value.shortName]),state.paperSize,value=>setPaperSize(value,true));
+      choose('Juegos completos',Array.from({length:10},(_,i)=>[String(i+1),String(i+1)]),state.outputSets||1,value=>{state.outputSets=Number(value);});target.append(controls);
+    }
     {
       // Vista previa de la hoja tal como saldrá (clon a escala de la hoja real).
       const sheet = document.querySelector('.a4-sheet');
