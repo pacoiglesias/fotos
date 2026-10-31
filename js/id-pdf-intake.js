@@ -100,13 +100,14 @@
   if(active&&!active.current())dismiss();
   const show=!document.body.classList.contains('rs-quick')&&unlocked()&&state.activeCategory==='docs'&&state.format==='card'&&!root.RealScanDocuments?.status().active&&Object.values(state.images).some(i=>i.processedDataUrl);
   if(!show){removeFocus();if(focusedImport?.job!==state._jobRevision)focusedImport=null;return;}
-  if(!$('colStageWorkspace')||!root.RealScanWorkspacePolish)return;const work=root.RealScanWorkflow.describe(),key=[state._jobRevision,state.outputScalePercent,state.printMode,work.busy,...work.wanted,...work.wanted.map(side=>state.images[side]?.processedDataUrl)];if(focus&&key.length===lastFocus.length&&key.every((v,i)=>v===lastFocus[i]))return;lastFocus=key;
+  if(!$('colStageWorkspace')||!root.RealScanWorkspacePolish)return;const work=root.RealScanWorkflow.describe(),key=[state._jobRevision,state.outputScalePercent,state.printMode,JSON.stringify(state.outputAnnotations||[]),work.busy,...work.wanted,...work.wanted.map(side=>state.images[side]?.processedDataUrl)];if(focus&&key.length===lastFocus.length&&key.every((v,i)=>v===lastFocus[i]))return;lastFocus=key;
   if(!focus){
    originalPanel=document.querySelector('#colStageWorkspace .panel-sheet-preview');if(!originalPanel)return;
    focus=document.createElement('section');focus.id='idFocusPreview';focus.className='id-focus-preview';focus.innerHTML='<div class="id-focus-heading"><div><small>TU IDENTIFICACIÓN</small><h3>Revisa las caras</h3></div><strong id="idFocusSize"></strong></div><div id="idFocusCards" class="id-card-grid"></div><p>Vista ampliada para revisar los bordes. La impresión conserva las medidas indicadas.</p><div class="id-focus-actions"><button type="button" id="idFocusSave">Guardar PDF</button><button type="button" id="idFocusPrint">Imprimir</button></div>';
    panelAnchor=document.createComment('identity-sheet-position');originalPanel.before(panelAnchor,focus);const sheet=document.createElement('details');sheet.id='idSheetView';const summary=document.createElement('summary');summary.textContent='Ver hoja de impresión completa';sheet.append(summary);focus.after(sheet);sheet.append(originalPanel);sheet.open=focusedImport?.job!==state._jobRevision;
    focus.querySelector('#idFocusSave').onclick=()=>root.RealScanPdfDelivery.open({destination:'pdf'});focus.querySelector('#idFocusPrint').onclick=()=>root.handlePrintDirect();
   }
+  if((state.outputAnnotations||[]).length&&$('idSheetView'))$('idSheetView').open=true;
   document.body.dataset.idFocus='true';const scale=(Number(state.outputScalePercent)||100)/100;
   focus.querySelector('#idFocusSize').textContent=(85.6*scale).toFixed(2)+' × '+(53.98*scale).toFixed(2)+' mm · '+Math.round(scale*100)+' %';
   const container=focus.querySelector('#idFocusCards'),sides=root.RealScanWorkflow.describe().wanted.filter(side=>['front','back'].includes(side));

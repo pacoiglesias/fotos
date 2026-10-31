@@ -475,3 +475,4 @@ html.dark body.rs-next.rs-counter330{background:radial-gradient(ellipse at 85% 0
  }
 }
 @media screen{body.rs-next.rs-counter330.rs-identity .id-focus-actions{display:none}}
+@media screen and (max-width:1099px){body.rs-studio.rs-next.rs-counter330.rs-identity[data-flow-kind=id] #flowWorkspace #colControlPanel{display:flex!important}}

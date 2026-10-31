@@ -31,7 +31,23 @@
   }finally{changing=false;schedule();}
  }
  async function undoService(){if(!previousService||busy()||changing||!unlocked())return;const saved=previousService;previousService=null;changing=true;try{if(saved.document)await RealScanDocuments.restoreSnapshot(saved.document);else if(saved.draft){RealScanDocuments.deactivate();await restoreActiveDraft(saved.draft);}else{RealScanDocuments.deactivate();switchIntent(saved.kind);}RealScanStudio.update();RealScanServiceFlow.update();}finally{changing=false;schedule();}}
- function showStage(value){stage=value;document.body.dataset.workspaceStage=value;for(const b of document.querySelectorAll('[data-workspace-stage]'))b.setAttribute('aria-current',b.dataset.workspaceStage===value?'step':'false');if(value==='deliver'){deliver('print');return;}if(value==='prepare'){if(doc().active){root.RealScanJourney.go('review');}else{const w=RealScanWorkflow.describe();RealScanWorkflow.moveTo(2,w.missing[0]||w.wanted[0]);}schedule();return;}const target=$('deskStart');if(innerWidth<1100){setMobileStep(value==='receive'?1:2);target?.scrollIntoView({block:'start',behavior:'auto'});}schedule();}
+ function showStage(value){
+  if(!unlocked()||busy()||changing)return;
+  stage=value;document.body.dataset.workspaceStage=value;
+  for(const b of document.querySelectorAll('[data-workspace-stage]'))b.setAttribute('aria-current',b.dataset.workspaceStage===value?'step':'false');
+  if(value==='deliver'){
+   setMobileStep(3);const target=$('workspaceDelivery');target?.scrollIntoView({block:'start',behavior:'auto'});
+   const action=[...target?.querySelectorAll('button')||[]].find(b=>!b.disabled&&b.getClientRects().length);action?.focus({preventScroll:true});schedule();return;
+  }
+  if(value==='prepare'){
+   if(doc().active)root.RealScanJourney.go('review');
+   else if(document.body.classList.contains('rs-identity')){
+    setMobileStep(2);$('serviceFlow').scrollIntoView({block:'start',behavior:'auto'});$('flowSides').querySelector('[aria-pressed=true]')?.focus({preventScroll:true});
+   }else{const w=RealScanWorkflow.describe();RealScanWorkflow.moveTo(2,w.missing[0]||w.wanted[0]);}
+   schedule();return;
+  }
+  const target=$('deskStart');if(innerWidth<1100){setMobileStep(1);target?.scrollIntoView({block:'start',behavior:'auto'});}schedule();
+ }
  function advance(){if(!unlocked()||busy()||changing)return;const d=doc(),w=RealScanWorkflow.describe();if(d.active){if(!d.count){$('docCamera').click();return;}if(!d.ready){root.RealScanJourney.go('review');const row=document.querySelector('#docPages .document-page[data-reviewed="false"]'),control=row?.querySelector('[data-page-action="Revisar"]');if(control)control.click();else $('documentWorkspace').scrollIntoView({block:'start'});return;}}else if(w.missing.length){$('operatorReceiveActions').querySelector('button').click();return;}deliver(document.body.dataset.outputMode==='digital'?'pdf':'print');}
  function deliver(destination){if(!unlocked()||busy())return;const ready=doc().active?doc().ready:RealScanWorkflow.describe().ready;if(destination==='print'&&!doc().active&&Object.values(state.images).some(i=>i.processedDataUrl)){handlePrintDirect();return;}if(!ready){root.showToast?.('Completa y revisa las capturas antes de entregar.','info');showStage('prepare');return;}if(destination==='print'){if(doc().active)RealScanDocumentPrint.review();else handlePrintDirect();}else RealScanPdfDelivery.open({destination});}
  function updateDock(){const dock=$('mobileDock');if(!dock)return;const action=$('mobileDockPrimary')?.dataset.action,target=$(action==='save'?'mobileSavePdf':'mobileCapture');let visible=false;if(target){const b=target.getBoundingClientRect(),v=root.visualViewport,top=v?.offsetTop||0,bottom=top+(v?.height||innerHeight),s=getComputedStyle(target);visible=b.height>0&&b.top>=top+4&&b.bottom<=bottom-8&&s.visibility!=='hidden'&&s.display!=='none';}dock.dataset.inlineVisible=String(visible);}

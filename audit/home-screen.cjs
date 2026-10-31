@@ -5,14 +5,14 @@
    que servicio actual, captura y siguiente paso están a la vista sin
    scroll ni desplegables → elegir formato directo → cargar una foto
    por «Archivo / USB» → revisar → pasar a la hoja de entrega.
-   Capturas y resultados en audit/home-screen/. */
+   Capturas y resultados en .audit/home-screen/. */
 const fs = require("fs"),
   path = require("path"),
   http = require("http"),
   assert = require("assert"),
   { chromium, webkit } = require("playwright");
 const root = path.resolve("dist");
-const out = path.resolve("audit/home-screen");
+const out = path.resolve(".audit/home-screen");
 fs.mkdirSync(out, { recursive: true });
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, "http://localhost");

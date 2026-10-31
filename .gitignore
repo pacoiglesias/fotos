@@ -17,3 +17,10 @@ tools/
 
 # Dependency directory may be a workspace symlink.
 node_modules
+
+# Generated results from older standalone audit scripts.
+/audit/counter-mode/
+/audit/fondo-ia/
+/audit/home-screen/
+/audit/pwa-update/
+/audit/cierre-3150/

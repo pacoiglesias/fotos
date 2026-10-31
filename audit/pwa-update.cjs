@@ -12,7 +12,7 @@
    4) Pulsa «Actualizar» y afirma que la app acaba mostrando la
       marca de B SIN borrar cachés ni storage a mano (un centinela
       en localStorage sobrevive a la actualización).
-   Evidencia en audit/pwa-update/. */
+   Evidencia en .audit/pwa-update/. */
 const fs = require("fs"),
   path = require("path"),
   http = require("http"),
@@ -22,7 +22,7 @@ const pkgVersion = "v" + require("../package.json").version;
 const MARK_B = "v9.9.9-B";
 const CACHE_B = "realscan-bbbbbbbbbbbbbbbb";
 const distA = path.resolve("dist");
-const out = path.resolve("audit/pwa-update");
+const out = path.resolve(".audit/pwa-update");
 const distB = path.join(out, "dist-b");
 fs.mkdirSync(out, { recursive: true });
 

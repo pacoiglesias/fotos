@@ -45,9 +45,16 @@ function pass(text){checks.push(text);console.log('PASS '+text);}
   const parent=await page.locator('#identityOptions').evaluate(e=>e.parentElement.id);
   await page.locator('[data-preview-action=edit][data-preview-side=back]').click();await page.locator('#cropModal').waitFor({state:'visible'});await page.keyboard.press('Escape');
   assert.equal(await page.evaluate(()=>state.images.back.originalSrc),back);
+  await page.locator('[data-guided-step="2"]').click();assert(await page.evaluate(()=>!!document.activeElement.closest('#identityOptions')));
+  await page.locator('[data-guided-step="3"]').click();assert(await page.locator('#outputReviewModal').isHidden());assert.equal(await page.locator('.pdf-delivery-dialog').count(),0);assert(await page.evaluate(()=>!!document.activeElement.closest('#workspaceDelivery')));
   await page.locator('[data-workspace-deliver=pdf]').click();await page.locator('.pdf-delivery-dialog').waitFor({state:'visible'});await page.waitForFunction(()=>!document.getElementById('pdfDeliveryDownload').disabled);await page.locator('#pdfDeliveryClose').click();
   assert.equal(await page.locator('#identityOptions').evaluate(e=>e.parentElement.id),parent);
   pass(engine+' direct per-face adjustment cancels safely and delivery returns to the same stable panel');
+  await page.evaluate(()=>document.getElementById('idSheetView').open=false);
+  await page.locator('[data-annotation-open=copy]').click();await page.locator('.annotation-editor').waitFor({state:'visible'});await page.waitForFunction(()=>document.getElementById('annItems').children.length===1);await page.locator('[data-ann=apply]').click();await page.locator('.annotation-editor').waitFor({state:'detached'});
+  await page.waitForFunction(()=>document.getElementById('idSheetView').open&&document.querySelector('#idSheetView [data-annotation-layer]'));
+  assert.equal(await page.evaluate(()=>state.images.front.originalSrc),front);assert.equal(await page.evaluate(()=>state.images.back.originalSrc),back);
+  pass(engine+' applying a stamp opens the actual annotated print sheet without changing either original');
   for(const width of [320,390,768,1024,1440]){
    await page.setViewportSize({width,height:1000});await page.waitForTimeout(100);
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Page overflow at '+width);

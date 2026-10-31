@@ -16,7 +16,30 @@ Base: main 3.35.1, dda394d1cf195b42c1d183fca29962145070f3f0. Versión anterior p
 
 Prueba nueva identity-preparation-regression en Chromium y WebKit: recepción mediante selector real y confirmación, solo frente listo para entrega, reverso pendiente bloqueado, conservación al cambiar caras, cuatro páginas ID-1 para dos juegos separados, cancelación del recorte y regreso de entrega estable, ausencia de desbordamiento a 320/390/768/1024/1440 px y separación del servicio Documentos. Se conserva la prueba de impresión dúplex; su acceso está ahora en el acordeón de impresora.
 
-La regresión específica aprobó diez comprobaciones en Chromium y WebKit. Compilación, metadatos coordinados y CSP aprobados. La suite completa, CI y publicación están pendientes de finalizar; este documento no acredita un despliegue.
+La regresión específica aprobó doce comprobaciones en Chromium y WebKit, incluida la visibilidad de la hoja con sellos y los pasos sin impresión implícita. Compilación, metadatos coordinados y CSP aprobados. La suite completa, CI y publicación están pendientes de finalizar; este documento no acredita un despliegue.
+
+El primer CI detectó un desfase al pedir el reverso: el estado del trabajo ya exigía dos caras mientras el botón PDF conservaba por un instante su disponibilidad anterior. Se detuvo el publicador y se sincronizan ahora las acciones de entrega al terminar cada actualización del panel, manteniendo la aserción inmediata de la prueba.
+
+## Revisión adicional de flujos
+
+- Se elimina el doble manejo de los pasos de navegación cuando está activo el propietario actual del mostrador. «Preparar» vuelve a sus opciones; «Entregar» muestra destinos y no abre automáticamente la impresión.
+- Se corrige la regla de la interfaz móvil anterior que ocultaba el panel de preparación al activar el paso de la hoja. Las opciones de identificación permanecen accesibles durante la revisión.
+- Al aplicar firmas o sellos, la vista de identificación abre la hoja completa para mostrar el resultado impreso, además de las capturas originales ampliadas. Se mantiene el recorte y el original por separado.
+- Se retiran 18 PNG/JSON generados de auditorías anteriores (1.969.410 bytes). No son fixtures ni recursos publicados; los cinco scripts originales se conservan y escriben en `.audit/`, fuera de Git. Los documentos de auditoría y el historial del repositorio permanecen disponibles.
+
+## Mejoras siguientes, sin anunciarlas como implementadas
+
+| Prioridad | Mejora | Beneficio |
+| --- | --- | --- |
+| Alta | Una única revisión que reúna encuadre, hoja y destino | Menos saltos entre diálogos, conservando la confirmación de tamaño físico. |
+| Alta | Selector de destino más breve en la entrega PDF | Mostrar Descargar, Imprimir y Compartir; agrupar NAS/QR/WhatsApp según la acción elegida. |
+| Alta | Comprobante de archivo NAS con tarea y estado final | Distinguir claramente envío aceptado, procesamiento y archivo recuperable. |
+| Media | Edición del margen sobre la hoja, con guías en mm | Comprender el resultado sin interpretar campos numéricos. |
+| Media | Unificar encabezado y acabado en una sola edición | Evitar controles equivalentes en posiciones distintas. |
+| Media | Reanudar exactamente la posición después de cada diálogo | Mantener el contexto al revisar varias páginas o clientes. |
+| Media | Accesos de teclado para capturar, repetir y entregar | Acelerar el trabajo de escritorio con foco y avisos claros. |
+| Media | Recetas de negocio visibles por servicio | Ofrecer solo presets pertinentes, sin guardar imágenes ni datos personales. |
+| Física | Calibración HP e iPhone con pruebas reales | Completar la evidencia que las pruebas automatizadas no pueden sustituir. |
 
 ## Límites
 

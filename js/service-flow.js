@@ -42,6 +42,9 @@
   refreshAdvice(doc,work,allowed);prepareInBackground(doc,work,allowed);
   if(doc.active){$('flowDocColor').value=doc.options.color||'color';$('flowDocDuplex').value=doc.options.duplex||'single';}
   $('flowDuplexHint').hidden=!doc.active||doc.options.duplex!=='manual';if($('flowDuplexActions')){$('flowDuplexActions').hidden=$('flowDuplexHint').hidden;for(const b of $('flowDuplexActions').querySelectorAll('button'))b.disabled=!allowed||!doc.ready||doc.busy;}
+  // Publish the same readiness to every delivery control before this interaction returns.
+  // The scheduled layout pass still handles placement, not correctness of action states.
+  window.RealScanPanelLayout?.update();
  }
  function prepareInBackground(doc,work,allowed){
   if(!allowed){lastWarm=[];clearTimeout(warmTimer);RealScanPrint.clear();return;}

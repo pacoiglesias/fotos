@@ -99,7 +99,7 @@
       btn.type = 'button';
       btn.setAttribute('data-guided-step', String(step));
       btn.innerHTML = '<span class="guided-step-label"></span>';
-      btn.addEventListener('click', function () { goStep(step); });
+      btn.addEventListener('click', function () { if(!window.RealScanWorkspacePolish)goStep(step); });
       bar.appendChild(btn);
       if (step < 3) {
         const arrow = document.createElement('span');

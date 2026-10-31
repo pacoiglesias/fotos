@@ -3,14 +3,14 @@
    las regresiones, abre Ajustes y mide ANTES/DESPUÉS: font-size raíz,
    tamaño y color del texto secundario, altura de objetivos táctiles,
    contraste en oscuro, persistencia tras recargar y restauración al
-   desactivar. Capturas en audit/counter-mode/. */
+   desactivar. Capturas en .audit/counter-mode/. */
 const fs = require("fs"),
   path = require("path"),
   http = require("http"),
   assert = require("assert"),
   { chromium } = require("playwright");
 const root = path.resolve("dist");
-const out = path.resolve("audit/counter-mode");
+const out = path.resolve(".audit/counter-mode");
 fs.mkdirSync(out, { recursive: true });
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, "http://localhost");
