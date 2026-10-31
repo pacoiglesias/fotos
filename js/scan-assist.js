@@ -200,7 +200,7 @@
       const w = captured ? canvas.width : video.videoWidth, h = captured ? canvas.height : video.videoHeight;
       if(!w || !h)return;
       const area = $('.scan-preview-area');
-      const padding = captured ? 48 : 16;
+      const padding = captured ? Math.min(48, area.clientHeight * .25) : 16;
       const scale = Math.min(Math.max(1,area.clientWidth-padding)/w,Math.max(1,area.clientHeight-padding)/h);
       stage.style.width = Math.floor(w*scale)+'px';
       stage.style.height = Math.floor(h*scale)+'px';

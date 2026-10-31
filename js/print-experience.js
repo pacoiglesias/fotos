@@ -53,7 +53,7 @@
     modal._refreshSheet=e=>{if(e.target.closest('[data-passport-count]'))refresh();};
     modal.addEventListener('click',modal._refreshSheet);
     if(modal._profileSheet)modal.removeEventListener('change',modal._profileSheet);
-    modal._profileSheet=e=>{if(e.target.matches('.output-review-profile select'))refresh();};
+    modal._profileSheet=e=>{if(e.target.matches('.output-review-profile select, .review-edit-options select'))refresh();};
     modal.addEventListener('change',modal._profileSheet);
     await refresh();
   };

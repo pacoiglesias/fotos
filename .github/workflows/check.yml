@@ -45,6 +45,8 @@ jobs:
             .audit/workspace-polish/
             .audit/release329/
             .audit/operations330/
+            .audit/counter335/
+            .audit/id-pdf-intake/
             .audit/mobile-local-evidence/
             .audit/mobile-local-webkit-evidence/
             .audit/counter-final/

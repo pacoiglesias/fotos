@@ -1,4 +1,4 @@
-# RealScan Pro · 3.30.0
+# RealScan Pro · 3.35.0
 
 Mostrador para recibir, preparar, revisar e imprimir fotografías y documentos. Desarrollado por Paco Iglesias.
 
