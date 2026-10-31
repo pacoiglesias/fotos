@@ -224,7 +224,7 @@ function update(){
   const printer=$('quickPrinter');
   if(printer){const st=$('workspacePrinterStatus')?.textContent||'';if(printer.textContent!==st)printer.textContent=st;}
   const busy=!!w.busy,ok=!miss.length&&!!w.ready&&!busy;
-  if(actions)actions.dataset.ready=String(ok);
+  if(actions)actions.dataset.ready=String(ok);if($('quickMode'))$('quickMode').dataset.ready=String(ok);
   const print=$('quickPrintBtn'),pdf=$('quickPdfBtn');
   if(print)print.disabled=!ok;if(pdf)pdf.disabled=!ok;for(const id of ['quickSendBtn','quickArchiveBtn'])if($(id))$(id).disabled=!ok;
   setText('quickDeliverHint',postPrint?'':(!front&&!back?'Toca Escanear frente para empezar.':miss.length?'Falta '+(miss[0]==='back'?'el reverso':'el frente')+'.':busy?'Preparando imágenes…':'Revisa la hoja y elige cómo entregar.'));
