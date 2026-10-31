@@ -380,3 +380,5 @@
  @media(max-width:600px){.id-pdf-intake{padding:18px}.id-pdf-intake h2{font-size:23px}.id-card-grid{gap:10px}.id-card-grid figure{padding:8px}.id-pdf-intake .id-card-grid{grid-template-columns:1fr}.id-pdf-intake footer{position:sticky;bottom:-18px;padding:10px 0;background:var(--studio-surface,#fff);border-top:1px solid var(--studio-border,#dce2e9)}.id-focus-preview .id-card-grid{grid-template-columns:1fr}.id-pdf-intake footer button{flex:1 1 auto}.id-focus-actions button{flex:1;padding-inline:10px}.id-focus-preview .id-focus-heading>strong{width:100%;text-align:center}}
 }
 @media print{#idPdfIntake,#idFocusPreview,#idSheetView>summary{display:none!important}}
+
+@media screen and (max-width:1050px){#idFocusCards{grid-template-columns:minmax(0,1fr)}}

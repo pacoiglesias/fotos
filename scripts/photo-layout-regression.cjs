@@ -58,7 +58,7 @@ let browser;
   await page.locator('.mob-pane-2 .btn-mob-nav').first().click();
   assert.equal(await page.evaluate(()=>document.body.dataset.mobileStep),'1');
   await page.locator('[data-guided-step="2"]').click();
-  await page.locator('.mob-pane-2 .btn-mob-nav').last().click();
+  await page.locator('.mob-pane-2 .btn-mob-nav').last().click();await page.waitForFunction(()=>document.body.dataset.mobileStep==='3');
   assert.equal(await page.evaluate(()=>document.body.dataset.mobileStep),'3');
   await page.locator('.mob-pane-3 .btn-mob-nav').click();
   assert.equal(await page.evaluate(()=>document.body.dataset.mobileStep),'2');

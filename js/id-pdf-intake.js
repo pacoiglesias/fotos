@@ -83,7 +83,7 @@
     if(!await root.waitForProcessingComplete(15000))throw Error('La identificación aún se está procesando.');
     if(!unlocked()||job!==state._jobRevision)return;
     if(state.images.front.rawOriginalSrc!==cards[0]||state.images.back.rawOriginalSrc!==cards[1]||!state.images.front.processedDataUrl||!state.images.back.processedDataUrl)throw Error('No se pudieron preparar ambas caras.');
-    focusedImport={job};root.updateUI();root.RealScanStudio?.update();root.RealScanServiceFlow?.update();root.saveActiveDraft?.();onAssigned?.('both');dismiss();syncFocus();if($('idSheetView'))$('idSheetView').open=false;
+    focusedImport={job};root.updateUI();root.RealScanStudio?.update();root.RealScanServiceFlow?.update();root.saveActiveDraft?.();root.RealScanJourney?.go('review');onAssigned?.('both');dismiss();syncFocus();if($('idSheetView'))$('idSheetView').open=false;
     if(action==='print')root.handlePrintDirect();else if(action==='save')await root.RealScanPdfDelivery.open({destination:'pdf'});else $('idFocusPreview')?.scrollIntoView({block:'start',behavior:'instant'});
    }catch(error){if(unlocked()&&job===state._jobRevision&&previous)await root.restoreActiveDraft(previous);root.showToast?.(error.message||'No se pudo preparar la identificación.','error');dismiss();}
    finally{busy=false;if(active?.dialog===dialog)buttons();}
