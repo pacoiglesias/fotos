@@ -62,3 +62,6 @@ No todos los puntos son funciones nuevas: la matriz distingue lo incorporado de 
 
 ## Comprobación de origen del NAS
 La preconsulta OPTIONS autoriza https://fotos.cobertores.com. En ambas direcciones web.app responde 200 pero sin Access-Control-Allow-Origin: no pueden acceder desde el navegador hasta que el administrador del NAS amplíe sus orígenes autorizados. El formulario recomienda usar el dominio del negocio; no se redirige ni se cambia el servidor. Esta limitación no se resuelve desplegando Firebase.
+
+## Correcciones del primer CI 3.35
+El primer CI detectó cuatro fallos y se detuvo el publicador local antes de ejecutar Firebase. Se corrigió el espacio de la hoja preparada en escritorio, se evitó un segundo encabezado global en la vista ampliada y se compactaron textos auxiliares en teléfonos pequeños para conservar imagen y acciones. La prueba dúplex espera ahora la apertura real del módulo diferido, manteniendo su aserción de visibilidad y la comprobación del modo de impresión. La prueba de cámara conserva sus umbrales y añade evidencia de geometría por viewport.
