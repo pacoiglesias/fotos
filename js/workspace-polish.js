@@ -42,11 +42,37 @@
   const delivery=$('workspaceDelivery'),destination=doc().active?$('documentWorkspace'):$('colStageWorkspace');if(delivery&&destination&&delivery.parentElement!==destination)destination.append(delivery);if(delivery&&$('annotationTools')&&delivery.previousElementSibling!==$('annotationTools'))delivery.before($('annotationTools'));document.body.dataset.refinedLayout=wide?'workspace':'stack';updateDock();update();
  }
  function syncFinish(){if(!$('sheetFinishSummary'))return;const active=[];if(!state.hideSheetTitle&&(state.includeDocLabels!==false||(state.documentCustomTitle||'').trim()))active.push('Título');if(state.includeDocLabels!==false)active.push('Rótulos');if(state.includeRulerFooter!==false)active.push('Regla');if(state.includeCutMarks!==false)active.push('Marcas');$('sheetFinishSummary').textContent=active.length?active.join(' · '):'Sin elementos auxiliares';$('sheetFinishPanel').dataset.clean=String(!active.length);for(const id of ['btnQuickOfficialClean','btnQuickStandardChecked'])$(id).setAttribute('aria-pressed',String(id==='btnQuickOfficialClean'?!active.length:state.includeDocLabels!==false&&state.includeRulerFooter!==false&&state.includeCutMarks!==false));}
+ function mountIdentityPreparation(){
+  // Keep one owner and move the original controls once: no cloned handlers or settings.
+  const flow=$('serviceFlow'),options=document.createElement('div');options.id='identityOptions';
+  $('flowIdChoices').before(options);
+  options.append($('flowIdChoices'),$('flowPaper'),$('flowSets').closest('.flow-number'),$('workspaceQuantity'));
+  const badge=document.createElement('p');badge.id='identitySize';badge.className='identity-size';$('flowHeading').after(badge);
+  const guide=document.createElement('p');guide.id='identityGuide';guide.className='identity-guide';badge.after(guide);
+  const rail=$('capturePreviewRail');if(rail)options.after(rail);
+  if(rail)rail.after($('flowNextHint'),$('flowAddMissing'));
+  $('workspacePrinterOptions').append($('flowIdDuplexGuide'));
+  $('sheetFinishPanel').before($('counterService'));
+  const side=$('flowSides').querySelector('[data-flow-sides=single]');if(side)$('flowSides').prepend(side);
+  const sidesTitle=$('flowIdChoices').querySelector('h3');sidesTitle.textContent='¿Qué caras necesitas?';
+  flow.setAttribute('aria-labelledby','flowHeading');
+ }
+ function updateIdentityPreparation(d,work,allowed){
+  const active=!d.active&&state.activeCategory!=='photos'&&state.format==='card';
+  document.body.classList.toggle('rs-identity',active);
+  if(!$('identitySize'))return;
+  $('identitySize').hidden=$('identityGuide').hidden=!active;
+  if(!active)return;
+  $('identitySize').textContent=work.scale===100?'85,60 × 53,98 mm · tamaño de la tarjeta':'Escala '+work.scale+' % · comprueba las medidas';
+  $('identityGuide').textContent=!allowed?'Inicia sesión para preparar el trabajo.':work.busy?'Preparando la captura. Conservamos tus opciones.':work.missing.length?'Elige las caras y el papel. Usa Cámara o Archivo en cada cara.':'Capturas listas. Puedes cambiar las opciones y después elegir cómo entregar.';
+  $('flowAddMissing').textContent='Otras opciones de captura';
+  $('flowAddMissing').setAttribute('aria-label',work.missing.length?'Otras opciones para agregar '+(work.missing[0]==='back'?'reverso':'frente'):'Otras opciones de captura');
+ }
  function update(){
   if(!mounted||!root.state||!$('workspaceStatus'))return;const allowed=unlocked(),d=doc(),work=RealScanWorkflow.describe(),loaded=d.active?!!d.count:Object.values(state.images).some(i=>i.originalSrc),ready=d.active?d.ready:work.ready&&!work.layout.errors.length;
   document.body.dataset.workspaceLoaded=String(allowed&&loaded);document.body.dataset.workspaceBusy=String(busy()||changing);document.body.dataset.workspaceReady=String(ready);$('serviceFlow').setAttribute('aria-busy',String(busy()||changing));
   const favorites=$('studioFavorites');if(favorites&&favorites.parentElement!==$('deskTools'))$('deskTools').append(favorites);
-  $('sheetFinishPanel').hidden=!!d.active;syncFinish();
+  $('sheetFinishPanel').hidden=!!d.active;syncFinish();updateIdentityPreparation(d,work,allowed);
   const status=$('workspaceStatus');status.textContent=!allowed?'Inicia sesión para comenzar':busy()?'Preparando tu archivo…':!loaded?'Recibe una imagen. Puedes elegir el servicio después.':d.active?d.reviewed+' de '+d.count+' páginas revisadas':ready?'Capturas listas. Revisa la hoja antes de entregar.':'Falta '+work.missing.map(s=>s==='back'?'el reverso':s==='front'?'el frente':'una página').join(' y ');status.dataset.ready=String(ready);
   const next=$('workspaceNext');if(next){next.disabled=!allowed||busy()||changing;next.textContent=changing?'Cambiando de servicio…':busy()?'Preparando archivo…':!loaded?'Capturar primera imagen':d.active?!d.ready?'Revisar páginas pendientes':'Revisar y entregar':work.missing.length?'Capturar '+(work.missing[0]==='back'?'reverso':state.activeCategory==='photos'?'fotografía':'cara pendiente'):'Revisar y entregar';}
   $('studioApprovalNote').hidden=!$('studioApprovalNote').textContent.includes('aprobó');
@@ -99,7 +125,7 @@
  }
  function mount(){
   if(mounted)return;if(!$('colControlPanel')){mounted=true;document.body.classList.add('rs-next-mobile','rs-refined');updateDock();if(typeof IntersectionObserver==='function'){const observer=new IntersectionObserver(schedule,{threshold:[0,1]});for(const id of ['mobileCapture','mobileSavePdf'])if($(id))observer.observe($(id));}root.RealScanWorkspacePolish={update:schedule};return;}
-  if(!$('deskPresets')||!$('captureFirstOpen')||!$('annotationOptions')||!$('serviceFlow')||!$('sheetFinishPanel')||!$('deskPaperless')||!$('studioFavorites')){setTimeout(mount,40);return;}
+  if(!$('deskPresets')||!$('captureFirstOpen')||!$('annotationOptions')||!$('serviceFlow')||!$('sheetFinishPanel')||!$('deskPaperless')||!$('studioFavorites')||!$('capturePreviewRail')){setTimeout(mount,40);return;}
   document.body.classList.add('rs-next','rs-refined','rs-panels','rs-counter330');mountPanels();
   for(const id of ['deskStart','studioWelcome']){const e=$(id),anchor=document.createComment('service-controls-'+id);e.before(anchor);anchors.push({element:e,anchor});}editorAnchor=document.createComment('editor-tools-position');$('studioEditorTools').before(editorAnchor);
   $('counterMore').textContent='Más';$('counterMore').setAttribute('aria-label','Más opciones');$('deskStart').querySelector('h2').textContent='Recibe tu archivo';$('workbenchBar').querySelector('strong').textContent='Mostrador';$('workbenchQueue').onclick=()=>openJobs();$('workbenchQueue').firstChild.textContent='Trabajos ';$('deskRecent').onclick=()=>openJobs('printed');$('deskQueueCurrent').onclick=async()=>{try{await RealScanJobQueue.saveCurrent($('deskClient').value);await openJobs('orders');}catch(e){root.showToast?.(e.message,'warning');}};
@@ -129,7 +155,7 @@
   $('workbenchBar').querySelector('strong').textContent='Tu mesa de trabajo';const intro=document.createElement('p');intro.id='counterIntro';intro.textContent='Recibe el archivo, prepara la hoja y entrega con confianza.';$('workbenchBar').firstElementChild.append(intro);
   $('studioEmpty').innerHTML='<svg viewBox="0 0 200 160" fill="none" aria-hidden="true"><rect x="50" y="15" width="104" height="132" rx="8" fill="var(--work-surface)" stroke="currentColor" stroke-width="1.4"/><rect x="39" y="30" width="104" height="118" rx="8" fill="var(--work-surface)" stroke="currentColor" stroke-width="1.4"/><rect x="57" y="49" width="68" height="48" rx="5" fill="currentColor" opacity=".08"/><circle cx="79" cy="64" r="6" fill="currentColor" opacity=".3"/><path d="m61 91 17-17 14 11 11-9 18 15M58 113h64M58 123h43" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".35"/></svg><strong>Tu hoja empieza aquí</strong><span>Elige Cámara, Archivo o Cargar desde NAS.<br>Verás el resultado antes de imprimir.</span>';
   for(const [id,key]of [['btnOpenReceiveModal','qr'],['btnOpenDeliveryModal','pdf']]){const b=$(id),temp=button('',()=>{});addIcon(temp,key);if(b?.firstElementChild)b.firstElementChild.replaceWith(temp.querySelector('svg'));}
-  mounted=true;root.RealScanWorkspacePolish={update:arrange,choose,deliver,openJobs,undoService,remember,isChanging:()=>changing};root.RealScanPanelLayout={update};arrange();
+  mountIdentityPreparation();mounted=true;root.RealScanWorkspacePolish={update:arrange,choose,deliver,openJobs,undoService,remember,isChanging:()=>changing};root.RealScanPanelLayout={update};arrange();
  }
  for(const e of ['realscan:studio-updated','realscan:document-updated','realscan:mobile-updated','realscan:paperless-changed'])document.addEventListener(e,schedule);root.addEventListener('resize',schedule);root.addEventListener('scroll',updateDock,{passive:true});root.visualViewport?.addEventListener('resize',schedule);document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,140));
 })(window);

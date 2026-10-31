@@ -29,6 +29,7 @@ try {
     "id-pdf-intake-regression",
     "counter335-regression",
     "review-settings-regression",
+    "identity-preparation-regression",
     "diagnostics-regression",
     "auto-straighten-test",
     "quality-check-test",

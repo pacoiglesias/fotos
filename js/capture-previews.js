@@ -27,5 +27,47 @@ if(window.RealScanInePair?.detectSingleCardFromDataUrl){
  }).catch(()=>{});
 }for(const b of dialog.querySelectorAll('[data-preview-close]'))b.onclick=close;dialog.querySelector('[data-preview-zoom]').onclick=e=>{const zoom=dialog.dataset.zoom!=='true';dialog.dataset.zoom=String(zoom);e.target.textContent=zoom?'Ver captura completa':'Ampliar detalle';};dialog.querySelector('[data-preview-edit]').onclick=()=>{close();if(!allowed()||RealScanWorkflow.describe().busy)return;RealScanStudio.selectSlot(side);$('studioCrop').click();};dialog.addEventListener('cancel',e=>{e.preventDefault();close();});viewer={dialog,side,source,revision};document.body.append(dialog);dialog.showModal();}
 function label(side){return state.activeCategory==='photos'?(side==='front'?'Fotografía A':'Fotografía B'):({front:'Frente',back:'Reverso',page3:'Página 3',page4:'Página 4'}[side]);}
-function update(){const rail=$('capturePreviewRail');if(!rail)return;const allowedNow=allowed(),doc=RealScanDocuments.status(),work=RealScanWorkflow.describe();if(viewer&&(!allowedNow||doc.active||viewer.revision!==state._jobRevision||viewer.source!==(state.images[viewer.side]?.processedDataUrl||state.images[viewer.side]?.originalSrc)))close();const key=[allowedNow,doc.active,work.busy,state._jobRevision,state.activeCategory,...work.wanted,...work.wanted.map(side=>state.images[side]?.processedDataUrl||state.images[side]?.originalSrc||'')];if(key.length===last.length&&key.every((v,i)=>v===last[i]))return;last=key;rail.replaceChildren();rail.hidden=!allowedNow||doc.active;if(rail.hidden)return;const title=document.createElement('h3');title.textContent='Tus capturas';rail.append(title);const grid=document.createElement('div');grid.className='capture-preview-grid';for(const side of work.wanted){const img=state.images[side],source=img?.processedDataUrl||img?.originalSrc,b=document.createElement('button');b.type='button';b.dataset.previewSide=side;b.disabled=work.busy;b.setAttribute('aria-label',source?'Ampliar captura: '+label(side):'Agregar '+label(side));const caption=document.createElement('strong');caption.textContent=label(side);if(source){const picture=document.createElement('img');picture.src=source;picture.alt='Vista previa de '+label(side);picture.decoding='async';b.append(picture);b.onclick=()=>open(side);}else{const placeholder=document.createElement('span');placeholder.className='capture-preview-empty';placeholder.textContent='+';b.append(placeholder);b.onclick=()=>RealScanWorkflow.moveTo(2,side);}const hint=document.createElement('small');hint.textContent=source?'Toca para ampliar':'Pendiente de capturar';b.append(caption,hint);grid.append(b);}rail.append(grid);if(job!==state._jobRevision){job=state._jobRevision;seen=0;}const loaded=work.wanted.filter(side=>state.images[side]?.processedDataUrl).length;if(loaded>seen&&innerWidth<1024&&document.body.dataset.mobileStep==="2"){const revision=state._jobRevision;setTimeout(()=>{if(allowed()&&revision===state._jobRevision&&!document.querySelector("dialog[open]"))rail.scrollIntoView({block:"center",behavior:"auto"});},0);}seen=loaded;}
+function captureSource(side,source){
+ if(!allowed()||RealScanDocuments.status().active||RealScanWorkflow.describe().busy)return;
+ if(source==='camera')document.querySelector('[data-camera="'+side+'"]')?.click();
+ else $({front:'fileInputFront',back:'fileInputBack',page3:'fileInputPage3',page4:'fileInputPage4'}[side])?.click();
+}
+function update(){
+ const rail=$('capturePreviewRail');if(!rail)return;
+ const allowedNow=allowed(),doc=RealScanDocuments.status(),work=RealScanWorkflow.describe(),identity=state.activeCategory!=='photos'&&state.format==='card';
+ if(viewer&&(!allowedNow||doc.active||viewer.revision!==state._jobRevision||viewer.source!==(state.images[viewer.side]?.processedDataUrl||state.images[viewer.side]?.originalSrc)))close();
+ const key=[allowedNow,doc.active,identity,work.busy,state._jobRevision,state.activeCategory,...work.wanted,...work.wanted.map(side=>state.images[side]?.processedDataUrl||state.images[side]?.originalSrc||'')];
+ if(key.length===last.length&&key.every((v,i)=>v===last[i]))return;last=key;
+ // Updating another face must not drop keyboard focus when rebuilding the rail.
+ const focused=rail.contains(document.activeElement)?document.activeElement.dataset.previewAction+'|'+document.activeElement.dataset.previewSide:null;
+ rail.replaceChildren();rail.hidden=!allowedNow||doc.active;if(rail.hidden)return;
+ const title=document.createElement('h3');title.textContent=identity?'Añade y revisa las caras':'Tus capturas';rail.append(title);
+ const grid=document.createElement('div');grid.className='capture-preview-grid';
+ for(const side of work.wanted){
+  const img=state.images[side],source=img?.processedDataUrl||img?.originalSrc,b=document.createElement('button');
+  b.type='button';b.dataset.previewSide=side;b.dataset.previewAction='view';b.disabled=work.busy;
+  b.setAttribute('aria-label',source?'Ampliar captura: '+label(side):'Agregar '+label(side));
+  const caption=document.createElement('strong');caption.textContent=label(side);
+  if(source){const picture=document.createElement('img');picture.src=source;picture.alt='Vista previa de '+label(side);picture.decoding='async';b.append(picture);b.onclick=()=>open(side);}
+  else{const placeholder=document.createElement('span');placeholder.className='capture-preview-empty';placeholder.textContent='+';b.append(placeholder);b.onclick=()=>identity?captureSource(side,'camera'):RealScanWorkflow.moveTo(2,side);}
+  const hint=document.createElement('small');hint.textContent=source?'Toca para ampliar':'Pendiente';b.append(caption,hint);
+  if(!identity){grid.append(b);continue;}
+  const card=document.createElement('article');card.className='capture-side-card';card.dataset.captureSide=side;card.dataset.loaded=String(!!source);card.append(b);
+  const actions=document.createElement('div');actions.className='capture-side-actions';actions.setAttribute('role','group');actions.setAttribute('aria-label','Acciones de '+label(side));
+  function action(text,key,fn){const button=document.createElement('button');button.type='button';button.textContent=text;button.dataset.previewAction=key;button.dataset.previewSide=side;button.setAttribute('aria-label',text+' · '+label(side));button.disabled=work.busy;button.onclick=()=>{if(allowed()&&!RealScanDocuments.status().active&&!RealScanWorkflow.describe().busy)fn();};actions.append(button);}
+  action(source?'Repetir':'Cámara','camera',()=>captureSource(side,'camera'));
+  action(source?'Cambiar archivo':'Archivo','file',()=>captureSource(side,'file'));
+  if(source)action('Recortar / ajustar','edit',()=>{RealScanStudio.selectSlot(side);$('studioCrop').click();});
+  card.append(actions);grid.append(card);
+ }
+ rail.append(grid);
+ if(focused){const [action,side]=focused.split('|');rail.querySelector('[data-preview-action="'+action+'"][data-preview-side="'+side+'"]')?.focus({preventScroll:true});}
+ if(job!==state._jobRevision){job=state._jobRevision;seen=0;}
+ const loaded=work.wanted.filter(side=>state.images[side]?.processedDataUrl).length;
+ if(loaded>seen&&innerWidth<1024&&document.body.dataset.mobileStep==='2'){
+  const revision=state._jobRevision;
+  setTimeout(()=>{if(allowed()&&revision===state._jobRevision&&!document.querySelector('dialog[open]'))rail.scrollIntoView({block:'center',behavior:'auto'});},0);
+ }
+ seen=loaded;
+}
 function init(){if(root.RealScanMobile||!$('flowReceive'))return;const rail=document.createElement('section');rail.id='capturePreviewRail';rail.className='capture-preview-rail';rail.setAttribute('aria-label','Capturas recibidas');$('flowReceive').after(rail);for(const event of ['realscan:studio-updated','realscan:document-updated'])document.addEventListener(event,update);root.RealScanCapturePreviews={open,close,update};update();}root.addEventListener('pagehide',close);document.addEventListener('DOMContentLoaded',()=>setTimeout(init,40));})(window);

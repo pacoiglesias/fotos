@@ -1,4 +1,6 @@
-# RealScan Pro · 3.35.1
+# RealScan Pro · 3.36.0
+
+Identificaciones: caras, papel y juegos juntos, con Cámara y Archivo propios de cada cara. En escritorio se prepara a la izquierda y se revisa la hoja a la derecha; en móvil se eligen las opciones antes de la vista previa. Solo frente permite entregar sin exigir reverso y cambiar de modalidad conserva las capturas.
 
 Mostrador para recibir, preparar, revisar e imprimir fotografías y documentos. Desarrollado por Paco Iglesias.
 

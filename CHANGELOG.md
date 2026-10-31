@@ -1,3 +1,11 @@
+## 3.36.0 — Identificación con controles y capturas juntos
+
+- Panel de preparación estable: Solo frente, Frente y reverso o Una por hoja, papel y juegos juntos; controles a la izquierda y hoja a la derecha en escritorio. Preparación antes de la hoja en móvil.
+- Cámara y archivo propios de cada cara, con ampliación y recorte directos. Cambiar distribución conserva las capturas y usa el mismo motor de impresión.
+- Se ocultan los controles de acabado/dúplex de documentos al preparar identificaciones. La guía dúplex se encuentra en Impresora y escala real; se conservan sus validaciones físicas.
+- Menos duplicación visual: un selector de papel en identificaciones y una sola bandeja de capturas. Opciones especiales conservadas con sus identificadores y manejadores originales.
+- Regresión de recepción real por selector de archivos, modalidad de caras, conservación, entrega y cinco tamaños de pantalla en Chromium y WebKit. Publicación condicionada a verificación completa.
+
 ## 3.35.1 — Ajustar la hoja desde la revisión
 
 - Controles compartidos de márgenes, encabezado, rótulos, regla y líneas de corte dentro de la revisión y de la entrega PDF, organizados en Hoja, Encabezado y Acabado.

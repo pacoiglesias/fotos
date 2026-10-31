@@ -1,3 +1,7 @@
+## 3.36.0 — Preparación de identificaciones simplificada
+
+Revisión del panel de identificación sobre main 3.35.1. Distribución, papel y juegos en una zona; captura por cara; controles de documentos ocultos fuera de su servicio; preparación antes de la vista previa en móvil. Se conservan motores de medida, impresión, privacidad y las opciones originales. La verificación y publicación se acreditan con resultados y endpoints, no con esta anotación.
+
 ## 3.35.1 — Ajustar la hoja desde la revisión
 
 - Controles compartidos de márgenes, encabezado, rótulos, regla y líneas de corte dentro de la revisión y de la entrega PDF, organizados en Hoja, Encabezado y Acabado.
