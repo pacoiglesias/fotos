@@ -70,7 +70,7 @@
     if(Math.max(img.naturalWidth,img.naturalHeight)>MAX_EDGE){const c=document.createElement('canvas'),scale=MAX_EDGE/Math.max(img.naturalWidth,img.naturalHeight);c.width=Math.round(img.naturalWidth*scale);c.height=Math.round(img.naturalHeight*scale);const ctx=c.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);result=c.toDataURL('image/jpeg',.96);const normalized={data:result,width:c.width,height:c.height};c.width=c.height=0;return normalized;}
     return {data:result,width:img.naturalWidth,height:img.naturalHeight};
   }
-  async function addFiles(files){
+  async function addFiles(files,settings={}){
     if(!active||busy||!files.length)return false;const revision=epoch;busy=true;render();
     const staged=[],sourceFiles=[];
     try{
@@ -87,6 +87,7 @@
           const ownedTask=task,doc=await ownedTask.promise;
           try{
             if(doc.numPages>MAX_PAGES||pages.length+staged.length+doc.numPages>MAX_PAGES)throw Error('El documento admite hasta 40 páginas. Divide el archivo antes de importarlo.');
+            if(!settings.skipIdentity&&files.length===1&&!pages.length&&root.RealScanIdPdf&&/(?:^|[^a-z0-9])(dni|ine|identificaci[oó]n|credencial)(?=$|[^a-z0-9])/i.test(file.name)){const request=root.beginSlotRequest('front');try{if(await root.RealScanIdPdf.tryOpen(doc,{request,fileName:file.name,file,targetSide:'front',allowDocument:true,onAssigned:settings.onAssigned,isCurrent:()=>revision===epoch&&active&&!pages.length}))return {pendingIdentification:true};}finally{root.finishSlotRequest(request);}}
             for(let n=1;n<=doc.numPages;n++){
               if(revision!==epoch)return false;const page=await doc.getPage(n),base=page.getViewport({scale:1});
               const scale=Math.min(300/72,MAX_EDGE/Math.max(base.width,base.height)),viewport=page.getViewport({scale});
@@ -110,7 +111,7 @@
     }catch(e){if(revision===epoch)say(e.message||'No se pudo abrir el documento. Las páginas anteriores se conservan.',true);return false;}
     finally{if(revision===epoch){busy=false;render();}}
   }
-  async function fromInbox(file){if(file.assigning||file.documentAddedJob===(state._jobRevision||0))return;const job=state._jobRevision||0;file.assigning=true;RealScanReceiveUI.render();try{const blob=await(await fetch(file.dataUrl)).blob();if(!active||job!==(state._jobRevision||0))return;const added=await addFiles([new File([blob],file.name,{type:file.type})]);if(added&&job===(state._jobRevision||0)){file.documentAddedJob=job;file.assignedTo='document';}}catch(e){say('No se pudo añadir el archivo recibido. Reintenta.',true);}finally{file.assigning=false;RealScanReceiveUI.render();}}
+  async function fromInbox(file){if(file.assigning||file.documentAddedJob===(state._jobRevision||0))return;const job=state._jobRevision||0;file.assigning=true;RealScanReceiveUI.render();try{const blob=await(await fetch(file.dataUrl)).blob();if(!active||job!==(state._jobRevision||0))return;const added=await addFiles([new File([blob],file.name,{type:file.type})],{onAssigned:side=>{if(job===(state._jobRevision||0)){file.assignedTo=side;if(side==='document')file.documentAddedJob=job;RealScanReceiveUI.render();}}});if(added===true&&job===(state._jobRevision||0)){file.documentAddedJob=job;file.assignedTo='document';}}catch(e){say('No se pudo añadir el archivo recibido. Reintenta.',true);}finally{file.assigning=false;RealScanReceiveUI.render();}}
   async function enhancePage(page){if(busy||!pages.includes(page)||!root.RealScanEnhance)return;const revision=epoch,source=page.data;try{await root.RealScanEnhance.open({sourceDataUrl:source,photoMode:false,isCurrent:()=>revision===epoch&&pages.includes(page),onAccept:async data=>{if(revision!==epoch||!pages.includes(page))throw Error('El documento cambió.');if(data===source)return;const changed=await normalize(data);if(revision!==epoch||!pages.includes(page))throw Error('El documento cambió.');if(sizeOf(pages.map(p=>p===page?{...page,...changed}:p),originals)>MAX_BYTES)throw Error('El ajuste supera el límite del trabajo.');Object.assign(page,changed,{reviewed:false});persist();render();say('Mejora aplicada. Revisa y confirma esta página antes de entregar.');}});}catch(e){say(e.message,true);}}
   async function reviewPage(page){
     if(busy||!pages.includes(page))return;const revision=epoch;

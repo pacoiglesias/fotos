@@ -34,12 +34,14 @@
     const id = getActiveId();
     return id ? get(id) : null;
   }
+  function changed(){document.dispatchEvent(new Event('realscan:printer-profile-changed'));}
   function setActive(id) {
     try {
       const key = window.PREFS_KEY || 'realscan_prefs_v2';
       const prefs = JSON.parse(localStorage.getItem(key) || '{}');
       if (id) prefs.printerProfileId = id; else delete prefs.printerProfileId;
       localStorage.setItem(key, JSON.stringify(prefs));
+      changed();
     } catch (e) {}
   }
   function upsert(profile) {

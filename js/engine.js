@@ -132,6 +132,8 @@ async function handlePdfFile(file, targetSide, onAssigned, request = beginSlotRe
     if(!slotRequestCurrent(request))return {cancelled:true};
     if (pdfDoc.numPages > 40) throw Error('El PDF supera 40 páginas. Divide el documento antes de cargarlo.');
 
+    if(window.RealScanIdPdf&&await RealScanIdPdf.tryOpen(pdfDoc,{request,fileName:file.name,file,targetSide,onAssigned}))return {pendingIdentification:true};
+
     if (pdfDoc.numPages >= 2) {
       if (typeof openPdfPageSelector === 'function') {
         finishSlotRequest(request);

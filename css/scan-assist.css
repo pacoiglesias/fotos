@@ -253,7 +253,7 @@
 .scan-dialog[open]{display:flex;flex-direction:column;height:min(94dvh,960px);max-height:none;overflow:hidden;scrollbar-gutter:auto;gap:8px;}
 .scan-head{position:static;flex:none;padding:0;background:transparent;}
 .scan-steps{flex:none;margin:0;}.scan-steps li{padding:5px;}
-.scan-preview-area{flex:1 1 0;min-height:80px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#020617;border-radius:14px;}
+.scan-preview-area{flex:1 1 0;min-height:128px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#020617;border-radius:14px;}
 .scan-dialog .scan-stage{flex:none;margin:0!important;max-width:none;border:0;border-radius:0;box-shadow:none;}
 .scan-dialog .scan-stage video,.scan-dialog .scan-stage canvas{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;}
 .scan-status{flex:none;min-height:0;padding:0;font-size:.78rem!important;line-height:1.35!important;}

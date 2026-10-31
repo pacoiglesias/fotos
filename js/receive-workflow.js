@@ -30,7 +30,7 @@
       card.append(title);
       const info = document.createElement("p");
       info.className = "text-xs text-slate-500";
-      info.textContent = Math.round(file.size / 1024) + " KB · " + (file.assigning ? "Asignando…" : file.assignedTo ? "Asignado: " + { front: "Frente", back: "Reverso", page3: "Página 3", page4: "Página 4" }[file.assignedTo] : "Pendiente") + (file.editedDataUrl ? " · Con ajuste reversible" : " · Original");
+      info.textContent = Math.round(file.size / 1024) + " KB · " + (file.assigning ? "Asignando…" : file.assignedTo ? "Asignado: " + { front: "Frente", back: "Reverso", page3: "Página 3", page4: "Página 4", document: "Documento", both: "Frente y reverso" }[file.assignedTo] : "Pendiente") + (file.editedDataUrl ? " · Con ajuste reversible" : " · Original");
       card.append(info);
       if (file.type.startsWith("image/")) {
         const thumb = button("Revisar y ajustar", () => api.editReceivedFile(file.id)), image = document.createElement("img");

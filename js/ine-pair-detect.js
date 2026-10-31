@@ -152,10 +152,11 @@ async function detectPairFromDataUrl(dataUrl){
  canvas.width = w;canvas.height = h;
  const ctx = canvas.getContext('2d', {willReadFrequently: true});
  ctx.drawImage(img, 0, 0, w, h);
- const boxes = detectPairRegions(ctx.getImageData(0, 0, w, h).data, w, h);
+ const pixels = ctx.getImageData(0, 0, w, h).data;canvas.width=canvas.height=0;
+ const boxes = detectPairRegions(pixels, w, h);
  if(!boxes) return null;
  const crops = boxes.map(function(box){
-  const padX = Math.round(box.w * 0.02), padY = Math.round(box.h * 0.02);
+  const padX = 0, padY = 0;
   const sx = Math.max(0, Math.round(box.x / scale) - Math.round(padX / scale));
   const sy = Math.max(0, Math.round(box.y / scale) - Math.round(padY / scale));
   const sw = Math.min(img.naturalWidth - sx, Math.round(box.w / scale) + 2 * Math.round(padX / scale));
@@ -163,7 +164,7 @@ async function detectPairFromDataUrl(dataUrl){
   const c = document.createElement('canvas');
   c.width = Math.max(1, sw);c.height = Math.max(1, sh);
   c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
-  return c.toDataURL('image/jpeg', 0.95);
+  try{return c.toDataURL('image/jpeg', 0.95);}finally{c.width=c.height=0;}
  });
  return {boxes: boxes, crops: crops};
 }

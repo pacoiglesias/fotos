@@ -1,3 +1,11 @@
+## 3.35.0 — Identificaciones prácticas, conexiones claras y entrega directa
+
+- Modo rápido con Solo frente o Frente y reverso sin perder capturas; imprimir, PDF, enviar y guardar en NAS a la vista.
+- Accesos de impresora y Paperless accionables; un token guardado no se anuncia como conexión comprobada. Configuración guiada para HP LaserJet CP 1025, con medición física pendiente hasta confirmarla.
+- PDF con dos imágenes de identificación: revisión de caras antes de ajustar a ID-1; opción de solo frente y conservación de página completa como alternativa.
+- Presentación renovada y recortes de tarjeta sin margen blanco añadido; vista móvil pequeña con espacio reservado para la imagen.
+- Regresiones de diagnóstico, calidad, OCR y enderezado incluidas en verify. La publicación se acredita con sus endpoints y no con este registro.
+
 # Avances de RealScan Pro
 
 ## 3.34.0 — Log de diagnóstico en todo el flujo

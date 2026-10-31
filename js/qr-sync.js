@@ -85,7 +85,8 @@
           {preserveFrame:true},
         );
         if(result?.cancelled || result?.loaded===false)return false;
-        if (result?.pendingSelection)
+        if(result?.pendingIdentification)global.showToast?.('Revisa las dos caras detectadas y elige Guardar PDF o Imprimir.','info');
+        else if (result?.pendingSelection)
           global.showToast?.(
             "Selecciona la página del PDF y su destino.",
             "info",
