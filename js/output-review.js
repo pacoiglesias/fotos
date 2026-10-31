@@ -30,7 +30,8 @@
       facts.append(box);
     }
     target.append(facts);
-    if(window.RealScanWorkflow&&!RealScanDocuments.status().active){
+    if(window.RealScanSheetSettings)RealScanSheetSettings.mount(target,mutate=>{if(!$('loginOverlay')?.classList.contains('hidden')||RealScanWorkflow.describe().busy)return;mutate();updateUI();RealScanStudio.update();RealScanServiceFlow.update();saveActiveDraft?.();render(target,mode);});
+    if(!window.RealScanSheetSettings&&window.RealScanWorkflow&&!RealScanDocuments.status().active){
       const controls=document.createElement('fieldset');controls.className='review-edit-options';const legend=document.createElement('legend');legend.textContent='Cambiar sin volver a empezar';controls.append(legend);
       function choose(label,values,current,mutate){const row=document.createElement('label'),select=document.createElement('select');row.append(document.createTextNode(label));select.setAttribute('aria-label',label);for(const [value,text]of values)select.append(new Option(text,value));select.value=String(current);select.onchange=()=>{if(!$('loginOverlay')?.classList.contains('hidden')||RealScanWorkflow.describe().busy)return;mutate(select.value);updateUI();RealScanStudio.update();RealScanServiceFlow.update();saveActiveDraft?.();render(target,mode);};row.append(select);controls.append(row);}
       if(state.activeCategory!=='photos'&&state.format==='card')choose('Caras de la identificación',[['single','Solo frente'],['both','Ambas juntas'],['both_separate','Una cara por hoja']],state.printMode,setPrintMode);

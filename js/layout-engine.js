@@ -59,9 +59,10 @@
 
     // Márgenes y límites físicos de seguridad
     const infantPack = !!state.photoPack && isPhotos && state.format==='photo_infantil' && state.paperSize==='photo_4x6' && outputScale===1;
-    const marginSide = infantPack ? 3 : 12; // 12 mm margen lateral mínimo
-    const marginTop = infantPack ? 3 : (targetH > 100) ? 16 : 20; // 20 mm o 16 mm para documentos grandes
-    const marginBottom = infantPack ? 3 : includeRuler ? 38 : 14; // Reserva para regla (38mm) o margen inferior (14mm)
+    const customMargin=Number.isFinite(state.sheetMarginMm)?Math.max(0,Math.min(25,state.sheetMarginMm)):null;
+    const marginSide = customMargin??(infantPack ? 3 : 12); // 12 mm margen lateral mínimo
+    const marginTop = customMargin===null?(infantPack ? 3 : (targetH > 100) ? 16 : 20):Math.max(customMargin,includeSheetTitle?20:0); // 20 mm o 16 mm para documentos grandes
+    const marginBottom = customMargin===null?(infantPack ? 3 : includeRuler ? 38 : 14):Math.max(customMargin,includeRuler?38:0); // Reserva para regla (38mm) o margen inferior (14mm)
     const availW = paper.widthMm - (marginSide * 2);
     const availH = paper.heightMm - marginTop - marginBottom;
 

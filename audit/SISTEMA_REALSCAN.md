@@ -1,4 +1,4 @@
-# Referencia técnica de RealScan Pro · 3.35.0
+# Referencia técnica de RealScan Pro · 3.35.1
 
 Esta guía describe el código de la nueva entrega. El estado publicado se comprueba en `version.json`; no se deduce del número de versión escrito en un documento.
 
