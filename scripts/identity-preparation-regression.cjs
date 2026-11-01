@@ -10,6 +10,21 @@ const server=http.createServer((req,res)=>{
  res.end(fs.readFileSync(file));
 });
 function pass(text){checks.push(text);console.log('PASS '+text);}
+// WebKit on Windows can stop delivering the animation frames used by locator.screenshot
+// while the desktop is busy. Measure actual geometry with timers and capture real page pixels.
+async function panelScreenshot(page,file){
+ const panel=page.locator('#serviceFlow');await panel.waitFor({state:'visible'});
+ await panel.evaluate(element=>element.scrollIntoView({behavior:'instant',block:'start'}));
+ let previous=null,stable=0,clip;
+ for(let attempt=0;attempt<40;attempt++){
+  clip=await panel.evaluate(element=>{const r=element.getBoundingClientRect();return{x:r.x+scrollX,y:r.y+scrollY,width:r.width,height:r.height};});
+  assert(clip.width>0&&clip.height>0,'Preparation panel must have visible geometry');
+  stable=previous&&Object.keys(clip).every(key=>Math.abs(clip[key]-previous[key])<.5)?stable+1:0;
+  if(stable>=3)break;previous=clip;await page.waitForTimeout(50);
+ }
+ assert(stable>=3,'Preparation panel geometry must settle before capturing evidence');
+ await page.screenshot({path:file,fullPage:true,clip,animations:'disabled'});
+}
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
  for(const [engine,type]of Object.entries({chromium,webkit})){
@@ -22,7 +37,7 @@ function pass(text){checks.push(text);console.log('PASS '+text);}
   assert(await page.locator('details[data-rs-wrap=serviceFlow]').isHidden(),'Multipage color/duplex options must not mislabel an ID');
   assert.equal(await page.locator('#flowSides > button').first().getAttribute('data-flow-sides'),'single');
   for(const side of ['front','back'])for(const action of ['camera','file'])await page.locator('[data-preview-action='+action+'][data-preview-side='+side+']').waitFor({state:'visible'});
-  await page.locator('#serviceFlow').screenshot({path:path.join(out,engine+'-empty.png')});
+  await panelScreenshot(page,path.join(out,engine+'-empty.png'));
   await page.locator('[data-flow-sides=single]').click();await page.locator('#quickPaper').selectOption('letter');await page.locator('#flowSets').fill('2');await page.locator('#flowSets').dispatchEvent('change');
   assert.equal(await page.locator('[data-capture-side=back]').count(),0);
   const samples=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=1011;c.height=638;const x=c.getContext('2d');function make(text,color){x.fillStyle=color;x.fillRect(0,0,c.width,c.height);x.fillStyle='#172033';x.font='52px Arial';x.fillText(text,80,130);x.strokeStyle='#475569';x.lineWidth=6;x.strokeRect(30,30,951,578);return c.toDataURL('image/png');}return{front:make('FRENTE DE PRUEBA','#dbeafe'),back:make('REVERSO DE PRUEBA','#d1fae5')};});
@@ -66,10 +81,10 @@ function pass(text){checks.push(text);console.log('PASS '+text);}
    assert(await page.locator('[data-preview-action=file][data-preview-side=front]').isVisible());
    const layout=await page.evaluate(()=>{const controls=document.getElementById('colControlPanel').getBoundingClientRect(),preview=document.getElementById('colStageWorkspace').getBoundingClientRect();return{controls:{x:controls.x,y:controls.y,right:controls.right},preview:{x:preview.x,y:preview.y}};});
    if(width>=1100)assert(layout.controls.right<=layout.preview.x+1,'Controls and preview overlap');else assert(layout.controls.y<=layout.preview.y,'Preparation must precede the sheet on mobile');
-   await page.locator('#serviceFlow').screenshot({path:path.join(out,engine+'-panel-'+width+'.png')});
+   await panelScreenshot(page,path.join(out,engine+'-panel-'+width+'.png'));
   }
-  await page.setViewportSize({width:1440,height:1050});await page.locator('#serviceFlow').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,engine+'-desktop.png')});
-  await page.evaluate(()=>document.documentElement.classList.add('dark'));await page.locator('#serviceFlow').screenshot({path:path.join(out,engine+'-dark.png')});
+  await page.setViewportSize({width:1440,height:1050});await page.locator('#serviceFlow').evaluate(element=>element.scrollIntoView({behavior:'instant',block:'start'}));await page.screenshot({path:path.join(out,engine+'-desktop.png')});
+  await page.evaluate(()=>document.documentElement.classList.add('dark'));await panelScreenshot(page,path.join(out,engine+'-dark.png'));
   pass(engine+' stable controls and capture actions fit five screen sizes and both themes');
   await page.evaluate(()=>RealScanDocuments.activate());await page.waitForFunction(()=>document.body.dataset.flowKind==='document');assert(await page.locator('details[data-rs-wrap=serviceFlow]').isVisible());
   await page.locator('details[data-rs-wrap=serviceFlow] > summary').click();assert(await page.locator('#flowDocColor').isVisible());
