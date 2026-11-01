@@ -1,3 +1,31 @@
+## 3.36.0 — Identificación con controles y capturas juntos
+
+- Recepción compacta, herramientas secundarias plegadas fuera de la barra y visor Hoja / Frente o foto / Reverso con ajuste directo.
+- Resolver desde avisos de calidad o caras pendientes y desde los avisos de páginas. Retorno al punto de trabajo al cerrar diálogos, incluyendo la pulsación real de botones en Safari.
+- Favoritos con margen, acabado, posición y perfil, validados mediante campos permitidos. Ajustes habituales por servicio e impresora sin persistir imágenes, firmas ni títulos del cliente.
+- Atajos Alt+n configurables, pausados mientras se escribe o se abre un diálogo; entrega principal Descargar / Imprimir / Compartir y destinos secundarios explícitos.
+- Atajo de nuevo cliente con confirmación, protección de Ctrl+Z/Ctrl+Y mientras se escribe y retorno de foco que no interrumpe la vista automática de una captura nueva.
+- Las identificaciones abren sus caras ampliadas por defecto; Hoja conserva la referencia física y las anotaciones abren la salida real. El primer archivo lleva también el escritorio a su vista de trabajo.
+- Selección visual de posición y margen en milímetros, revisión conjunta de vacías/duplicadas/orientación, lista de trabajos adaptada al móvil y filtro Hoy.
+- Estado de envíos a Paperless con comprobación de tareas pendientes sin reenviar el archivo; lista limitada a metadatos de estado, sin nombres.
+- Correcciones de apertura/foco de Más acciones en móvil y disponibilidad de la actualización solo después de terminar la limpieza de cachés propias.
+- Regresión integrada en Chromium/WebKit y simulación de trabajos repetidos con medidas de nodos y memoria; se conservan los límites de comprobación física y de certificación de accesibilidad/rendimiento.
+- Informes históricos de la raíz organizados en `audit/archivo/`; el registro técnico actual y las pruebas permanecen disponibles.
+
+- Revisión antes de imprimir renovada: ajustes y resultado en columnas, vista primero en móvil, detalles secundarios plegados y acciones de cliente/compartir agrupadas.
+- Accesos Hoja limpia / Con guías, posición, escala del contenido con aviso y restablecimiento al 100 %, y cantidades por juego o persona. La ampliación es solo visual y conserva el archivo preparado.
+- La revisión mantiene el foco al editar y retira avisos de revisiones anteriores. Los avisos de calidad y coincidencia solo examinan las caras que se imprimirán.
+- El margen automático permanece deshabilitado para edición numérica tras preparar el PDF; las acciones de descarga no se habilitan para una revisión incompleta.
+- Se retiran 18 capturas/resultados generados antiguos de Git; los scripts se conservan y escriben en `.audit/`.
+- Publicación pospuesta por indicación del usuario: primero perfeccionar y comprobar la entrega. La compilación local usada por pruebas no acredita un despliegue.
+- Documentos: revisión de posibles páginas en blanco con miniaturas, selección explícita, eliminación por lote y recuperación con Deshacer. Conserva originales y excluye páginas con anotaciones añadidas; no afecta al relleno generado para dúplex.
+
+- Panel de preparación estable: Solo frente, Frente y reverso o Una por hoja, papel y juegos juntos; controles a la izquierda y hoja a la derecha en escritorio. Preparación antes de la hoja en móvil.
+- Cámara y archivo propios de cada cara, con ampliación y recorte directos. Cambiar distribución conserva las capturas y usa el mismo motor de impresión.
+- Se ocultan los controles de acabado/dúplex de documentos al preparar identificaciones. La guía dúplex se encuentra en Impresora y escala real; se conservan sus validaciones físicas.
+- Menos duplicación visual: un selector de papel en identificaciones y una sola bandeja de capturas. Opciones especiales conservadas con sus identificadores y manejadores originales.
+- Regresión de recepción real por selector de archivos, modalidad de caras, conservación, entrega y cinco tamaños de pantalla en Chromium y WebKit. Publicación condicionada a verificación completa.
+
 ## 3.35.1 — Ajustar la hoja desde la revisión
 
 - Controles compartidos de márgenes, encabezado, rótulos, regla y líneas de corte dentro de la revisión y de la entrega PDF, organizados en Hoja, Encabezado y Acabado.

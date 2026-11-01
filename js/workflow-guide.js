@@ -22,7 +22,8 @@
     }
     target.tabIndex = -1;
     target.focus({preventScroll:true});
-    target.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    // Step navigation must settle before the next tap; an unfinished scroll can move its target.
+    target.scrollIntoView({block:'start',behavior:'auto'});
   }
   function text(id, value) {
     const el = document.getElementById(id);

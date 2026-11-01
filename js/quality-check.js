@@ -27,10 +27,10 @@ function verdict(analysis){
  if(!analysis)return {blurry:false,washed:false};
  return {blurry:analysis.sharpFraction<0.002,washed:analysis.washedFraction>0.97,sharpFraction:analysis.sharpFraction,washedFraction:analysis.washedFraction};
 }
-const cache=new Map();
+const cache=new Map();let cacheEpoch=0;function clear(){cacheEpoch++;cache.clear();}if(typeof document!=='undefined')document.addEventListener('realscan:auth-lock',clear);root.addEventListener?.('pagehide',clear);
 async function analyze(dataUrl){
  if(!dataUrl||typeof document==='undefined')return null;
- if(cache.has(dataUrl))return cache.get(dataUrl);
+ if(cache.has(dataUrl))return cache.get(dataUrl);const revision=cacheEpoch;
  const result=await (async()=>{
   try{
    const img=new Image();img.src=dataUrl;await img.decode();
@@ -39,14 +39,15 @@ async function analyze(dataUrl){
    const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
    const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,w,h);
    const pixels=analyzePixels(ctx.getImageData(0,0,w,h).data,w,h);
-   canvas.width=canvas.height=1;
+   canvas.width=canvas.height=0;
    return verdict(pixels);
   }catch{return null;}
  })();
+ if(revision!==cacheEpoch)return null;
  if(cache.size>=8)cache.delete(cache.keys().next().value);
  cache.set(dataUrl,result);
  return result;
 }
-root.RealScanQuality={analyze,analyzePixels,verdict};
+root.RealScanQuality={clear,analyze,analyzePixels,verdict};
 if(typeof module!=='undefined'&&module.exports)module.exports={analyzePixels,verdict};
 })(typeof window!=='undefined'?window:globalThis);

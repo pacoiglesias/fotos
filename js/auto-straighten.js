@@ -42,10 +42,10 @@ function estimateSkewFromGray(gray,w,h){
  if(Math.abs(refined)<1)return null;
  return {angle:Math.round(refined*4)/4,confidence:Math.round((best[1]/median)*100)/100,points:points.length};
 }
-const cache=new Map();
+const cache=new Map();let cacheEpoch=0;function clear(){cacheEpoch++;cache.clear();}if(typeof document!=='undefined')document.addEventListener('realscan:auth-lock',clear);root.addEventListener?.('pagehide',clear);
 async function estimateSkew(dataUrl){
  if(!dataUrl||typeof document==='undefined')return null;
- if(cache.has(dataUrl))return cache.get(dataUrl);
+ if(cache.has(dataUrl))return cache.get(dataUrl);const revision=cacheEpoch;
  const result=await (async()=>{
   try{
    const img=new Image();img.src=dataUrl;await img.decode();
@@ -55,14 +55,15 @@ async function estimateSkew(dataUrl){
    const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,w,h);
    const data=ctx.getImageData(0,0,w,h).data,gray=new Float32Array(w*h);
    for(let i=0;i<w*h;i++){const o=i*4;gray[i]=0.299*data[o]+0.587*data[o+1]+0.114*data[o+2];}
-   canvas.width=canvas.height=1;
+   canvas.width=canvas.height=0;
    return estimateSkewFromGray(gray,w,h);
   }catch{return null;}
  })();
+ if(revision!==cacheEpoch)return null;
  if(cache.size>=8)cache.delete(cache.keys().next().value);
  cache.set(dataUrl,result);
  return result;
 }
-root.RealScanAutoStraighten={estimateSkew,estimateSkewFromGray};
+root.RealScanAutoStraighten={clear,estimateSkew,estimateSkewFromGray};
 if(typeof module!=='undefined'&&module.exports)module.exports={estimateSkewFromGray};
 })(typeof window!=='undefined'?window:globalThis);

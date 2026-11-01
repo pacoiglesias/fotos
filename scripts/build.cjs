@@ -38,6 +38,8 @@ function copy(src, dst) {
   copy(path.join(root, "css/polish.css"), path.join(dist, "css/polish.css"));
   copy(path.join(root, "css/studio.css"), path.join(dist, "css/studio.css"));
   copy(path.join(root, "css/service-flow.css"), path.join(dist, "css/service-flow.css"));
+  copy(path.join(root, "css/review-workspace.css"), path.join(dist, "css/review-workspace.css"));
+  copy(path.join(root, "css/desk-experience.css"), path.join(dist, "css/desk-experience.css"));
   copy(path.join(root, "css/workbench.css"), path.join(dist, "css/workbench.css"));
   copy(path.join(root, "css/mobile-experience.css"), path.join(dist, "css/mobile-experience.css"));
   for (const file of ["modern-experience.css", "duplex-guide.css", "annotations.css", "counter-desk.css", "counter-workspace.css", "quick-mode.css", "ux-accessibility.css", "redesign-333.css"]) copy(path.join(root, "css", file), path.join(dist, "css", file));

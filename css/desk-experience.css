@@ -1,0 +1,46 @@
+@media screen {
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-bottom:18px;padding:16px;border:1px solid var(--work-line);border-radius:20px;background:var(--work-surface);box-shadow:0 8px 24px #17223308}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake>:is(#studioWelcome,#deskStart) {margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:transparent!important;min-width:0}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake>#studioWelcome {display:block!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake :is(.studio-eyebrow,.studio-version,#studioWelcomeHint,#deskStart>p,#deskPresets>p,#workspaceNasStatus) {display:none!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake :is(h1,h2) {font-size:15px!important;line-height:1.5!important;margin-bottom:8px!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake .operator-task {min-height:52px!important;padding:8px!important;flex-direction:row!important;gap:6px!important;border-radius:10px!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake .studio-service-art {width:24px!important;height:24px!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake .operator-task small {display:none!important}
+ body.rs-next.rs-counter330.rs-desk336 #operatorReceiveActions>button {min-height:54px!important;padding:8px 4px!important;border-radius:10px!important}
+ body.rs-next.rs-counter330.rs-desk336 #captureFirstOpen {min-height:40px!important;padding:7px!important;margin-top:8px!important}
+ body.rs-next.rs-counter330.rs-desk336 #captureFirstOpen small {display:none!important}
+ body.rs-next.rs-counter330.rs-desk336 #workspaceNas {padding:0!important;border:0!important;box-shadow:none!important;background:transparent!important}
+ body.rs-next.rs-counter330.rs-desk336 #deskPresets {margin-top:10px!important;padding:0!important;border:0!important}
+ body.rs-next.rs-counter330.rs-desk336 #deskPresets h3 {font-size:12px!important;margin-bottom:6px!important}
+ #deskViewerToolbar {display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;padding:7px;background:var(--work-surface);border:1px solid var(--work-line);border-radius:14px}
+ body.rs-desk336 :is(#colStageWorkspace,#serviceFlow) {scroll-margin-top:96px}
+ body.rs-desk336 #deskTools {grid-column:1/-1;margin:0 0 16px;padding:8px 14px;border:1px solid var(--work-line);border-radius:12px;background:var(--work-surface)}
+ body.rs-desk336 #deskTools>summary {min-height:40px;cursor:pointer;align-content:center}
+ #deskViewerToolbar button,.sheet-map button {min-height:44px;padding:8px 12px;font-size:14px;font-weight:650;border:1px solid var(--work-line);border-radius:9px;background:var(--work-surface);color:var(--work-ink)}
+ #deskViewerToolbar [aria-pressed=true],.sheet-map [aria-pressed=true] {background:var(--work-soft);border-color:var(--work-accent);color:var(--work-accent)}
+ #deskImageViewport {padding:20px;border:1px solid var(--work-line);border-radius:18px;background:var(--work-surface);text-align:center}
+ #deskImageViewport img {display:block;max-width:100%;max-height:60dvh;object-fit:contain;margin:auto}
+ #deskImageViewport img:not([src]) {display:none}
+ #deskImageViewport figcaption {margin-top:12px;color:var(--work-muted);font-size:13px}
+ body.rs-desk336[data-desk-view=front] :is(#idFocusPreview,.panel-sheet-preview),body.rs-desk336[data-desk-view=back] :is(#idFocusPreview,.panel-sheet-preview),body.rs-desk336[data-desk-view=sheet] #idFocusPreview {display:none!important}
+ body.rs-desk336 #workspaceJobsRows[data-view=list] .workspace-job-card {margin-bottom:10px}
+ #deskNasPanel {font-size:13px;margin-top:8px}
+ #deskNasPanel summary {min-height:44px;cursor:pointer;display:flex;align-items:center}
+ #deskNasTransfers>div {display:flex;align-items:center;flex-wrap:wrap;gap:8px;border-top:1px solid var(--work-line);padding:8px 0}
+ #deskNasTransfers button,#deskNasTransfers a {padding:8px;min-height:40px}
+ .sheet-map {display:grid;gap:10px;padding:12px;border:1px solid var(--work-line);border-radius:12px;margin-top:12px}
+ .sheet-map>div {display:flex;gap:8px;flex-wrap:wrap}
+ .sheet-map svg {width:50px;height:66px;display:block;margin:auto}
+ .sheet-map input {width:100%;min-height:44px}
+ body.rs-desk336 :focus-visible {outline:3px solid var(--work-accent,#4338ca);outline-offset:3px}
+}
+@media screen and (max-width:767px) {
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake {grid-template-columns:1fr;padding:12px;gap:12px}
+ #deskViewerToolbar {position:sticky;top:0;z-index:8}
+ #deskViewerToolbar button {flex:1 1 auto;font-size:12px;padding:7px}
+ #workspaceJobsRows .kanban-board {display:block!important;overflow:visible!important}
+ #workspaceJobsRows .kanban-column {min-width:0!important;margin-bottom:12px}
+}
+@media (prefers-reduced-motion:reduce) {body.rs-desk336 * {scroll-behavior:auto!important;animation-duration:0s!important;transition-duration:0s!important}}
+@media print {#deskViewerToolbar,#deskImageViewport,#deskNasPanel,#deskShortcuts {display:none!important}}

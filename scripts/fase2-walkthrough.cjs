@@ -174,7 +174,7 @@ async function seed(page, kind) {
     assert(!(await page.evaluate(() => [...document.querySelectorAll('.output-review-warning')].some(p => p.textContent.includes('documentos distintos')))), 'sin falso aviso con la misma CURP');
     pass('Verificación mismo documento: avisa solo cuando las CURP difieren');
     // C6 pantalla para el cliente (solo su trabajo + cierre)
-    await page.locator('#btnReviewClientScreen').click();
+    if(!await page.locator('#printReviewMoreActions').evaluate(e=>e.open))await page.locator('#printReviewMoreActions > summary').click();await page.locator('#btnReviewClientScreen').click();
     await page.locator('#clientScreen').waitFor({state: 'visible'});
     assert.equal(await page.locator('#clientScreen #btnClientApprove').count(), 0);
     assert.equal(await page.locator('#clientScreen #btnClientRepeat').count(), 0);
@@ -187,7 +187,7 @@ async function seed(page, kind) {
     await page.evaluate(() => handlePrintDirect());
     await page.locator('#outputReviewModal').waitFor({state: 'visible'});
     await page.waitForFunction(() => !document.getElementById('btnReviewDuplex').classList.contains('hidden'));
-    await page.locator('#btnReviewDuplex').click();
+    if(!await page.locator('#printReviewMoreActions').evaluate(e=>e.open))await page.locator('#printReviewMoreActions > summary').click();await page.locator('#btnReviewDuplex').click();
     await page.locator('#duplexAssistantModal').waitFor({state: 'visible'});
     await page.locator('#duplexAssistantModal [data-close-modal]').first().click();
     pass('Dúplex guiado desde la revisión abre el asistente');

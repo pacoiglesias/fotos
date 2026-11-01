@@ -9,7 +9,7 @@
    (3) Respaldo cifrado: exportado en A con contraseña, importado en perfil
        limpio C; trabajos y fotos intactos (hash idéntico, decodificables).
    Uso: node audit/cierre-3150-simulacros.cjs   (desde la raíz del repo)
-   Evidencia: audit/cierre-3150/
+   Evidencia: .audit/cierre-3150/
 */
 const fs = require('fs'), path = require('path'), http = require('http'),
   assert = require('assert'), crypto = require('crypto');
@@ -17,7 +17,7 @@ const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
-const OUT = path.join(__dirname, 'cierre-3150');
+const OUT = path.join(ROOT, '.audit', 'cierre-3150');
 fs.mkdirSync(OUT, { recursive: true });
 const log = [];
 function say(s) { log.push(s); console.log(s); }

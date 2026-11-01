@@ -53,6 +53,8 @@
   function syncO2State(){
     const det = document.querySelector('details.rs-o2-details[data-rs-wrap="serviceFlow"]');
     if (!det) return;
+    // These controls belong to multipage documents, not to an ID's faces.
+    det.hidden = !!$('#flowDocumentOptions')?.hidden;
     const state = det.querySelector('.rs-o2-state');
     if (state) {
       const color = $('#flowDocColor');

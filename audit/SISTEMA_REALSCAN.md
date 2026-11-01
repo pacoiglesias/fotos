@@ -1,19 +1,20 @@
-# Referencia técnica de RealScan Pro · 3.35.1
+# Referencia técnica de RealScan Pro · 3.36.0
 
 Esta guía describe el código de la nueva entrega. El estado publicado se comprueba en `version.json`; no se deduce del número de versión escrito en un documento.
 
 ## Base y estado de la revisión
 
 - Repositorio: `pacoiglesias/fotos`.
-- Base auditada: integración 3.29.1 del PR #10, merge `81f0965b5238a6408b4a4e7c0be3d69b3b36df41`.
-- CI de esa base: [40551089106](https://github.com/pacoiglesias/fotos/actions/runs/40551089106), Windows y regresión aprobados.
-- Publicación anterior comprobada: aplicación 3.29.1, build `realscan-b6c338541ef7eb0c`, sourceCommit `9ac90a5870ce96e129afd3681bae4a851f0cd69a`. Los dos Firebase y `fotos.cobertores.com` sirvieron los mismos archivos.
-- Nueva entrega: rama `codex/mostrador-claro-330`. Su validación y publicación se registran en el PR y en las evidencias de entrega. Durante el desarrollo no se presenta como publicada.
+- Base auditada: main 3.35.1, merge `dda394d1cf195b42c1d183fca29962145070f3f0` (PR #14).
+- CI de esa base: [41245814131](https://github.com/pacoiglesias/fotos/actions/runs/41245814131), Windows y regresión aprobados.
+- Publicación anterior comprobada: aplicación 3.35.1, build `realscan-d012696a631430aa`, fuente `6a9fd1ee422ed2a9e4c500273c9dc7d459355072`. Ambos Firebase y el dominio propio coincidieron en versión, fuente, CSP y 57 archivos por origen.
+- Nueva entrega 3.36.0: rama `codex/identificacion-simple-336`. Su validación y publicación se registran en el PR y en las evidencias de entrega. Durante el desarrollo no se presenta como publicada.
 
 ## Responsabilidades
 
 | Componente | Función |
 | --- | --- |
+| `js/desk-experience.js`, `css/desk-experience.css` | Configuración permitida para favoritos, visor compartido, atajos, retorno de foco y estado de transferencias; sin otro motor de medida o impresión |
 | `js/workspace-polish.js`, `css/counter-workspace.css` | Composición única del mostrador, recepción persistente, acción contextual y tablero de trabajos |
 | `js/engine.js`, `js/image-processing.js` | Captura, edición y materialización de imágenes conservando originales |
 | `js/layout-engine.js`, `js/print-sheet.js`, `js/document-print.js` | Geometría en milímetros y revisión previa a la impresión |

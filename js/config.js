@@ -3,7 +3,7 @@
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
-window.APP_VERSION = 'v3.35.1';
+window.APP_VERSION = 'v3.36.0';
 window.AUTH_STORAGE_KEY = 'realscan_auth_v2';
 window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
@@ -344,7 +344,7 @@ function showToast(message, type) {
     feedback.textContent = message;
   }
   if (type === 'error' || type === 'warning') window.RealScanDiagnostics?.record('ui.feedback', type === 'error' ? 'error' : 'warning', { modal: activeModal?.id });
-  
+
   // Feedback sonoro accesible diferenciado (Web Audio API)
   if (typeof window !== 'undefined' && window.RealScanAudio) {
     if (type === 'success') window.RealScanAudio.playSuccess();

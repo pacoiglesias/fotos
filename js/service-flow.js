@@ -15,7 +15,7 @@
   document.body.dataset.flowKind=doc.active?'document':photos?'photos':'id';
   $('flowDocumentPaper').hidden=!doc.active;for(const b of document.querySelectorAll('[data-flow-doc-paper]')){b.setAttribute('aria-pressed',String(b.dataset.flowDocPaper===doc.options.paper));b.disabled=!allowed||doc.busy;}
   $('flowPhotoChoices').hidden=!photos||doc.active;$('flowQuantity').hidden=!photos||doc.active;$('flowIdChoices').hidden=photos||doc.active;
-  $('flowHeading').textContent=doc.active?'Tu documento, página por página':photos?'Prepara tus fotografías':'Prepara tu identificación';
+  $('flowHeading').textContent=doc.active?'Tu documento, página por página':photos?'Prepara tus fotografías':state.format==='card'?'Tu identificación':'Prepara tu identificación';
   for(const b of document.querySelectorAll('[data-flow-format]'))b.setAttribute('aria-pressed',String(b.dataset.flowFormat===state.format));
   for(const b of document.querySelectorAll('[data-flow-sides]'))b.setAttribute('aria-pressed',String(b.dataset.flowSides===state.printMode));
   for(const b of document.querySelectorAll('[data-flow-count]'))b.setAttribute('aria-pressed',String(Number(b.dataset.flowCount)===Number(state.photoCopies)));
@@ -29,6 +29,7 @@
   if(!doc.active&&sets>1)summary+=' · '+sets+' juegos';
   if(!doc.active&&work.scale!==100)summary+=' · Escala '+work.scale+' %';
   const perSet=state.mixTwoPhotos?(Number(state.photoCopiesPersonA)||0)+(Number(state.photoCopiesPersonB)||0):(Number(state.photoCopies)||1);if($('flowOrderHint'))$('flowOrderHint').textContent=photos&&!doc.active?perSet+' × '+sets+' = '+perSet*sets+' fotos · Impresora: 1 copia':'Vista previa y medidas antes de imprimir';$('flowIdHint').textContent=state.printMode==='both'?'Frente y reverso se colocan juntos en una misma cara del papel.':state.printMode==='both_separate'?'Se preparan dos páginas. Para imprimirlas por los dos lados de una sola hoja, usa la guía manual.':state.printMode==='single'?'Se prepara únicamente el frente.':'Revisa las páginas y su orden antes de imprimir.';$('flowIdDuplexGuide').hidden=state.activeCategory!=='docs'||state.format!=='card';$('flowSummary').textContent=summary;$('flowSummary').setAttribute('title',summary);
+  $('flowIdDuplexGuide').hidden=doc.active||state.activeCategory!=='docs'||state.format!=='card';
   const ready=doc.active?doc.ready:work.ready&&!work.layout.errors.length;
   $('flowPrimary').disabled=!allowed||!ready||(doc.active?doc.busy:work.busy);
   $('flowPrimary').textContent=doc.active?'Revisar e imprimir':document.body.dataset.outputMode==='digital'?'Revisar entrega digital':'Revisar e imprimir';
@@ -41,6 +42,9 @@
   refreshAdvice(doc,work,allowed);prepareInBackground(doc,work,allowed);
   if(doc.active){$('flowDocColor').value=doc.options.color||'color';$('flowDocDuplex').value=doc.options.duplex||'single';}
   $('flowDuplexHint').hidden=!doc.active||doc.options.duplex!=='manual';if($('flowDuplexActions')){$('flowDuplexActions').hidden=$('flowDuplexHint').hidden;for(const b of $('flowDuplexActions').querySelectorAll('button'))b.disabled=!allowed||!doc.ready||doc.busy;}
+  // Publish the same readiness to every delivery control before this interaction returns.
+  // The scheduled layout pass still handles placement, not correctness of action states.
+  window.RealScanPanelLayout?.update();
  }
  function prepareInBackground(doc,work,allowed){
   if(!allowed){lastWarm=[];clearTimeout(warmTimer);RealScanPrint.clear();return;}
@@ -94,7 +98,7 @@
   }
   $('flowSizes').append(button('Otros tamaños',()=>{$('studioAdvanced').open=true;$('quickPhotoFormatRow').classList.add('flow-show');$('quickPhotoFormat').focus();}));
   const sheetIcons={both:'<rect x="17" y="2" width="30" height="44" rx="3"/><rect x="21" y="10" width="22" height="10" rx="1"/><rect x="21" y="28" width="22" height="10" rx="1"/><text x="32" y="18">F</text><text x="32" y="36">R</text>',both_separate:'<rect x="3" y="4" width="26" height="40" rx="3"/><rect x="35" y="4" width="26" height="40" rx="3"/><rect x="7" y="17" width="18" height="12" rx="1"/><rect x="39" y="17" width="18" height="12" rx="1"/><text x="16" y="26">F</text><text x="48" y="26">R</text>',single:'<rect x="17" y="2" width="30" height="44" rx="3"/><rect x="21" y="18" width="22" height="12" rx="1"/><text x="32" y="27">F</text>'};
-  for(const [mode,label]of [['both','Ambas en una página'],['both_separate','Una cara por página'],['single','Solo frente']]){const b=button(label,()=>change(()=>setPrintMode(mode)));b.dataset.flowSides=mode;const art=document.createElement('span');art.className='flow-side-visual';art.innerHTML='<svg viewBox="0 0 64 48" aria-hidden="true">'+sheetIcons[mode]+'</svg>';b.prepend(art);$('flowSides').append(b);}
+  for(const [mode,label]of [['both','Frente y reverso'],['both_separate','Una por hoja'],['single','Solo frente']]){const b=button(label,()=>change(()=>setPrintMode(mode)));b.dataset.flowSides=mode;const art=document.createElement('span');art.className='flow-side-visual';art.innerHTML='<svg viewBox="0 0 64 48" aria-hidden="true">'+sheetIcons[mode]+'</svg>';b.prepend(art);$('flowSides').append(b);}
   for(const paper of ['letter','a4','oficio','legal']){const spec=PAPER_SPECS[paper],b=button(spec.shortName,()=>RealScanDocuments.setOptions({paper}));b.dataset.flowDocPaper=paper;const size=document.createElement('small');size.textContent=spec.widthMm+' × '+spec.heightMm+' mm';b.append(size);$('flowDocumentPaperChoices').append(b);}
   $('flowIdDuplexGuide').onclick=()=>{if(!unlocked()||RealScanWorkflow.describe().busy)return;change(()=>setPrintMode('both_separate'));RealScanDuplex.open();};
   for(const count of [2,4,6,8]){const b=button(String(count),()=>change(()=>setPhotoCopies(count)));b.dataset.flowCount=count;$('flowCounts').append(b);}

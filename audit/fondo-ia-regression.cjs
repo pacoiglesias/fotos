@@ -10,11 +10,11 @@
    (d) con vendor/segment/* bloqueado, el respaldo por inundación
        funciona y el flujo no se rompe,
    (e) la preparación sin conexión registra segment:true en status().
-   Evidencia: capturas y metrics.json en audit/fondo-ia/. */
+   Evidencia: capturas y metrics.json en .audit/fondo-ia/. */
 const fs = require('fs'), path = require('path'), http = require('http'), assert = require('assert');
 const { chromium, webkit } = require('playwright');
 const root = path.resolve(__dirname, '..', 'dist');
-const outDir = path.resolve(__dirname, 'fondo-ia');
+const outDir = path.resolve(__dirname, '..', '.audit', 'fondo-ia');
 fs.mkdirSync(outDir, { recursive: true });
 const MIME = { '.js': 'application/javascript', '.mjs': 'application/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.wasm': 'application/wasm', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.gz': 'application/gzip', '.tflite': 'application/octet-stream' };
 const server = http.createServer((req, res) => {

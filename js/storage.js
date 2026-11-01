@@ -51,6 +51,7 @@ function getDB() {
 function prepareWorkspaceForJobSwitch(options) {
   options = options || {};
   window.RealScanPrint?.clear();
+  window.RealScanQuality?.clear();window.RealScanOcrAssist?.clear();window.RealScanAutoStraighten?.clear();
   window.RealScanReview?.cancel();
   const documentCleanup=window.RealScanDocuments?.reset(!!options.clearDraft);
   window.RealScanP2P?.close();window.RealScanOcr?.cancel(true);

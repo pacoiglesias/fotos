@@ -30,6 +30,6 @@ Los enlaces funcionan como credenciales temporales: quien recibe uno puede usar 
 
 ## Evidencia y límites
 
-Resultados detallados en `VALIDACION_MEJORAS.md`. Los programas de prueba se incluyen en `scripts/`; las imágenes y registros locales están en `.audit/repair-evidence/`. La transferencia se probó mediante Firebase real, con imágenes sintéticas y navegadores aislados; no se utilizaron documentos ni cuentas de clientes.
+Resultados detallados en [validación histórica](archivo/VALIDACION_MEJORAS.md). Los programas de prueba se incluyen en `scripts/`; las imágenes y registros locales están en `.audit/repair-evidence/`. La transferencia se probó mediante Firebase real, con imágenes sintéticas y navegadores aislados; no se utilizaron documentos ni cuentas de clientes.
 
 La verificación de hardware, Safari/iPhone y medidas impresas debe hacerse en el negocio. No se afirma que el sistema esté libre de cualquier error posible ni que las fotografías sean aceptadas por todas las autoridades.

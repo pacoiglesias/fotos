@@ -1,3 +1,5 @@
+> Registro histórico. No describe la versión actual. Consulta [el sistema vigente](../SISTEMA_REALSCAN.md) y [el plan actual](../../PLAN_MEJORAS.md).
+
 # Auditoría independiente de RealScan
 
 Fecha: 14 de octubre de 2026. Alcance: código local y navegador de prueba Chromium; no se modificó la implementación ni se desplegó a producción.
