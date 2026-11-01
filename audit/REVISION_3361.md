@@ -5,6 +5,7 @@ Estado: candidata en validación. La entrega anterior 3.36.0 permanece documenta
 ## Hallazgos y cambios
 
 - En la sesión observada estaba activo el perfil HP LaserJet CP 1025 al 100 %, con medición pendiente. No se reprodujo el aviso equivocado en esa inspección; no se atribuye una causa no demostrada. El antiguo aviso infería el estado por identificador o texto del panel, y no escuchaba explícitamente el evento del perfil. Ahora consulta el perfil existente y muestra su nombre y el estado de medición, con acceso a cambiarlo.
+- El panel antiguo de perfiles tampoco se actualizaba al seleccionar desde otro control. Se conecta al mismo evento; la regresión comprueba que su aviso, el selector, el resumen y el semáforo coinciden al aplicar y retirar la HP.
 - La impresión parcial ya exigía una casilla de consentimiento, dejando espacios vacíos; descargar PDF requería completar las caras o cambiar la composición en otro control. Ahora hay una acción explícita para continuar con una sola cara desde preparación y revisión. Conserva las imágenes originales, el papel y los juegos; se mantienen los bloqueos por ausencia de imágenes y geometría inválida.
 - La actualización de la revisión tenía un contador llamado igual que la función `refresh`. La nueva regresión detectó que una acción o reintento dentro de esa función intentaba ejecutar un número. Se renombra el contador y se comprueba un fallo transitorio seguido de un reintento real.
 - Cambiar la composición actualiza también los hechos y el selector de la revisión. No se añade otro motor de impresión.

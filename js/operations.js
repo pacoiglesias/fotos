@@ -330,5 +330,6 @@ document.addEventListener('DOMContentLoaded', function() {
       ppSay('Corrección sugerida desde la última medición (la regla de 50 mm salió a ' + last.ruleMm + ' mm): escala ' + corr + ' % en X e Y. Ponle nombre a la impresora y guarda el perfil. Si también mediste el eje vertical, ajusta Y a mano.');
     });
     ppRender();
+    document.addEventListener('realscan:printer-profile-changed',ppRender);
   }
 });
