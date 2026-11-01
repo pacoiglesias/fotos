@@ -112,6 +112,7 @@
        revisión anterior. Nunca bloquean: sin evidencia, no hay aviso. */
     const warningsBox = document.createElement("div");
     warningsBox.className = "output-review-warnings";
+    warningsBox.setAttribute('aria-busy','true');
     target.append(warningsBox);
     const revision = ++renderRevision;
     (async () => {
@@ -125,7 +126,7 @@
           if (check?.blurry) lines.push(label + ": se ve borrosa. Repite la foto con más luz y sin mover el teléfono.");
           else if (check?.washed) lines.push(label + ": se ve lavada (demasiada luz). Baja la luz o acerca la tarjeta.");
         }
-        if (sheetSlots.has('front')&&sheetSlots.has('back')&&state.images.front?.originalSrc && state.images.back?.originalSrc && window.RealScanOcrAssist?.verifySameDocument) {
+        if (state.activeCategory==='docs'&&state.format==='card'&&sheetSlots.has('front')&&sheetSlots.has('back')&&state.images.front?.originalSrc && state.images.back?.originalSrc && window.RealScanOcrAssist?.verifySameDocument) {
           const same = await window.RealScanOcrAssist.verifySameDocument(state.images.front.originalSrc, state.images.back.originalSrc);
           if (same?.match === false) lines.push("Las caras parecen de documentos distintos. Revisa que frente y reverso sean del mismo documento antes de imprimir.");
         }
@@ -137,6 +138,7 @@
         p.textContent = text;
         warningsBox.append(p);
       }
+      warningsBox.setAttribute('aria-busy','false');
     })();
     const note = document.createElement("p");
     note.className = "output-review-note";
