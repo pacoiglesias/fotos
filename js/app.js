@@ -2706,6 +2706,7 @@ function bindEvents() {
 
   // Atajos de teclado: Ctrl + P (imprimir), Ctrl + Z (deshacer), Ctrl + Y (rehacer)
   on(window, 'keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && ['z','y'].includes(e.key.toLowerCase()) && e.target?.closest?.('input,textarea,[contenteditable=true]')) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
       e.preventDefault();
       handlePrintDirect();

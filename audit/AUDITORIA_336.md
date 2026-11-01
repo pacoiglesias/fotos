@@ -57,6 +57,10 @@ Las trece mejoras de software del [plan vigente](../PLAN_MEJORAS.md) están prep
 
 Regresiones añadidas: `stage-completion-regression`, `pwa-activation-regression` y `cache-lifecycle-regression`. Se amplían la revisión de lotes, restauración móvil y transferencias Paperless. Las comprobaciones dirigidas anteriores pasaron, incluida la recuperación de la caché antigua; el resultado integral del código definitivo se registra por commit en el PR y el registro de entrega.
 
+La primera integración completa detectó incompatibilidades adicionales: una aserción enumeraba únicamente los campos antiguos del favorito, el visor ocultaba las caras ampliadas y el retorno genérico de desplazamiento podía apartar la captura recién confirmada en móvil. Se conserva una validación estricta del esquema ampliado; el modo inicial de identificación vuelve a las caras y el foco solo regresa a un control visible del mismo contexto, incluyendo el número de capturas. La recepción en escritorio lleva el primer resultado a la zona visible sin exigir desplazamiento manual.
+
+La revisión de teclado detectó además Ctrl+Z/Ctrl+Y de la imagen actuando sobre campos de texto. Esos campos conservan ahora el comportamiento del navegador. El atajo configurable de nuevo cliente abre su confirmación y no descarta el trabajo; los atajos se pausan también ante diálogos heredados. Las regresiones conservan el original y comprueban deshacer texto y mantener las opciones del diálogo abierto.
+
 ## Límites
 
 Se conservan las validaciones físicas pendientes de HP (regla de 50 mm), dúplex e iPhone real. No se incorporan documentos personales ni credenciales a Git o a los artefactos CI. Paperless continúa siendo opcional y su conexión depende del origen autorizado y de la sesión del navegador.

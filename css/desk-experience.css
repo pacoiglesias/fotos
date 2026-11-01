@@ -14,6 +14,7 @@
  body.rs-next.rs-counter330.rs-desk336 #deskPresets {margin-top:10px!important;padding:0!important;border:0!important}
  body.rs-next.rs-counter330.rs-desk336 #deskPresets h3 {font-size:12px!important;margin-bottom:6px!important}
  #deskViewerToolbar {display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;padding:7px;background:var(--work-surface);border:1px solid var(--work-line);border-radius:14px}
+ body.rs-desk336 :is(#colStageWorkspace,#serviceFlow) {scroll-margin-top:96px}
  body.rs-desk336 #deskTools {grid-column:1/-1;margin:0 0 16px;padding:8px 14px;border:1px solid var(--work-line);border-radius:12px;background:var(--work-surface)}
  body.rs-desk336 #deskTools>summary {min-height:40px;cursor:pointer;align-content:center}
  #deskViewerToolbar button,.sheet-map button {min-height:44px;padding:8px 12px;font-size:14px;font-weight:650;border:1px solid var(--work-line);border-radius:9px;background:var(--work-surface);color:var(--work-ink)}

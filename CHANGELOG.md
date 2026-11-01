@@ -4,6 +4,8 @@
 - Resolver desde avisos de calidad o caras pendientes y desde los avisos de páginas. Retorno al punto de trabajo al cerrar diálogos, incluyendo la pulsación real de botones en Safari.
 - Favoritos con margen, acabado, posición y perfil, validados mediante campos permitidos. Ajustes habituales por servicio e impresora sin persistir imágenes, firmas ni títulos del cliente.
 - Atajos Alt+n configurables, pausados mientras se escribe o se abre un diálogo; entrega principal Descargar / Imprimir / Compartir y destinos secundarios explícitos.
+- Atajo de nuevo cliente con confirmación, protección de Ctrl+Z/Ctrl+Y mientras se escribe y retorno de foco que no interrumpe la vista automática de una captura nueva.
+- Las identificaciones abren sus caras ampliadas por defecto; Hoja conserva la referencia física y las anotaciones abren la salida real. El primer archivo lleva también el escritorio a su vista de trabajo.
 - Selección visual de posición y margen en milímetros, revisión conjunta de vacías/duplicadas/orientación, lista de trabajos adaptada al móvil y filtro Hoy.
 - Estado de envíos a Paperless con comprobación de tareas pendientes sin reenviar el archivo; lista limitada a metadatos de estado, sin nombres.
 - Correcciones de apertura/foco de Más acciones en móvil y disponibilidad de la actualización solo después de terminar la limpieza de cachés propias.
