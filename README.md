@@ -1,4 +1,6 @@
-# RealScan Pro · 3.36.0
+# RealScan Pro · 3.36.1
+
+Código 3.36.1 verificado e integrado en main. Añade «Continuar solo con frente» desde preparación y revisión, sincroniza el perfil de impresora con todas las vistas y corrige Reintentar. El despliegue se detuvo por sesión de Firebase caducada: **la versión pública comprobada sigue siendo 3.36.0**. [Estado de entrega y acceso pendiente](audit/ENTREGA_3361.md).
 
 Identificaciones: caras, papel y juegos juntos, con Cámara y Archivo propios de cada cara. En escritorio se prepara a la izquierda y se revisa la hoja a la derecha; en móvil se eligen las opciones antes de la vista previa. Solo frente permite entregar sin exigir reverso y cambiar de modalidad conserva las capturas.
 

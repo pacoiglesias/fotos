@@ -1,6 +1,6 @@
-## 3.36.1 — Correcciones en revisión
+## 3.36.1 — Código verificado; despliegue pendiente de acceso
 
-Continuación explícita solo con frente desde preparación y revisión; perfil de impresora sincronizado y claramente separado de la medición física; reintento de preparación corregido y composición visual más compacta. Ver [auditoría de esta corrección](REVISION_3361.md). La publicación se confirmará con el resultado del publicador y las versiones remotas; 3.36.0 es la última publicación registrada hasta entonces.
+Continuación explícita solo con frente desde preparación y revisión; perfil sincronizado también con el panel antiguo; reintento corregido y composición visual más compacta. PR #16 integrado, CI de código y main aprobados; 441 marcas PASS y 0 FAIL en el publicador de Windows. El despliegue se detuvo por sesión Firebase caducada y las cinco direcciones siguen en 3.36.0. Se abrió el acceso oficial de Google para renovarla. Ver [estado de entrega](ENTREGA_3361.md) y [auditoría](REVISION_3361.md). No se declara publicado ni físicamente calibrado.
 
 ## 3.36.0 — Publicada y verificada
 

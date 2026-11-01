@@ -1,6 +1,6 @@
 # Revisión del mostrador · 3.36.1
 
-Estado: candidata en validación. La entrega anterior 3.36.0 permanece documentada en [ENTREGA_336.md](ENTREGA_336.md).
+Estado: código verificado e integrado en main; publicación pendiente de renovar el acceso a Firebase. Ver [estado de entrega](ENTREGA_3361.md). La entrega pública anterior 3.36.0 permanece documentada en [ENTREGA_336.md](ENTREGA_336.md).
 
 ## Hallazgos y cambios
 
@@ -15,16 +15,18 @@ Estado: candidata en validación. La entrega anterior 3.36.0 permanece documenta
 
 - Preparación con una y dos caras: Chromium y WebKit, cinco anchuras, ambos temas, firmas/sellos y conservación de originales.
 - Revisión de impresión: acción de una cara, tamaño ID-1 de 85,60 × 53,98 mm, PDF habilitado, perfil HP tras recarga y reintento después de fallo transitorio.
-- Compilación, comprobación de versión, CSP y batería completa: se registrará el resultado al terminar.
+- npm ci finalizó: 101 paquetes, 0 vulnerabilidades informadas. El publicador completó la batería completa: 441 marcas PASS, 0 marcas FAIL, versión/compilado/CSP comprobados. Este recuento incluye comprobaciones repetidas de publicación y no representa casos únicos.
+- CI aprobado para el código `32d12db5c0a9848897e3f9b02ad720de83102464` y para su integración en main. La primera operación de despliegue se detuvo por sesión caducada; no se declara publicado.
+- Simulación: 160 trabajos en Chromium y 160 en WebKit. Nodos antes/después: 3181/3155 en ambos; heap Chromium 7754040/7603280 bytes tras recolección. WebKit no ofrece esa medición de heap. Es una simulación con imágenes sintéticas, no una certificación de jornada completa ni de dispositivo físico.
 - La calibración de la HP, el dúplex físico y la prueba con iPhone real continúan pendientes por indicación del usuario. Un perfil seleccionado no equivale a una medición física.
 
 ## Mejoras siguientes, propuestas
 
-1. Medir pasos y tiempo de los tres pedidos habituales con datos sintéticos; fijar un objetivo por recorrido y comprobarlo en cada entrega.
-2. Unificar acciones repetidas de captura y entrega tras comprobar qué accesos se usan, manteniendo cada ajuste accesible durante el trabajo.
-3. Edición directa sobre la vista de hoja para posición y márgenes, con entrada numérica y teclado como alternativa.
-4. Resumen de pedido legible para el cliente: piezas, caras, juegos y hojas, antes de confirmar cada destino.
-5. Separar más claramente «guardar pedido local», «descargar archivo» y «archivar copia en NAS», indicando dónde queda cada copia.
-6. Prueba de uso con un operador nuevo para localizar etiquetas y pasos que todavía requieren explicación.
+1. Unificar acciones repetidas de captura y entrega, manteniendo cada ajuste accesible durante el trabajo y una siguiente acción clara.
+2. Abrir un detalle grande del documento dentro de la revisión final, junto a la referencia de la hoja. La comparación original/resultado ya existe en el editor: conviene hacerla accesible desde el visor.
+3. Edición directa sobre la vista de hoja para posición y márgenes, con entrada numérica y teclado como alternativa a los controles existentes.
+4. Unificar tipografía, iconos, espaciado y etiquetas de los menús antiguos; revisar los saltos de palabras de los botones en móvil.
+5. Reunir Cargar/Archivar de Paperless en un acceso claro y distinguir pedido local, archivo descargado y copia en NAS, indicando dónde queda cada copia.
+6. Medir pasos y tiempo de los tres pedidos habituales y probarlos con un operador nuevo para localizar lo que todavía exige explicación.
 
 Estas propuestas no se presentan como implementadas ni justifican declarar el sistema sin fallos.
