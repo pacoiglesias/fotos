@@ -58,11 +58,13 @@
     const idx = profiles.findIndex(function (p) { return p.id === clean.id; });
     if (idx >= 0) profiles[idx] = clean; else profiles.push(clean);
     saveAll(profiles);
+    changed();
     return clean;
   }
   function remove(id) {
     saveAll(list().filter(function (p) { return p.id !== id; }));
     if (getActiveId() === id) setActive(null);
+    else changed();
   }
   /* A12: única fuente de verdad de «impresora verificada»: la marca que el
      asistente de calibración deja tras medir la regla de 50 mm, con las
@@ -121,4 +123,5 @@
     correctionFromMeasurement: correctionFromMeasurement,
     describe: describe
   };
+  window.addEventListener('storage',function(event){if(event.key===null||event.key===PROFILES_KEY||event.key===(window.PREFS_KEY||'realscan_prefs_v2')||event.key.startsWith('realscan_calibration_verified_'))changed();});
 })();

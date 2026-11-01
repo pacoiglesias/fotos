@@ -1,4 +1,4 @@
-# Referencia técnica de RealScan Pro · 3.36.0
+# Referencia técnica de RealScan Pro · 3.36.1
 
 Esta guía describe el código de la nueva entrega. El estado publicado se comprueba en `version.json`; no se deduce del número de versión escrito en un documento.
 
@@ -9,6 +9,10 @@ Esta guía describe el código de la nueva entrega. El estado publicado se compr
 - CI de esa base: [41245814131](https://github.com/pacoiglesias/fotos/actions/runs/41245814131), Windows y regresión aprobados.
 - Publicación anterior comprobada: aplicación 3.35.1, build `realscan-d012696a631430aa`, fuente `6a9fd1ee422ed2a9e4c500273c9dc7d459355072`. Ambos Firebase y el dominio propio coincidieron en versión, fuente, CSP y 57 archivos por origen.
 - Entrega 3.36.0 publicada: fuente `09743c6be291da54c386652a31ebc52345cab0f1`, contenido `realscan-eae2eb5df9ea7418`, PR #15 integrado en main. Cinco direcciones comprobadas; ver [entrega y pendientes físicos](ENTREGA_336.md).
+
+## Corrección 3.36.1 en revisión
+
+Las observaciones del mostrador se tratan en [REVISION_3361.md](REVISION_3361.md): continuar solo con frente, selección del perfil y reintento de revisión. El número de versión del código no certifica el despliegue ni la calibración física.
 
 ## Responsabilidades
 

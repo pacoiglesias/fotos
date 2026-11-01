@@ -34,6 +34,36 @@
  .sheet-map svg {width:50px;height:66px;display:block;margin:auto}
  .sheet-map input {width:100%;min-height:44px}
  body.rs-desk336 :focus-visible {outline:3px solid var(--work-accent,#4338ca);outline-offset:3px}
+ /* Counter hierarchy: a compact intake and a clear, contrasting working surface. */
+ body.rs-next.rs-counter330.rs-desk336 {--work-accent:#235ccf;--work-soft:#edf3ff}
+ html.dark body.rs-next.rs-counter330.rs-desk336 {--work-accent:#9dbbff;--work-soft:#243957}
+ body.rs-next.rs-counter330.rs-desk336 #workbenchBar {padding:20px 24px;margin-bottom:16px;border-radius:18px;background:#14253e!important;color:#fff!important;gap:14px}
+ body.rs-next.rs-counter330.rs-desk336 #workbenchBar strong {font-size:26px;letter-spacing:-.035em;font-weight:700}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntro {display:block;color:#c3d2e8;margin-top:5px;font-size:13px}
+ body.rs-next.rs-counter330.rs-desk336 #workbenchBar #counterOffline {color:#c3d2e8;background:transparent;border:0;padding:4px 0;min-height:32px}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake {align-items:start;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);border-radius:16px;padding:18px 20px;box-shadow:0 3px 14px #14253e06}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake .operator-task[aria-pressed=true] {background:#14253e!important;border-color:#14253e!important;color:#fff!important;box-shadow:none!important}
+ html.dark body.rs-next.rs-counter330.rs-desk336 #counterIntake .operator-task[aria-pressed=true] {background:#c5d8ff!important;border-color:#c5d8ff!important;color:#12243d!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake .studio-service-art {opacity:1!important;width:30px!important;height:26px!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake .studio-welcome-heading {margin-bottom:8px!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake #deskReceive #operatorReceiveActions>button {min-height:56px!important;gap:6px!important;flex-direction:row!important;font-size:12px!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake #workspaceContact {margin-block:6px;padding-block:0;border:0}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake #workspaceContact>summary {min-height:40px;align-content:center}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake #workspaceNas {display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;margin:0!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake #deskNasPanel {margin:0}
+ body.rs-next.rs-counter330.rs-desk336 #deskTools {border:0;background:transparent;padding:0 4px;margin-bottom:10px;font-size:12px;color:var(--work-muted)}
+ body.rs-next.rs-counter330.rs-desk336 #serviceFlow {border-radius:18px!important}
+ body.rs-next.rs-counter330.rs-desk336 #colStageWorkspace {border-radius:18px!important;box-shadow:0 8px 32px #14253e08!important}
+ body.rs-next.rs-counter330.rs-desk336 #deskViewerToolbar {border:0;background:var(--work-bg);padding:6px;margin-bottom:18px}
+ body.rs-next.rs-counter330.rs-desk336 #deskViewerToolbar [aria-pressed=true] {background:var(--work-surface);border-color:var(--work-line);color:var(--work-ink);box-shadow:0 2px 5px #14253e0c}
+ body.rs-next.rs-counter330.rs-desk336 #idFocusPreview {padding:20px!important;border:1px solid var(--work-line)!important;border-radius:14px;background:var(--work-bg)!important}
+ #identityFrontChoice,.review-front-choice {padding:14px;margin:14px 0;border:1px solid var(--work-accent);border-radius:12px;background:var(--work-soft);color:var(--work-ink);font-size:13px;line-height:1.6;grid-column:1/-1}
+ #identityFrontChoice p,.review-front-choice p {margin:0 0 10px}
+ #identityContinueFront,#printReviewUseFront {min-height:46px;padding:10px 14px;border-radius:9px;background:var(--work-accent);color:#fff;border:0;font-size:13px;font-weight:650}
+ html.dark :is(#identityContinueFront,#printReviewUseFront) {color:#12243d}
+ #flowPrinterSummary {display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;margin:6px 0 0;font-size:12px;line-height:1.4;color:var(--work-muted)}
+ #flowPrinterSummary button {min-height:36px;padding:5px 8px;color:var(--work-accent);text-decoration:underline;text-underline-offset:3px;font-size:12px}
+ #flowPrinterSummary[data-verified=true] {color:var(--work-ink)}
 }
 @media screen and (max-width:767px) {
  body.rs-next.rs-counter330.rs-desk336 #counterIntake {grid-template-columns:1fr;padding:12px;gap:12px}
@@ -41,6 +71,24 @@
  #deskViewerToolbar button {flex:1 1 auto;font-size:12px;padding:7px}
  #workspaceJobsRows .kanban-board {display:block!important;overflow:visible!important}
  #workspaceJobsRows .kanban-column {min-width:0!important;margin-bottom:12px}
+ body.rs-next.rs-counter330.rs-desk336 #workbenchBar {display:flex;align-items:start;justify-content:space-between;text-align:left;padding:14px;flex-wrap:wrap;border-radius:14px;gap:6px}
+ body.rs-next.rs-counter330.rs-desk336 #workbenchBar>div:first-child {text-align:left;min-width:0}
+ body.rs-next.rs-counter330.rs-desk336 #workbenchBar strong {font-size:22px}
+ body.rs-next.rs-counter330.rs-desk336 #workbenchBar #counterIntro {display:none}
+ body.rs-next.rs-counter330.rs-desk336 #workbenchBar>div:last-child {justify-content:start}
+ body.rs-next.rs-counter330.rs-desk336 #deskSemaphore {display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:12px}
+ body.rs-next.rs-counter330.rs-desk336 #deskSemaphore h3 {grid-column:1;grid-row:1;font-size:12px;white-space:normal}
+ body.rs-next.rs-counter330.rs-desk336 #deskSemaphore #deskSemaphoreRefresh {grid-column:2;grid-row:1;margin:0;min-height:36px}
+ body.rs-next.rs-counter330.rs-desk336 #deskSemaphore .desk-lights {grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ body.rs-next.rs-counter330.rs-desk336 #deskSemaphore button.desk-light {min-height:40px;font-size:11px;padding:7px 8px;gap:6px}
+ body.rs-next.rs-counter330.rs-desk336 #deskSemaphore #deskLightPrinter {grid-column:1/-1}
+ body.rs-next.rs-counter330.rs-desk336 #deskSemaphore .rs-dot {width:12px;height:12px}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake {grid-template-columns:1fr;padding:14px}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake #deskReceive #operatorReceiveActions>button {flex-direction:column!important;min-height:68px!important;font-size:11px!important}
+ body.rs-next.rs-counter330.rs-desk336 #idFocusPreview {padding:12px!important}
+ body.rs-next.rs-counter330.rs-desk336 #flowDock #flowPrinterSummary {grid-column:1/-1;grid-row:auto;font-size:11px;margin:0}
+ body.rs-next.rs-counter330.rs-desk336 #flowDock #flowPrinterSummary>span {display:inline!important;min-width:0;overflow-wrap:anywhere}
+ #flowPrinterSummary button {min-height:32px}
 }
 @media (prefers-reduced-motion:reduce) {body.rs-desk336 * {scroll-behavior:auto!important;animation-duration:0s!important;transition-duration:0s!important}}
 @media print {#deskViewerToolbar,#deskImageViewport,#deskNasPanel,#deskShortcuts {display:none!important}}

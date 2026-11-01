@@ -337,4 +337,5 @@
   }
   window.preparePassportSheet = preparePassportSheet;
   window.showClientApproval = showClientApproval;
+  window.RealScanOutputReview={refresh:()=>{const target=$('printReview');if(target&&!$('outputReviewModal').classList.contains('hidden')){render(target,reviewMode);updateDuplexButton();}}};
 })();
