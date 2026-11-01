@@ -1,37 +1,37 @@
 # Prioridades antes de la próxima entrega — RealScan Pro
 
-Actualización: 31 de octubre de 2026. Rama `codex/identificacion-simple-336`, revisión [#15](https://github.com/pacoiglesias/fotos/pull/15). Producción sigue en 3.35.1; la publicación está aplazada por indicación del usuario.
+Actualización: 31 de octubre de 2026. Rama `codex/identificacion-simple-336`, revisión [#15](https://github.com/pacoiglesias/fotos/pull/15). El usuario ha solicitado implementar todas las mejoras de software y hacer después las pruebas físicas. La publicación se acredita únicamente con los endpoints y el resultado del publicador.
 
 Ya preparados para 3.36.0: panel de identificación más compacto, captura por cara, navegación corregida, revisión de impresión renovada, edición de escala/posición/cantidades y revisión reversible de páginas en blanco. Las pruebas locales y CI se registran por commit en el PR; una compilación de prueba no acredita un despliegue.
 
 ## Estado vigente de las etapas
 
-Los símbolos contradictorios del plan antiguo no representan el avance de esta revisión. Estos estados describen la evidencia actual; no son porcentajes de terminación.
+Los símbolos contradictorios del plan antiguo no representan el avance de esta revisión. Estos estados describen el código preparado y la evidencia; el resultado completo se registra por commit en el PR. No se inventan porcentajes de terminación.
 
 | Etapa | Estado actual | Evidencia y pendiente |
 | --- | --- | --- |
 | 1. Composición y medidas | Geometría digital comprobada; validación física pendiente | Las regresiones comprueban papel, piezas, paginación y transformaciones PDF. Falta medir la salida de la HP con la regla de 50 mm. |
-| 2. Proyecto y acceso | Funciones principales comprobadas; arquitectura en revisión | Acceso, respaldo, recuperación y conservación de originales tienen regresiones. Eso no acredita cerrar toda la separación arquitectónica propuesta. |
-| 3. Rediseño y flujo | En curso | Preparación de identificación y revisión de impresión renovadas en la rama. Recepción compacta, visor unificado y otras propuestas siguen pendientes. |
+| 2. Proyecto y acceso | Funciones cubiertas por regresiones | Se conservan los motores y propietarios actuales. Configuración de favoritos validada con una lista explícita de campos; no almacena imágenes, firmas ni títulos de clientes. |
+| 3. Rediseño y flujo | Implementado; en verificación integral | Recepción compacta, visor común de hoja/caras, recorte directo, avisos Resolver, foco de retorno y entrega por acciones principales. |
 | 4. Edición y páginas | Funciones revisadas y probadas en navegador | Recorte, perspectiva, anotaciones, distribución y revisión reversible de páginas en blanco. Se conserva la validación física pendiente. |
-| 5. Recuperación y productividad | Parcial; incidencia abierta | Recuperación y cambio de cliente cubiertos. La suite local detectó un fallo intermitente al abrir Restaurar en móvil; la repetición aislada pasó en Chromium y WebKit, sin que ello permita declarar resuelta su causa. Los avisos con solución directa siguen como propuesta. |
-| 6. Rendimiento, accesibilidad y sin conexión | Parcial; incidencia abierta | Hay pruebas de modo sin red, tamaños de pantalla, cancelación y recursos. La suite local detectó una caché antigua retenida durante la actualización. No se certifican 60 FPS sostenidos ni conformidad WCAG AA completa; faltan jornada larga, mediciones y dispositivo real. |
-| 7. Cierre y entrega | Abierta | PR #15 en borrador. La verificación local terminó con dos suites fallidas; siguen pendientes su diagnóstico, las comprobaciones físicas y la publicación. CI satisfactorio por sí solo no cierra esta etapa. |
+| 5. Recuperación y productividad | Implementado; en verificación integral | Los menús móviles conservan apertura y foco al regenerar páginas. Se añaden ajustes por servicio/impresora, favoritos ampliados, atajos configurables, cola compacta y filtro de hoy. |
+| 6. Rendimiento, accesibilidad y sin conexión | Implementado y medido en simulación; dispositivo físico posterior | La respuesta del trabajador espera la limpieza de cachés. Se mide arranque del recorrido, nodos y memoria con trabajos repetidos; diálogos y recursos secundarios siguen siendo diferidos. Se comprueban foco, teclado y adaptación; no se certifican 60 FPS sostenidos ni WCAG AA completa. |
+| 7. Cierre y entrega | En verificación | Se registran pruebas completas por commit y se revisa el repositorio después del push. Las pruebas físicas se harán después de aplicar el software, por indicación del usuario. |
 
-## Incidencias que deben cerrarse antes de publicar
+## Incidencias anteriores y correcciones preparadas
 
-- **Restaurar en móvil:** la prueba completa de Windows no consiguió abrir la acción dentro de «Más acciones». La repetición instrumentada pasó en Chromium y WebKit. La causa sigue sin confirmar; no se ha demostrado una corrección.
-- **Actualización y versiones antiguas:** la prueba completa de Windows encontró `realscan-cache-v3.3.0` después de activar el trabajador actual. La repetición aislada pasó sin cambiar el código. Debe aclararse la diferencia y comprobarse la limpieza y conservación de datos de usuario antes de dar por resuelto el cambio de versión.
+- **Restaurar en móvil:** la regeneración de páginas descartaba el estado de «Más acciones». Ahora se conserva por identificador de página, junto al foco de la acción. La regresión abre el menú, cambia otra opción real y comprueba que Restaurar sigue accesible y recupera exactamente el original.
+- **Actualización y versiones antiguas:** el estado `activated` no acredita que haya terminado el trabajo asíncrono de activación. La respuesta `REALSCAN_CACHE_INFO` espera ahora la promesa de limpieza y toma de control. Una prueba con eliminación retenida demuestra que no confirma disponibilidad antes de tiempo y conserva las cachés ajenas.
 
-Ambos CI del código `4d9c1bc` terminaron correctamente. Eso no sustituye el resultado local: `npm run verify` terminó con código 1, con 398 registros PASS y las suites `image-enhance-regression` y `upgrade-regression` fallidas. Producción continúa en 3.35.1.
+El fallo previo de `4d9c1bc` permanece en la auditoría como antecedente. No se sustituye por repeticiones aisladas: el cierre exige la batería completa del código corregido.
 
-## Propuestas adicionales priorizadas
+## Aplicación de las catorce mejoras acordadas
 
-| Prioridad | Mejora propuesta | Resultado práctico |
+| Prioridad | Mejora aplicada | Resultado práctico / validación |
 | --- | --- | --- |
-| Alta | Compactar la recepción en una barra y reducir los bloques anteriores a la hoja | Llegar a las capturas y opciones sin recorrer media pantalla. |
-| Alta | Un visor para encuadre, caras y hoja, con controles coherentes | Evitar saltos entre vistas y conservar siempre la referencia del tamaño impreso. |
-| Alta | Botón «Resolver» en cada aviso de revisión | Ir a la página, imagen o ajuste exacto que necesita atención. |
+| Alta | Recepción compacta y herramientas secundarias plegadas fuera de la barra | Servicios y orígenes accesibles sin expandir columnas con espacios vacíos. |
+| Alta | Visor común Hoja / Frente o foto / Reverso y recorte directo | Amplía sin alterar la pieza impresa; se conserva el original. |
+| Alta | Resolver en avisos de caras y páginas | Abre la captura o revisión exacta que necesita atención. |
 | Alta | Ajustes habituales según el servicio y la impresora | Elegir menos opciones en INE, infantiles y documentos sin heredar datos del cliente. |
 | Alta | Retomar foco y desplazamiento al volver de cualquier diálogo | Continuar en la cara o página que se estaba preparando. |
 | Alta | Simplificar la entrega PDF en Descargar, Imprimir y Compartir | Mostrar NAS, QR o WhatsApp cuando corresponda al destino elegido. |
@@ -42,9 +42,9 @@ Ambos CI del código `4d9c1bc` terminaron correctamente. Eso no sustituye el res
 | Media | Estado visible por archivo enviado a Paperless | Distinguir envío aceptado, procesamiento, archivado y error recuperable. |
 | Media | Vista compacta de la cola para móvil y pedidos del día | Consultar el siguiente trabajo sin desplazamiento horizontal. |
 | Media | Medir arranque y memoria en una jornada simulada larga | Priorizar carga diferida y liberación de recursos con evidencia de rendimiento. |
-| Alta, física | Completar medición HP, reinserción dúplex e iPhone real | Comprobar los resultados que una prueba automatizada de navegador no puede certificar. |
+| Física, después del software | Medición HP, reinserción dúplex e iPhone real | Pendiente por indicación del usuario. El perfil no se marca verificado sin medir. |
 
-La recomendación es cerrar primero recepción compacta, avisos resolubles y retorno al punto de trabajo. Las demás propuestas quedan para una fase posterior; no se presentan como funciones ya entregadas.
+Las trece mejoras de software están preparadas en la rama y tienen comprobaciones dirigidas. El resultado completo del código definitivo se registra por commit en el PR. La comprobación física es posterior y no se presenta como realizada.
 
 ## Registro histórico
 

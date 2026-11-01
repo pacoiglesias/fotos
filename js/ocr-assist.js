@@ -29,11 +29,12 @@ function extractName(text){
  return null;
 }
 function extractIdentity(text){return {curp:extractCurp(text),name:extractName(text)};}
-const cache=new Map();
+const cache=new Map();let cacheEpoch=0;function clear(){cacheEpoch++;cache.clear();}if(typeof document!=='undefined')document.addEventListener('realscan:auth-lock',clear);root.addEventListener?.('pagehide',clear);
 async function recognizeCached(dataUrl){
  if(!dataUrl||!root.RealScanOcr?.recognizeText)return null;
- if(cache.has(dataUrl))return cache.get(dataUrl);
+ if(cache.has(dataUrl))return cache.get(dataUrl);const revision=cacheEpoch;
  const result=await root.RealScanOcr.recognizeText(dataUrl,'spa');
+ if(revision!==cacheEpoch)return null;
  if(cache.size>=4)cache.delete(cache.keys().next().value);
  cache.set(dataUrl,result);
  return result;
@@ -53,6 +54,6 @@ async function verifySameDocument(frontSrc,backSrc){
  if(!frontCurp||!backCurp)return {frontCurp,backCurp,match:null};
  return {frontCurp,backCurp,match:tolerant(frontCurp)===tolerant(backCurp)};
 }
-root.RealScanOcrAssist={extractCurp,extractName,extractIdentity,recognizeCached,suggestFileName,verifySameDocument};
+root.RealScanOcrAssist={clear,extractCurp,extractName,extractIdentity,recognizeCached,suggestFileName,verifySameDocument};
 if(typeof module!=='undefined'&&module.exports)module.exports={normalizeText,tolerant,extractCurp,extractName,extractIdentity};
 })(typeof window!=='undefined'?window:globalThis);

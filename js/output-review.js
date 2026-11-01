@@ -1,5 +1,6 @@
 (function() {
   "use strict";
+  function resolveButton(side){const button=document.createElement('button');button.type='button';button.textContent='Resolver · '+(side==='back'?'reverso':'frente');button.dataset.resolveSide=side;button.onclick=()=>{closeModal('outputReviewModal');RealScanStudio.selectSlot(side);RealScanWorkflow.moveTo(2,side);if(state.images[side]?.processedDataUrl)window.RealScanCapturePreviews.open(side);};return button;}
   function render(target, mode) {
     if (!target) return;
     const focusKey=target.contains(document.activeElement)?document.activeElement.dataset.sheetSetting:null,focusPreset=target.contains(document.activeElement)?document.activeElement.dataset.sheetPreset:null,focusProfile=target.querySelector('.output-review-profile select')===document.activeElement,detailsOpen=target.querySelector('.review-facts-details')?.open;
@@ -91,6 +92,7 @@
       const warning = document.createElement('p');
       warning.className = 'output-review-warning';
       warning.textContent = 'Sin imagen: ' + missing.map(side => names[side]).join(', ') + '. Revisa las caras necesarias antes de continuar.';
+      for(const side of missing)warning.append(resolveButton(side));
       target.append(warning);
     }
     const thumbs = document.createElement("div");
@@ -136,6 +138,7 @@
         const p = document.createElement("p");
         p.className = "output-review-warning";
         p.textContent = text;
+        p.append(resolveButton(text.startsWith('Frente')?'front':'back'));
         warningsBox.append(p);
       }
       warningsBox.setAttribute('aria-busy','false');

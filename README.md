@@ -10,6 +10,10 @@ Mostrador para recibir, preparar, revisar e imprimir fotografías y documentos. 
 
 [Guía técnica](audit/SISTEMA_REALSCAN.md) · [Avances](audit/AVANCES.md) · [Cambios](CHANGELOG.md)
 
+La nueva preparación añade una barra compacta de servicio/recepción, visor común de hoja y caras, avisos **Resolver**, favoritos con margen/acabado/perfil y atajos configurables desde **Historial, respaldo y herramientas**. En la revisión puedes elegir visualmente la posición y el margen. La entrega agrupa Descargar, Imprimir y Compartir; los destinos NAS, QR y WhatsApp se muestran al elegir compartir. El estado de los envíos al NAS distingue procesamiento y archivo confirmado y permite comprobar una tarea sin reenviarla.
+
+En Documentos, **Revisar lote** reúne páginas vacías, posibles duplicados y orientación para revisar; no selecciona ni elimina automáticamente. En **Trabajos** hay vista compacta para móvil y filtro **Hoy**. Las pruebas físicas de HP y dúplex se harán después de aplicar las mejoras de software; el programa conserva su aviso de medición pendiente.
+
 Dirección habitual: [fotos.cobertores.com](https://fotos.cobertores.com). Usa siempre el mismo dominio y navegador para acceder a tus trabajos locales. Cada origen conserva su propio acceso, ajustes y borradores.
 
 ## Trabajo diario

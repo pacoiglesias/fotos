@@ -14,6 +14,7 @@ Esta guía describe el código de la nueva entrega. El estado publicado se compr
 
 | Componente | Función |
 | --- | --- |
+| `js/desk-experience.js`, `css/desk-experience.css` | Configuración permitida para favoritos, visor compartido, atajos, retorno de foco y estado de transferencias; sin otro motor de medida o impresión |
 | `js/workspace-polish.js`, `css/counter-workspace.css` | Composición única del mostrador, recepción persistente, acción contextual y tablero de trabajos |
 | `js/engine.js`, `js/image-processing.js` | Captura, edición y materialización de imágenes conservando originales |
 | `js/layout-engine.js`, `js/print-sheet.js`, `js/document-print.js` | Geometría en milímetros y revisión previa a la impresión |

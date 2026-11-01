@@ -73,7 +73,7 @@ let browser, server;
       await page.locator("#pdfDeliveryBuild").click();
       await page.waitForFunction(() => !document.getElementById("pdfDeliveryDownload").disabled);
       const prevHref = await page.evaluate(() => document.getElementById("pdfDeliveryQrLink").getAttribute("href"));
-      await page.locator("#pdfDeliveryQr").click();
+      if(!await page.locator('#pdfDeliveryMore').evaluate(e=>e.open))await page.locator('#pdfDeliveryShare').click();await page.locator("#pdfDeliveryQr").click();
       await page.waitForFunction((prev) => !document.getElementById("pdfDeliveryQrResult").hidden && document.getElementById("pdfDeliveryQrLink").getAttribute("href") !== prev, prevHref, { timeout: 45e3 });
       const session = await page.evaluate(() => RealScanQrSync.getActiveDeliverySession());
       const qr = await page.locator("#pdfDeliveryQrCanvas").evaluate((c) => ({ w: c.width, h: c.height, data: Array.from(c.getContext("2d").getImageData(0, 0, c.width, c.height).data) }));

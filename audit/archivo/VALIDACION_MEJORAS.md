@@ -1,3 +1,5 @@
+> Registro histórico. No describe la versión actual. Consulta [el sistema vigente](../SISTEMA_REALSCAN.md) y [el plan actual](../../PLAN_MEJORAS.md).
+
 # Validación de RealScan 3.4
 
 Fecha: 14 de octubre de 2026.

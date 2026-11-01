@@ -39,15 +39,29 @@ El primer CI detectó un desfase al pedir el reverso: el estado del trabajo ya e
 - Al aplicar firmas o sellos, la vista de identificación abre la hoja completa para mostrar el resultado impreso, además de las capturas originales ampliadas. Se mantiene el recorte y el original por separado.
 - Se retiran 18 PNG/JSON generados de auditorías anteriores (1.969.410 bytes). No son fixtures ni recursos publicados; los cinco scripts originales se conservan y escriben en `.audit/`, fuera de Git. Los documentos de auditoría y el historial del repositorio permanecen disponibles.
 
-## Mejoras siguientes, sin anunciarlas como implementadas
+## Aplicación de las mejoras acordadas
 
-Las catorce propuestas, con prioridad y beneficio práctico, se centralizan en [PLAN_MEJORAS.md](../PLAN_MEJORAS.md). La recomendación es empezar por recepción compacta, avisos con solución y retorno al punto de trabajo. Estas propuestas son una fase posterior a las correcciones ya preparadas.
+Las trece mejoras de software del [plan vigente](../PLAN_MEJORAS.md) están preparadas en la rama. La decimocuarta es la comprobación física que el usuario ha aplazado expresamente hasta terminar el software. No se presenta la impresora como calibrada ni se certifica un dispositivo físico sin comprobarlo.
+
+- Recepción compacta y herramientas secundarias fuera de la barra; visor común para hoja y caras, sin otro motor de impresión.
+- Resolver abre la captura o página exacta de los avisos. Los diálogos conservan origen, desplazamiento y revisión de trabajo; Safari utiliza también el botón realmente pulsado, porque una pulsación de ratón no siempre cambia `activeElement`.
+- Favoritos con margen, acabado, posición y perfil mediante un esquema de campos permitidos. Ajustes por servicio e impresora, manteniendo la impresora elegida al recuperar el ajuste habitual.
+- Atajos Alt+n configurables, sin ejecución mientras se escribe, se repite una tecla o hay un diálogo abierto; revisión previa antes de imprimir.
+- Entrega con acciones principales Descargar, Imprimir y Compartir; destinos QR, WhatsApp y NAS secundarios. Los recorridos de prueba abren el grupo real antes de actuar.
+- Posición representada sobre una hoja y margen en milímetros conectado a los mismos ajustes que generan el PDF. La medida nominal de la pieza no cambia.
+- Revisión conjunta de vacías, duplicadas y orientación con miniaturas, selección explícita, revisión por página, protección de anotaciones y deshacer.
+- Lista de transferencias Paperless con estados, hora y comprobación de tareas pendientes. Conserva las guardas de sesión y límites; no expone nombres, token ni contenido y no reenvía para consultar un estado.
+- Lista compacta móvil de trabajos, tablero vertical sin desbordamiento y filtro Hoy.
+- Medición del recorrido de arranque y simulación de trabajos repetidos con nodos y heap, sin presentar esa simulación como certificación de una jornada o teléfono real.
+- Las cachés de OCR, calidad y enderezado se vacían al cambiar de trabajo o bloquear la sesión. Los resultados asíncronos anteriores no vuelven a poblarlas; los canvas temporales se liberan con dimensiones cero.
+
+Regresiones añadidas: `stage-completion-regression`, `pwa-activation-regression` y `cache-lifecycle-regression`. Se amplían la revisión de lotes, restauración móvil y transferencias Paperless. Las comprobaciones dirigidas anteriores pasaron, incluida la recuperación de la caché antigua; el resultado integral del código definitivo se registra por commit en el PR y el registro de entrega.
 
 ## Límites
 
 Se conservan las validaciones físicas pendientes de HP (regla de 50 mm), dúplex e iPhone real. No se incorporan documentos personales ni credenciales a Git o a los artefactos CI. Paperless continúa siendo opcional y su conexión depende del origen autorizado y de la sesión del navegador.
 
-## Resultado de la revisión completa en Windows
+## Antecedente: resultado de Windows sobre 4d9c1bc
 
 Código evaluado: `4d9c1bcf8f5c127335435e062dc73d07cb8472e0`. Dependencias instaladas con `npm ci`: 101 paquetes añadidos, 0 vulnerabilidades informadas. `npm run verify` generó la compilación local `realscan-45cad2f9a7940be2` (358 archivos), comprobó versiones y CSP y terminó con **código 1**. El registro contiene 398 líneas PASS y dos suites fallidas; no se declara aprobada la batería completa.
 
@@ -56,4 +70,6 @@ Código evaluado: `4d9c1bcf8f5c127335435e062dc73d07cb8472e0`. Dependencias insta
 
 Los CI [push](https://github.com/pacoiglesias/fotos/actions/runs/41267873156) y [PR](https://github.com/pacoiglesias/fotos/actions/runs/41267876763) del mismo código terminaron correctamente. La diferencia de resultados entre entornos queda registrada, sin sustituir el fallo local por el éxito de CI. Evidencias locales ignoradas por Git: `.audit/verify336-predeployment-final.log`, `.audit/image-enhance336-investigation.log` y `.audit/upgrade336-investigation.log`.
 
-La etapa 7 permanece abierta y PR #15 sigue en borrador. Se separó el plan histórico de octubre de la tabla de estados vigente para eliminar la contradicción entre encabezados «en curso» y textos «completada». No hubo nuevo despliegue: el dominio continúa en 3.35.1.
+Este resultado corresponde al código anterior, no al resultado de la continuación. Las correcciones conservan las aserciones y amplían las regresiones: apertura y foco por identificador de página, y respuesta de información del trabajador solo después de resolver la limpieza de activación. La prueba del trabajador retiene deliberadamente la eliminación para comprobar esa espera y la conservación de cachés ajenas.
+
+Se separó el plan histórico de la tabla vigente y se archivaron los tres informes antiguos que estaban en la raíz. El cierre de la entrega actual se acredita con sus resultados por commit; este documento no acredita un deploy.

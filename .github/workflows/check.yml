@@ -49,6 +49,7 @@ jobs:
             .audit/review-settings/
             .audit/identity-preparation/
             .audit/blank-pages/
+            .audit/stage-completion/
             .audit/id-pdf-intake/
             .audit/mobile-local-evidence/
             .audit/mobile-local-webkit-evidence/

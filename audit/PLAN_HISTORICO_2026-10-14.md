@@ -20,7 +20,7 @@ Este archivo conserva el registro anterior tal como estaba, incluidos sus símbo
 2. **Modelo Geométrico Digital en Milímetros:** Toda composición, visualización, corte y exportación se rige por especificaciones en milímetros ($mm$) proyectadas a 300 DPI en los exportadores vectoriales y raster (la precisión física final en papel está sujeta a que el usuario desactive el 'Ajustar al área imprimible' en el driver de su impresora).
 3. **Flujo de Usuario Optimizado:** Tipo de trabajo → Cargar archivos → Ajustar imágenes → Componer hojas → Verificar pre-vuelo → Exportar / Imprimir.
 4. **Respeto a Cambios y Datos:** Conservar historiales, configuraciones válidas existentes y arquitectura proporcional (sin sobreingeniería ni frameworks pesados innecesarios).
-5. **Entregas Continuas Validadas:** Cada entrega se implementa, valida con pruebas reproducibles, se documenta en `VALIDACION_MEJORAS.md`, se commitea y se sube a GitHub antes de avanzar a la siguiente.
+5. **Entregas Continuas Validadas:** Cada entrega se implementa, valida con pruebas reproducibles, se documenta en [VALIDACION_MEJORAS.md](archivo/VALIDACION_MEJORAS.md), se commitea y se sube a GitHub antes de avanzar a la siguiente.
 
 ---
 

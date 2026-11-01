@@ -1,7 +1,9 @@
+> Registro histórico. No describe la versión actual. Consulta [el sistema vigente](../SISTEMA_REALSCAN.md) y [el plan actual](../../PLAN_MEJORAS.md).
+
 # 🛡️ AUDITORÍA DEL SISTEMA — RealScan Pro v2.6.0-Enterprise
-**Desarrollado por Paco Iglesias**  
-**Fecha de Auditoría:** 13 de Octubre de 2026  
-**Entornos Validados:** 
+**Desarrollado por Paco Iglesias**<br>
+**Fecha de Auditoría:** 13 de Octubre de 2026<br>
+**Entornos Validados:**
 - Local: `http://localhost:5500/`
 - Producción Firebase Hosting: `https://fotos-cobertores-pro.web.app` / `https://fotos-cobertores-pro.firebaseapp.com`
 - Repositorio GitHub: `pacoiglesias/fotos` (Rama: `main`)
@@ -12,7 +14,7 @@
 
 ### Hallazgo Original
 - El archivo `js/config.js` contenía el hash SHA-256 legacy del PIN `2026` (`158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab`).
-- Los navegadores de clientes u operadores que hubieran iniciado sesión previamente almacenaban dicho hash en `localStorage` bajo la clave `realscan_auth_v2`. 
+- Los navegadores de clientes u operadores que hubieran iniciado sesión previamente almacenaban dicho hash en `localStorage` bajo la clave `realscan_auth_v2`.
 - Al intentar acceder con `1313`, el sistema comparaba el hash contra el valor guardado en el navegador del usuario y lo rechazaba.
 
 ### Solución y Blindaje Aplicado (v2.6.0)

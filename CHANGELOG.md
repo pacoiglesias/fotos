@@ -1,5 +1,15 @@
 ## 3.36.0 — Identificación con controles y capturas juntos
 
+- Recepción compacta, herramientas secundarias plegadas fuera de la barra y visor Hoja / Frente o foto / Reverso con ajuste directo.
+- Resolver desde avisos de calidad o caras pendientes y desde los avisos de páginas. Retorno al punto de trabajo al cerrar diálogos, incluyendo la pulsación real de botones en Safari.
+- Favoritos con margen, acabado, posición y perfil, validados mediante campos permitidos. Ajustes habituales por servicio e impresora sin persistir imágenes, firmas ni títulos del cliente.
+- Atajos Alt+n configurables, pausados mientras se escribe o se abre un diálogo; entrega principal Descargar / Imprimir / Compartir y destinos secundarios explícitos.
+- Selección visual de posición y margen en milímetros, revisión conjunta de vacías/duplicadas/orientación, lista de trabajos adaptada al móvil y filtro Hoy.
+- Estado de envíos a Paperless con comprobación de tareas pendientes sin reenviar el archivo; lista limitada a metadatos de estado, sin nombres.
+- Correcciones de apertura/foco de Más acciones en móvil y disponibilidad de la actualización solo después de terminar la limpieza de cachés propias.
+- Regresión integrada en Chromium/WebKit y simulación de trabajos repetidos con medidas de nodos y memoria; se conservan los límites de comprobación física y de certificación de accesibilidad/rendimiento.
+- Informes históricos de la raíz organizados en `audit/archivo/`; el registro técnico actual y las pruebas permanecen disponibles.
+
 - Revisión antes de imprimir renovada: ajustes y resultado en columnas, vista primero en móvil, detalles secundarios plegados y acciones de cliente/compartir agrupadas.
 - Accesos Hoja limpia / Con guías, posición, escala del contenido con aviso y restablecimiento al 100 %, y cantidades por juego o persona. La ampliación es solo visual y conserva el archivo preparado.
 - La revisión mantiene el foco al editar y retira avisos de revisiones anteriores. Los avisos de calidad y coincidencia solo examinan las caras que se imprimirán.

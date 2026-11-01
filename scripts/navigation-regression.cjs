@@ -137,7 +137,7 @@ const pass = name => { checks.push(name); console.log('PASS ' + name); };
   await page.evaluate(() => { window.generatePdfDoc = __pdfGenerator; __relay.mode = 'slow'; delete __relay.resolve; });
   await page.locator('#pdfDeliveryBuild').click();
   await page.waitForFunction(() => !document.getElementById('pdfDeliveryDownload').disabled);
-  await page.locator('#pdfDeliveryQr').click();
+  if(!await page.locator('#pdfDeliveryMore').evaluate(e=>e.open))await page.locator('#pdfDeliveryShare').click();await page.locator('#pdfDeliveryQr').click();
   await page.waitForFunction(() => typeof __relay.resolve === 'function');
   const deliveryCalls = await page.evaluate(() => __relay.calls);
   // Mientras la generación está pendiente, el botón QR se deshabilita: la
@@ -153,7 +153,7 @@ const pass = name => { checks.push(name); console.log('PASS ' + name); };
   assert.equal(await page.locator('#pdfDeliveryQrResult').isVisible(), false);
   await page.evaluate(() => { __relay.mode = 'normal'; });
   await page.waitForFunction(() => !document.getElementById('pdfDeliveryDownload').disabled);
-  await page.locator('#pdfDeliveryQr').click();
+  if(!await page.locator('#pdfDeliveryMore').evaluate(e=>e.open))await page.locator('#pdfDeliveryShare').click();await page.locator('#pdfDeliveryQr').click();
   await page.waitForFunction(() => !document.getElementById('pdfDeliveryQrResult').hidden);
   await page.keyboard.press('Escape');
   pass('Delivery never omits a failed requested PDF, rejects duplicate generation and cancels stale results across close and reopen');
