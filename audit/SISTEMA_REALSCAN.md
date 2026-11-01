@@ -8,7 +8,7 @@ Esta guía describe el código de la nueva entrega. El estado publicado se compr
 - Base auditada: main 3.35.1, merge `dda394d1cf195b42c1d183fca29962145070f3f0` (PR #14).
 - CI de esa base: [41245814131](https://github.com/pacoiglesias/fotos/actions/runs/41245814131), Windows y regresión aprobados.
 - Publicación anterior comprobada: aplicación 3.35.1, build `realscan-d012696a631430aa`, fuente `6a9fd1ee422ed2a9e4c500273c9dc7d459355072`. Ambos Firebase y el dominio propio coincidieron en versión, fuente, CSP y 57 archivos por origen.
-- Nueva entrega 3.36.0: rama `codex/identificacion-simple-336`. Su validación y publicación se registran en el PR y en las evidencias de entrega. Durante el desarrollo no se presenta como publicada.
+- Entrega 3.36.0 publicada: fuente `09743c6be291da54c386652a31ebc52345cab0f1`, contenido `realscan-eae2eb5df9ea7418`, PR #15 integrado en main. Cinco direcciones comprobadas; ver [entrega y pendientes físicos](ENTREGA_336.md).
 
 ## Responsabilidades
 

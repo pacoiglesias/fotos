@@ -2,6 +2,10 @@
 
 Base: main 3.35.1, dda394d1cf195b42c1d183fca29962145070f3f0. Versión anterior publicada y verificada en ambos Firebase y dominio propio.
 
+## Cierre comprobado
+
+La versión 3.36.0 está publicada y verificada. La batería completa y el publicador oficial finalizaron con código 0, sin suites fallidas; ambos Firebase y el dominio habitual coinciden en contenido y fuente. El [registro de entrega](ENTREGA_336.md) contiene los resultados definitivos y el alcance de las pruebas físicas pendientes. Los apartados de desarrollo y antecedentes siguientes conservan el contexto de los hallazgos, sin sustituir ese cierre.
+
 ## Problemas revisados y correcciones
 
 - El acordeón de color/dúplex de documentos aparecía con identificaciones aunque sus controles internos estuvieran ocultos. Se sincroniza la visibilidad del envoltorio con su contenido; no se confunde distribución de caras con doble cara física.
@@ -12,9 +16,9 @@ Base: main 3.35.1, dda394d1cf195b42c1d183fca29962145070f3f0. Versión anterior p
 - Se retiran los botones duplicados de la vista ampliada; imprimir conserva la acción principal del pie y el PDF su destino de entrega. El pie móvil conserva resumen, comprobante y acción principal con menos altura; el aviso detallado de impresora sigue en el semáforo y la revisión.
 - Un único propietario de distribución, workspace-polish, coloca los nodos originales una vez; no se clonan controles ni manejadores. Los cambios de servicio mantienen el mismo motor y sus guardas.
 
-## Verificación
+## Verificación durante el desarrollo, anterior al cierre
 
-El usuario pidió perfeccionar la revisión y cerrar la auditoría antes de hacer la publicación. Se detuvo el publicador antes de Firebase. Se realizan compilaciones locales para las pruebas de navegador; producción continúa en 3.35.1 y no se anuncia 3.36.0 desplegada.
+Durante esa fase, el usuario pidió perfeccionar la revisión y cerrar la auditoría antes de publicar. Se detuvo el publicador antes de Firebase y se realizaron compilaciones locales para las pruebas; producción permaneció entonces en 3.35.1. El cierre publicado de 3.36.0 está documentado al principio de esta auditoría y en el registro de entrega.
 
 Prueba nueva identity-preparation-regression en Chromium y WebKit: recepción mediante selector real y confirmación, solo frente listo para entrega, reverso pendiente bloqueado, conservación al cambiar caras, cuatro páginas ID-1 para dos juegos separados, cancelación del recorte y regreso de entrega estable, ausencia de desbordamiento a 320/390/768/1024/1440 px y separación del servicio Documentos. Se conserva la prueba de impresión dúplex; su acceso está ahora en el acordeón de impresora.
 
@@ -76,4 +80,4 @@ Los CI [push](https://github.com/pacoiglesias/fotos/actions/runs/41267873156) y 
 
 Este resultado corresponde al código anterior, no al resultado de la continuación. Las correcciones conservan las aserciones y amplían las regresiones: apertura y foco por identificador de página, y respuesta de información del trabajador solo después de resolver la limpieza de activación. La prueba del trabajador retiene deliberadamente la eliminación para comprobar esa espera y la conservación de cachés ajenas.
 
-Se separó el plan histórico de la tabla vigente y se archivaron los tres informes antiguos que estaban en la raíz. El cierre de la entrega actual se acredita con sus resultados por commit; este documento no acredita un deploy.
+Se separó el plan histórico de la tabla vigente y se archivaron los tres informes antiguos que estaban en la raíz. Estos antecedentes corresponden a revisiones anteriores; el cierre publicado se acredita con las comprobaciones del registro de entrega.

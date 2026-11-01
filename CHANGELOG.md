@@ -17,7 +17,7 @@
 - La revisión mantiene el foco al editar y retira avisos de revisiones anteriores. Los avisos de calidad y coincidencia solo examinan las caras que se imprimirán.
 - El margen automático permanece deshabilitado para edición numérica tras preparar el PDF; las acciones de descarga no se habilitan para una revisión incompleta.
 - Se retiran 18 capturas/resultados generados antiguos de Git; los scripts se conservan y escriben en `.audit/`.
-- Publicación pospuesta por indicación del usuario: primero perfeccionar y comprobar la entrega. La compilación local usada por pruebas no acredita un despliegue.
+- Publicación completada y verificada: `realscan-eae2eb5df9ea7418`, fuente `09743c6be291da54c386652a31ebc52345cab0f1`. Ambos Firebase y dominio habitual coinciden; [registro de entrega](audit/ENTREGA_336.md). Pruebas físicas posteriores, por indicación del usuario.
 - Documentos: revisión de posibles páginas en blanco con miniaturas, selección explícita, eliminación por lote y recuperación con Deshacer. Conserva originales y excluye páginas con anotaciones añadidas; no afecta al relleno generado para dúplex.
 
 - Panel de preparación estable: Solo frente, Frente y reverso o Una por hoja, papel y juegos juntos; controles a la izquierda y hoja a la derecha en escritorio. Preparación antes de la hoja en móvil.

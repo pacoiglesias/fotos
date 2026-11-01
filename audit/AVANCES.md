@@ -1,14 +1,10 @@
-## 3.36.0 — Preparación de identificaciones simplificada
+## 3.36.0 — Publicada y verificada
 
-Continuación autorizada: aplicación de las trece mejoras de software del plan; pruebas físicas después, por indicación del usuario. Recepción compacta, visor común, Resolver, favoritos ampliados, atajos, retorno de foco, entrega agrupada, posición/margen visual, revisión de lotes, estado de transferencias, lista móvil/Hoy y mediciones con trabajos repetidos. Los informes antiguos de raíz se conservan en `audit/archivo/`.
+Las trece mejoras de software del plan están aplicadas y publicadas: recepción compacta, visor de caras/hoja, Resolver, favoritos ampliados, ajustes por servicio e impresora, atajos, retorno de foco, entrega agrupada, posición/margen visual, revisión de lotes, estados de transferencias, cola móvil/Hoy y mediciones de uso repetido.
 
-Se corrige conservación de Más acciones al regenerar páginas móviles y se espera la finalización de limpieza del trabajador antes de confirmar disponibilidad. Las regresiones dirigidas de restauración, actualización, revisión, navegación, mostrador y flujos prácticos pasaron. Se añaden pruebas de integración, activación y ciclo de cachés; el resultado completo se registra por commit en el PR. El fallo anterior de `4d9c1bc` sigue como antecedente en la auditoría, sin confundirse con el código corregido. No se acredita un deploy con esta anotación.
+El publicador oficial terminó con código 0; 437 marcas PASS, ninguna suite fallida y ambos despliegues completados. Versión `realscan-eae2eb5df9ea7418`, fuente `09743c6be291da54c386652a31ebc52345cab0f1`. Las cinco direcciones coinciden, con 63 archivos y CSP comprobados por dirección. [Registro de entrega](ENTREGA_336.md).
 
-Ampliación solicitada: revisión de impresión con ajustes y vista en columnas, ampliación sin modificar el archivo, acceso a hoja limpia/guías, posición, escala y cantidades. Se corrigen foco, avisos obsoletos, sincronización de acciones y controles que desaparecían al pasar a la hoja en móvil. Limpieza de 18 artefactos generados; se conservan sus scripts. Por indicación del usuario se detuvo el publicador antes de Firebase y se continúa con pruebas y compilación local. Producción permanece en 3.35.1 hasta una publicación posterior comprobada.
-
-Páginas en blanco: revisión explícita en Documentos, miniaturas de tamaño limitado, ampliación a petición, eliminación reversible y originales conservados. Ocho comprobaciones específicas en Chromium/WebKit, con PDF real de prueba, modo sin red, protección de anotaciones, dúplex y cancelación por nuevo trabajo. El plan actualizado prioriza catorce propuestas posteriores sin anunciarlas como implementadas.
-
-Revisión del panel de identificación sobre main 3.35.1. Distribución, papel y juegos en una zona; captura por cara; controles de documentos ocultos fuera de su servicio; preparación antes de la vista previa en móvil. Se conservan motores de medida, impresión, privacidad y las opciones originales. La verificación y publicación se acreditan con resultados y endpoints, no con esta anotación.
+El PR #15 está integrado en main. Se retiraron 18 resultados generados y se archivaron los tres informes antiguos de raíz. Las pruebas físicas de HP, dúplex e iPhone quedan para después, por indicación del usuario; no se marcan verificadas.
 
 ## 3.35.1 — Ajustar la hoja desde la revisión
 
