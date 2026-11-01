@@ -34,28 +34,31 @@
       const pdf=document.createElement('button');pdf.id='printReviewPdf';pdf.type='button';pdf.className='counter-secondary';pdf.textContent='Guardar PDF';button.before(pdf);
     }
     arrangeReview();
+    if(!$('printReviewFrontChoice')){const choice=document.createElement('section');choice.id='printReviewFrontChoice';choice.hidden=true;choice.className='review-front-choice';choice.innerHTML='<strong>¿Solo necesitas el frente?</strong><p>Preparamos una sola cara con el papel, las medidas y los juegos elegidos.</p><button type="button" id="printReviewUseFront">Continuar solo con frente</button>';$('printReviewIssues').before(choice);}
     $('printReviewPdf').hidden=opts.mode==='pdf';
     $('printReviewPdf').onclick=()=>{closeModal('outputReviewModal');handleExportPDF(false,true);};
     let refreshId=0;
     async function refresh(){
-      const refresh=++refreshId;
+      const revision=++refreshId;
       button.disabled=true;button.textContent='Preparando hoja…';
       $('printReviewPdf').disabled=true;
       $('printReadyStatus').textContent='Preparando la hoja mientras la revisas…';
       $('printPrinterNotice').textContent='';
       $('printSheetPreview').replaceChildren();
       if(!await waitForProcessingComplete()){$('printReadyStatus').textContent='La imagen sigue en preparación. Vuelve a corregir para reintentar.';return;}
-      if(sequence!==session||refresh!==refreshId)return;
+      if(sequence!==session||revision!==refreshId)return;
       const checks=runPreflightChecks(),fatal=checks.issues.filter(i=>i.type==='error'&&i.code!=='MISSING_SLOT');
       const missing=checks.issues.some(i=>i.code==='MISSING_SLOT');
+      $('printReviewFrontChoice').hidden=!window.RealScanWorkspacePolish?.canContinueWithFront();
+      $('printReviewUseFront').onclick=()=>{if(window.RealScanWorkspacePolish?.continueWithFront()){window.RealScanOutputReview?.refresh();refresh();}};
       $('printReviewIssues').replaceChildren();
-      for(const issue of checks.issues){const p=document.createElement('p');p.className='output-review-warning';p.textContent=issue.message;$('printReviewIssues').append(p);}
+      for(const issue of checks.issues){const p=document.createElement('p');p.className='output-review-warning';p.textContent=issue.code==='MISSING_SLOT'&&window.RealScanWorkspacePolish?.canContinueWithFront()?'Reverso pendiente. Puedes añadirlo o continuar solo con el frente.':issue.message;$('printReviewIssues').append(p);}
       const requireConsent=missing&&opts.mode!=='pdf';
       $('printMissingConsentRow').hidden=!requireConsent;$('printMissingConsent').checked=false;
       if(fatal.length||(missing&&opts.mode==='pdf')){button.textContent=missing&&opts.mode==='pdf'?'Completa las caras':'Corrige los avisos';$('printReadyStatus').textContent=missing&&opts.mode==='pdf'?'Agrega la cara pendiente o elige Solo frente antes de descargar.':'Vuelve a corregir el trabajo antes de continuar.';return;}
       try{
         const entry=await RealScanPrint.prepare();
-        if(sequence!==session||refresh!==refreshId)return;
+        if(sequence!==session||revision!==refreshId)return;
         RealScanPrint.preview($('printSheetPreview'),entry);
         const update=()=>{button.disabled=requireConsent&&!$('printMissingConsent').checked;};
         $('printMissingConsent').onchange=update;update();
@@ -67,7 +70,7 @@
         $('printPrinterNotice').dataset.verified=String(verified);$('printPrinterNotice').textContent=verified?'Perfil '+entry.profile.name+' · medición registrada por el operador.':(entry.profile?'Perfil '+entry.profile.name+' sin medición registrada.':'Sin perfil de corrección.')+' Comprueba las medidas de la primera impresión.';
         button.onclick=()=>{if(button.disabled)return;if(!RealScanPrint.isPrepared()){refresh();return;}button.disabled=true;closeModal('outputReviewModal');callback();};
       }catch(error){
-        if(sequence!==session||refresh!==refreshId)return;
+        if(sequence!==session||revision!==refreshId)return;
         button.textContent='Reintentar';button.disabled=false;button.onclick=refresh;
         $('printReadyStatus').textContent=error.message+' Puedes volver a corregir o descargar el PDF desde la hoja.';
       }
@@ -80,6 +83,8 @@
     modal.addEventListener('change',modal._profileSheet);
     if(modal._settingsSheet)modal.removeEventListener('realscan:sheet-settings-updated',modal._settingsSheet);
     modal._settingsSheet=()=>refresh();modal.addEventListener('realscan:sheet-settings-updated',modal._settingsSheet);
+    if(modal._printerEventSheet)document.removeEventListener('realscan:printer-profile-changed',modal._printerEventSheet);
+    modal._printerEventSheet=()=>{if(!modal.classList.contains('hidden')){window.RealScanOutputReview?.refresh();refresh();}};document.addEventListener('realscan:printer-profile-changed',modal._printerEventSheet);
     await refresh();
   };
 })();

@@ -81,7 +81,8 @@ function setLight(id,state,text){const el=$(id);if(!el)return;el.className='desk
 async function renderSemaphore(){
  const turn=++semaphoreSerial;
  const profile=root.RealScanPrinterProfiles?.getActive();
- setLight('deskLightPrinter',profile?(root.RealScanPrinterProfiles?.isVerified?.(profile)?'ok':'warn'):'warn',profile?(root.RealScanPrinterProfiles?.isVerified?.(profile)?'Impresora lista':'Impresora · Verificar tamaño'):'Impresora · Configurar');
+ const printerVerified=!!profile&&!!root.RealScanPrinterProfiles?.isVerified?.(profile);
+ setLight('deskLightPrinter',printerVerified?'ok':'warn',profile?profile.name+' · '+(printerVerified?'Medición registrada':'Medición pendiente'):'Impresora · Configurar');
  const connected=!!root.RealScanPaperless?.hasToken();
  setLight('deskLightPaperless',connected?'checking':'warn',connected?'Paperless · Comprobando':'Paperless · Conectar');
  setLight('deskLightNas','checking','NAS: comprobando…');

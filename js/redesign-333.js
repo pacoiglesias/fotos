@@ -98,22 +98,20 @@
   }
 
   /* ---------- O8: aviso de perfil en el dock ---------- */
-  function hasActiveProfile(){
-    try { if (window.RealScanPrinterProfiles && window.RealScanPrinterProfiles.getActiveId && window.RealScanPrinterProfiles.getActiveId()) return true; } catch (e) {}
-    const st = $('#printerProfileStatus');
-    return !!(st && st.textContent.indexOf('Perfil activo:') !== -1);
-  }
   function syncProfileWarning(){
     const dock = $('#flowDock > div'); if (!dock) return;
-    let warn = dock.querySelector('.rs-profile-warning');
-    if (hasActiveProfile()) { if (warn) warn.remove(); return; }
-    if (!warn) {
-      warn = document.createElement('p');
-      warn.className = 'rs-profile-warning';
-      warn.textContent = '⚠ Sin perfil activo: la impresión sale sin corrección de impresora.';
-      const hint = $('#flowOrderHint');
-      if (hint && hint.parentElement === dock) hint.after(warn); else dock.append(warn);
+    dock.querySelector('.rs-profile-warning')?.remove();
+    let status = $('#flowPrinterSummary');
+    if (!status) {
+      status = document.createElement('p');status.id = 'flowPrinterSummary';
+      const label=document.createElement('span'),change=document.createElement('button');change.type='button';change.textContent='Cambiar';change.setAttribute('aria-label','Cambiar perfil de impresora');
+      change.onclick=()=>{const options=$('#workspacePrinterOptions');if(!options||!$('#loginOverlay')?.classList.contains('hidden'))return;options.open=true;options.scrollIntoView({block:'center'});$('#workspacePrinter')?.focus({preventScroll:true});};
+      status.append(label,change);dock.append(status);
     }
+    const api=window.RealScanPrinterProfiles,profile=api?.getActive(),verified=!!profile&&api.isVerified(profile);
+    const text=profile?profile.name+' · '+(verified?'Medición registrada':'Seleccionada · medición pendiente'):'Sin perfil de corrección · elige tu impresora';
+    if(status.firstElementChild.textContent!==text)status.firstElementChild.textContent=text;
+    status.dataset.verified=String(verified);
   }
 
   /* ---------- O1 + V10/G5: revisión con pie fijo, avisos arriba y kicker ---------- */
@@ -245,4 +243,5 @@
     sweep();
     new MutationObserver(scheduleSweep).observe(document.body, { childList: true, subtree: true, characterData: true });
   });
+  document.addEventListener('realscan:printer-profile-changed',scheduleSweep);
 })();

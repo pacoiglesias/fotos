@@ -35,6 +35,10 @@ function pass(text){checks.push(text);console.log('PASS '+text);}
   pass(engine+' one-front upload is immediately deliverable, preserving paper and copies');
   await page.locator('[data-flow-sides=both]').click();await page.waitForFunction(()=>document.querySelector('[data-capture-side=back]'));
   assert.equal(await page.evaluate(()=>RealScanWorkflow.describe().ready),false);assert(await page.locator('[data-workspace-deliver=pdf]').isDisabled());
+  await page.locator('#identityContinueFront').waitFor({state:'visible'});await page.locator('#identityContinueFront').click();await page.waitForFunction(()=>state.printMode==='single'&&RealScanWorkflow.describe().ready);
+  assert.equal(await page.evaluate(()=>state.images.front.originalSrc),front);assert.equal(await page.evaluate(()=>state.paperSize),'letter');assert.equal(await page.evaluate(()=>state.outputSets),2);assert(await page.locator('[data-workspace-deliver=pdf]').isEnabled());
+  await page.locator('[data-flow-sides=both]').click();await page.waitForFunction(()=>document.querySelector('[data-capture-side=back]'));
+  pass(engine+' missing reverse offers a direct one-front continuation without changing paper, sets or the original');
   await upload('back',samples.back);const back=await page.evaluate(()=>state.images.back.originalSrc);
   await page.locator('[data-flow-sides=single]').click();assert.equal(await page.evaluate(()=>state.images.back.originalSrc),back);
   await page.locator('[data-flow-sides=both_separate]').click();await page.waitForFunction(()=>RealScanWorkflow.describe().ready);

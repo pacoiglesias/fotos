@@ -1,3 +1,12 @@
+## 3.36.1 — Continuar con una cara y aclarar la impresora
+
+- Acción explícita «Continuar solo con frente» junto a las capturas y en la revisión: conserva papel, juegos y originales; cambia la composición a una cara ID-1.
+- El resumen y el selector de revisión se regeneran con la hoja. Se conservan los errores de geometría, autenticación y ausencia de imágenes.
+- Estado coherente del perfil: nombre de impresora seleccionada y medición pendiente/registrada. Los cambios y borrados del perfil actualizan las superficies; se sincronizan también los cambios del mismo origen entre pestañas.
+- Reintentar una preparación fallida vuelve a preparar la hoja; se evita que un contador interno oculte la función de actualización.
+- Jerarquía visual con cabecera contrastada, recepción más compacta, servicio seleccionado destacado y visor diferenciado. En móvil se reduce el bloque de estados y se mantiene visible el perfil en el pie. Los estilos afectan solo a pantalla.
+- Regresiones de una sola cara, medidas, conservación de originales, reintento y perfil HP tras recarga. Las pruebas físicas siguen pendientes.
+
 ## 3.36.0 — Identificación con controles y capturas juntos
 
 - Recepción compacta, herramientas secundarias plegadas fuera de la barra y visor Hoja / Frente o foto / Reverso con ajuste directo.

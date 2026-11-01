@@ -1,3 +1,7 @@
+## 3.36.1 — Correcciones en revisión
+
+Continuación explícita solo con frente desde preparación y revisión; perfil de impresora sincronizado y claramente separado de la medición física; reintento de preparación corregido y composición visual más compacta. Ver [auditoría de esta corrección](REVISION_3361.md). La publicación se confirmará con el resultado del publicador y las versiones remotas; 3.36.0 es la última publicación registrada hasta entonces.
+
 ## 3.36.0 — Publicada y verificada
 
 Las trece mejoras de software del plan están aplicadas y publicadas: recepción compacta, visor de caras/hoja, Resolver, favoritos ampliados, ajustes por servicio e impresora, atajos, retorno de foco, entrega agrupada, posición/margen visual, revisión de lotes, estados de transferencias, cola móvil/Hoy y mediciones de uso repetido.
