@@ -46,3 +46,14 @@ Las catorce propuestas, con prioridad y beneficio práctico, se centralizan en [
 ## Límites
 
 Se conservan las validaciones físicas pendientes de HP (regla de 50 mm), dúplex e iPhone real. No se incorporan documentos personales ni credenciales a Git o a los artefactos CI. Paperless continúa siendo opcional y su conexión depende del origen autorizado y de la sesión del navegador.
+
+## Resultado de la revisión completa en Windows
+
+Código evaluado: `4d9c1bcf8f5c127335435e062dc73d07cb8472e0`. Dependencias instaladas con `npm ci`: 101 paquetes añadidos, 0 vulnerabilidades informadas. `npm run verify` generó la compilación local `realscan-45cad2f9a7940be2` (358 archivos), comprobó versiones y CSP y terminó con **código 1**. El registro contiene 398 líneas PASS y dos suites fallidas; no se declara aprobada la batería completa.
+
+- `image-enhance-regression`: agotó la espera de «Restaurar» después de recargar el borrador móvil y pulsar «Más acciones». La repetición instrumentada de la misma suite terminó correctamente en Chromium y WebKit, incluyendo restauración exacta del original. La incidencia es intermitente y su causa no está confirmada.
+- `upgrade-regression`: encontró la caché antigua `realscan-cache-v3.3.0` junto a la actual después de la activación. Conservó el marcador de datos de usuario y la caché ajena de prueba. La repetición aislada terminó con código 0 y acreditó limpieza de caché, sin cambios al código. La diferencia con la ejecución completa sigue abierta hasta aclarar la incidencia.
+
+Los CI [push](https://github.com/pacoiglesias/fotos/actions/runs/41267873156) y [PR](https://github.com/pacoiglesias/fotos/actions/runs/41267876763) del mismo código terminaron correctamente. La diferencia de resultados entre entornos queda registrada, sin sustituir el fallo local por el éxito de CI. Evidencias locales ignoradas por Git: `.audit/verify336-predeployment-final.log`, `.audit/image-enhance336-investigation.log` y `.audit/upgrade336-investigation.log`.
+
+La etapa 7 permanece abierta y PR #15 sigue en borrador. Se separó el plan histórico de octubre de la tabla de estados vigente para eliminar la contradicción entre encabezados «en curso» y textos «completada». No hubo nuevo despliegue: el dominio continúa en 3.35.1.

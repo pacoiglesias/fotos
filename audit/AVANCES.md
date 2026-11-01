@@ -1,5 +1,7 @@
 ## 3.36.0 — Preparación de identificaciones simplificada
 
+Estado de cierre: **abierto**. En el código `4d9c1bc`, ambos CI finalizaron correctamente, pero la batería completa de Windows terminó con dos suites fallidas: acceso a Restaurar en móvil y retirada de caché antigua. Las repeticiones aisladas de ambas pasaron sin cambios al código; sus causas siguen pendientes. No se acredita publicación ni cierre completo de etapas 5–7. El plan vigente separa estados actuales, incidencias y propuestas del registro histórico de octubre.
+
 Ampliación solicitada: revisión de impresión con ajustes y vista en columnas, ampliación sin modificar el archivo, acceso a hoja limpia/guías, posición, escala y cantidades. Se corrigen foco, avisos obsoletos, sincronización de acciones y controles que desaparecían al pasar a la hoja en móvil. Limpieza de 18 artefactos generados; se conservan sus scripts. Por indicación del usuario se detuvo el publicador antes de Firebase y se continúa con pruebas y compilación local. Producción permanece en 3.35.1 hasta una publicación posterior comprobada.
 
 Páginas en blanco: revisión explícita en Documentos, miniaturas de tamaño limitado, ampliación a petición, eliminación reversible y originales conservados. Ocho comprobaciones específicas en Chromium/WebKit, con PDF real de prueba, modo sin red, protección de anotaciones, dúplex y cancelación por nuevo trabajo. El plan actualizado prioriza catorce propuestas posteriores sin anunciarlas como implementadas.
