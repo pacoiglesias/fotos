@@ -1,6 +1,6 @@
-## 3.36.1 — Código verificado; despliegue pendiente de acceso
+## 3.36.1 — Publicada y verificada
 
-Continuación explícita solo con frente desde preparación y revisión; perfil sincronizado también con el panel antiguo; reintento corregido y composición visual más compacta. PR #16 integrado, CI de código y main aprobados; 441 marcas PASS y 0 FAIL en el publicador de Windows. El despliegue se detuvo por sesión Firebase caducada y las cinco direcciones siguen en 3.36.0. Se abrió el acceso oficial de Google para renovarla. Ver [estado de entrega](ENTREGA_3361.md) y [auditoría](REVISION_3361.md). No se declara publicado ni físicamente calibrado.
+Continuación explícita solo con frente desde preparación y revisión; perfil sincronizado también con el panel antiguo; reintento corregido y composición visual más compacta. PR #16 integrado y CI aprobado. Tras renovar el acceso a Firebase, el publicador completo finalizó con código 0: 442 marcas PASS, 0 FAIL y ambos despliegues completados. Cinco direcciones comprobadas: contenido `realscan-ed88608a60ea8802`, fuente `ee187d4450d3abdece84fdedee8a896922d6390b`. Ver [entrega](ENTREGA_3361.md) y [auditoría](REVISION_3361.md). Las pruebas físicas y las seis propuestas siguientes permanecen pendientes.
 
 ## 3.36.0 — Publicada y verificada
 

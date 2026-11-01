@@ -1,6 +1,6 @@
 # Revisión del mostrador · 3.36.1
 
-Estado: código verificado e integrado en main; publicación pendiente de renovar el acceso a Firebase. Ver [estado de entrega](ENTREGA_3361.md). La entrega pública anterior 3.36.0 permanece documentada en [ENTREGA_336.md](ENTREGA_336.md).
+Estado: publicada y verificada en ambos Firebase y en el dominio habitual. Ver [entrega comprobada](ENTREGA_3361.md). La entrega anterior 3.36.0 permanece documentada en [ENTREGA_336.md](ENTREGA_336.md).
 
 ## Hallazgos y cambios
 
@@ -15,9 +15,9 @@ Estado: código verificado e integrado en main; publicación pendiente de renova
 
 - Preparación con una y dos caras: Chromium y WebKit, cinco anchuras, ambos temas, firmas/sellos y conservación de originales.
 - Revisión de impresión: acción de una cara, tamaño ID-1 de 85,60 × 53,98 mm, PDF habilitado, perfil HP tras recarga y reintento después de fallo transitorio.
-- Un intento posterior con acceso Firebase renovado se detuvo al capturar evidencia: WebKit en Windows esperaba indefinidamente los cuadros de animación usados por locator.screenshot. Se comprueba ahora la geometría estable mediante temporizadores y se capturan los píxeles reales de la página, conservando todas las aserciones funcionales. La regresión completa de preparación volvió a pasar en Chromium y WebKit, cinco anchuras y ambos temas; se repite el publicador antes de declarar un despliegue.
-- npm ci finalizó: 101 paquetes, 0 vulnerabilidades informadas. El publicador completó la batería completa: 441 marcas PASS, 0 marcas FAIL, versión/compilado/CSP comprobados. Este recuento incluye comprobaciones repetidas de publicación y no representa casos únicos.
-- CI aprobado para el código `32d12db5c0a9848897e3f9b02ad720de83102464` y para su integración en main. La primera operación de despliegue se detuvo por sesión caducada; no se declara publicado.
+- Un intento posterior con acceso Firebase renovado se detuvo al capturar evidencia: WebKit en Windows esperaba indefinidamente los cuadros de animación usados por locator.screenshot. Se comprueba ahora la geometría estable mediante temporizadores y se capturan los píxeles reales de la página, conservando todas las aserciones funcionales. La regresión completa de preparación volvió a pasar en Chromium y WebKit, cinco anchuras y ambos temas; el publicador completo posterior terminó con código 0.
+- npm ci finalizó: 101 paquetes, 0 vulnerabilidades informadas. El publicador completó la batería completa: 442 marcas PASS, 0 marcas FAIL, versión/compilado/CSP comprobados. Este recuento incluye comprobaciones repetidas de publicación y no representa casos únicos.
+- CI aprobado para el código, su integración y la fuente publicada `ee187d4450d3abdece84fdedee8a896922d6390b`. Tras renovar la sesión se repitió npm run publish, que terminó con código 0. Se verificaron metadatos, CSP y archivos en cinco direcciones; ver [entrega](ENTREGA_3361.md).
 - Simulación: 160 trabajos en Chromium y 160 en WebKit. Nodos antes/después: 3181/3155 en ambos; heap Chromium 7754040/7603280 bytes tras recolección. WebKit no ofrece esa medición de heap. Es una simulación con imágenes sintéticas, no una certificación de jornada completa ni de dispositivo físico.
 - La calibración de la HP, el dúplex físico y la prueba con iPhone real continúan pendientes por indicación del usuario. Un perfil seleccionado no equivale a una medición física.
 

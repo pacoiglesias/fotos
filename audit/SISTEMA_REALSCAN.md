@@ -10,9 +10,9 @@ Esta guía describe el código de la nueva entrega. El estado publicado se compr
 - Publicación anterior comprobada: aplicación 3.35.1, build `realscan-d012696a631430aa`, fuente `6a9fd1ee422ed2a9e4c500273c9dc7d459355072`. Ambos Firebase y el dominio propio coincidieron en versión, fuente, CSP y 57 archivos por origen.
 - Entrega 3.36.0 publicada: fuente `09743c6be291da54c386652a31ebc52345cab0f1`, contenido `realscan-eae2eb5df9ea7418`, PR #15 integrado en main. Cinco direcciones comprobadas; ver [entrega y pendientes físicos](ENTREGA_336.md).
 
-## Corrección 3.36.1 verificada; publicación pendiente
+## Corrección 3.36.1 publicada y verificada
 
-Las observaciones del mostrador se tratan en [REVISION_3361.md](REVISION_3361.md): continuar solo con frente, selección del perfil y reintento de revisión. CI y verificación completa aprobados; el despliegue requiere renovar la sesión de Firebase. Ver [estado exacto](ENTREGA_3361.md). El número de versión del código no certifica el despliegue ni la calibración física.
+Las observaciones del mostrador se tratan en [REVISION_3361.md](REVISION_3361.md): continuar solo con frente, selección del perfil y reintento de revisión. CI y publicador completo aprobados; ambas publicaciones y el dominio habitual coinciden en `realscan-ed88608a60ea8802`, fuente `ee187d4450d3abdece84fdedee8a896922d6390b`. Ver [entrega comprobada](ENTREGA_3361.md). La calibración física sigue pendiente.
 
 ## Responsabilidades
 

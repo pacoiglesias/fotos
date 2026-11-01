@@ -1,10 +1,10 @@
 # RealScan Pro · 3.36.1
 
-Código 3.36.1 verificado e integrado en main. Añade «Continuar solo con frente» desde preparación y revisión, sincroniza el perfil de impresora con todas las vistas y corrige Reintentar. El despliegue se detuvo por sesión de Firebase caducada: **la versión pública comprobada sigue siendo 3.36.0**. [Estado de entrega y acceso pendiente](audit/ENTREGA_3361.md).
+La 3.36.1 está publicada y verificada en ambos Firebase y en el dominio habitual. Añade «Continuar solo con frente» desde preparación y revisión, sincroniza el perfil de impresora con todas las vistas y corrige Reintentar. [Entrega y pendientes físicos](audit/ENTREGA_3361.md).
 
 Identificaciones: caras, papel y juegos juntos, con Cámara y Archivo propios de cada cara. En escritorio se prepara a la izquierda y se revisa la hoja a la derecha; en móvil se eligen las opciones antes de la vista previa. Solo frente permite entregar sin exigir reverso y cambiar de modalidad conserva las capturas.
 
-La revisión de impresión reúne margen, encabezado, acabado, posición, escala y cantidad junto a la hoja preparada. «Hoja completa» y «Ampliar detalle» cambian solo la vista. «Hoja limpia» conserva firmas y sellos. La versión 3.36.0 está publicada y verificada en ambos Firebase y en el dominio habitual. El [registro de entrega](audit/ENTREGA_336.md) contiene fuente, contenido, pruebas y pendientes físicos; la versión servida también se puede comprobar en `version.json`.
+La revisión de impresión reúne margen, encabezado, acabado, posición, escala y cantidad junto a la hoja preparada. «Hoja completa» y «Ampliar detalle» cambian solo la vista. «Hoja limpia» conserva firmas y sellos. La versión 3.36.1 está publicada y verificada en ambos Firebase y en el dominio habitual. El [registro de entrega](audit/ENTREGA_3361.md) contiene fuente, contenido, pruebas y pendientes físicos; la versión servida también se puede comprobar en `version.json`.
 
 En Documentos, **Quitar páginas en blanco** muestra sugerencias sin seleccionar ninguna. Amplía para comprobar texto tenue, elige páginas y quita el lote; **Deshacer** las recupera. Los originales se conservan y las páginas con firmas o sellos añadidos se excluyen de las sugerencias.
 

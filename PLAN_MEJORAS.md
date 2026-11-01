@@ -1,10 +1,10 @@
-# Plan aplicado y entrega de RealScan Pro 3.36.0
+# Plan aplicado y entrega de RealScan Pro 3.36.1
 
-**Corrección posterior 3.36.1:** integrada en main y verificada con CI y el publicador completo. Resuelve continuación solo con frente, perfil de impresora y reintento de revisión; incluye ajustes de jerarquía visual. La publicación se detuvo por sesión Firebase caducada; las direcciones públicas siguen en 3.36.0. [Estado exacto](audit/ENTREGA_3361.md) · [Cambios y seis propuestas siguientes](audit/REVISION_3361.md).
+**Corrección posterior 3.36.1:** integrada en main, publicada y comprobada tras renovar el acceso de Firebase. Resuelve continuación solo con frente, perfil de impresora y reintento de revisión; incluye ajustes de jerarquía visual. [Entrega comprobada](audit/ENTREGA_3361.md) · [Cambios y seis propuestas siguientes](audit/REVISION_3361.md).
 
 Actualización: 1 de noviembre de 2026. **Las trece mejoras de software están implementadas, verificadas y publicadas en 3.36.0.** El [PR #15](https://github.com/pacoiglesias/fotos/pull/15) está integrado en main. El punto 14, pruebas físicas, queda pendiente por indicación del usuario.
 
-Versión servida: `realscan-eae2eb5df9ea7418`, fuente `09743c6be291da54c386652a31ebc52345cab0f1`. Ambos Firebase y el dominio habitual coinciden. Consulta el [registro de entrega](audit/ENTREGA_336.md) para las comprobaciones y su alcance.
+Versión servida: `realscan-ed88608a60ea8802`, fuente `ee187d4450d3abdece84fdedee8a896922d6390b`. Ambos Firebase y el dominio habitual coinciden. Consulta el [registro de entrega](audit/ENTREGA_3361.md) para las comprobaciones y su alcance.
 
 ## Estado vigente de las etapas
 
