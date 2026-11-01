@@ -1,0 +1,81 @@
+/* Screen-only review controls. Physical output is rendered by the existing print engine. */
+@media screen {
+  body.rs-next.rs-counter330 #outputReviewModal > .print-review-dialog {
+    width:min(1220px,96vw);max-width:1220px;max-height:94dvh;padding:24px;
+    border-radius:24px;background:var(--work-surface,#fff);color:var(--work-ink,#172233);
+  }
+  #printReviewWorkspace {display:grid;grid-template-columns:minmax(300px,.85fr) minmax(0,1.15fr);gap:22px;align-items:start}
+  #printReviewWorkspace > * {min-width:0}
+  #printReviewWorkspace > .review-adjustments {grid-column:1;grid-row:1}
+  #printReviewWorkspace > .review-preview-column {grid-column:2;grid-row:1}
+  .review-preview-column {position:sticky;top:0;padding:16px;border:1px solid var(--work-line,#dce2e9);border-radius:16px;background:var(--work-bg,#f4f6fa)}
+  .review-preview-toolbar {display:grid;gap:12px;margin-bottom:14px}
+  .review-preview-toolbar > strong {font-size:16px;font-weight:750}
+  .review-preview-toolbar > div {display:flex;gap:6px;flex-wrap:wrap}
+  .review-preview-toolbar button,.sheet-review-presets button,.sheet-review-actual-size {
+    min-height:44px;border:1px solid var(--work-line,#dce2e9);border-radius:9px;padding:9px 12px;
+    background:var(--work-surface,#fff);color:var(--work-ink,#172233);font-size:12px;font-weight:650;
+  }
+  .review-preview-toolbar [aria-pressed=true],.sheet-review-presets [aria-pressed=true] {
+    border-color:var(--work-accent,#315cdb);background:var(--work-soft,#edf2ff);color:var(--work-accent,#315cdb);
+    box-shadow:inset 0 0 0 1px var(--work-accent,#315cdb);
+  }
+  #outputReviewModal #printSheetPreview {padding:8px;gap:16px;border-radius:10px;background:transparent;max-height:68dvh;overflow:auto}
+  #outputReviewModal #printSheetPreview figure {min-width:0!important}
+  #outputReviewModal #printSheetPreview svg {width:100%!important;max-width:100%!important;height:auto!important}
+  /* More specific than the legacy full-width rule, including its !important. */
+  #outputReviewModal #printSheetPreview[data-zoom=fit] {grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+  #outputReviewModal #printSheetPreview[data-zoom=fit] figure {width:100%;max-width:320px!important}
+  #outputReviewModal #printSheetPreview[data-zoom=detail] {grid-template-columns:1fr}
+  #outputReviewModal #printSheetPreview[data-zoom=detail] figure {width:720px;max-width:none!important}
+  .review-preview-hint {font-size:11px;line-height:1.6;color:var(--work-muted,#617084);margin:12px 0 0}
+  #printReview .review-main-facts {gap:10px}
+  #printReview .review-main-facts .output-review-fact {padding:14px;border-radius:12px;border-color:var(--work-line,#dce2e9);background:var(--work-soft,#edf2ff)}
+  #printReview .review-main-facts small {font-size:11px;margin-bottom:5px;color:var(--work-muted,#617084)}
+  #printReview .review-main-facts strong {font-size:16px;line-height:1.5;font-weight:750}
+  .review-facts-details > summary,#printReviewFormats > summary,#printReviewMoreActions > summary {
+    cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:650;color:var(--work-muted,#617084);
+  }
+  .review-facts-details > summary::before,#printReviewFormats > summary::before,#printReviewMoreActions > summary::before {content:'+';font-size:17px;line-height:1}
+  .review-facts-details[open] > summary::before,#printReviewFormats[open] > summary::before,#printReviewMoreActions[open] > summary::before {content:'−'}
+  .review-facts-details .output-review-fact {font-size:12px;padding:10px;background:var(--work-bg,#f4f6fa);border-color:var(--work-line,#dce2e9)}
+  .review-facts-details small {font-size:11px}
+  #printReview .sheet-review-settings {margin:0;padding:16px;border-color:var(--work-line,#dce2e9);background:var(--work-bg,#f4f6fa)}
+  .sheet-review-presets {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 16px}
+  .sheet-review-presets button:disabled {opacity:.5}
+  .sheet-review-actual-size {width:100%;margin-top:10px;color:var(--work-accent,#315cdb)}
+  #printReview .output-review-profile {display:grid;gap:7px;margin:4px 0 0;font-size:12px}
+  #printReview .output-review-profile select {width:100%;min-height:44px;border-color:var(--work-line,#dce2e9);background:var(--work-surface,#fff);color:var(--work-ink,#172233);font-size:13px}
+  .review-printer-status {font-size:12px;line-height:1.6;color:var(--work-muted,#617084)}
+  #printReview .output-review-note {font-size:12px;line-height:1.6;background:var(--work-soft,#edf2ff);color:var(--work-ink,#172233);border:1px solid var(--work-line,#dce2e9)}
+  #printReviewMoreActions {width:100%;border-top:1px solid var(--work-line,#dce2e9);margin-top:8px;padding-top:3px}
+  #printReviewMoreActions > div {display:flex;gap:8px;flex-wrap:wrap;padding:6px 0}
+  #printReviewFormats {border-top:1px solid var(--work-line,#dce2e9);margin-top:12px}
+  #outputReviewModal #printReadyStatus {font-size:12px;line-height:1.6;padding:9px 12px;border-radius:9px;background:var(--work-bg,#f4f6fa);color:var(--work-muted,#617084)}
+  .review-printer-notice {font-size:12px;line-height:1.6;margin:8px 0;color:var(--work-muted,#617084)}
+  .review-printer-notice[data-verified=false] {padding-left:10px;border-left:3px solid #b97819}
+  #outputReviewModal :focus-visible {outline:3px solid var(--work-accent,#315cdb);outline-offset:3px}
+  #outputReviewModal #confirmPrintReview {background:var(--work-accent,#315cdb);color:#fff;border:1px solid var(--work-accent,#315cdb);min-height:48px}
+  body.rs-next.rs-counter330 #outputReviewModal .rs-review-footer {bottom:-24px;margin:16px -24px -24px;padding:14px 24px 24px;background:var(--work-surface,#fff);border-color:var(--work-line,#dce2e9)}
+  html[data-counter=on] #outputReviewModal .sheet-review-settings :is(label,input,select) {font-size:16px!important}
+  html[data-counter=on] #outputReviewModal .review-preview-toolbar button,html[data-counter=on] #outputReviewModal .sheet-review-presets button {font-size:14px;min-height:48px}
+}
+@media screen and (max-width:849px) {
+  body.rs-next.rs-counter330 #outputReviewModal > .print-review-dialog {padding:18px;border-radius:18px;width:100%;max-height:94dvh}
+  #printReviewWorkspace {grid-template-columns:1fr;gap:16px}
+  #printReviewWorkspace > .review-adjustments,#printReviewWorkspace > .review-preview-column {grid-column:1;grid-row:auto}
+  .review-preview-column {position:static}
+  #outputReviewModal #printSheetPreview {max-height:55dvh}
+  .review-preview-toolbar {display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+  .review-preview-toolbar > strong {font-size:14px}
+  .review-preview-toolbar button {font-size:11px;padding-inline:9px}
+  #printReview .review-main-facts strong {font-size:14px}
+  #printReviewMoreActions > div > button {flex:1 1 45%}
+  #printReview .sheet-review-settings-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.rs-next.rs-counter330 #outputReviewModal .rs-review-footer {bottom:-18px;margin:14px -18px -18px;padding:12px 18px 18px}
+}
+@media screen and (max-width:380px) {
+  #printReview .sheet-review-settings-grid {grid-template-columns:1fr}
+  .review-preview-toolbar > div {width:100%}
+  .review-preview-toolbar button {flex:1}
+}

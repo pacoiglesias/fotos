@@ -24,7 +24,7 @@
   q('pdfDeliveryScope').onchange=()=>{q('pdfDeliveryRangeRow').hidden=q('pdfDeliveryScope').value!=='range';invalidate();};q('pdfDeliveryRange').onchange=invalidate;
   q('pdfDeliveryClose').onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close();});active={close,dialog};
   q('pdfDeliveryBuild').onclick=async()=>{
-   if(busy||!current())return;busy=true;q('pdfDeliveryBuild').disabled=true;for(const el of dialog.querySelectorAll('select,input'))el.disabled=true;invalidate();q('pdfDeliveryStatus').textContent='Preparando archivo y vista previa…';
+   if(busy||!current())return;busy=true;q('pdfDeliveryBuild').disabled=true;for(const el of dialog.querySelectorAll('select,input,[data-sheet-preset]'))el.disabled=true;invalidate();q('pdfDeliveryStatus').textContent='Preparando archivo y vista previa…';
    try{
     await task?.destroy?.();task=null;
     const indices=q('pdfDeliveryScope').value==='all'?pages.map((_,i)=>i):RealScanAnnotations.parseRange(q('pdfDeliveryRange').value,pages.length),asset=q('pdfDeliveryAsset').value;
@@ -36,7 +36,7 @@
     }
     if(!current())return;prepared=Object.freeze(prepared);q('pdfDeliveryEmpty').hidden=!q('pdfDeliveryPreview').hidden||!q('pdfDeliveryPhoto').hidden;q('pdfDeliveryStatus').textContent=prepared.pages+' página(s) · '+(prepared.blob.size/1024/1024).toFixed(2)+' MB · '+(prepared.asset==='photo'?'Fotografía individual':'PDF revisado');
    }catch(e){if(!disposed){prepared=null;q('pdfDeliveryStatus').textContent=e.message||'No se pudo preparar el archivo.';}}
-   finally{busy=false;if(!disposed){q('pdfDeliveryBuild').disabled=false;for(const el of dialog.querySelectorAll('select,input'))el.disabled=false;stateButtons();}}
+   finally{busy=false;if(!disposed){q('pdfDeliveryBuild').disabled=false;for(const el of dialog.querySelectorAll('select,input,[data-sheet-preset]'))el.disabled=false;const automatic=dialog.querySelector('[data-sheet-setting=automatic]'),margin=dialog.querySelector('[data-sheet-setting=margin]');if(automatic&&margin)margin.disabled=automatic.checked;stateButtons();}}
   };
   function fileName(){const extension=(prepared?.asset==='photo'||prepared?.asset==='side')?({'image/png':'png','image/webp':'webp'})[prepared.blob.type]||'jpg':'pdf';return (q('pdfDeliveryName').value.replace(/[\x00-\x1f<>:"/\\|?*]/g,'').replace(/\.(pdf|png|jpg|jpeg|webp)$/i,'').trim()||'RealScan_Entrega')+'.'+extension;}
   q('pdfDeliveryDownload').onclick=()=>{if(!prepared||!current()){invalidate();return;}const url=URL.createObjectURL(prepared.blob),a=document.createElement('a');a.href=url;a.download=fileName();a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);root.RealScanIssuance?.record(prepared.blob,{action:'pdf-descargado',pageKeys:prepared.pageKeys});};

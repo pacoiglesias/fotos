@@ -41,8 +41,12 @@
   }
   if(value==='prepare'){
    if(doc().active)root.RealScanJourney.go('review');
-   else if(document.body.classList.contains('rs-identity')){
-    setMobileStep(2);$('serviceFlow').scrollIntoView({block:'start',behavior:'auto'});$('flowSides').querySelector('[aria-pressed=true]')?.focus({preventScroll:true});
+   else if(kind()==='id'&&state.format==='card'){
+    root.RealScanServiceFlow.update();root.RealScanCapturePreviews?.update();setMobileStep(2);
+    const work=RealScanWorkflow.describe(),received=work.wanted.length-work.missing.length,pending=received&&work.missing[0];
+    const target=pending?document.querySelector('[data-capture-side="'+pending+'"]'):$('serviceFlow');
+    target?.scrollIntoView({block:'start',behavior:'auto'});
+    (pending?target?.querySelector('[data-preview-action=camera]'):$('flowSides').querySelector('[aria-pressed=true]'))?.focus({preventScroll:true});
    }else{const w=RealScanWorkflow.describe();RealScanWorkflow.moveTo(2,w.missing[0]||w.wanted[0]);}
    schedule();return;
   }

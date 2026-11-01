@@ -1,5 +1,9 @@
 ## 3.36.0 — Preparación de identificaciones simplificada
 
+Ampliación solicitada: revisión de impresión con ajustes y vista en columnas, ampliación sin modificar el archivo, acceso a hoja limpia/guías, posición, escala y cantidades. Se corrigen foco, avisos obsoletos, sincronización de acciones y controles que desaparecían al pasar a la hoja en móvil. Limpieza de 18 artefactos generados; se conservan sus scripts. Por indicación del usuario se detuvo el publicador antes de Firebase y se continúa con pruebas y compilación local. Producción permanece en 3.35.1 hasta una publicación posterior comprobada.
+
+Páginas en blanco: revisión explícita en Documentos, miniaturas de tamaño limitado, ampliación a petición, eliminación reversible y originales conservados. Ocho comprobaciones específicas en Chromium/WebKit, con PDF real de prueba, modo sin red, protección de anotaciones, dúplex y cancelación por nuevo trabajo. El plan actualizado prioriza catorce propuestas posteriores sin anunciarlas como implementadas.
+
 Revisión del panel de identificación sobre main 3.35.1. Distribución, papel y juegos en una zona; captura por cara; controles de documentos ocultos fuera de su servicio; preparación antes de la vista previa en móvil. Se conservan motores de medida, impresión, privacidad y las opciones originales. La verificación y publicación se acreditan con resultados y endpoints, no con esta anotación.
 
 ## 3.35.1 — Ajustar la hoja desde la revisión

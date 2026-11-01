@@ -14,13 +14,23 @@ Base: main 3.35.1, dda394d1cf195b42c1d183fca29962145070f3f0. Versión anterior p
 
 ## Verificación
 
+El usuario pidió perfeccionar la revisión y cerrar la auditoría antes de hacer la publicación. Se detuvo el publicador antes de Firebase. Se realizan compilaciones locales para las pruebas de navegador; producción continúa en 3.35.1 y no se anuncia 3.36.0 desplegada.
+
 Prueba nueva identity-preparation-regression en Chromium y WebKit: recepción mediante selector real y confirmación, solo frente listo para entrega, reverso pendiente bloqueado, conservación al cambiar caras, cuatro páginas ID-1 para dos juegos separados, cancelación del recorte y regreso de entrega estable, ausencia de desbordamiento a 320/390/768/1024/1440 px y separación del servicio Documentos. Se conserva la prueba de impresión dúplex; su acceso está ahora en el acordeón de impresora.
 
-La regresión específica aprobó doce comprobaciones en Chromium y WebKit, incluida la visibilidad de la hoja con sellos y los pasos sin impresión implícita. Compilación, metadatos coordinados y CSP aprobados. La suite completa, CI y publicación están pendientes de finalizar; este documento no acredita un despliegue.
+La regresión de identificación aprobó doce comprobaciones en Chromium y WebKit, incluida la visibilidad de la hoja con sellos y los pasos sin impresión implícita. La revisión de impresión añade doce comprobaciones de vista, escala, formato y cantidades; páginas en blanco añade ocho comprobaciones. Compilación local, metadatos coordinados y CSP aprobados. El resultado de la suite completa y CI se registra por commit en el PR #15 y sus evidencias; este documento no acredita un despliegue.
 
 El primer CI detectó un desfase al pedir el reverso: el estado del trabajo ya exigía dos caras mientras el botón PDF conservaba por un instante su disponibilidad anterior. Se detuvo el publicador y se sincronizan ahora las acciones de entrega al terminar cada actualización del panel, manteniendo la aserción inmediata de la prueba.
 
 ## Revisión adicional de flujos
+
+- Revisión de impresión con panel de ajustes y vista previa en columnas; vista previa primero en móvil, resumen de medida/papel y detalles secundarios plegados. Las acciones de cliente y compartir están agrupadas.
+- Nuevos accesos de acabado, posición, escala del contenido y cantidad por juego o persona. La ampliación no altera la copia preparada; el mensaje distingue escala del contenido y el 100 % de la impresora.
+- Se conserva el foco al regenerar controles y se retiran avisos de una revisión anterior. La revisión de calidad/coincidencia ignora las caras excluidas de la salida.
+- Tras generar el PDF, el margen numérico sigue bloqueado cuando el ajuste es automático. Los presets también quedan bloqueados durante preparación para evitar repetición de acciones.
+- Los estilos de la revisión se separan en `css/review-workspace.css`. Se corrige una regla antigua con mayor prioridad que impedía encajar la hoja completa en su marco, sin cambiar el archivo físico.
+- La detección de páginas en blanco ofrece miniaturas limitadas a 360 × 480 px y carga el original solo al ampliarlo. No selecciona páginas automáticamente; preserva los originales y elimina el lote en una única operación reversible. Excluye páginas con anotaciones añadidas y no analiza las páginas de relleno generadas para dúplex. Se cancela al cambiar de trabajo o sesión.
+- La navegación consulta el tipo de trabajo actual, evitando depender de una clase visual que podía actualizarse después. Si ya está el frente, «Preparar» enfoca la captura del reverso; sin capturas vuelve a las opciones.
 
 - Se elimina el doble manejo de los pasos de navegación cuando está activo el propietario actual del mostrador. «Preparar» vuelve a sus opciones; «Entregar» muestra destinos y no abre automáticamente la impresión.
 - Se corrige la regla de la interfaz móvil anterior que ocultaba el panel de preparación al activar el paso de la hoja. Las opciones de identificación permanecen accesibles durante la revisión.
@@ -30,17 +40,7 @@ El primer CI detectó un desfase al pedir el reverso: el estado del trabajo ya e
 
 ## Mejoras siguientes, sin anunciarlas como implementadas
 
-| Prioridad | Mejora | Beneficio |
-| --- | --- | --- |
-| Alta | Una única revisión que reúna encuadre, hoja y destino | Menos saltos entre diálogos, conservando la confirmación de tamaño físico. |
-| Alta | Selector de destino más breve en la entrega PDF | Mostrar Descargar, Imprimir y Compartir; agrupar NAS/QR/WhatsApp según la acción elegida. |
-| Alta | Comprobante de archivo NAS con tarea y estado final | Distinguir claramente envío aceptado, procesamiento y archivo recuperable. |
-| Media | Edición del margen sobre la hoja, con guías en mm | Comprender el resultado sin interpretar campos numéricos. |
-| Media | Unificar encabezado y acabado en una sola edición | Evitar controles equivalentes en posiciones distintas. |
-| Media | Reanudar exactamente la posición después de cada diálogo | Mantener el contexto al revisar varias páginas o clientes. |
-| Media | Accesos de teclado para capturar, repetir y entregar | Acelerar el trabajo de escritorio con foco y avisos claros. |
-| Media | Recetas de negocio visibles por servicio | Ofrecer solo presets pertinentes, sin guardar imágenes ni datos personales. |
-| Física | Calibración HP e iPhone con pruebas reales | Completar la evidencia que las pruebas automatizadas no pueden sustituir. |
+Las catorce propuestas, con prioridad y beneficio práctico, se centralizan en [PLAN_MEJORAS.md](../PLAN_MEJORAS.md). La recomendación es empezar por recepción compacta, avisos con solución y retorno al punto de trabajo. Estas propuestas son una fase posterior a las correcciones ya preparadas.
 
 ## Límites
 

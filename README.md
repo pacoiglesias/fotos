@@ -2,6 +2,10 @@
 
 Identificaciones: caras, papel y juegos juntos, con Cámara y Archivo propios de cada cara. En escritorio se prepara a la izquierda y se revisa la hoja a la derecha; en móvil se eligen las opciones antes de la vista previa. Solo frente permite entregar sin exigir reverso y cambiar de modalidad conserva las capturas.
 
+La revisión de impresión reúne margen, encabezado, acabado, posición, escala y cantidad junto a la hoja preparada. «Hoja completa» y «Ampliar detalle» cambian solo la vista. «Hoja limpia» conserva firmas y sellos. La versión publicada se comprueba en `version.json`; estos cambios de 3.36.0 están en preparación y no implican que el sitio ya los sirva.
+
+En Documentos, **Quitar páginas en blanco** muestra sugerencias sin seleccionar ninguna. Amplía para comprobar texto tenue, elige páginas y quita el lote; **Deshacer** las recupera. Los originales se conservan y las páginas con firmas o sellos añadidos se excluyen de las sugerencias.
+
 Mostrador para recibir, preparar, revisar e imprimir fotografías y documentos. Desarrollado por Paco Iglesias.
 
 [Guía técnica](audit/SISTEMA_REALSCAN.md) · [Avances](audit/AVANCES.md) · [Cambios](CHANGELOG.md)

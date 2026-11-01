@@ -1,3 +1,34 @@
+# Prioridades antes de la próxima entrega — RealScan Pro
+
+Actualización: 31 de octubre de 2026. Rama `codex/identificacion-simple-336`, revisión [#15](https://github.com/pacoiglesias/fotos/pull/15). Producción sigue en 3.35.1; la publicación está aplazada por indicación del usuario.
+
+Ya preparados para 3.36.0: panel de identificación más compacto, captura por cara, navegación corregida, revisión de impresión renovada, edición de escala/posición/cantidades y revisión reversible de páginas en blanco. Las pruebas locales y CI se registran por commit en el PR; una compilación de prueba no acredita un despliegue.
+
+## Propuestas adicionales priorizadas
+
+| Prioridad | Mejora propuesta | Resultado práctico |
+| --- | --- | --- |
+| Alta | Compactar la recepción en una barra y reducir los bloques anteriores a la hoja | Llegar a las capturas y opciones sin recorrer media pantalla. |
+| Alta | Un visor para encuadre, caras y hoja, con controles coherentes | Evitar saltos entre vistas y conservar siempre la referencia del tamaño impreso. |
+| Alta | Botón «Resolver» en cada aviso de revisión | Ir a la página, imagen o ajuste exacto que necesita atención. |
+| Alta | Ajustes habituales según el servicio y la impresora | Elegir menos opciones en INE, infantiles y documentos sin heredar datos del cliente. |
+| Alta | Retomar foco y desplazamiento al volver de cualquier diálogo | Continuar en la cara o página que se estaba preparando. |
+| Alta | Simplificar la entrega PDF en Descargar, Imprimir y Compartir | Mostrar NAS, QR o WhatsApp cuando corresponda al destino elegido. |
+| Alta | Atajos de teclado configurables para captura, cambio y entrega | Reducir movimientos de ratón, conservando la revisión antes de imprimir. |
+| Media | Ampliar favoritos con margen, acabado, posición y perfil | Preparar un pedido habitual en un toque, guardando solo configuración. |
+| Media | Ajustar posición y márgenes directamente sobre la hoja | Ver guías en milímetros sin alterar la medida física de las piezas. |
+| Media | Reunir vacías, duplicadas y orientación dudosa en una revisión de importación | Corregir el lote con miniaturas y deshacer, sin eliminar automáticamente. |
+| Media | Estado visible por archivo enviado a Paperless | Distinguir envío aceptado, procesamiento, archivado y error recuperable. |
+| Media | Vista compacta de la cola para móvil y pedidos del día | Consultar el siguiente trabajo sin desplazamiento horizontal. |
+| Media | Medir arranque y memoria en una jornada simulada larga | Priorizar carga diferida y liberación de recursos con evidencia de rendimiento. |
+| Alta, física | Completar medición HP, reinserción dúplex e iPhone real | Comprobar los resultados que una prueba automatizada de navegador no puede certificar. |
+
+La recomendación es cerrar primero recepción compacta, avisos resolubles y retorno al punto de trabajo. Las demás propuestas quedan para una fase posterior; no se presentan como funciones ya entregadas.
+
+## Archivo del plan anterior
+
+El contenido siguiente corresponde al plan iniciado el 14 de octubre de 2026. Sus estados y referencias son históricos; el estado de la entrega actual se consulta arriba y en `audit/AUDITORIA_336.md`.
+
 # 🗺️ Plan Maestro de Mejoras Integrales — RealScan Pro
 
 **Documento de Control y Seguimiento de Ingeniería**  

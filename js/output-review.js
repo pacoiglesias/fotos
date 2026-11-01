@@ -2,10 +2,13 @@
   "use strict";
   function render(target, mode) {
     if (!target) return;
+    const focusKey=target.contains(document.activeElement)?document.activeElement.dataset.sheetSetting:null,focusPreset=target.contains(document.activeElement)?document.activeElement.dataset.sheetPreset:null,focusProfile=target.querySelector('.output-review-profile select')===document.activeElement,detailsOpen=target.querySelector('.review-facts-details')?.open;
+    target.closest('#outputReviewModal')?.querySelectorAll('.output-review-warnings[data-rs-moved="1"]').forEach(node=>node.remove());
     target.replaceChildren();
     target.className = "output-review";
-    const layout = RealScanLayout.computeDocumentLayout(state), spec = getActiveSpec(), facts = document.createElement("div");
+    const layout = RealScanLayout.computeDocumentLayout(state), spec = getActiveSpec(), facts = document.createElement("div"),moreFacts=document.createElement('details'),moreFactsGrid=document.createElement('div');
     facts.className = "output-review-facts";
+    facts.classList.add('review-main-facts');moreFacts.className='review-facts-details';moreFacts.open=!!detailsOpen;moreFactsGrid.className='output-review-facts';const factsTitle=document.createElement('summary');factsTitle.textContent='Detalles del trabajo';moreFacts.append(factsTitle,moreFactsGrid);
     const scale = (Number(state.outputScalePercent) || 100) / 100;
     const pairs = [["Tama\xF1o de cada pieza", (spec.widthMm * scale).toFixed(2) + " \xD7 " + (spec.heightMm * scale).toFixed(2) + " mm"], ["Papel y hojas", layout.paper.shortName + " \xB7 " + layout.pages.length + " hoja(s)"], ["Contenido", layout.summary || spec.shortName], ["Destino", mode === "pdf" ? "Descarga de PDF a escala real" : "Impresora · Hoja a tamaño real"]];
     pairs.push(['Guías de corte',layout.includeCutMarks ? 'Visibles en la hoja' : 'Sin marcas'], ['Acabado',layout.isCleanSheet ? 'Hoja limpia' : 'Con anotaciones activas']);
@@ -27,10 +30,12 @@
       small.textContent = label;
       strong.textContent = value;
       box.append(small, strong);
-      facts.append(box);
+      if(['Tamaño de cada pieza','Papel y hojas'].includes(label))facts.append(box);else moreFactsGrid.append(box);
     }
     target.append(facts);
-    if(window.RealScanSheetSettings)RealScanSheetSettings.mount(target,mutate=>{if(!$('loginOverlay')?.classList.contains('hidden')||RealScanWorkflow.describe().busy)return;mutate();updateUI();RealScanStudio.update();RealScanServiceFlow.update();saveActiveDraft?.();render(target,mode);});
+    target.append(moreFacts);
+    if(scale!==1){const warning=document.createElement('p');warning.className='output-review-warning review-scale-notice';warning.textContent='Contenido al '+Math.round(scale*100)+' %. Para una identificación a tamaño real, restablece el 100 %.';target.append(warning);}
+    if(window.RealScanSheetSettings)RealScanSheetSettings.mount(target,mutate=>{if(!$('loginOverlay')?.classList.contains('hidden')||RealScanWorkflow.describe().busy)return;mutate();updateUI();RealScanStudio.update();RealScanServiceFlow.update();saveActiveDraft?.();render(target,mode);target.dispatchEvent(new CustomEvent('realscan:sheet-settings-updated',{bubbles:true}));});
     if(!window.RealScanSheetSettings&&window.RealScanWorkflow&&!RealScanDocuments.status().active){
       const controls=document.createElement('fieldset');controls.className='review-edit-options';const legend=document.createElement('legend');legend.textContent='Cambiar sin volver a empezar';controls.append(legend);
       function choose(label,values,current,mutate){const row=document.createElement('label'),select=document.createElement('select');row.append(document.createTextNode(label));select.setAttribute('aria-label',label);for(const [value,text]of values)select.append(new Option(text,value));select.value=String(current);select.onchange=()=>{if(!$('loginOverlay')?.classList.contains('hidden')||RealScanWorkflow.describe().busy)return;mutate(select.value);updateUI();RealScanStudio.update();RealScanServiceFlow.update();saveActiveDraft?.();render(target,mode);};row.append(select);controls.append(row);}
@@ -55,7 +60,7 @@
         const profileRow = document.createElement('label');
         profileRow.className = 'output-review-profile';
         const profileText = document.createElement('span');
-        profileText.textContent = '🖨️ Perfil:';
+        profileText.textContent = 'Perfil de impresión';
         const profileSelect = document.createElement('select');
         profileSelect.setAttribute('aria-label', 'Perfil de calibración de impresora');
         const noneOpt = document.createElement('option');
@@ -75,6 +80,7 @@
         });
         profileRow.append(profileText, profileSelect);
         target.append(profileRow);
+        const status=document.createElement('p');status.className='review-printer-status';const profile=window.RealScanPrinterProfiles.getActive();status.textContent=profile?(window.RealScanPrinterProfiles.isVerified?.(profile)?'Medición registrada para '+profile.name:'Falta comprobar la regla de 50 mm en '+profile.name):'Sin perfil de corrección: comprueba las medidas de la primera impresión.';target.append(status);
       }
     }
     const sheetSlots = new Set(layout.pages.flatMap(page => page.placements.map(placement => placement.slot)));
@@ -112,13 +118,14 @@
       const lines = [];
       try {
         for (const [side, label] of [["front", "Frente"], ["back", "Reverso"]]) {
+          if(!sheetSlots.has(side))continue;
           const src = state.images[side]?.processedDataUrl;
           if (!src || !window.RealScanQuality?.analyze) continue;
           const check = await window.RealScanQuality.analyze(src);
           if (check?.blurry) lines.push(label + ": se ve borrosa. Repite la foto con más luz y sin mover el teléfono.");
           else if (check?.washed) lines.push(label + ": se ve lavada (demasiada luz). Baja la luz o acerca la tarjeta.");
         }
-        if (state.images.front?.originalSrc && state.images.back?.originalSrc && window.RealScanOcrAssist?.verifySameDocument) {
+        if (sheetSlots.has('front')&&sheetSlots.has('back')&&state.images.front?.originalSrc && state.images.back?.originalSrc && window.RealScanOcrAssist?.verifySameDocument) {
           const same = await window.RealScanOcrAssist.verifySameDocument(state.images.front.originalSrc, state.images.back.originalSrc);
           if (same?.match === false) lines.push("Las caras parecen de documentos distintos. Revisa que frente y reverso sean del mismo documento antes de imprimir.");
         }
@@ -136,6 +143,9 @@
     note.textContent = "Comprueba recortes y copias. En la impresora selecciona \xABTama\xF1o real / 100 %\xBB, sin ajustar a p\xE1gina. " + ((Number(state.outputScalePercent) || 100) !== 100 ? "Atenci\xF3n: has aplicado una escala de " + state.outputScalePercent + " % dentro del proyecto." : "");
     target.append(note);
     const checklist=document.createElement('ul');checklist.className='operator-checklist';checklist.setAttribute('aria-label','Revisión del operador');for(const value of ['Todas las caras necesarias y en el orden correcto','Orientación correcta y bordes completos','Texto o rostro nítido al ampliar la imagen']){const li=document.createElement('li');li.textContent=value;checklist.append(li);}target.append(checklist);
+    if(focusKey)target.querySelector('[data-sheet-setting="'+focusKey+'"]')?.focus({preventScroll:true});
+    else if(focusPreset)(target.querySelector('[data-sheet-preset="'+focusPreset+'"]')||target.querySelector('[data-sheet-setting=scale]'))?.focus({preventScroll:true});
+    else if(focusProfile)target.querySelector('.output-review-profile select')?.focus({preventScroll:true});
   }
   let renderRevision = 0;
   window.showPrintReview = (callback, options) => {

@@ -48,6 +48,7 @@ jobs:
             .audit/counter335/
             .audit/review-settings/
             .audit/identity-preparation/
+            .audit/blank-pages/
             .audit/id-pdf-intake/
             .audit/mobile-local-evidence/
             .audit/mobile-local-webkit-evidence/

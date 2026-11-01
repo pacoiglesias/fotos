@@ -30,6 +30,7 @@ try {
     "counter335-regression",
     "review-settings-regression",
     "identity-preparation-regression",
+    "blank-pages-regression",
     "diagnostics-regression",
     "auto-straighten-test",
     "quality-check-test",

@@ -1,5 +1,13 @@
 ## 3.36.0 — Identificación con controles y capturas juntos
 
+- Revisión antes de imprimir renovada: ajustes y resultado en columnas, vista primero en móvil, detalles secundarios plegados y acciones de cliente/compartir agrupadas.
+- Accesos Hoja limpia / Con guías, posición, escala del contenido con aviso y restablecimiento al 100 %, y cantidades por juego o persona. La ampliación es solo visual y conserva el archivo preparado.
+- La revisión mantiene el foco al editar y retira avisos de revisiones anteriores. Los avisos de calidad y coincidencia solo examinan las caras que se imprimirán.
+- El margen automático permanece deshabilitado para edición numérica tras preparar el PDF; las acciones de descarga no se habilitan para una revisión incompleta.
+- Se retiran 18 capturas/resultados generados antiguos de Git; los scripts se conservan y escriben en `.audit/`.
+- Publicación pospuesta por indicación del usuario: primero perfeccionar y comprobar la entrega. La compilación local usada por pruebas no acredita un despliegue.
+- Documentos: revisión de posibles páginas en blanco con miniaturas, selección explícita, eliminación por lote y recuperación con Deshacer. Conserva originales y excluye páginas con anotaciones añadidas; no afecta al relleno generado para dúplex.
+
 - Panel de preparación estable: Solo frente, Frente y reverso o Una por hoja, papel y juegos juntos; controles a la izquierda y hoja a la derecha en escritorio. Preparación antes de la hoja en móvil.
 - Cámara y archivo propios de cada cara, con ampliación y recorte directos. Cambiar distribución conserva las capturas y usa el mismo motor de impresión.
 - Se ocultan los controles de acabado/dúplex de documentos al preparar identificaciones. La guía dúplex se encuentra en Impresora y escala real; se conservan sus validaciones físicas.
