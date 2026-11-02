@@ -1,6 +1,6 @@
 # RealScan Pro · 3.37.0
 
-Entrega en validación; estado comprobado en [el registro de entrega](audit/ENTREGA_3370.md). Selección de impresora separada de medición, identificaciones ampliadas con original/resultado, margen y posición visuales, destino de la acción principal y centro Paperless.
+Publicada y verificada en ambos Firebase y en tu dominio; estado comprobado en [el registro de entrega](audit/ENTREGA_3370.md). Selección de impresora separada de medición, identificaciones ampliadas con original/resultado, margen y posición visuales, destino de la acción principal y centro Paperless.
 
 Cargar → Ajustar → Entregar conserva las capturas y utiliza los motores existentes en milímetros. El margen y las posiciones seguras actúan sobre la salida real; la ampliación solo cambia la vista. Las pruebas físicas permanecen pendientes.
 

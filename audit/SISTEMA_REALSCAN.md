@@ -1,4 +1,4 @@
-## Revisión 3.37.0
+## Revisión y publicación comprobada 3.37.0
 
 [Entrega y alcance](ENTREGA_3370.md). Se conservan los motores en milímetros y las validaciones de sesión, Paperless y datos sensibles. Seleccionar impresora no certifica su resultado físico.
 

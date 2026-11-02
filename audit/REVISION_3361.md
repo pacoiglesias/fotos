@@ -31,3 +31,6 @@ Estado: publicada y verificada en ambos Firebase y en el dominio habitual. Ver [
 6. Medir pasos y tiempo de los tres pedidos habituales y probarlos con un operador nuevo para localizar lo que todavía exige explicación.
 
 Estas propuestas no se presentan como implementadas ni justifican declarar el sistema sin fallos.
+
+
+Actualización 3.37.0: las seis propuestas tienen implementación de software y regresiones. El estudio con un operador nuevo sigue pendiente, junto a las pruebas físicas; no se presenta como realizado. Ver [entrega comprobada](ENTREGA_3370.md).

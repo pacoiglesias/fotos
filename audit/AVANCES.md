@@ -1,6 +1,6 @@
-## 3.37.0 — En validación
+## 3.37.0 — Publicada y verificada
 
-Se aplican las seis propuestas de la revisión 3.36.1 y se separa selección de impresora de medición. Estado y pruebas en [la entrega](ENTREGA_3370.md). No se declara publicada hasta comprobar ambos sitios y el dominio.
+Se aplican las seis propuestas de la revisión 3.36.1 y se separa selección de impresora de medición. Publicador completo: 450 marcas PASS, 0 FAIL. Cinco direcciones comprobadas, 330 archivos en total, CSP y metadatos coincidentes. Fuente f13b46be3b3f18284f67a9e8e483ae45c937aeca, contenido realscan-781411c417b9da3e. [Entrega y pendientes humanos](ENTREGA_3370.md).
 
 ## 3.36.1 — Publicada y verificada
 

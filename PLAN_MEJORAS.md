@@ -1,4 +1,4 @@
-## Continuación 3.37.0
+## Entrega comprobada 3.37.0
 
 Las seis propuestas de 3.36.1 tienen implementación de software: recorrido Cargar/Ajustar/Entregar, detalle original/resultado, posiciones y márgenes visuales, diseño común, centro Paperless y mediciones agregadas de sesión. Las posiciones se ajustan a tres anclajes seguros; no hay desplazamiento libre arbitrario. La evaluación con operador nuevo y las pruebas físicas son validaciones humanas pendientes, separadas de la regresión automatizada. Ver [entrega](audit/ENTREGA_3370.md).
 
