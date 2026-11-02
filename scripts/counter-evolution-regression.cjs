@@ -9,7 +9,7 @@ const pass=label=>{checks.push(label);console.log('PASS '+label);};
   page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());await context.route('**/*',route=>{const u=new URL(route.request().url());return u.origin===origin||/^(data|blob):$/.test(u.protocol)?route.continue():route.abort();});
   await page.addInitScript(()=>{if(window!==top)return;localStorage.setItem('realscan_welcome_seen_v1','1');localStorage.setItem('realscan_auth_v2',JSON.stringify({users:[{username:'admin',passwordHash:'beeaac74a3a1833e8547bf1510c9bbdfaa41d019ad7da238b606d91155014abe',role:'admin',mustChangePassword:false}],currentUsername:'admin',sessionToken:null,sessionExpiry:0}));});
   async function login(){await page.locator('#loginUserInput').fill('admin');await page.locator('#loginPassInput').fill('PruebaAcceso2026');await page.locator('#btnLoginSubmit').click();await page.locator('#loginOverlay').waitFor({state:'hidden'});await page.waitForFunction(()=>document.body.classList.contains('rs-evolved'));}
-  await page.goto(origin);await login();
+  await page.goto(origin);await login();assert(await page.locator('#workbenchBar').evaluate(e=>getComputedStyle(e).backgroundImage.includes('linear-gradient')),'Legacy flat background must not override the new design');
   assert(!(await page.locator('#deskLightPrinter').getAttribute('class')).includes('bad'));
   await page.locator('#deskLightPrinter').click();await page.locator('#calHp1025').click();assert.equal(await page.evaluate(()=>RealScanPrinterProfiles.getActive()),null);
   await page.locator('#calUseSelected').click();await page.waitForFunction(()=>document.getElementById('deskLightPrinter').dataset.status==='ok');

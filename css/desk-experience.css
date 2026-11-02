@@ -94,10 +94,10 @@
 @media print {#deskViewerToolbar,#deskImageViewport,#deskNasPanel,#deskShortcuts {display:none!important}}
 /* 3.37: one visual language across intake, adjustments and secondary dialogs. */
 @media screen {
- body.rs-evolved {--work-accent:#275be8;--work-soft:#edf3ff;--work-line:#dbe4f0;--work-muted:#52627b;font-family:Inter,"Segoe UI",Arial,sans-serif}
+ body.rs-next.rs-counter330.rs-evolved {--work-accent:#275be8;--work-soft:#edf3ff;--work-line:#dbe4f0;--work-muted:#52627b;font-family:Inter,"Segoe UI",Arial,sans-serif}
  body.rs-evolved :is(button,input,select,textarea,legend,summary,h1,h2,h3) {font-family:inherit}
  html.dark body.rs-evolved {--work-accent:#88acff;--work-soft:#1c2c49;--work-line:#35445b;--work-muted:#b0bfd4}
- body.rs-next.rs-counter330.rs-evolved #workbenchBar {border-radius:22px;background:linear-gradient(115deg,#102a4c,#1d4477);padding:22px 24px;border:1px solid #2b537d;box-shadow:0 12px 30px #132f521c}
+ body.rs-next.rs-counter330.rs-evolved #workbenchBar {border-radius:22px;background:linear-gradient(115deg,#102a4c,#1d4477)!important;padding:22px 24px;border:1px solid #2b537d;box-shadow:0 12px 30px #132f521c}
  body.rs-next.rs-counter330.rs-evolved #workbenchBar strong {font-size:clamp(22px,2.4vw,30px);letter-spacing:-.035em;color:#fff}
  body.rs-next.rs-counter330.rs-evolved #counterIntro {font-size:14px;color:#c9daef;line-height:1.6}
  body.rs-next.rs-counter330.rs-evolved #counterIntake {padding:20px;border-radius:20px;gap:22px;background:var(--work-surface);box-shadow:0 8px 28px #17365e08}
