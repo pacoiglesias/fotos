@@ -2,6 +2,7 @@
 
 - Selección de impresora separada de la medición física; opción explícita para usarla y medir después, sin inventar calibración ni sustituir correcciones existentes.
 - Revisión con imagen ampliada, original/resultado y hoja de referencia; posición y margen sobre mapa de la primera hoja, con teclado y controles numéricos.
+- Los manejadores del visor no retienen la entrada preparada anterior; regresión de recolección real con WeakRef en Chromium y limpieza del visor en ambos motores.
 - Entrada central de Paperless con acciones de carga, archivo y configuración, y explicación del destino de las copias.
 - Jerarquía visual común en recepción, pasos, entrega y diálogos; métricas agregadas de preparación solo en memoria de la sesión.
 - Regresión integrada en Chromium y WebKit; conserva las comprobaciones geométricas, de privacidad y de actualización.

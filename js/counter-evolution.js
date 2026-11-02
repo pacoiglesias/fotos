@@ -7,16 +7,16 @@
  let detailSide='front',original=false,activeJob=null,totals={},metricsDialog=null;
  function mountDetail(entry){
   if(!unlocked())return;const column=document.querySelector('.review-preview-column');if(!column)return;
-  let panel=$('reviewDocumentDetail');if(!panel){panel=document.createElement('section');panel.id='reviewDocumentDetail';panel.hidden=true;panel.setAttribute('aria-label','Detalle del documento');panel.innerHTML='<div class="review-detail-tools"><div id="reviewDetailSides" role="group" aria-label="Cara ampliada"></div><button type="button" id="reviewDetailOriginal" aria-pressed="false">Ver original</button></div><figure><img id="reviewDetailImage" alt=""><figcaption id="reviewDetailCaption"></figcaption></figure>';$('printSheetPreview').before(panel);$('reviewDetailOriginal').onclick=()=>{if(!available())return;original=!original;drawDetail(entry);};}
+  let panel=$('reviewDocumentDetail');if(!panel){panel=document.createElement('section');panel.id='reviewDocumentDetail';panel.hidden=true;panel.setAttribute('aria-label','Detalle del documento');panel.innerHTML='<div class="review-detail-tools"><div id="reviewDetailSides" role="group" aria-label="Cara ampliada"></div><button type="button" id="reviewDetailOriginal" aria-pressed="false">Ver original</button></div><figure><img id="reviewDetailImage" alt=""><figcaption id="reviewDetailCaption"></figcaption></figure>';$('printSheetPreview').before(panel);$('reviewDetailOriginal').onclick=()=>{if(!available())return;original=!original;drawDetail();};}
   const sides=[...new Set(entry.layout.pages.flatMap(p=>p.placements.map(i=>i.slot)))].filter(side=>state.images[side]?.processedDataUrl);
   if(!sides.includes(detailSide))detailSide=sides[0]||'front';
-  $('reviewDetailSides').replaceChildren();for(const side of sides){const b=button(({front:'Frente / foto',back:'Reverso',page3:'Página 3',page4:'Página 4'})[side]||side,()=>{detailSide=side;drawDetail(entry);});b.dataset.detailSide=side;$('reviewDetailSides').append(b);}
-  $('reviewDetailOriginal').onclick=()=>{if(!available())return;original=!original;drawDetail(entry);};
-  for(const b of document.querySelectorAll('[data-review-zoom]'))b.onclick=()=>{if(!available())return;const detail=b.dataset.reviewZoom==='detail';panel.hidden=!detail;$('printSheetPreview').dataset.zoom=detail?'reference':'fit';for(const other of document.querySelectorAll('[data-review-zoom]'))other.setAttribute('aria-pressed',String(other===b));drawDetail(entry);};
+  $('reviewDetailSides').replaceChildren();for(const side of sides){const b=button(({front:'Frente / foto',back:'Reverso',page3:'Página 3',page4:'Página 4'})[side]||side,()=>{detailSide=side;drawDetail();});b.dataset.detailSide=side;$('reviewDetailSides').append(b);}
+  $('reviewDetailOriginal').onclick=()=>{if(!available())return;original=!original;drawDetail();};
+  for(const b of document.querySelectorAll('[data-review-zoom]'))b.onclick=()=>{if(!available())return;const detail=b.dataset.reviewZoom==='detail';panel.hidden=!detail;$('printSheetPreview').dataset.zoom=detail?'reference':'fit';for(const other of document.querySelectorAll('[data-review-zoom]'))other.setAttribute('aria-pressed',String(other===b));drawDetail();};
   panel.hidden=document.querySelector('[data-review-zoom=detail]')?.getAttribute('aria-pressed')!=='true';
-  if(!panel.hidden)$('printSheetPreview').dataset.zoom='reference';drawDetail(entry);
+  if(!panel.hidden)$('printSheetPreview').dataset.zoom='reference';drawDetail();
  }
- function drawDetail(entry){
+ function drawDetail(){
   if(!unlocked())return;const image=$('reviewDetailImage');if(!image)return;const slot=state.images[detailSide],source=original?slot?.originalSrc:slot?.processedDataUrl;
   if(source){if(image.getAttribute('src')!==source)image.src=source;}else image.removeAttribute('src');
   image.alt=(detailSide==='back'?'Reverso':'Imagen')+' · '+(original?'original':'resultado preparado');
