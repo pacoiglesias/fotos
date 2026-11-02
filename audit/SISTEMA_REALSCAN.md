@@ -1,3 +1,7 @@
+## Revisión 3.37.0
+
+[Entrega y alcance](ENTREGA_3370.md). Se conservan los motores en milímetros y las validaciones de sesión, Paperless y datos sensibles. Seleccionar impresora no certifica su resultado físico.
+
 # Referencia técnica de RealScan Pro · 3.36.1
 
 Esta guía describe el código de la nueva entrega. El estado publicado se comprueba en `version.json`; no se deduce del número de versión escrito en un documento.

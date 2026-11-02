@@ -1,3 +1,7 @@
+## 3.37.0 — En validación
+
+Se aplican las seis propuestas de la revisión 3.36.1 y se separa selección de impresora de medición. Estado y pruebas en [la entrega](ENTREGA_3370.md). No se declara publicada hasta comprobar ambos sitios y el dominio.
+
 ## 3.36.1 — Publicada y verificada
 
 Continuación explícita solo con frente desde preparación y revisión; perfil sincronizado también con el panel antiguo; reintento corregido y composición visual más compacta. PR #16 integrado y CI aprobado. Tras renovar el acceso a Firebase, el publicador completo finalizó con código 0: 442 marcas PASS, 0 FAIL y ambos despliegues completados. Cinco direcciones comprobadas: contenido `realscan-ed88608a60ea8802`, fuente `ee187d4450d3abdece84fdedee8a896922d6390b`. Ver [entrega](ENTREGA_3361.md) y [auditoría](REVISION_3361.md). Las pruebas físicas y las seis propuestas siguientes permanecen pendientes.

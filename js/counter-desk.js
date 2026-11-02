@@ -77,12 +77,14 @@ async function queueCurrent(){if(!unlocked())return;const guard=state._jobRevisi
    verificar, rojo si no hay perfil. Paperless: verde con token, rojo sin él.
    NAS: comprobación best-effort con límite de 8 s (nunca bloquea). */
 let semaphoreSerial=0;
-function setLight(id,state,text){const el=$(id);if(!el)return;el.className='desk-light '+state;el.textContent='● '+text;}
+function setLight(id,state,text){const el=$(id);if(!el)return;el.className='desk-light '+state;el.dataset.status=state;let dot=el.querySelector('.rs-dot'),label=el.querySelector('.desk-light-label');if(!dot||!label){dot=document.createElement('span');dot.className='rs-dot';dot.setAttribute('aria-hidden','true');label=document.createElement('span');label.className='desk-light-label';el.replaceChildren(dot,label);}label.textContent=text;}
 async function renderSemaphore(){
  const turn=++semaphoreSerial;
  const profile=root.RealScanPrinterProfiles?.getActive();
  const printerVerified=!!profile&&!!root.RealScanPrinterProfiles?.isVerified?.(profile);
- setLight('deskLightPrinter',printerVerified?'ok':'warn',profile?profile.name+' · '+(printerVerified?'Medición registrada':'Medición pendiente'):'Impresora · Configurar');
+ setLight('deskLightPrinter',profile?'ok':'checking',profile?profile.name+' · Perfil seleccionado':'Impresora · Elegir perfil');
+ let measurement=$('deskPrinterMeasurement');if(!measurement&&$('deskLightPrinter')){measurement=document.createElement('p');measurement.id='deskPrinterMeasurement';measurement.setAttribute('role','status');$('deskSemaphore').append(measurement);}
+ if(measurement){measurement.dataset.verified=String(printerVerified);measurement.textContent=profile?(printerVerified?'Medición física registrada por el operador.':'Medición física pendiente · puedes continuar al 100 %.'): 'Puedes imprimir al 100 % sin corrección. Elige la impresora en el diálogo del navegador.';}
  const connected=!!root.RealScanPaperless?.hasToken();
  setLight('deskLightPaperless',connected?'checking':'warn',connected?'Paperless · Comprobando':'Paperless · Conectar');
  setLight('deskLightNas','checking','NAS: comprobando…');

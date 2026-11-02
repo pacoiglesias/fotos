@@ -92,3 +92,43 @@
 }
 @media (prefers-reduced-motion:reduce) {body.rs-desk336 * {scroll-behavior:auto!important;animation-duration:0s!important;transition-duration:0s!important}}
 @media print {#deskViewerToolbar,#deskImageViewport,#deskNasPanel,#deskShortcuts {display:none!important}}
+/* 3.37: one visual language across intake, adjustments and secondary dialogs. */
+@media screen {
+ body.rs-evolved {--work-accent:#275be8;--work-soft:#edf3ff;--work-line:#dbe4f0;--work-muted:#52627b;font-family:Inter,"Segoe UI",Arial,sans-serif}
+ body.rs-evolved :is(button,input,select,textarea,legend,summary,h1,h2,h3) {font-family:inherit}
+ html.dark body.rs-evolved {--work-accent:#88acff;--work-soft:#1c2c49;--work-line:#35445b;--work-muted:#b0bfd4}
+ body.rs-next.rs-counter330.rs-evolved #workbenchBar {border-radius:22px;background:linear-gradient(115deg,#102a4c,#1d4477);padding:22px 24px;border:1px solid #2b537d;box-shadow:0 12px 30px #132f521c}
+ body.rs-next.rs-counter330.rs-evolved #workbenchBar strong {font-size:clamp(22px,2.4vw,30px);letter-spacing:-.035em;color:#fff}
+ body.rs-next.rs-counter330.rs-evolved #counterIntro {font-size:14px;color:#c9daef;line-height:1.6}
+ body.rs-next.rs-counter330.rs-evolved #counterIntake {padding:20px;border-radius:20px;gap:22px;background:var(--work-surface);box-shadow:0 8px 28px #17365e08}
+ body.rs-next.rs-counter330.rs-evolved #counterIntake .operator-task {min-height:64px!important;border-radius:14px!important;border:1px solid var(--work-line)!important;padding:12px!important}
+ body.rs-next.rs-counter330.rs-evolved #counterIntake .operator-task[aria-pressed=true] {background:var(--work-soft)!important;border-color:var(--work-accent)!important;color:var(--work-accent)!important;box-shadow:inset 0 0 0 1px var(--work-accent)}
+ body.rs-next.rs-counter330.rs-evolved #guidedStepsBar {gap:8px;margin-bottom:20px}
+ body.rs-next.rs-counter330.rs-evolved #guidedStepsBar button {border:1px solid var(--work-line)!important;border-radius:12px!important;min-height:46px!important;background:var(--work-surface)!important;font-size:14px!important}
+ body.rs-next.rs-counter330.rs-evolved #guidedStepsBar button[aria-current=step] {background:var(--work-soft)!important;border-color:var(--work-accent)!important;color:var(--work-accent)!important}
+ body.rs-evolved #deskSemaphore #deskPrinterMeasurement {grid-column:1/-1;margin:0;font-size:12px;line-height:1.6;color:var(--work-muted);padding:4px 2px}
+ body.rs-evolved #deskSemaphore .desk-light-label {min-width:0;overflow-wrap:anywhere}
+ body.rs-evolved #workspaceNas {display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+ body.rs-evolved #workspaceNasStatus {display:block!important;flex-basis:100%;font-size:12px;color:var(--work-muted)}
+ body.rs-evolved #workspaceDelivery {border:1px solid var(--work-line);border-radius:20px;background:var(--work-surface);padding:20px;box-shadow:0 6px 24px #152c4a08}
+ body.rs-evolved #workspaceDelivery h3 {font-size:19px;letter-spacing:-.02em;margin:0 0 6px}
+ body.rs-evolved #workspaceDelivery>div>button {min-height:50px!important;border-radius:12px!important;white-space:normal;overflow-wrap:normal;word-break:normal}
+ body.rs-evolved .delivery-location-hint {margin-top:14px;padding-top:12px;border-top:1px solid var(--work-line);font-size:12px;color:var(--work-muted);line-height:1.7}
+ .counter-destination {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;margin-block:12px;color:var(--work-muted)}.counter-destination select {min-height:44px;max-width:100%;border:1px solid var(--work-line);border-radius:10px;padding:8px 12px;background:var(--work-surface);color:var(--work-ink)}
+ body.rs-evolved :is(.panel-disclosure,.desk-dialog,.pdf-delivery-dialog,.scan-dialog,.paperless-browser,.paperless-settings) {font-family:inherit;border-color:var(--work-line);border-radius:18px}
+ body.rs-evolved :is(.desk-dialog,.pdf-delivery-dialog,.scan-dialog,.paperless-browser) :is(button,input,select) {border-radius:10px;line-height:1.45}
+ body.rs-evolved .desk-dialog h2 {font-size:23px;font-weight:750;letter-spacing:-.025em;margin:0 0 14px}
+ body.rs-evolved .desk-dialog p {line-height:1.7}
+ body.rs-evolved .desk-dialog button {min-height:44px}
+ body.rs-evolved .desk-dialog::backdrop {background:#0c203ac4;backdrop-filter:blur(4px)}
+ body.rs-evolved :focus-visible {outline:3px solid var(--work-accent);outline-offset:3px}
+ #nasHub {width:min(640px,calc(100vw - 28px));max-height:90dvh;overflow:auto}
+ #nasHub header small {font-size:11px;letter-spacing:.12em;color:var(--work-muted)}
+ .nas-hub-actions {display:grid;gap:10px;margin:18px 0}
+ .nas-hub-actions button:first-child {background:var(--work-soft);color:var(--work-accent);border-color:var(--work-accent)}
+ #nasHub dl {background:var(--work-bg,#f4f6fa);border:1px solid var(--work-line);border-radius:14px;padding:16px}
+ #nasHub dt {font-weight:750;margin-top:12px;font-size:14px}#nasHub dt:first-child {margin-top:0}#nasHub dd {margin:4px 0 0;font-size:13px;line-height:1.6;color:var(--work-muted)}
+ body.rs-evolved #workspaceNext {display:none!important}
+ #counterSessionMetrics {max-width:600px}
+ @media(max-width:600px){body.rs-next.rs-counter330.rs-evolved #workbenchBar{padding:16px}body.rs-next.rs-counter330.rs-evolved #counterIntake{padding:14px;gap:16px}body.rs-next.rs-counter330.rs-evolved #guidedStepsBar button{font-size:12px!important}body.rs-evolved #workspaceDelivery{padding:15px}}
+}
