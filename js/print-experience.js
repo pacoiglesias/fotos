@@ -12,13 +12,13 @@
       const toolbar=document.createElement('div');toolbar.className='review-preview-toolbar';toolbar.innerHTML='<strong>Así saldrá tu trabajo</strong><div role="group" aria-label="Ampliación de la vista"><button type="button" data-review-zoom="fit" aria-pressed="true">Hoja completa</button><button type="button" data-review-zoom="detail" aria-pressed="false">Ampliar detalle</button></div>';
       for(const b of toolbar.querySelectorAll('[data-review-zoom]'))b.onclick=()=>{$('printSheetPreview').dataset.zoom=b.dataset.reviewZoom;for(const item of toolbar.querySelectorAll('button'))item.setAttribute('aria-pressed',String(item===b));};
       const hint=document.createElement('p');hint.className='review-preview-hint';hint.textContent='La ampliación cambia solo esta vista. Las medidas del archivo se conservan.';
-      for(const b of toolbar.querySelectorAll('[data-review-zoom]'))b.addEventListener('click',()=>{hint.textContent=b.dataset.reviewZoom==='detail'?'Desplázate por la hoja ampliada para revisar el detalle. El archivo no cambia.':'La ampliación cambia solo esta vista. Las medidas del archivo se conservan.';});
+      for(const b of toolbar.querySelectorAll('[data-review-zoom]'))b.addEventListener('click',()=>{hint.textContent=b.dataset.reviewZoom==='detail'?'Revisa la imagen ampliada y compárala con el original. La hoja inferior conserva la referencia de distribución.':'La ampliación cambia solo esta vista. Las medidas del archivo se conservan.';});
       view.append(toolbar,$('printSheetPreview'),hint);workspace.append(view,controls);
       const formats=document.createElement('details');formats.id='printReviewFormats';const formatTitle=document.createElement('summary');formatTitle.textContent='Formato pasaporte · hoja de 4 o 6';formats.append(formatTitle,$('reviewPassportRow'));controls.append(formats);
       const other=$('btnReviewClient')?.parentElement;if(other){const more=document.createElement('details');more.id='printReviewMoreActions';const title=document.createElement('summary');title.textContent='Más acciones · cliente, compartir y dúplex';other.before(more);more.append(title,other);}
     }
     $('printReviewFormats').hidden=state.activeCategory!=='photos';
-    $('printSheetPreview').dataset.zoom='fit';for(const b of document.querySelectorAll('[data-review-zoom]'))b.setAttribute('aria-pressed',String(b.dataset.reviewZoom==='fit'));
+    const initialZoom=state.activeCategory!=='photos'&&state.format==='card'?'detail':'fit';$('printSheetPreview').dataset.zoom=initialZoom;for(const b of document.querySelectorAll('[data-review-zoom]'))b.setAttribute('aria-pressed',String(b.dataset.reviewZoom===initialZoom));
   }
   window.showPrintReview=async function(callback,options){
     const opts=options||{}, session=++sequence;
@@ -60,6 +60,7 @@
         const entry=await RealScanPrint.prepare();
         if(sequence!==session||revision!==refreshId)return;
         RealScanPrint.preview($('printSheetPreview'),entry);
+        window.RealScanCounterEvolution?.mountDetail(entry);
         const update=()=>{button.disabled=requireConsent&&!$('printMissingConsent').checked;};
         $('printMissingConsent').onchange=update;update();
         $('printReviewPdf').disabled=missing;

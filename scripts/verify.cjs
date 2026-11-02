@@ -31,6 +31,7 @@ try {
     "id-pdf-intake-regression",
     "counter335-regression",
     "review-settings-regression",
+    "counter-evolution-regression",
     "identity-preparation-regression",
     "blank-pages-regression",
     "stage-completion-regression",

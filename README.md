@@ -1,10 +1,8 @@
-# RealScan Pro · 3.36.1
+# RealScan Pro · 3.37.0
 
-La 3.36.1 está publicada y verificada en ambos Firebase y en el dominio habitual. Añade «Continuar solo con frente» desde preparación y revisión, sincroniza el perfil de impresora con todas las vistas y corrige Reintentar. [Entrega y pendientes físicos](audit/ENTREGA_3361.md).
+Entrega en validación; estado comprobado en [el registro de entrega](audit/ENTREGA_3370.md). Selección de impresora separada de medición, identificaciones ampliadas con original/resultado, margen y posición visuales, destino de la acción principal y centro Paperless.
 
-Identificaciones: caras, papel y juegos juntos, con Cámara y Archivo propios de cada cara. En escritorio se prepara a la izquierda y se revisa la hoja a la derecha; en móvil se eligen las opciones antes de la vista previa. Solo frente permite entregar sin exigir reverso y cambiar de modalidad conserva las capturas.
-
-La revisión de impresión reúne margen, encabezado, acabado, posición, escala y cantidad junto a la hoja preparada. «Hoja completa» y «Ampliar detalle» cambian solo la vista. «Hoja limpia» conserva firmas y sellos. La versión 3.36.1 está publicada y verificada en ambos Firebase y en el dominio habitual. El [registro de entrega](audit/ENTREGA_3361.md) contiene fuente, contenido, pruebas y pendientes físicos; la versión servida también se puede comprobar en `version.json`.
+Cargar → Ajustar → Entregar conserva las capturas y utiliza los motores existentes en milímetros. El margen y las posiciones seguras actúan sobre la salida real; la ampliación solo cambia la vista. Las pruebas físicas permanecen pendientes.
 
 En Documentos, **Quitar páginas en blanco** muestra sugerencias sin seleccionar ninguna. Amplía para comprobar texto tenue, elige páginas y quita el lote; **Deshacer** las recupera. Los originales se conservan y las páginas con firmas o sellos añadidos se excluyen de las sugerencias.
 

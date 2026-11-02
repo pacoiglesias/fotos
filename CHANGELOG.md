@@ -1,3 +1,11 @@
+## 3.37.0 — Mostrador integrado
+
+- Selección de impresora separada de la medición física; opción explícita para usarla y medir después, sin inventar calibración ni sustituir correcciones existentes.
+- Revisión con imagen ampliada, original/resultado y hoja de referencia; posición y margen sobre mapa de la primera hoja, con teclado y controles numéricos.
+- Entrada central de Paperless con acciones de carga, archivo y configuración, y explicación del destino de las copias.
+- Jerarquía visual común en recepción, pasos, entrega y diálogos; métricas agregadas de preparación solo en memoria de la sesión.
+- Regresión integrada en Chromium y WebKit; conserva las comprobaciones geométricas, de privacidad y de actualización.
+
 ## 3.36.1 — Continuar con una cara y aclarar la impresora
 
 - Acción explícita «Continuar solo con frente» junto a las capturas y en la revisión: conserva papel, juegos y originales; cambia la composición a una cara ID-1.
