@@ -125,6 +125,9 @@ const pass = name => { checks.push(name); console.log('PASS ' + name); };
   await page.locator('#btnOpenDeliveryModal').click();
   await page.locator('.pdf-delivery-dialog').waitFor({state:'visible'});
   await page.waitForFunction(() => !document.getElementById('pdfDeliveryDownload').disabled);
+  // A prepared artifact is now viewed without rebuilding. Change an actual
+  // file option so the injected generator failure exercises a fresh build.
+  await page.locator('#pdfDeliveryQuality').selectOption('light');
   const beforeFailedPdf = await page.evaluate(() => {
     window.__pdfGenerator = generatePdfDoc;
     window.generatePdfDoc = () => null;
