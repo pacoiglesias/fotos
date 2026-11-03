@@ -25,10 +25,11 @@
   if(!blob?.size)throw Error('No hay archivo preparado.');if(blob.size>30*1024*1024)throw Error('Paperless admite archivos de hasta 30 MB desde RealScan.');if(!unlocked())throw Error('Desbloquea el puesto.');
   const metadata=cleanMetadata(options.metadata);
   const guard=epoch,isCurrent=options.isCurrent||(()=>true),fingerprint=await hash(blob),key=await hash(String(options.operationId||fingerprint)+'|'+getBase());check(guard,isCurrent);
-  const existing=running.get(key);if(existing){if(existing.fingerprint!==fingerprint)throw Error('El archivo cambió durante el envío. Espera al resultado anterior.');return existing.promise;}
+  root.RealScanCounterEvolution?.trackNas?.(key,options.metricsToken);
+ const existing=running.get(key);if(existing){if(existing.fingerprint!==fingerprint)throw Error('El archivo cambió durante el envío. Espera al resultado anterior.');return existing.promise;}
   const promise=(async()=>{
    let receipt=receipts()[key];
-   if(receipt?.fingerprint===fingerprint&&receipt.status==='archived'){root.RealScanDiagnostics?.record('paperless.sent');onStatus?.('Archivado en Paperless. Este archivo ya se envió.');return receipt;}
+   if(receipt?.fingerprint===fingerprint&&receipt.status==='archived'){root.RealScanCounterEvolution?.nasStatus?.(key,'archived');root.RealScanDiagnostics?.record('paperless.sent');onStatus?.('Archivado en Paperless. Este archivo ya se envió.');return receipt;}
    if(receipt?.status==='unknown'&&!receipt.taskId)throw Error('El envío anterior no se pudo confirmar. Comprueba Paperless antes de volver a enviarlo.');
    if(!receipt||receipt.fingerprint!==fingerprint||receipt.status==='failed'){
     if(!hasToken()){openSettings('Configura el acceso y vuelve a enviar.');throw Error('Falta el acceso a Paperless.');}

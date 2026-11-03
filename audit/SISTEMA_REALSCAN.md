@@ -1,3 +1,7 @@
+## Revisión 3.38.0
+
+[Entrega](ENTREGA_3380.md): PDF completo con lupa, revisión compacta y reversible, perfiles comparables con recuperación y métricas observadas hasta salida/confirmación. Sin cambios al motor en milímetros ni persistencia de imágenes en preferencias.
+
 ## Revisión y publicación comprobada 3.37.0
 
 [Entrega y alcance](ENTREGA_3370.md). Se conservan los motores en milímetros y las validaciones de sesión, Paperless y datos sensibles. Seleccionar impresora no certifica su resultado físico.

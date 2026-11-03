@@ -39,3 +39,24 @@
 @media print{.sheet-quick-stamps{display:none!important}}
 /* D: borde de la tarjeta detectada en la vista ampliada. */
 .capture-preview-frame{position:absolute;border:3px solid #16a34a;border-radius:6px;box-shadow:0 0 0 2px rgba(255,255,255,.65);pointer-events:none;z-index:2}
+@media screen {
+ .pdf-page-navigation {display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;width:100%;padding:10px;border:1px solid var(--work-line,#cbd5e1);border-radius:12px;background:var(--work-surface,#fff);color:var(--work-ink,#172233)}
+ .pdf-page-navigation[hidden] {display:none}
+ .pdf-page-navigation button {min-width:44px;min-height:44px;border:1px solid var(--work-line,#cbd5e1);border-radius:9px;font-size:19px;padding:8px}
+ .pdf-page-navigation>span {font-size:13px;font-weight:650;text-align:center;min-width:110px}
+ .pdf-page-navigation label {display:flex;align-items:center;gap:7px;font-size:12px}
+ .pdf-page-navigation select {min-height:44px;border-radius:9px;max-width:100%;background:var(--work-surface,#fff);color:inherit;border:1px solid var(--work-line,#cbd5e1);padding:6px}
+ .pdf-page-scroll {display:block;max-height:62dvh;overflow:auto;width:100%;min-width:0;padding:8px;background:#94a3b81a;border-radius:10px;touch-action:pan-x pan-y}
+ .pdf-page-scroll:has(canvas[hidden]) {display:none}
+ .pdf-delivery-dialog .pdf-page-scroll canvas {display:block;margin:auto;height:auto;object-fit:contain}
+ .printer-compare {width:min(720px,94vw);max-height:92dvh;overflow:auto}
+ .printer-compare select {width:100%;min-width:0;max-width:100%;min-height:44px;padding:9px;border:1px solid var(--work-line,#cbd5e1);border-radius:10px;background:var(--work-surface,#fff);color:inherit}
+ #printerCompareRows {display:grid;gap:12px;margin:14px 0}
+ #printerCompareRows article {border:1px solid var(--work-line,#cbd5e1);border-radius:13px;padding:14px;overflow-wrap:anywhere}
+ #printerCompareRows article>p {font-size:13px;line-height:1.6}
+ #printerCompareRows label {display:flex;align-items:center;gap:9px;min-height:44px;font-size:14px}
+ #printerCompareRows input {width:20px;height:20px;accent-color:var(--work-accent,#275be8)}
+ #printerCompareConfirmation {border:1px solid var(--work-accent,#275be8);padding:14px;border-radius:12px;background:var(--work-soft,#edf3ff)}
+ @media(max-width:600px){.pdf-page-scroll{max-height:46dvh}.pdf-delivery-dialog>.pdf-delivery-preview{min-width:0}}
+ @media(max-width:420px){.pdf-page-navigation>span{flex:1}.pdf-page-navigation label{flex-basis:100%;justify-content:center}}
+}

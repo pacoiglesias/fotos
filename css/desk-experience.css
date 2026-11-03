@@ -132,3 +132,10 @@
  #counterSessionMetrics {max-width:600px}
  @media(max-width:600px){body.rs-next.rs-counter330.rs-evolved #workbenchBar{padding:16px}body.rs-next.rs-counter330.rs-evolved #counterIntake{padding:14px;gap:16px}body.rs-next.rs-counter330.rs-evolved #guidedStepsBar button{font-size:12px!important}body.rs-evolved #workspaceDelivery{padding:15px}}
 }
+@media screen {
+ .session-metric-card {padding:14px;margin:12px 0;border:1px solid var(--work-line,#dbe4f0);border-radius:12px;background:var(--work-bg,#f4f6fa)}
+ .session-metric-card h3 {font-size:16px;font-weight:750;margin:0 0 6px}.session-metric-card p {font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+ .operator-trial-guide {border:1px solid var(--work-line,#dbe4f0);padding:14px;border-radius:12px;margin:14px 0}
+ .operator-trial-guide summary {cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700}.operator-trial-guide li{margin:10px 0;line-height:1.6}
+ #counterSessionMetrics {max-height:90dvh;overflow:auto}
+}

@@ -32,6 +32,7 @@ try {
     "counter335-regression",
     "review-settings-regression",
     "counter-evolution-regression",
+    "review-complete-regression",
     "identity-preparation-regression",
     "blank-pages-regression",
     "stage-completion-regression",
