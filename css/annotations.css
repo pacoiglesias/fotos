@@ -46,7 +46,9 @@
  .pdf-page-navigation>span {font-size:13px;font-weight:650;text-align:center;min-width:110px}
  .pdf-page-navigation label {display:flex;align-items:center;gap:7px;font-size:12px}
  .pdf-page-navigation select {min-height:44px;border-radius:9px;max-width:100%;background:var(--work-surface,#fff);color:inherit;border:1px solid var(--work-line,#cbd5e1);padding:6px}
- .pdf-page-scroll {display:block;max-height:62dvh;overflow:auto;width:100%;min-width:0;padding:8px;background:#94a3b81a;border-radius:10px;touch-action:pan-x pan-y}
+ .pdf-delivery-dialog>.pdf-delivery-preview:has(.pdf-page-navigation) {max-height:none;overflow:visible}
+ .pdf-delivery-dialog:has(.pdf-delivery-sheet-settings)>.pdf-delivery-preview:has(.pdf-page-navigation) {position:static}
+ .pdf-page-scroll {display:block;max-height:52dvh;overflow:auto;width:100%;min-width:0;padding:8px;background:#94a3b81a;border-radius:10px;touch-action:pan-x pan-y}
  .pdf-page-scroll:has(canvas[hidden]) {display:none}
  .pdf-delivery-dialog .pdf-page-scroll canvas {display:block;margin:auto;height:auto;object-fit:contain}
  .printer-compare {width:min(720px,94vw);max-height:92dvh;overflow:auto}
@@ -57,6 +59,6 @@
  #printerCompareRows label {display:flex;align-items:center;gap:9px;min-height:44px;font-size:14px}
  #printerCompareRows input {width:20px;height:20px;accent-color:var(--work-accent,#275be8)}
  #printerCompareConfirmation {border:1px solid var(--work-accent,#275be8);padding:14px;border-radius:12px;background:var(--work-soft,#edf3ff)}
- @media(max-width:600px){.pdf-page-scroll{max-height:46dvh}.pdf-delivery-dialog>.pdf-delivery-preview{min-width:0}}
+ @media(max-width:600px){.pdf-page-scroll{max-height:32dvh}.pdf-delivery-dialog>.pdf-delivery-preview{min-width:0}}
  @media(max-width:420px){.pdf-page-navigation>span{flex:1}.pdf-page-navigation label{flex-basis:100%;justify-content:center}}
 }

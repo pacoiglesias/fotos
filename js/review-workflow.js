@@ -6,22 +6,23 @@
   const canvas=dialog.querySelector('#pdfDeliveryPreview'),viewport=canvas.parentElement,nav=document.createElement('nav');nav.className='pdf-page-navigation';nav.setAttribute('aria-label','Recorrer el PDF preparado');
   nav.innerHTML='<button type="button" id="pdfPreviewPrevious" aria-label="Página anterior">←</button><span id="pdfPreviewPage" role="status" aria-live="polite">Sin vista preparada</span><button type="button" id="pdfPreviewNext" aria-label="Página siguiente">→</button><label>Vista<select id="pdfPreviewZoom" aria-label="Ampliación de la vista PDF"><option value="1">Encajar</option><option value="1.5">Lupa · 150 %</option><option value="2">Lupa · 200 %</option></select></label>';
   const scroll=document.createElement('div');scroll.className='pdf-page-scroll';canvas.before(scroll);scroll.append(canvas);viewport.prepend(nav);const q=id=>nav.querySelector('#'+id);
-  let pdf=null,rendering=null,serial=0,number=1,zoom=1,disposed=false,waiting=false,indices=[];
+  let pdf=null,rendering=null,serial=0,number=1,zoom=1,disposed=false,waiting=false,indices=[],resizeTimer=null,lastSize='';
+  const resizeObserver=new ResizeObserver(()=>{const size=viewport.clientWidth+':'+innerHeight;if(size===lastSize)return;lastSize=size;clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(!disposed&&pdf&&isCurrent())show();},80);});resizeObserver.observe(viewport);
   function buttons(){q('pdfPreviewPrevious').disabled=disposed||waiting||!pdf||number<=1;q('pdfPreviewNext').disabled=disposed||waiting||!pdf||number>=pdf.numPages;q('pdfPreviewZoom').disabled=disposed||waiting||!pdf;nav.hidden=!pdf;}
   async function show(value=number){
    if(disposed||!pdf||!isCurrent())return;const turn=++serial,documentPdf=pdf;number=Math.max(1,Math.min(documentPdf.numPages,Math.round(value)));waiting=true;buttons();
    const previous=rendering;previous?.cancel();await previous?.promise.catch(()=>{});if(disposed||turn!==serial||!isCurrent())return;
    try{const page=await documentPdf.getPage(number);if(disposed||turn!==serial||pdf!==documentPdf||!isCurrent())return;
-    const base=page.getViewport({scale:1}),width=Math.max(240,Math.min(700,viewport.clientWidth||700)),scale=Math.min(width/base.width*zoom,4096/Math.max(base.width,base.height),Math.sqrt(12000000/(base.width*base.height))),view=page.getViewport({scale});
-    canvas.width=Math.ceil(view.width);canvas.height=Math.ceil(view.height);canvas.style.width=(zoom===1?'100%':Math.round(zoom*100)+'%');canvas.style.maxWidth='none';canvas.setAttribute('aria-label','Página '+number+' de '+documentPdf.numPages+' del PDF preparado');scroll.dataset.zoom=String(zoom);
+    const base=page.getViewport({scale:1}),width=Math.max(120,Math.min(700,(viewport.clientWidth||748)-48)),height=Math.max(160,(parseFloat(getComputedStyle(scroll).maxHeight)||innerHeight*.5)-16),fit=Math.min(width/base.width,height/base.height),scale=Math.min(fit*zoom,4096/Math.max(base.width,base.height),Math.sqrt(12000000/(base.width*base.height))),view=page.getViewport({scale});
+    canvas.width=Math.ceil(view.width);canvas.height=Math.ceil(view.height);canvas.style.width=Math.ceil(view.width)+'px';canvas.style.maxWidth=zoom===1?'100%':'none';canvas.style.maxHeight='none';canvas.setAttribute('aria-label','Página '+number+' de '+documentPdf.numPages+' del PDF preparado');scroll.dataset.zoom=String(zoom);
     const operation=page.render({canvasContext:canvas.getContext('2d'),viewport:view});rendering=operation;await operation.promise;
     if(disposed||turn!==serial||pdf!==documentPdf||!isCurrent())return;canvas.hidden=false;q('pdfPreviewPage').textContent='Página '+number+' de '+documentPdf.numPages+(indices[number-1]!=null?' · origen '+(indices[number-1]+1):'');canvas.dataset.page=String(number);viewport.querySelector('#pdfDeliveryEmpty').hidden=true;
    }catch(error){if(!disposed&&turn===serial&&error.name!=='RenderingCancelledException'){canvas.hidden=true;q('pdfPreviewPage').textContent='No se pudo mostrar esta página. Prueba otra o descarga el archivo.';}}
    finally{if(turn===serial){waiting=false;rendering=null;buttons();}}
   }
   q('pdfPreviewPrevious').onclick=()=>{if(!waiting)show(number-1);};q('pdfPreviewNext').onclick=()=>{if(!waiting)show(number+1);};q('pdfPreviewZoom').onchange=()=>{zoom=Number(q('pdfPreviewZoom').value)||1;show();};
-  function clear(){serial++;rendering?.cancel();rendering=null;pdf=null;indices=[];waiting=false;number=1;zoom=1;q('pdfPreviewZoom').value='1';q('pdfPreviewPage').textContent='Sin vista preparada';canvas.hidden=true;delete canvas.dataset.page;canvas.width=canvas.height=0;canvas.style.width='';canvas.style.maxWidth='';buttons();}
-  buttons();return {async set(documentPdf,sourceIndices){clear();if(disposed||!isCurrent())return;pdf=documentPdf;indices=sourceIndices.slice();await show(1);},clear,dispose(){clear();disposed=true;nav.remove();}};
+  function clear(){serial++;clearTimeout(resizeTimer);rendering?.cancel();rendering=null;pdf=null;indices=[];waiting=false;number=1;zoom=1;q('pdfPreviewZoom').value='1';q('pdfPreviewPage').textContent='Sin vista preparada';canvas.hidden=true;delete canvas.dataset.page;canvas.width=canvas.height=0;canvas.style.width='';canvas.style.maxWidth='';canvas.style.maxHeight='';buttons();}
+  buttons();return {async set(documentPdf,sourceIndices){clear();if(disposed||!isCurrent())return;pdf=documentPdf;indices=sourceIndices.slice();await show(1);},clear,dispose(){clear();disposed=true;resizeObserver.disconnect();nav.remove();}};
  }
  let profileDialog=null,applying=false;
  function openProfiles(){
