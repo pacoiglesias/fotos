@@ -6,7 +6,7 @@ assert.equal(await p.locator('#deskStart h2').textContent(),'2. ¿De dónde vien
 await p.waitForFunction(()=>document.getElementById('counterIntake').nextElementSibling?.id==='deskSemaphore');
 assert.equal(await p.locator('#workspaceNas').evaluate(el=>el.closest('#counterIntake')),null);
 assert.equal(await p.locator('#deskNasPanel').evaluate(el=>el.closest('#workspaceDelivery')?.id),'workspaceDelivery');
-for(const width of [320,390,768,1440]){await p.setViewportSize({width,height:900});await p.screenshot({path:path.join(out,engine+'-intake-'+width+'.png')});assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert(await p.locator('#workspaceNasSearch').isVisible());}
+for(const width of [320,390,768,1440]){await p.setViewportSize({width,height:900});await p.screenshot({path:path.join(out,engine+'-intake-'+width+'.png')});assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert(await p.locator('#workspaceNasSearch').isVisible());if(width===390)assert(await p.locator('#operatorReceiveActions button').first().evaluate(el=>el.getBoundingClientRect().bottom<innerHeight-130),'Camera must be reachable above the fixed footer without scrolling');}
 pass(engine+' intake explains service and source; Paperless output is separate and responsive');
 await p.setViewportSize({width:1440,height:1050});
 await p.evaluate(async()=>{const c=document.createElement('canvas');c.width=860;c.height=540;const x=c.getContext('2d');x.fillStyle='#ddd';x.fillRect(0,0,860,540);x.fillStyle='#222';x.font='50px sans-serif';x.fillText('PRUEBA SIN DATOS',50,150);await handleLoadedFile('front',c.toDataURL(),'synthetic.png');setPrintMode('single');updateUI();});

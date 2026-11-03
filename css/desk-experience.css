@@ -165,3 +165,11 @@
 }
 
 @media screen and (max-width:767px){body.rs-next.rs-counter330.rs-desk336 #workbenchBar{min-height:0!important}}
+
+@media screen and (max-width:767px){
+ body.rs-next.rs-counter330.rs-desk336 #workbenchBar{padding:8px 12px!important;display:flex!important;flex-direction:row!important;justify-content:flex-end;gap:8px}
+ body.rs-next.rs-counter330.rs-desk336 #workbenchBar>div:first-child{display:none!important}
+ body.rs-next.rs-counter330.rs-desk336 #workbenchBar>div:last-child{margin:0!important;display:flex;gap:8px}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake #deskPresets>div{grid-template-columns:1fr!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake #deskPresets button{min-height:40px!important}
+}
