@@ -173,3 +173,18 @@
  body.rs-next.rs-counter330.rs-desk336 #counterIntake #deskPresets>div{grid-template-columns:1fr!important}
  body.rs-next.rs-counter330.rs-desk336 #counterIntake #deskPresets button{min-height:40px!important}
 }
+
+@media screen {
+ #localOcrModal.local-ocr-dialog{width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px);margin:auto;border:0;padding:0;background:transparent;color:var(--work-ink,#172233)}
+ #localOcrModal.local-ocr-dialog::backdrop{background:#0c203ac4;backdrop-filter:blur(4px)}
+ .local-ocr-header,.paperless-metadata>header{position:sticky;top:0;z-index:3;background:var(--work-surface,#fff)}
+ .local-ocr-header,.nas-metadata-heading{display:flex;align-items:start;justify-content:space-between;gap:12px}
+ .local-ocr-header h2,.nas-metadata-heading h2{margin:0!important;min-width:0}
+ .local-ocr-header{padding:8px 0;margin-bottom:12px}
+ .local-ocr-header button{flex:none;min-height:44px;border:1px solid var(--work-line,#ccd5df);border-radius:9px;padding:8px 12px;background:var(--work-surface,#fff);color:var(--work-ink,#172233);font-weight:650}
+ .paperless-metadata>header{padding-block:6px 10px}
+ .nas-metadata-heading button{flex:none}
+ html.dark .local-ocr-header{background:#0f172a}
+}
+
+@media screen{#localOcrModal select,#localOcrModal textarea{border:1px solid var(--work-line,#cbd5e1);border-radius:10px;padding:10px;background:var(--work-surface,#fff);color:var(--work-ink,#172233)}#localOcrModal p{font-size:14px;line-height:1.6}}

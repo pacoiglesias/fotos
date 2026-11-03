@@ -421,20 +421,25 @@ function getTopModal() {
   return null;
 }
 
+function hasNativeModal() {
+  try { return !!document.querySelector?.('dialog:modal'); } catch (_) { return false; }
+}
+
 function syncModalState() {
   modalFocusStack = modalFocusStack.filter(function(entry) {
     const modal = $(entry.id);
     return modal && !modal.classList.contains('hidden') && modal.isConnected !== false;
   });
   const active = getTopModal();
-  setBackgroundInert(!!active, active);
+  const nativeOpen = hasNativeModal();
+  setBackgroundInert(!!active && !nativeOpen, active);
   modalFocusStack.forEach(function(entry, index) {
     const modal = $(entry.id);
     if (modal.style) modal.style.zIndex = String(100 + index);
-    modal.setAttribute('aria-modal', modal === active ? 'true' : 'false');
+    modal.setAttribute('aria-modal', modal === active && !nativeOpen ? 'true' : 'false');
   });
   const login = $('loginOverlay');
-  if (active || (login && !login.classList.contains('hidden'))) document.body.classList.add('modal-open');
+  if (active || nativeOpen || (login && !login.classList.contains('hidden'))) document.body.classList.add('modal-open');
   else document.body.classList.remove('modal-open');
   return active;
 }
@@ -455,6 +460,11 @@ function openModal(id) {
     if(!deferredModalLoads.has(id))deferredModalLoads.set(id,fetch('assets/dialogs/'+files[id]+'.html').then(r=>{if(!r.ok)throw Error('help');return r.text();}).then(html=>{if(!$(id)){const t=document.createElement('template');t.innerHTML=html;document.body.append(t.content);}}).catch(()=>{deferredModalLoads.delete(id);showToast('No se pudo abrir la ayuda. Comprueba conexión o prepara la app para usarla sin internet.','warning');}));
     return deferredModalLoads.get(id).then(()=>{if($(id)&&deferredModalEpoch.get(id)===generation)openModal(id);});
   }
+  if (modal.tagName === 'DIALOG') {
+    setBackgroundInert(false);
+    if (!modal.open) modal.showModal();
+    return;
+  }
   const previous = modalFocusStack.find(function(entry) { return entry.id === id; });
   // Reopening or renewing a dialog is idempotent: one entry per dialog.
   modalFocusStack = modalFocusStack.filter(function(entry) { return entry.id !== id; });
@@ -472,6 +482,12 @@ function closeModal(id) {
   if(id==="localTransferModal")window.RealScanLocalTransfer?.stopCamera();
   const modal = $(id);
   if (!modal) return;
+  if (modal.tagName === 'DIALOG') {
+    if (modal.open) modal.close();
+    syncModalState();
+    if (typeof CustomEvent !== 'undefined') document.dispatchEvent(new CustomEvent('realscan:modal-closed', { detail: { id: id } }));
+    return;
+  }
   const entries = modalFocusStack.filter(function(entry) { return entry.id === id; });
   modalFocusStack = modalFocusStack.filter(function(entry) { return entry.id !== id; });
   modal.classList.add('hidden');
@@ -504,6 +520,7 @@ function anyModalOpen() { return !!getTopModal(); }
 
 if (typeof document !== 'undefined') {
   document.addEventListener('keydown', function(e) {
+    if (hasNativeModal()) return;
     if (e.key === 'Escape' && anyModalOpen()) {
       e.preventDefault();
       const activeModal = getTopModal();

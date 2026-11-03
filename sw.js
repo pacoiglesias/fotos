@@ -2,6 +2,7 @@ const CACHE_NAME='__BUILD_VERSION__';
 const CORE_ASSETS=__CORE_ASSETS__;
 self.addEventListener('install',event=>event.waitUntil((async()=>{const cache=await caches.open(CACHE_NAME);await cache.addAll(CORE_ASSETS);await self.skipWaiting();})()));
 let activationReady=Promise.resolve();
+async function removeLegacyCaches(){for(const key of await caches.keys())if(key.startsWith('realscan-cache-'))await caches.delete(key);}
 self.addEventListener('activate',event=>{activationReady=(async()=>{for(const key of await caches.keys())if(key.startsWith('realscan-')&&key!==CACHE_NAME)await caches.delete(key);await self.clients.claim();})();event.waitUntil(activationReady);});
 self.addEventListener('fetch',event=>{
  const request=event.request,url=new URL(request.url);
@@ -11,4 +12,4 @@ self.addEventListener('fetch',event=>{
  }
  event.respondWith((async()=>{const cache=await caches.open(CACHE_NAME),cached=await cache.match(request);if(cached)return cached;try{const response=await fetch(request);if(response.ok&&url.pathname.includes("/vendor/"))await cache.put(request,response.clone());return response;}catch{return new Response('Este recurso no está preparado para usarse sin conexión.',{status:503,headers:{'Content-Type':'text/plain;charset=utf-8'}});}})());
 });
-self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING'){event.waitUntil(self.skipWaiting());return;}if(event.data?.type==='REALSCAN_CACHE_INFO')event.waitUntil(activationReady.then(()=>event.ports[0]?.postMessage({name:CACHE_NAME})));});
+self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING'){event.waitUntil(self.skipWaiting());return;}if(event.data?.type==='REALSCAN_CACHE_INFO')event.waitUntil(activationReady.then(async()=>{await removeLegacyCaches();event.ports[0]?.postMessage({name:CACHE_NAME});}));});

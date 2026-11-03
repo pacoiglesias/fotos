@@ -18,9 +18,9 @@
  document.addEventListener('keydown',()=>{trigger=null;},true);
  function origin(){const candidate=trigger?.isConnected&&performance.now()-triggerAt<1000?trigger:document.activeElement;return {element:candidate?.matches?.('button,a,input,select,textarea,summary,[tabindex],[contenteditable=true]')&&candidate.getClientRects().length?candidate:null,x:scrollX,y:scrollY,job:jobId()};}
  HTMLDialogElement.prototype.showModal=function(){
-  if(!this.open){origins.set(this,origin());this.addEventListener('close',()=>{
-   const saved=origins.get(this);origins.delete(this);setTimeout(()=>{if(!saved||!unlocked()||saved.job!==jobId()||document.querySelector('dialog[open]')||!saved.element?.isConnected)return;root.scrollTo({left:saved.x,top:saved.y,behavior:'instant'});saved.element.focus?.({preventScroll:true});},0);
-  },{once:true});}return nativeShow.call(this);
+  if(!this.open){root.setBackgroundInert?.(false);origins.set(this,origin());this.addEventListener('close',()=>{
+   root.syncModalState?.();const saved=origins.get(this);origins.delete(this);setTimeout(()=>{if(!saved||!unlocked()||saved.job!==jobId()||document.querySelector('dialog[open]')||!saved.element?.isConnected)return;root.scrollTo({left:saved.x,top:saved.y,behavior:'instant'});saved.element.focus?.({preventScroll:true});},0);
+  },{once:true});}try{const result=nativeShow.call(this);root.syncModalState?.();return result;}catch(error){root.syncModalState?.();throw error;}
  };
  const legacyOrigins=new Map();
  function installLegacyFocus(){if(!root.openModal||!root.closeModal)return;const open=root.openModal,close=root.closeModal;

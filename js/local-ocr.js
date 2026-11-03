@@ -6,15 +6,16 @@
     externalSource=options.dataUrl || null;externalRequestId=options.requestId||null;
     let modal = document.getElementById("localOcrModal");
     if (!modal) {
-      modal = document.createElement("div");
+      modal = document.createElement("dialog");
       modal.id = "localOcrModal";
-      modal.className = "hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4";
+      modal.className = "local-ocr-dialog";
       modal.setAttribute("role", "dialog");
       modal.setAttribute("aria-modal", "true");
       modal.setAttribute("aria-labelledby", "localOcrTitle");
       modal.innerHTML = '<div class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-5 max-w-xl w-full space-y-3 max-h-[90vh] overflow-y-auto"><h2 id="localOcrTitle" class="font-bold text-lg">Reconocer texto en este equipo</h2><p class="text-xs">El procesamiento se hace en tu navegador. Revisa nombres y números: puede haber errores. No modifica la imagen ni envía su contenido a servidores.</p><label class="block">Imagen <select id="ocrSide" class="border rounded p-2 bg-white dark:bg-slate-800"><option value="front">Frente / Foto A</option><option value="back">Reverso / Foto B</option><option value="page3">Página 3</option><option value="page4">Página 4</option></select></label><label class="block">Idioma <select id="ocrLanguage" class="border rounded p-2 bg-white dark:bg-slate-800"><option value="spa">Español</option><option value="eng">Inglés</option></select></label><p id="ocrStatus" role="status" class="text-xs">Los recursos de reconocimiento se cargan al utilizarlos.</p><textarea id="ocrText" aria-label="Texto reconocido, editable para corregir" rows="8" class="w-full border rounded-xl p-3 bg-white dark:bg-slate-800"></textarea><div class="flex gap-2 flex-wrap"><button type="button" id="ocrRun" class="px-4 py-2 rounded bg-indigo-600 text-white">Extraer texto</button><button type="button" id="ocrCancel" class="px-4 py-2 rounded bg-slate-200 dark:bg-slate-700">Cancelar proceso</button><button type="button" id="ocrCopy" class="px-4 py-2 rounded bg-slate-200 dark:bg-slate-700">Copiar texto</button><button type="button" id="ocrDownload" class="px-4 py-2 rounded bg-slate-200 dark:bg-slate-700">Descargar TXT</button><button type="button" data-close-modal="localOcrModal" class="px-4 py-2 rounded bg-slate-200 dark:bg-slate-700">Cerrar</button></div></div>';
       document.body.append(modal);
       const $ = (id) => document.getElementById(id);
+      const heading=$('localOcrTitle'),header=document.createElement('header'),back=document.createElement('button');header.className='local-ocr-header';back.id='ocrClose';back.type='button';back.textContent='Volver';back.setAttribute('aria-label','Volver al trabajo');back.onclick=()=>closeModal('localOcrModal');heading.before(header);header.append(heading,back);modal.addEventListener('close',()=>cancel());
       $("ocrRun").onclick = run;
       $("ocrCancel").onclick = cancel;
       $("ocrCopy").onclick = async () => {
@@ -48,7 +49,7 @@
     await current?.terminate().catch(() => {
     });
     const status = document.getElementById("ocrStatus");
-    if (status && epoch===cancelledRevision) status.textContent = "Proceso cancelado. La imagen original se conserva.";
+    if (status && epoch===cancelledRevision) status.textContent = clearText === true ? "Pulsa Extraer texto para comenzar." : "Proceso cancelado. La imagen original se conserva.";
   }
   async function run() {
     if (busy) return;
