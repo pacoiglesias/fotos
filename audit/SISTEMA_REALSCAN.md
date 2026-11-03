@@ -1,3 +1,7 @@
+## 3.39.1 — En validación
+
+[Correcciones y pruebas pendientes de publicación](ENTREGA_3391.md). No certifica el OCR del NAS ni la impresora física.
+
 ## Revisión y publicación comprobada 3.39.0
 
 [Herramientas y validación](ENTREGA_3390.md). Las copias especiales se aplanan a imágenes, conservando el tamaño de las páginas; no conservan formularios, texto seleccionable ni firmas digitales del archivo de entrada. El motor de impresión original no cambia.

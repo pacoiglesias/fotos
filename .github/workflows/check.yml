@@ -50,6 +50,7 @@ jobs:
             .audit/counter-evolution/
             .audit/review-complete/
             .audit/document-tools/
+            .audit/paperless-intake/
             .audit/identity-preparation/
             .audit/blank-pages/
             .audit/stage-completion/

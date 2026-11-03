@@ -154,10 +154,11 @@
 
   async function storageDelete(path) {
     const token = await ensureToken();
-    if (!token) return;
-    await fetch('https://firebasestorage.googleapis.com/v0/b/' + encodeURIComponent(bucketName()) + '/o/' + encodeURIComponent(path), {
+    if (!token) throw Error('Sin sesión de nube.');
+    const response = await fetch('https://firebasestorage.googleapis.com/v0/b/' + encodeURIComponent(bucketName()) + '/o/' + encodeURIComponent(path), {
       method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token }
-    }).catch(function () {});
+    });
+    if (!response.ok && response.status !== 404) throw Error('No se pudo borrar la copia de nube.');
   }
 
   function blobToDataUrl(blob) {
@@ -179,11 +180,11 @@
       const blob=await dataUrlToBlob(source);if(!blob.size||!/^image\/(png|jpeg|webp)$/.test(blob.type))throw Error('Imagen de respaldo no válida.');
       meta.pagesMeta[index].cloudHash=await digest(blob);files.push({slot,blob});
     }
-    setState(scan.id,{s:'uploading',at:scan.updatedAt||scan.createdAt||0});meta.cloudState='uploading';
+    setState(scan.id,{s:'uploading',at:scan.updatedAt||scan.createdAt||0,slots:[...slots]});meta.cloudState='uploading';
     await rtdb('/users/'+uid+'/scans/'+scan.id,'PUT',meta);
     for(const file of files)await storageUpload('users/'+uid+'/scans/'+scan.id+'/'+file.slot+'.jpg',file.blob);
     meta.cloudState='ready';await rtdb('/users/'+uid+'/scans/'+scan.id,'PUT',meta);
-    setState(scan.id,{s:'synced',at:scan.updatedAt||scan.createdAt||0});
+    setState(scan.id,{s:'synced',at:scan.updatedAt||scan.createdAt||0,slots:[...slots]});
   }
 
   async function syncNow() {
@@ -203,15 +204,20 @@
         const st = map[scan.id];
         if (!st || st.at !== (scan.updatedAt || scan.createdAt || 0) || st.s === 'error') {
           try { await uploadScan(scan, l.uid); }
-          catch (e) { setState(scan.id, { s: 'error', at: scan.updatedAt || scan.createdAt || 0 }); }
+          catch (e) { setState(scan.id, { ...stateMap()[scan.id], s: 'error', at: scan.updatedAt || scan.createdAt || 0 }); }
         }
       }
       for (const id of Object.keys(stateMap())) {
         const st = stateMap()[id];
         if (st && st.s === 'deleted' && !localIds.has(id)) {
-          try { await rtdb('/users/' + l.uid + '/scans/' + id, 'DELETE'); } catch (e) {}
-          for (const slot of st.slots || []) await storageDelete('users/' + l.uid + '/scans/' + id + '/' + slot + '.jpg');
-          setState(id, null);
+          // Legacy records discover their actual pages before removing the manifest.
+          const path='/users/'+l.uid+'/scans/'+id;
+          const meta=Array.isArray(st.slots)?null:await rtdb(path,'GET');
+          const slots=Array.isArray(st.slots)?st.slots:(meta?.pagesMeta||[]).map(page=>page.slot||'front');
+          if(slots.some(slot=>typeof slot!=='string'||!/^[-a-zA-Z0-9_]{1,80}$/.test(slot)))throw Error('Lista de páginas no válida.');
+          for(const slot of new Set(slots))await storageDelete('users/'+l.uid+'/scans/'+id+'/'+slot+'.jpg');
+          await rtdb(path,'DELETE');
+          setState(id,null);
         }
       }
       await checkCloudOnly(l.uid);
@@ -275,7 +281,7 @@
           const record={};Object.keys(meta).forEach(k=>{if(k!=='pagesMeta')record[k]=meta[k];});
           record.id=id;record.pages=pages;record.schemaVersion=record.schemaVersion||1;
           await window.putScanRecord(record);
-          setState(id,{s:'synced',at:record.updatedAt||record.createdAt||0});pending.delete(id);restored++;
+          setState(id,{s:'synced',at:record.updatedAt||record.createdAt||0,slots:[...slots]});pending.delete(id);restored++;
         } catch(e) { window.RealScanDiagnostics?.record('cloud.restore.failed','warning'); }
       }
       cloudOnlyIds=[...pending];renderRestoreBanner();
@@ -305,7 +311,7 @@
 
   function onScanDeleted(id, slots) {
     const st = stateMap()[id];
-    if (st && st.s === 'synced') setState(id, { s: 'deleted', at: 0, slots: slots || ['front', 'back', 'page3', 'page4'] });
+    if (st) setState(id, { s: 'deleted', at: 0, ...(Array.isArray(st.slots)||Array.isArray(slots)?{slots:[...new Set([...(st.slots||[]),...(slots||[])])]}:{}) });
     else setState(id, null);
     notifyChanged();
   }

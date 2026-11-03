@@ -22,8 +22,8 @@
   function placeSemaphore(){
     const sem = $('#deskSemaphore'); if (!sem) return;
     const bar = $('#workbenchBar'), intake = $('#counterIntake');
-    if (bar && sem.previousElementSibling !== bar) bar.after(sem);
-    else if (!bar && intake && sem.nextElementSibling !== intake) intake.before(sem);
+    if (intake && sem.previousElementSibling !== intake) intake.after(sem);
+    else if (!intake && bar && sem.previousElementSibling !== bar) bar.after(sem);
     dots(sem);
   }
 
