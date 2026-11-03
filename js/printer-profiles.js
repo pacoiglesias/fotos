@@ -109,7 +109,23 @@
       p.offsetX + ' / ' + p.offsetY + ' mm';
   }
 
+  let consolidationUndo=null;
+  const comparisonName=p=>String(p?.name||'').trim().replace(/\s+/g,' ').toLocaleLowerCase();
+  function comparisonSignature(){return JSON.stringify(list().map(p=>[p,localStorage.getItem('realscan_calibration_verified_'+p.id)]));}
+  function writable(){if(!document.getElementById('loginOverlay')?.classList.contains('hidden')||document.getElementById('setupOverlay')&&!document.getElementById('setupOverlay').classList.contains('hidden')||window.RealScanWorkflow?.describe().busy||window.RealScanDocuments?.status().busy)throw Error('Desbloquea el puesto y espera a que termine la operación.');}
+  function writeValues(values){const written=[];try{for(const [key,value]of values){const before=localStorage.getItem(key);if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);written.push([key,before]);}}catch(error){let failed=false;for(const [key,value]of written.reverse())try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}catch{failed=true;}throw Error(failed?'No se pudo completar ni restaurar la configuración. Revisa los perfiles antes de imprimir.':'No se pudo guardar; se conserva la configuración anterior.');}}
+  function consolidate({keepId,removeIds,expected}={}){
+    writable();if(expected!==comparisonSignature())throw Error('Los perfiles cambiaron. Vuelve a compararlos.');
+    const profiles=list(),keep=profiles.find(p=>p.id===keepId),ids=new Set(removeIds);if(!keep||!Array.isArray(removeIds)||!ids.size||ids.size!==removeIds.length||ids.size>50||ids.has(keepId)||[...ids].some(id=>!profiles.some(p=>p.id===id&&comparisonName(p)===comparisonName(keep))))throw Error('Selecciona perfiles del mismo nombre y conserva uno de ellos.');
+    const changes=new Map([[PROFILES_KEY,JSON.stringify(profiles.filter(p=>!ids.has(p.id)))]]),prefsKey=window.PREFS_KEY||'realscan_prefs_v2';
+    if(ids.has(getActiveId())){const prefs=JSON.parse(localStorage.getItem(prefsKey)||'{}');prefs.printerProfileId=keepId;changes.set(prefsKey,JSON.stringify(prefs));}
+    for(const id of ids)changes.set('realscan_calibration_verified_'+id,null);
+    const before=[...changes.keys()].map(key=>[key,localStorage.getItem(key)]);writeValues(changes);consolidationUndo={before,after:[...changes],until:Date.now()+300000};changed();return {kept:keepId,removed:ids.size};
+  }
+  function canUndoConsolidation(){return !!consolidationUndo&&Date.now()<consolidationUndo.until&&consolidationUndo.after.every(([key,value])=>localStorage.getItem(key)===value);}
+  function undoConsolidation(){writable();if(!canUndoConsolidation())throw Error('La recuperación caducó o hubo otros cambios. No se sustituirá la configuración actual.');writeValues(consolidationUndo.before);consolidationUndo=null;changed();}
   window.RealScanPrinterProfiles = {
+    comparisonSignature,consolidate,canUndoConsolidation,undoConsolidation,clearConsolidationUndo:()=>{consolidationUndo=null;},
     list: list,
     get: get,
     getActive: getActive,

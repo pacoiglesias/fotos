@@ -1,3 +1,7 @@
+## Entrega diaria 3.38.0
+
+Implementación de cinco mejoras: PDF multipágina navegable con lupa; Deshacer/Rehacer en revisión de INE/fotos; opciones habituales visibles y avanzadas plegadas; comparación reversible de perfiles repetidos; métricas hasta salida/confirmación. Se prepara una guía y archivos sintéticos para la sexta propuesta, evaluación con operador nuevo, que requiere una persona real y permanece pendiente. [Estado de entrega](audit/ENTREGA_3380.md).
+
 ## Entrega comprobada 3.37.0
 
 Las seis propuestas de 3.36.1 tienen implementación de software: recorrido Cargar/Ajustar/Entregar, detalle original/resultado, posiciones y márgenes visuales, diseño común, centro Paperless y mediciones agregadas de sesión. Las posiciones se ajustan a tres anclajes seguros; no hay desplazamiento libre arbitrario. La evaluación con operador nuevo y las pruebas físicas son validaciones humanas pendientes, separadas de la regresión automatizada. Ver [entrega](audit/ENTREGA_3370.md).

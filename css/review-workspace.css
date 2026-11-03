@@ -106,3 +106,12 @@
  .direct-sheet-block[data-position=top] {top:17%}.direct-sheet-block[data-position=compact] {top:5%;left:5%}
  .direct-sheet-block:active {cursor:grabbing}.direct-sheet-map>label {display:block;font-size:13px;margin-block:10px}.direct-sheet-map input[type=range] {display:block;width:100%;min-height:44px}
 }
+@media screen {
+ .sheet-review-history {display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}
+ .sheet-review-history button {min-height:44px;padding:8px 12px;border-radius:9px;border:1px solid var(--work-line,#cbd5e1);font-size:13px}
+ .sheet-review-history button:disabled {opacity:.5}
+ .sheet-review-advanced {margin-top:14px;padding:12px;border:1px solid var(--work-line,#cbd5e1);border-radius:12px;background:var(--work-surface,#fff)}
+ .sheet-review-advanced>summary {cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:700;line-height:1.5}
+ .sheet-review-advanced>summary::before {content:'+';font-size:20px;margin-right:8px}.sheet-review-advanced[open]>summary::before{content:'−'}
+ .sheet-review-advanced .sheet-review-settings-grid {margin-top:10px}
+}

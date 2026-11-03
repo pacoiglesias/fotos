@@ -1,3 +1,11 @@
+## 3.38.0 — Revisión completa y entrega diaria
+
+- Navegación por todas las páginas del PDF preparado y lupa sin cambiar los bytes del archivo ni las medidas impresas; cancelación de render y liberación de recursos.
+- Deshacer/Rehacer de ajustes de INE y fotos dentro de la revisión, con historial limitado en memoria y opciones avanzadas plegadas.
+- Comparación explícita de perfiles repetidos, confirmación del perfil a conservar y recuperación temporal protegida frente a cambios posteriores.
+- Métricas hasta la salida o confirmación, separando preparación, revisión/espera y operación; no confunden QR listo con archivo recibido ni impresión abierta con entregada.
+- Guía de tres pedidos con datos sintéticos para un operador nuevo. La evaluación humana y las pruebas físicas siguen pendientes.
+
 ## 3.37.0 — Mostrador integrado
 
 - Selección de impresora separada de la medición física; opción explícita para usarla y medir después, sin inventar calibración ni sustituir correcciones existentes.
