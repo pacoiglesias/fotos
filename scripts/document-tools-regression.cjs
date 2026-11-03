@@ -62,6 +62,10 @@ const pass = (t) => {
       if (rejected !== 4) throw Error("Invalid selections accepted");
     });
     assert.deepEqual(await page.evaluate(() => __selection339), { odd: [0, 2], even: [1], groups: [[0], [1, 2]] });
+    assert(await page.evaluate(async () => {
+      const copy = await RealScanDocumentTools.transform(__source339, { sets: [[0, 1, 2]], maxBytes: 2 * 1024 * 1024 });
+      return copy[0].profile.original && JSON.stringify(Array.from(new Uint8Array(await copy[0].blob.arrayBuffer()))) === JSON.stringify(__sourceBytes339);
+    }), "A file already inside the requested limit must preserve its exact original bytes");
     const redaction = await page.evaluate(async () => {
       const api = RealScanDocumentTools, files = await api.transform(__source339, { sets: [[0], [1, 2]], marks: [{ page: 0, x: 0.05, y: 0.05, w: 0.85, h: 0.3 }] }), task = pdfjsLib.getDocument({ data: new Uint8Array(await files[0].blob.arrayBuffer()) });
       try {
@@ -163,10 +167,21 @@ const pass = (t) => {
       await locator.click();
       return fs.readFileSync(await (await event).path());
     };
+    const q = (k) => page.locator('[data-copy="' + k + '"]');
     const before = await download(page.locator("#pdfDeliveryDownload"));
     await page.locator("#pdfDeliveryTools").click();
     await page.waitForFunction(() => !document.querySelector("[data-copy=build]").disabled);
-    const q = (k) => page.locator('[data-copy="' + k + '"]');
+    await q("scope").selectOption("even");
+    await q("mode").selectOption("pages");
+    await q("build").click();
+    await page.waitForFunction(() => !document.querySelector("[data-copy=download]").disabled, null, { timeout: 12e4 });
+    const onePageZip = await download(q("download"));
+    assert.equal(await page.evaluate(async (bytes) => {
+      const zip = await JSZip.loadAsync(new Uint8Array(bytes));
+      return Object.keys(zip.files).length;
+    }, Array.from(onePageZip)), 1, "Split mode must still provide a ZIP when only one page is selected");
+    await q("edit").click();
+    await q('scope').selectOption('all');
     await q("mode").selectOption("groups");
     await q("groups").fill("1;2-3");
     await q("groups").dispatchEvent("change");
@@ -184,8 +199,8 @@ const pass = (t) => {
     await q("next").click();
     await page.waitForFunction(() => document.querySelector("[data-copy=page]").textContent === "Página 2 de 2");
     await q("zoom").selectOption("2");
-    await page.waitForFunction(()=>document.querySelector('[data-copy=canvas]').style.maxWidth==='none'&&document.querySelector('[data-copy=page]').textContent==='Página 2 de 2');
-    assert(await page.locator('#documentCopyTools').evaluate(e=>e.scrollWidth<=e.clientWidth+1),'Zoom must scroll inside its viewer, without widening the dialog');
+    await page.waitForFunction(() => document.querySelector("[data-copy=canvas]").style.maxWidth === "none" && document.querySelector("[data-copy=page]").textContent === "Página 2 de 2");
+    assert(await page.locator("#documentCopyTools").evaluate((e) => e.scrollWidth <= e.clientWidth + 1), "Zoom must scroll inside its viewer, without widening the dialog");
     const zipBytes = await download(q("download")), zipCounts = await page.evaluate(async (bytes) => {
       await ensureJSZip();
       const zip = await JSZip.loadAsync(new Uint8Array(bytes)), result = [];
@@ -220,6 +235,7 @@ const pass = (t) => {
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 1e3 });
       assert(await page.locator("#documentCopyTools").evaluate((e) => e.scrollWidth <= e.clientWidth + 1), "tools overflow " + width);
+      if (width < 700) assert(await page.evaluate(() => document.querySelector("[data-copy=canvas]").getBoundingClientRect().top < document.querySelector("[data-copy=scope]").getBoundingClientRect().top), "The copy preview must precede options on phones");
       await page.screenshot({ path: path.join(out, engine + "-tools-" + width + ".png") });
     }
     await q("close").click();

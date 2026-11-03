@@ -13,7 +13,7 @@ Estado: implementación local; validación completa y publicación pendientes. L
 
 ## Alcance de las copias
 
-Las herramientas especiales crean copias aplanadas desde el PDF ya preparado: conservan medidas físicas y orientación, pero no texto seleccionable, formularios ni firmas digitales de entrada. La copia normal se prepara hasta 220 ppp; al limitar peso puede bajar hasta 72 ppp. El original preparado y el motor de impresión 1:1 siguen disponibles por separado. Volver al diálogo de entrega no sustituye el original por la copia ocultada.
+Las herramientas especiales crean copias aplanadas desde el PDF ya preparado: conservan medidas físicas y orientación, pero no texto seleccionable, formularios ni firmas digitales de entrada. Si la única petición es un límite de peso que el archivo original ya cumple, se conserva el archivo exacto sin degradación. La copia modificada se prepara hasta 220 ppp; al limitar peso puede bajar hasta 72 ppp. El original preparado y el motor de impresión 1:1 siguen disponibles por separado. Volver al diálogo de entrega no sustituye el original por la copia ocultada.
 
 Máximo 80 páginas por copia y 100 MB de entrada/salida agregada; render limitado por página, liberación de canvas/tareas, controles bloqueados durante operaciones y cancelación por cierre, bloqueo o cambio de trabajo. La ocultación solo vive en memoria mientras está abierto el diálogo.
 

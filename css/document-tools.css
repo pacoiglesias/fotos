@@ -3,6 +3,7 @@
  dialog.document-copy-tools{width:min(1120px,96vw);max-height:94dvh;overflow:auto;border:0;border-radius:20px;padding:22px;background:var(--studio-surface,#fff);color:var(--studio-ink,#172b40)}
  dialog.document-copy-tools::backdrop{background:#122033b8;backdrop-filter:blur(4px)}
  dialog.document-copy-tools h2{font-size:26px;margin:8px 0}dialog.document-copy-tools p{font-size:13px;line-height:1.6}
+ #copyToolsTitle:focus{outline:none}
  .copy-tools-layout{display:grid;grid-template-columns:minmax(240px,1fr) minmax(240px,1.25fr);gap:24px}
  .copy-tools-layout>section{min-width:0}.copy-canvas-wrap{min-width:0;max-width:100%}
  dialog.document-copy-tools label{display:grid;gap:7px;margin:14px 0;font-size:14px;font-weight:650}
@@ -15,6 +16,6 @@
  dialog.document-copy-tools footer{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;position:sticky;bottom:-22px;padding:15px 0;background:var(--studio-surface,#fff);border-top:1px solid var(--studio-border,#dbe4ef)}
  dialog.document-copy-tools [data-copy=build],dialog.document-copy-tools [data-copy=download]{background:#275ecb;color:white}
  .pdf-file-check{font-size:13px;line-height:1.6;padding:10px;border-radius:10px;background:var(--studio-soft,#eff5ff)}.pdf-file-check:empty{display:none}
- @media(max-width:700px){dialog.document-copy-tools{padding:16px}.copy-tools-layout{grid-template-columns:minmax(0,1fr);gap:12px}dialog.document-copy-tools footer{bottom:-16px}.copy-canvas-wrap{max-height:45dvh}dialog.document-copy-tools footer button{flex:1 1 44%}}
+ @media(max-width:700px){dialog.document-copy-tools{padding:16px}.copy-tools-layout{grid-template-columns:minmax(0,1fr);gap:12px}.copy-tools-layout>section:last-child{grid-row:1}dialog.document-copy-tools footer{bottom:-16px}.copy-canvas-wrap{max-height:45dvh}dialog.document-copy-tools footer button{flex:1 1 44%}}
 }
 @media print{dialog.document-copy-tools{display:none!important}}

@@ -138,6 +138,7 @@
   }
   async function transform(blob, { sets, marks = [], maxBytes = null, isCurrent = () => true, onProgress = () => {
   } } = {}) {
+    check(isCurrent);
     if (!blob?.size || blob.size > MAX_BYTES) throw Error("Archivo vacío o superior a 100 MB.");
     if (maxBytes !== null && (!Number.isFinite(maxBytes) || maxBytes < 1024 || maxBytes > 30 * 1024 * 1024)) throw Error("El límite debe estar entre 1 KB y 30 MB por PDF.");
     const lib = await reader(), task = lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false });
@@ -146,6 +147,10 @@
       check(isCurrent);
       if (pdf.numPages < 1 || pdf.numPages > MAX_PAGES || !Array.isArray(sets) || !sets.length || sets.length > 80 || sets.some((row) => !Array.isArray(row) || !row.length || row.some((i) => !Number.isInteger(i) || i < 0 || i >= pdf.numPages))) throw Error("Páginas de salida no válidas.");
       const safe = cleanMarks(marks, pdf.numPages), files = [];
+      if (maxBytes && blob.size <= maxBytes && !safe.length && sets.length === 1 && sets[0].length === pdf.numPages && sets[0].every((value, index) => value === index)) {
+        const report = await inspectDocument(pdf, { expectedPages: pdf.numPages, isCurrent, onProgress });
+        return [{ blob, pages: pdf.numPages, indices: sets[0].slice(), report, profile: { original: true }, name: "RealScan_Copia_01.pdf" }];
+      }
       let total = 0;
       for (const [index, indices] of sets.entries()) {
         let result = null, profile = null;
@@ -188,7 +193,7 @@
     dialog.id = "documentCopyTools";
     dialog.className = "desk-dialog document-copy-tools";
     dialog.setAttribute("aria-labelledby", "copyToolsTitle");
-    dialog.innerHTML = '<header><small>HERRAMIENTAS DEL DOCUMENTO</small><h2 id="copyToolsTitle">Prepara una copia para entregar</h2><p>Trabajamos sobre el PDF preparado. Conservamos sus medidas y tu trabajo original. Las copias se aplanan: no conservan texto seleccionable, formularios ni firmas digitales del archivo de entrada.</p></header><div class="copy-tools-layout"><section><label>Páginas del PDF preparado<select data-copy="scope"><option value="all">Todas</option><option value="odd">Impares</option><option value="even">Pares</option><option value="range">Intervalo</option></select></label><label data-copy="range-row" hidden>Intervalo<input data-copy="range" placeholder="1, 3-5"></label><label>Cómo guardar<select data-copy="mode"><option value="single">Un solo PDF</option><option value="pages">Un PDF por página · ZIP</option><option value="groups">Dividir por grupos · ZIP</option></select></label><label data-copy="groups-row" hidden>Grupos sin repetir páginas<input data-copy="groups" placeholder="1-2; 3-5"></label><label class="copy-check"><input type="checkbox" data-copy="limit"> Reducir a un peso máximo por PDF</label><label data-copy="mb-row" hidden>Máximo por PDF (MB)<input type="number" data-copy="mb" min="0.1" max="30" step="0.1" value="2"></label><p>La reducción puede perder detalle. Revisa letras pequeñas antes de entregar. Las zonas ocultas se guardan sin pérdidas para mantener el negro opaco.</p><details data-copy="redaction"><summary>Ocultar datos en esta copia</summary><p>Arrastra sobre la página o introduce porcentajes. Las zonas negras se incorporan a los píxeles de la copia, sin texto OCR ni archivos originales ocultos. Comprueba que cubren todos los datos.</p><div class="copy-rect-fields"></div><button type="button" data-copy="add">Añadir zona</button><button type="button" data-copy="undo">Deshacer última zona</button><p data-copy="marks"></p><label class="copy-check"><input type="checkbox" data-copy="confirm"> Revisé todas las zonas y quiero generar la copia ocultada</label></details></section><section><nav class="copy-page-nav"><button type="button" data-copy="previous">← Anterior</button><span data-copy="page"></span><button type="button" data-copy="next">Siguiente →</button></nav><label>Ampliar vista · no cambia el archivo<select data-copy="zoom"><option value="1">Encajar</option><option value="1.5">150 %</option><option value="2">200 %</option><option value="3">300 %</option></select></label><p data-copy="view-label">Original preparado · dibuja las zonas negras sobre esta vista</p><div class="copy-canvas-wrap"><canvas data-copy="canvas" aria-label="Página para ocultar datos"></canvas></div><label data-copy="result-row" hidden>Archivo comprobado<select data-copy="result"></select></label><button type="button" data-copy="edit" hidden>Volver a editar las zonas</button></section></div><p data-copy="status" role="status">Abriendo el PDF…</p><footer><button type="button" data-copy="close">Volver</button><button type="button" data-copy="build" disabled>Generar y comprobar copia</button><button type="button" data-copy="download" disabled>Descargar copia</button></footer>';
+    dialog.innerHTML = '<header><small>HERRAMIENTAS DEL DOCUMENTO</small><h2 id="copyToolsTitle">Prepara una copia para entregar</h2><p>Trabajamos sobre el PDF preparado. Conservamos sus medidas y tu trabajo original. Las copias modificadas se aplanan: no conservan texto seleccionable, formularios ni firmas digitales. Si solo eliges un peso que ya cumple, conservamos el archivo sin reducir su calidad.</p></header><div class="copy-tools-layout"><section><label>Páginas del PDF preparado<select data-copy="scope"><option value="all">Todas</option><option value="odd">Impares</option><option value="even">Pares</option><option value="range">Intervalo</option></select></label><label data-copy="range-row" hidden>Intervalo<input data-copy="range" placeholder="1, 3-5"></label><label>Cómo guardar<select data-copy="mode"><option value="single">Un solo PDF</option><option value="pages">Un PDF por página · ZIP</option><option value="groups">Dividir por grupos · ZIP</option></select></label><label data-copy="groups-row" hidden>Grupos sin repetir páginas<input data-copy="groups" placeholder="1-2; 3-5"></label><label class="copy-check"><input type="checkbox" data-copy="limit"> Reducir a un peso máximo por PDF</label><label data-copy="mb-row" hidden>Máximo por PDF (MB)<input type="number" data-copy="mb" min="0.1" max="30" step="0.1" value="2"></label><p>La reducción puede perder detalle. Revisa letras pequeñas antes de entregar. Las zonas ocultas se guardan sin pérdidas para mantener el negro opaco.</p><details data-copy="redaction"><summary>Ocultar datos en esta copia</summary><p>Arrastra sobre la página o introduce porcentajes. Las zonas negras se incorporan a los píxeles de la copia, sin texto OCR ni archivos originales ocultos. Comprueba que cubren todos los datos.</p><div class="copy-rect-fields"></div><button type="button" data-copy="add">Añadir zona</button><button type="button" data-copy="undo">Deshacer última zona</button><p data-copy="marks"></p><label class="copy-check"><input type="checkbox" data-copy="confirm"> Revisé todas las zonas y quiero generar la copia ocultada</label></details></section><section><nav class="copy-page-nav"><button type="button" data-copy="previous">← Anterior</button><span data-copy="page"></span><button type="button" data-copy="next">Siguiente →</button></nav><label>Ampliar vista · no cambia el archivo<select data-copy="zoom"><option value="1">Encajar</option><option value="1.5">150 %</option><option value="2">200 %</option><option value="3">300 %</option></select></label><p data-copy="view-label">Original preparado · dibuja las zonas negras sobre esta vista</p><div class="copy-canvas-wrap"><canvas data-copy="canvas" aria-label="Página para ocultar datos"></canvas></div><label data-copy="result-row" hidden>Archivo comprobado<select data-copy="result"></select></label><button type="button" data-copy="edit" hidden>Volver a editar las zonas</button></section></div><p data-copy="status" role="status">Abriendo el PDF…</p><footer><button type="button" data-copy="close">Volver</button><button type="button" data-copy="build" disabled>Generar y comprobar copia</button><button type="button" data-copy="download" disabled>Descargar copia</button></footer>';
     const q = (key) => dialog.querySelector('[data-copy="' + key + '"]');
     let disposed = false, busy = false, task = null, pdf = null, pageIndex = 0, marks = [], results = [], resultTask = null, resultPdf = null, renderTask = null, serial = 0, drag = null, dragPreview = null;
     const current = () => !disposed && unlocked() && isCurrent();
@@ -429,7 +434,7 @@
         await showResult();
         check(current);
         const warnings = files.flatMap((f) => f.report.warnings);
-        q("status").textContent = files.length + " archivo(s) comprobado(s). " + (maxBytes ? "Todos cumplen el peso máximo. " : "") + (maxBytes ? "Calidad reducida: revisa el texto ampliando la vista. " : "") + warnings.join(" ");
+        q("status").textContent = files.length + " archivo(s) comprobado(s). " + (maxBytes ? "Todos cumplen el peso máximo. " : "") + (files.every((f) => f.profile.original) ? "El archivo ya cumplía el límite y conserva su calidad original. " : maxBytes ? "Calidad reducida: revisa el texto ampliando la vista. " : "") + warnings.join(" ");
       } catch (e) {
         results = [];
         if (current()) q("status").textContent = e.message;
@@ -444,7 +449,7 @@
       buttons();
       try {
         const measurement = root.RealScanCounterEvolution?.beginDelivery?.("pdf");
-        if (results.length === 1) save(results[0].blob, results[0].name);
+        if (results.length === 1 && q("mode").value === "single") save(results[0].blob, results[0].name);
         else {
           if (root.ensureJSZip) await root.ensureJSZip();
           check(current);
@@ -464,6 +469,10 @@
     };
     document.body.append(dialog);
     dialog.showModal();
+    const heading = dialog.querySelector("#copyToolsTitle");
+    heading.tabIndex = -1;
+    heading.focus({ preventScroll: true });
+    dialog.scrollTop = 0;
     buttons();
     try {
       const lib = await reader(), data = new Uint8Array(await blob.arrayBuffer());
