@@ -1,3 +1,12 @@
+## 3.39.1 — Entrada clara y envío a Paperless resistente a fallos
+
+- Tarjeta de entrada con dos pasos explicados: qué preparar y de dónde cargarlo; recepción y archivado separados.
+- Tipografía y ayuda legibles, controles de entrada prioritarios en móvil y estado del envío junto a las acciones del PDF.
+- Límites de espera hasta terminar de leer respuestas del NAS; error OCR explicable sin mostrar nombres del servidor y reintento explícito.
+- Eliminar solo las caras registradas en la nube. Las eliminaciones fallidas permanecen pendientes; 404 significa que el objeto ya no existe.
+- Audio solo tras interacción real y sin crear contexto con volumen cero; metadato móvil estándar junto al compatible con Apple.
+- Pruebas con respuestas ficticias: cancelación, permisos del catálogo, fallo OCR, reintento y prevención de duplicados en Chromium y WebKit.
+
 ## 3.39.0 — Herramientas del documento y copias seguras
 
 - Unir archivos desde Documentos, dividir el PDF preparado por página o grupos y descargar un ZIP.

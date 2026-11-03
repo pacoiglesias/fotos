@@ -382,3 +382,21 @@
 @media print{#idPdfIntake,#idFocusPreview,#idSheetView>summary{display:none!important}}
 
 @media screen and (max-width:1050px){#idFocusCards{grid-template-columns:minmax(0,1fr)}}
+
+/* 3.39.1: explain input and output without changing any printed geometry. */
+@media screen {
+ body.rs-next.rs-counter330 #counterIntake{gap:0;border:1px solid var(--work-line);border-radius:16px;background:var(--work-surface);overflow:hidden}
+ body.rs-next.rs-counter330 #counterIntake>:is(#studioWelcome,#deskStart){border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+ body.rs-next.rs-counter330 #counterIntake #deskStart{border-left:1px solid var(--work-line)!important}
+ body.rs-next.rs-counter330 .intake-hint{font-size:12px;color:var(--work-muted);margin:4px 0 14px;max-width:45ch}
+ body.rs-next.rs-counter330 #workspaceNas{display:grid;grid-template-columns:1fr auto;align-items:start;padding:14px;margin:16px 0 0;border:1px solid var(--work-line);border-radius:12px;background:var(--work-bg)}
+ body.rs-next.rs-counter330 #workspaceNas h3{grid-column:1/-1;margin:0;font-size:13px}
+ body.rs-next.rs-counter330 #workspaceNas #deskPaperless{min-height:44px;font-size:13px!important}
+ body.rs-next.rs-counter330 #deskNasPanel{grid-column:1/-1;font-size:12px}
+ body.rs-next.rs-counter330 #workspaceDelivery [data-workspace-deliver=paperless][hidden]{display:none!important}
+ body.rs-next.rs-counter330[data-workspace-loaded=true] #counterIntake .intake-hint{display:none}
+ body.rs-next.rs-counter330[data-workspace-loaded=true] #counterIntake :is(.studio-welcome-heading,.desk-heading){display:flex!important;margin:0 0 8px!important}
+ body.rs-next.rs-counter330[data-workspace-loaded=true] #counterIntake :is(h1,h2){font-size:13px!important;line-height:1.4}
+ body.rs-next.rs-counter330[data-workspace-loaded=true] #counterIntake :is(.studio-welcome-heading,.desk-heading)>:is(p,small){display:none}
+ @media(max-width:767px){body.rs-next.rs-counter330 #counterIntake #deskStart{border-left:0!important;border-top:1px solid var(--work-line)!important}body.rs-next.rs-counter330 #workspaceNas{grid-template-columns:1fr}body.rs-next.rs-counter330 #workspaceNas small{text-align:left;max-width:none}}
+}

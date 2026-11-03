@@ -1,3 +1,7 @@
+## 3.39.1 — En validación
+
+[Correcciones y pruebas pendientes de publicación](ENTREGA_3391.md). No certifica el OCR del NAS ni la impresora física.
+
 ## 3.39.0 — Publicada y verificada
 
 Las seis propuestas están implementadas y publicadas. 470 marcas PASS, 0 FAIL; cinco direcciones verificadas y 65 comparaciones de archivos. Fuente 442650608898de65d31690f4fa87c7650680b584, contenido realscan-144ffb76d7a0a7f6. [Alcance, pruebas y límites](ENTREGA_3390.md).

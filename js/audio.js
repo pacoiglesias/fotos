@@ -7,9 +7,11 @@
   'use strict';
 
   let audioCtx = null;
+  let userActivated = false;
   const AUDIO_PREFS_KEY = 'realscan_audio_prefs_v1';
 
   function getAudioContext() {
+    if (!userActivated && !global.navigator?.userActivation?.isActive) return null;
     if (!audioCtx && (typeof window !== 'undefined')) {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (AudioContextClass) {
@@ -20,7 +22,7 @@
         }
       }
     }
-    if (audioCtx && audioCtx.state === 'suspended') {
+    if (audioCtx && audioCtx.state === 'suspended' && global.navigator?.userActivation?.isActive) {
       audioCtx.resume().catch(function() {});
     }
     return audioCtx;
@@ -28,11 +30,11 @@
 
   // Desbloqueo de AudioContext tras el primer gesto de usuario
   if (typeof document !== 'undefined') {
-    const unlockAudio = function() {
-      getAudioContext();
-      document.removeEventListener('click', unlockAudio, true);
-      document.removeEventListener('keydown', unlockAudio, true);
-      document.removeEventListener('touchstart', unlockAudio, true);
+    const unlockAudio = function(event) {
+      if (!event.isTrusted || !global.navigator?.userActivation?.isActive) return;
+      userActivated = true;
+      const st = global.state || {};
+      if (st.audioFeedbackEnabled && st.audioVolume !== 0) getAudioContext();
     };
     document.addEventListener('click', unlockAudio, true);
     document.addEventListener('keydown', unlockAudio, true);
@@ -63,12 +65,11 @@
   function playTone(freq, durationMs, type, startGain, endGain, delayMs) {
     const st = global.state || {};
     if (!st.audioFeedbackEnabled) return;
-    const ctx = getAudioContext();
-    if (!ctx) return;
-
-    delayMs = delayMs || 0;
     const masterVol = typeof st.audioVolume === 'number' ? st.audioVolume : 0.7;
     if (masterVol <= 0) return;
+    const ctx = getAudioContext();
+    if (!ctx || ctx.state !== 'running') return;
+    delayMs = delayMs || 0;
     const startTime = ctx.currentTime + (delayMs / 1000);
     const stopTime = startTime + (durationMs / 1000);
 
