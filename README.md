@@ -1,6 +1,9 @@
-# RealScan Pro · 3.38.0
+# RealScan Pro · 3.39.0
 
-Publicada y verificada en ambos Firebase y en tu dominio; el estado de las pruebas y la publicación se registra en [el registro de entrega](audit/ENTREGA_3380.md). La revisión permite recorrer todas las páginas y ampliarlas, deshacer ajustes de INE/fotos, comparar perfiles repetidos y consultar métricas hasta la salida del trabajo. Los ajustes habituales están visibles y los avanzados se despliegan cuando hacen falta.
+Entrega 3.39.0 en validación: unir/dividir PDF, selección de pares/impares, peso máximo, ocultación en una copia y repetición segura de ajustes. [Estado y límites](audit/ENTREGA_3390.md). La entrega pública comprobada anterior es 3.38.0.
+
+
+La entrega anterior 3.38.0 está comprobada en [su registro](audit/ENTREGA_3380.md). Se conservan la navegación y lupa del PDF, los ajustes reversibles de INE/fotos, la comparación de perfiles y las métricas hasta la salida del trabajo.
 
 Cargar → Ajustar → Entregar conserva las capturas y utiliza los motores existentes en milímetros. El margen y las posiciones seguras actúan sobre la salida real; la ampliación solo cambia la vista. Las pruebas físicas permanecen pendientes.
 

@@ -2,9 +2,9 @@
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  let starting = false;
+  let starting = false;let lastConfiguration=null,repeatLast=false;
   let output = 'both';
-  const settings = ['photoPack','sheetPosition','hideSheetTitle','outputSets','activeCategory','format','paperSize','printMode','sheetLayout','documentPageCount','photoCopies','photoCopiesPersonA','photoCopiesPersonB','mixTwoPhotos','duplicateCard','includeRulerFooter','includeDocLabels','includeCutMarks','customWidth','customHeight','customUnit','passportOpenOrientation','passportPageOrientation'];
+  const settings = ['sheetMarginMm','photoPack','sheetPosition','hideSheetTitle','outputSets','activeCategory','format','paperSize','printMode','sheetLayout','documentPageCount','photoCopies','photoCopiesPersonA','photoCopiesPersonB','mixTwoPhotos','duplicateCard','includeRulerFooter','includeDocLabels','includeCutMarks','customWidth','customHeight','customUnit','passportOpenOrientation','passportPageOrientation'];
   function activeDelivery() {
     const s = window.RealScanQrSync?.getActiveDeliverySession();
     return s && !['revoked','expired'].includes(s.status) && Date.now() < s.expiresAt ? s : null;
@@ -22,12 +22,13 @@
     $('counterDeliver').textContent = output === 'print' ? 'Revisar impresión' : 'Preparar entrega digital';
   }
   function rootDigitalUpdate(){window.RealScanDigital?.render();window.RealScanWorkflow?.update();}
-  function openNewService(kind = 'id', source = 'choose') {
-    if (starting) return;
+  function openNewService(kind = 'id', source = 'choose',useLast=false) {
+    if (starting) return;repeatLast=!!useLast;
     const delivery = activeDelivery();
     $('newKeepDeliveryRow').hidden = !delivery;
     $('newKeepDelivery').checked = true;
     $('newServiceKind').value = ['id','photos','multi','document','custom','repeat'].includes(kind) ? kind : 'id';
+    $('newServiceKind').querySelector('[value="repeat"]').textContent=useLast?'Repetir ajustes del último pedido · sin datos del cliente':'Repetir la configuración actual con imágenes nuevas';
     $('newServiceSource').value = ['choose','qr','camera','file'].includes(source) ? source : 'choose';
     $('newServiceOutput').value = 'both';
     $('newServiceConfirm').checked = !Object.values(state.images).some(i=>i.originalSrc || i._reading) && !RealScanQrSync.getInboxFiles().length && !window.RealScanDocuments?.status().count;
@@ -41,8 +42,11 @@
     $('newServiceStart').disabled = true;
     try {
       const kind = $('newServiceKind').value, source = $('newServiceSource').value, selectedOutput = $('newServiceOutput').value;
-      const previous = Object.fromEntries(settings.map(key=>[key,state[key]]));
-      const wasDocument=window.RealScanDocuments?.status().active;
+      // Whitelist configuration only; never retain customer titles, media or annotations.
+      const captured=Object.fromEntries(settings.map(key=>[key,state[key]])),docStatus=window.RealScanDocuments?.status(),safeDocument=docStatus?.active?Object.fromEntries(['paper','orientation','margin','quality','color','sets','duplex','position'].map(key=>[key,docStatus.options[key]])):null;
+      if(docStatus?.count||Object.values(state.images).some(i=>i.originalSrc))lastConfiguration={settings:captured,document:safeDocument};
+      const repeated=kind==='repeat'&&repeatLast&&lastConfiguration?lastConfiguration:{settings:captured,document:safeDocument};
+      const previous=repeated.settings;const wasDocument=!!repeated.document;
       const keepDelivery = !!activeDelivery() && $('newKeepDelivery').checked;
       prepareWorkspaceForJobSwitch({clearDraft:true,keepTitle:false,keepDelivery});
       const revision=state._jobRevision;
@@ -67,7 +71,8 @@
       setPaperSize(state.paperSize,true);
       savePreferences();
       updateUI();
-      if(kind==='document'||kind==='repeat'&&wasDocument)window.RealScanDocuments.activate();
+      if(kind==='document'||kind==='repeat'&&wasDocument){window.RealScanDocuments.activate();if(kind==='repeat'&&repeated.document)window.RealScanDocuments.setOptions(repeated.document);}
+      for(const id of ['deskClient','deskPhone','deskNote'])if($(id))$(id).value='';
       closeModal('newServiceModal');
       const firstSide=RealScanWorkflow.describe().wanted[0] || 'front';
       setMobileStep(source === 'choose' ? 1 : 2);
