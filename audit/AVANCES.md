@@ -1,6 +1,6 @@
-## 3.38.0 — En validación
+## 3.38.0 — Publicada y verificada
 
-Se aplican las cinco mejoras de software y se prepara la evaluación con operador nuevo. [Entrega y límites](ENTREGA_3380.md). No se declara publicada hasta comprobar los dos Firebase y el dominio.
+Las cinco mejoras de software están publicadas. Publicador completo: 460 marcas PASS, 0 FAIL. Cinco direcciones verificadas, 95 comparaciones de archivos, CSP y metadatos coincidentes. Fuente 78354907c481a5a4ab6ca6ce53183d50e33c00d1, contenido realscan-9536e5ccaa108f44. Evaluación humana preparada y pendiente. [Entrega y límites](ENTREGA_3380.md).
 
 ## 3.37.0 — Publicada y verificada
 

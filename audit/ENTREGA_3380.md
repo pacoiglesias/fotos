@@ -1,6 +1,6 @@
 # RealScan Pro 3.38.0
 
-Estado: implementación local; pruebas y publicación pendientes.
+Estado: **publicada y verificada en ambos Firebase y en el dominio habitual**.
 
 ## Alcance
 
@@ -13,7 +13,26 @@ Estado: implementación local; pruebas y publicación pendientes.
 
 ## Validación y publicación
 
-Pendientes de registrar después de ejecutar npm ci, verificación completa, compilación, CI y publicador oficial. Se comprobarán appVersion, sourceCommit, CSP, archivos y portada sin parámetros en ambos Firebase y el dominio.
+Publicada y verificada el 3 de noviembre de 2026, 7:16 a.m., hora de Ciudad de México.
+
+- Fuente: `78354907c481a5a4ab6ca6ce53183d50e33c00d1`; contenido: `realscan-9536e5ccaa108f44`.
+- npm ci completado: 101 paquetes instalados, 0 vulnerabilidades informadas.
+- npm run publish terminó con código 0: verificación completa, build, comprobación de CSP/versión y despliegue de los dos Firebase. 460 marcas PASS, 0 FAIL; las marcas incluyen comprobaciones repetidas y no equivalen a casos únicos.
+- [PR #18](https://github.com/pacoiglesias/fotos/pull/18) integrado; [CI de la fuente publicada](https://github.com/pacoiglesias/fotos/actions/runs/41571144415) aprobado, incluida la comprobación del publicador Windows.
+- Regresión nueva: 10 grupos aprobados entre Chromium y WebKit. Prueba PDF real con selección 1,3, navegación, lupa, encaje completo en cuatro anchos, cancelación de render, cierre, ajuste reversible, perfiles, reimpresión, archivado y compartir. El archivo descargado conserva los mismos bytes al navegar o ampliar.
+- Portada / y version.json sin parámetros, appVersion, sourceCommit, CSP y huellas de archivos coinciden en cinco direcciones. Se compararon 95 archivos en total.
+
+| Dirección | Archivos comprobados | Versión |
+| --- | ---: | --- |
+| https://fotos-cobertores-pro.web.app | 19 | 3.38.0 |
+| https://fotos-cobertores-pro.firebaseapp.com | 19 | 3.38.0 |
+| https://fotos-cobertores.web.app | 19 | 3.38.0 |
+| https://fotos-cobertores.firebaseapp.com | 19 | 3.38.0 |
+| https://fotos.cobertores.com | 19 | 3.38.0 |
+
+Dos ejecuciones locales se interrumpieron durante las pruebas, antes de desplegar: se corrigieron el encaje completo y una superposición con el QR, y se adaptó el escenario de fallo de generación a un cambio real de calidad. La ejecución final corresponde a la fuente y resultados anteriores. Las pruebas de Paperless usan archivos sintéticos y respuestas controladas; no certifican el acceso actual de cada navegador al NAS real.
+
+Evidencia local ignorada: .audit/publish3380.log, .audit/publicacion-3380-verificada.json, .audit/ci3380-publication.json y .audit/review-complete/results.json. No se publica material privado de clientes. El cierre de documentos no modifica el compilado ni constituye otro despliegue.
 
 ## Pendientes humanos
 

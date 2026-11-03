@@ -1,4 +1,4 @@
-## Revisión 3.38.0
+## Revisión y publicación comprobada 3.38.0
 
 [Entrega](ENTREGA_3380.md): PDF completo con lupa, revisión compacta y reversible, perfiles comparables con recuperación y métricas observadas hasta salida/confirmación. Sin cambios al motor en milímetros ni persistencia de imágenes en preferencias.
 

@@ -1,4 +1,4 @@
-## Entrega diaria 3.38.0
+## Entrega comprobada 3.38.0
 
 Implementación de cinco mejoras: PDF multipágina navegable con lupa; Deshacer/Rehacer en revisión de INE/fotos; opciones habituales visibles y avanzadas plegadas; comparación reversible de perfiles repetidos; métricas hasta salida/confirmación. Se prepara una guía y archivos sintéticos para la sexta propuesta, evaluación con operador nuevo, que requiere una persona real y permanece pendiente. [Estado de entrega](audit/ENTREGA_3380.md).
 

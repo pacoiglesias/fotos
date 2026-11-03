@@ -1,6 +1,6 @@
 # RealScan Pro · 3.38.0
 
-Entrega en preparación; el estado de las pruebas y la publicación se registra en [el registro de entrega](audit/ENTREGA_3380.md). La revisión permite recorrer todas las páginas y ampliarlas, deshacer ajustes de INE/fotos, comparar perfiles repetidos y consultar métricas hasta la salida del trabajo. Los ajustes habituales están visibles y los avanzados se despliegan cuando hacen falta.
+Publicada y verificada en ambos Firebase y en tu dominio; el estado de las pruebas y la publicación se registra en [el registro de entrega](audit/ENTREGA_3380.md). La revisión permite recorrer todas las páginas y ampliarlas, deshacer ajustes de INE/fotos, comparar perfiles repetidos y consultar métricas hasta la salida del trabajo. Los ajustes habituales están visibles y los avanzados se despliegan cuando hacen falta.
 
 Cargar → Ajustar → Entregar conserva las capturas y utiliza los motores existentes en milímetros. El margen y las posiciones seguras actúan sobre la salida real; la ampliación solo cambia la vista. Las pruebas físicas permanecen pendientes.
 
