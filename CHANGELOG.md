@@ -5,6 +5,7 @@
 - Copias con peso máximo por PDF medido en bytes; no entrega un archivo fuera del límite. Avisa de pérdida de detalle y conserva las medidas.
 - Ocultación de datos en píxeles negros opacos de una copia aplanada, sin OCR, adjuntos ni original incrustado. Los originales del trabajo se conservan.
 - Repetir los ajustes del último pedido en memoria, incluidos márgenes y opciones de documentos, limpiando imágenes, firmas, encabezados y datos de cliente.
+- La recuperación de un cambio de servicio queda vinculada al pedido que la creó; no puede restaurar imágenes del cliente anterior ni confirmar una conversión que terminó después de cambiar de pedido.
 - Comprobación del PDF final: número de páginas, medidas, posibles páginas vacías y avisos de contenido o anotaciones fuera del papel.
 
 ## 3.38.0 — Revisión completa y entrega diaria

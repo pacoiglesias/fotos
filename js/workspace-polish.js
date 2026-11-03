@@ -18,7 +18,7 @@
   if(k==='photos'||p.clean){state.includeRulerFooter=false;state.includeDocLabels=false;state.hideSheetTitle=true;state.documentCustomTitle='';state.includeCutMarks=true;}root.RealScanDeskConfig?.apply(p.settings?{...p.settings,printer:root.RealScanPrinterProfiles?.getActiveId()||''}:null);
  }
  async function choose(k){
-  if(!unlocked()||busy()||changing)return;remember();const previous={kind:kind(),draft:root.snapshotActiveDraft?.(),document:doc().active?RealScanDocuments.exportSnapshot():null};changing=true;update();
+  if(!unlocked()||busy()||changing)return;remember();const sourceRevision=state._jobRevision;const previous={kind:kind(),draft:root.snapshotActiveDraft?.(),document:doc().active?RealScanDocuments.exportSnapshot():null};changing=true;update();
   try{
    if(k==='document'){
     const captures=Object.entries(state.images).filter(([,p])=>p.processedDataUrl).map(([side,p])=>({side,src:p.processedDataUrl}));const needsImport=!doc().count;RealScanDocuments.activate();if(needsImport&&captures.length){const revision=state._jobRevision,files=[];for(const c of captures){const blob=await(await fetch(c.src)).blob();if(!unlocked()||revision!==state._jobRevision)throw Error('La sesión o el trabajo cambió.');files.push(new File([blob],c.side+'.'+(blob.type==='image/png'?'png':'jpg'),{type:blob.type}));}await RealScanDocuments.addFiles(files);}applyPreference(k);
@@ -26,11 +26,11 @@
     let page=null;if(doc().active){const snapshot=RealScanDocuments.exportSnapshot(),selected=snapshot?.pages?.[doc().selected];if(selected)page=snapshot.assets[selected.data];RealScanDocuments.deactivate();}
     switchIntent(k);applyPreference(k);if(page&&!state.images.front.originalSrc){root.processRawDataUrl(page,'front',true);await root.waitForProcessingComplete?.();}
    }
-   await root.waitForProcessingComplete?.();if(!unlocked())return;previousService=previous;state._jobRevision=(state._jobRevision||0)+1;root.updateUI?.();RealScanStudio.update();RealScanServiceFlow.update();root.saveActiveDraft?.();root.savePreferences?.();showStage('prepare');
+   await root.waitForProcessingComplete?.();if(!unlocked()||sourceRevision!==state._jobRevision)return;state._jobRevision=(state._jobRevision||0)+1;previousService={...previous,revision:state._jobRevision};root.updateUI?.();RealScanStudio.update();RealScanServiceFlow.update();root.saveActiveDraft?.();root.savePreferences?.();showStage('prepare');
    if(previous.draft||previous.document)root.showToast?.('Capturas conservadas. Revisa el encuadre y las medidas del nuevo servicio.','info');
   }finally{changing=false;schedule();}
  }
- async function undoService(){if(!previousService||busy()||changing||!unlocked())return;const saved=previousService;previousService=null;changing=true;try{if(saved.document)await RealScanDocuments.restoreSnapshot(saved.document);else if(saved.draft){RealScanDocuments.deactivate();await restoreActiveDraft(saved.draft);}else{RealScanDocuments.deactivate();switchIntent(saved.kind);}RealScanStudio.update();RealScanServiceFlow.update();}finally{changing=false;schedule();}}
+ async function undoService(){if(previousService&&previousService.revision!==state._jobRevision)previousService=null;if(!previousService||busy()||changing||!unlocked())return;const saved=previousService;previousService=null;changing=true;try{if(saved.document)await RealScanDocuments.restoreSnapshot(saved.document);else if(saved.draft){RealScanDocuments.deactivate();await restoreActiveDraft(saved.draft);}else{RealScanDocuments.deactivate();switchIntent(saved.kind);}RealScanStudio.update();RealScanServiceFlow.update();}finally{changing=false;schedule();}}
  function showStage(value){
   if(!unlocked()||busy()||changing)return;
   stage=value;document.body.dataset.workspaceStage=value;
@@ -60,7 +60,7 @@
   setPrintMode('single');root.RealScanPrint?.clear();root.RealScanDocumentPrint?.clear();root.updateUI?.();root.RealScanStudio?.update();root.RealScanServiceFlow?.update();root.saveActiveDraft?.();root.savePreferences?.();remember();schedule();return true;
  }
  function updateDock(){const dock=$('mobileDock');if(!dock)return;const action=$('mobileDockPrimary')?.dataset.action,target=$(action==='save'?'mobileSavePdf':'mobileCapture');let visible=false;if(target){const b=target.getBoundingClientRect(),v=root.visualViewport,top=v?.offsetTop||0,bottom=top+(v?.height||innerHeight),s=getComputedStyle(target);visible=b.height>0&&b.top>=top+4&&b.bottom<=bottom-8&&s.visibility!=='hidden'&&s.display!=='none';}dock.dataset.inlineVisible=String(visible);}
- function arrange(){if(!mounted)return;const left=$('colControlPanel'),wide=!!left&&innerWidth>=1100&&!doc().active&&document.body.dataset.outputMode!=='digital';
+ function arrange(){if(previousService&&previousService.revision!==state._jobRevision)previousService=null;if(!mounted)return;const left=$('colControlPanel'),wide=!!left&&innerWidth>=1100&&!doc().active&&document.body.dataset.outputMode!=='digital';
   if(!$('counterIntake')){for(const {element,anchor}of anchors){if(wide){if(element.parentElement!==left)left.append(element);}else if(element.previousSibling!==anchor)anchor.after(element);}
   if(wide){let p=null;for(const id of ['deskStart','studioWelcome']){const e=$(id);if(p){if(p.nextElementSibling!==e)p.after(e);}else if(left.firstElementChild!==e)left.prepend(e);p=e;}}}
   const tools=$('studioEditorTools'),mat=document.querySelector('#colStageWorkspace .stage-canvas-area')?.parentElement;if(editorAnchor&&tools&&mat&&mat.nextElementSibling!==tools)mat.after(tools);
