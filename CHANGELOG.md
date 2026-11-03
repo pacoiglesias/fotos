@@ -1,3 +1,12 @@
+## 3.39.0 — Herramientas del documento y copias seguras
+
+- Unir archivos desde Documentos, dividir el PDF preparado por página o grupos y descargar un ZIP.
+- Selección directa de todas las páginas, pares, impares o intervalo.
+- Copias con peso máximo por PDF medido en bytes; no entrega un archivo fuera del límite. Avisa de pérdida de detalle y conserva las medidas.
+- Ocultación de datos en píxeles negros opacos de una copia aplanada, sin OCR, adjuntos ni original incrustado. Los originales del trabajo se conservan.
+- Repetir los ajustes del último pedido en memoria, incluidos márgenes y opciones de documentos, limpiando imágenes, firmas, encabezados y datos de cliente.
+- Comprobación del PDF final: número de páginas, medidas, posibles páginas vacías y avisos de contenido o anotaciones fuera del papel.
+
 ## 3.38.0 — Revisión completa y entrega diaria
 
 - Navegación por todas las páginas del PDF preparado y lupa sin cambiar los bytes del archivo ni las medidas impresas; cancelación de render y liberación de recursos.

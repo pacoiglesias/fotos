@@ -1,3 +1,7 @@
+## Revisión 3.39.0
+
+[Herramientas y validación](ENTREGA_3390.md). Las copias especiales se aplanan a imágenes, conservando el tamaño de las páginas; no conservan formularios, texto seleccionable ni firmas digitales del archivo de entrada. El motor de impresión original no cambia.
+
 ## Revisión y publicación comprobada 3.38.0
 
 [Entrega](ENTREGA_3380.md): PDF completo con lupa, revisión compacta y reversible, perfiles comparables con recuperación y métricas observadas hasta salida/confirmación. Sin cambios al motor en milímetros ni persistencia de imágenes en preferencias.
