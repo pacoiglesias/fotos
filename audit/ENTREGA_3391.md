@@ -8,8 +8,12 @@ Entrada diferenciada entre servicio y origen, archivo Paperless en entrega, avis
 
 ## Validación
 
-npm ci: 101 paquetes instalados, 102 auditados, 0 vulnerabilidades notificadas. Ocho comprobaciones del flujo de entrada y entrega con archivos sintéticos y respuestas simuladas del NAS en Chromium y WebKit. Pruebas unitarias de audio, respuestas NAS bloqueadas, fallos OCR y reintentos; seis comprobaciones de recuperación/eliminación de nube. Pendientes verificaciones finales, CI y publicación de la fuente final. version.json se genera en dist durante build con versión, contenido y commit de origen; no existe un version.json manual en la raíz.
+npm ci: 101 paquetes instalados, 102 auditados, 0 vulnerabilidades notificadas. Diez comprobaciones del flujo de entrada y entrega con archivos sintéticos y respuestas simuladas del NAS en Chromium y WebKit. Pruebas unitarias de audio, respuestas NAS bloqueadas, fallos OCR y reintentos; seis comprobaciones de recuperación/eliminación de nube. Pendientes verificaciones finales, CI y publicación de la fuente final. version.json se genera en dist durante build con versión, contenido y commit de origen; no existe un version.json manual en la raíz.
 
 ## Límites
 
 El error original de OCR de Paperless requiere comprobar una tarea nueva tras guardar spa+eng sin espacios. Si persiste, verificar idiomas dentro del contenedor NAS. No se han instalado paquetes ni modificado Docker. La prueba física de la HP sigue pendiente. Los avisos informativos de instalación PWA y limpieza de escaneos caducados se conservan. Un objeto ya borrado en otro equipo puede responder 404 sin impedir una eliminación idempotente. No se han usado credenciales ni documentos personales en las pruebas.
+
+## Revisión adicional antes de desplegar
+
+Se detuvo el primer publicador durante las pruebas, antes de cualquier despliegue, al detectar que el acceso rápido de archivado no compartía la recuperación del envío manual. Ambos accesos comparten ahora estado, enlace de ayuda y reintento explícito; mientras uno trabaja, el otro no inicia otra operación. Las descargas y la impresión siguen disponibles. Dos casos adicionales de navegador prueban el fallo y la recuperación por este acceso rápido.
