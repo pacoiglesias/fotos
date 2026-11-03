@@ -1,6 +1,6 @@
-## 3.39.0 — En validación
+## 3.39.0 — Publicada y verificada
 
-Se implementan las seis propuestas de herramientas diarias. [Alcance, pruebas y publicación](ENTREGA_3390.md). La entrega pública verificada anterior es 3.38.0.
+Las seis propuestas están implementadas y publicadas. 470 marcas PASS, 0 FAIL; cinco direcciones verificadas y 65 comparaciones de archivos. Fuente 442650608898de65d31690f4fa87c7650680b584, contenido realscan-144ffb76d7a0a7f6. [Alcance, pruebas y límites](ENTREGA_3390.md).
 
 ## 3.38.0 — Publicada y verificada
 

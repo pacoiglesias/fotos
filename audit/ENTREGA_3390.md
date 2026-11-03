@@ -1,6 +1,6 @@
 # RealScan Pro 3.39.0 · Herramientas del documento
 
-Estado: implementación local; validación completa y publicación pendientes. La última entrega pública comprobada es 3.38.0.
+Estado: **publicada y verificada en ambos Firebase y en el dominio habitual**.
 
 ## Las seis funciones
 
@@ -19,8 +19,31 @@ Máximo 80 páginas por copia y 100 MB de entrada/salida agregada; render limita
 
 ## Pruebas y publicación
 
-Pendientes de registrar sobre la fuente final: npm ci, comprobación de versión, sintaxis, compilación, CSP, regresiones de las seis funciones en Chromium/WebKit, suite completa, CI y publicación. Se comprobarán la portada y version.json sin parámetros, archivos y CSP en ambos Firebase y el dominio habitual.
+Publicación comprobada el 3 de noviembre de 2026, 1:02 p.m., hora de Ciudad de México.
+
+- Fuente: `442650608898de65d31690f4fa87c7650680b584`; contenido: `realscan-144ffb76d7a0a7f6`.
+- npm ci: 101 paquetes instalados; 0 vulnerabilidades informadas.
+- npm run publish terminó con código 0: suite completa, build, CSP, metadatos y ambos Firebase desplegados. 470 marcas PASS, 0 FAIL; las marcas incluyen comprobaciones repetidas y no equivalen a casos únicos.
+- [PR #19](https://github.com/pacoiglesias/fotos/pull/19) integrado. [CI de la fuente publicada](https://github.com/pacoiglesias/fotos/actions/runs/41694262545) aprobado.
+- Regresión nueva: 10 grupos en Chromium/WebKit. Comprueba medidas mixtas A4/Carta/paisaje, píxeles opacos y ausencia de OCR/adjuntos en copias ocultadas, peso real y límite imposible, conservación exacta del archivo que ya cumple, ZIP de uno o varios PDFs, orden de unión, páginas impares, vista ampliada, limpieza de datos al repetir ajustes, recuperación limitada al mismo pedido y cierre por bloqueo.
+- Portada / y version.json sin parámetros, appVersion, sourceCommit, CSP y huellas de archivos coinciden en cinco direcciones: 65 comparaciones de archivos.
+
+| Dirección | Archivos comprobados | Versión |
+| --- | ---: | --- |
+| [https://fotos-cobertores-pro.web.app](https://fotos-cobertores-pro.web.app) | 13 | 3.39.0 |
+| [https://fotos-cobertores-pro.firebaseapp.com](https://fotos-cobertores-pro.firebaseapp.com) | 13 | 3.39.0 |
+| [https://fotos-cobertores.web.app](https://fotos-cobertores.web.app) | 13 | 3.39.0 |
+| [https://fotos-cobertores.firebaseapp.com](https://fotos-cobertores.firebaseapp.com) | 13 | 3.39.0 |
+| [https://fotos.cobertores.com](https://fotos.cobertores.com) | 13 | 3.39.0 |
+
+Durante la validación se reprodujo y corrigió la recuperación de imágenes del pedido anterior mediante Deshacer cambio de servicio. La primera ejecución del publicador se interrumpió en las pruebas, antes de desplegar, para incorporar esa corrección y su regresión. La ejecución final corresponde a la fuente y resultados indicados.
+
+Evidencia local ignorada: .audit/publish3390.log, .audit/publicacion-3390-verificada.json, .audit/ci3390-publication.json y .audit/document-tools/results.json. El cierre documental no modifica el compilado ni constituye otro despliegue.
 
 ## Pendientes humanos
 
 Se mantienen la medición física HP CP1025, dúplex, iPhone real y evaluación con un operador nuevo. Las pruebas de servicios remotos usan respuestas controladas y no certifican el acceso real al NAS desde cada navegador.
+
+## Incidencia OCR del NAS
+
+El operador mostró `spa + eng` en el campo Idioma de Paperless, sobrescribiendo la configuración externa. Se indicó usar `spa+eng`; el operador confirmó haber guardado el cambio. La validación de una tarea nueva sigue pendiente. No se instalaron paquetes ni se modificó Docker desde esta sesión. [Configuración, diagnóstico y límites](CONFIGURACION_PAPERLESS.md).

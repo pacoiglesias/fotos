@@ -1,4 +1,4 @@
-## Herramientas diarias 3.39.0
+## Entrega comprobada 3.39.0
 
 Unir/dividir, reducir por peso, páginas pares/impares/intervalo, ocultar datos en una copia, repetir ajustes sin datos de cliente y comprobar el PDF final. [Estado y límites](audit/ENTREGA_3390.md).
 

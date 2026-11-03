@@ -1,6 +1,8 @@
 # RealScan Pro · 3.39.0
 
-Entrega 3.39.0 en validación: unir/dividir PDF, selección de pares/impares, peso máximo, ocultación en una copia y repetición segura de ajustes. [Estado y límites](audit/ENTREGA_3390.md). La entrega pública comprobada anterior es 3.38.0.
+3.39.0 publicada y verificada en ambos Firebase y en tu dominio: unir/dividir PDF, selección de pares/impares, peso máximo, ocultación en una copia y repetición segura de ajustes. [Estado y límites](audit/ENTREGA_3390.md).
+
+[Configuración de OCR en Paperless](audit/CONFIGURACION_PAPERLESS.md): diagnóstico de idiomas con espacios, valores recomendados y comprobación de una tarea nueva en el NAS.
 
 
 La entrega anterior 3.38.0 está comprobada en [su registro](audit/ENTREGA_3380.md). Se conservan la navegación y lupa del PDF, los ajustes reversibles de INE/fotos, la comparación de perfiles y las métricas hasta la salida del trabajo.
