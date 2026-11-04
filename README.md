@@ -1,6 +1,6 @@
-# RealScan Pro · 3.39.0
+# RealScan Pro · 3.39.1
 
-3.39.0 publicada y verificada en ambos Firebase y en tu dominio: unir/dividir PDF, selección de pares/impares, peso máximo, ocultación en una copia y repetición segura de ajustes. [Estado y límites](audit/ENTREGA_3390.md).
+3.39.1 publicada y verificada en ambos Firebase y en tu dominio: entrada más clara, carga accesible en móvil, ventanas de Paperless accesibles, recuperación de envíos y limpieza de cachés antiguas. [Estado y límites](audit/ENTREGA_3391.md).
 
 [Configuración de OCR en Paperless](audit/CONFIGURACION_PAPERLESS.md): diagnóstico de idiomas con espacios, valores recomendados y comprobación de una tarea nueva en el NAS.
 

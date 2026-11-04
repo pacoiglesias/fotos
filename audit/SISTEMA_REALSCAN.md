@@ -1,6 +1,6 @@
-## 3.39.1 — En validación
+## 3.39.1 — Publicada y verificada
 
-[Correcciones y pruebas pendientes de publicación](ENTREGA_3391.md). No certifica el OCR del NAS ni la impresora física.
+Entrada más clara, ventanas de Paperless y OCR accesibles, recuperación de envíos y limpieza de cachés históricas. Publicador: 488 marcas PASS, 0 FAIL. Cinco direcciones y 95 comparaciones de archivos verificadas. Fuente 5f95fd5447fe7a1e560ae033a2f3e124949c378a, contenido realscan-a405d66782f5c9c2. [Entrega y límites](ENTREGA_3391.md). El OCR real del NAS y la prueba física de la HP siguen pendientes.
 
 ## Revisión y publicación comprobada 3.39.0
 

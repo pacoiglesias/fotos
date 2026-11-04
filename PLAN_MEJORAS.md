@@ -1,3 +1,7 @@
+## Entrega comprobada 3.39.1
+
+Entrada separada entre servicio y origen, opciones de NAS agrupadas en entrega, avisos próximos a las acciones y correcciones de borrado de nube/audio. [Pruebas, publicación y límites](audit/ENTREGA_3391.md). OCR real del NAS y medición física siguen pendientes.
+
 ## Entrega comprobada 3.39.0
 
 Unir/dividir, reducir por peso, páginas pares/impares/intervalo, ocultar datos en una copia, repetir ajustes sin datos de cliente y comprobar el PDF final. [Estado y límites](audit/ENTREGA_3390.md).
