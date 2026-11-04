@@ -422,7 +422,7 @@ function getTopModal() {
 }
 
 function hasNativeModal() {
-  try { return !!document.querySelector?.('dialog:modal'); } catch (_) { return false; }
+  try { const modal=document.querySelector?.('dialog:modal');return modal?.tagName === 'DIALOG' && modal.open === true; } catch (_) { return false; }
 }
 
 function syncModalState() {
