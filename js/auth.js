@@ -159,11 +159,11 @@ function renderAuditLogs() {
       '<div class="min-w-0">' +
         '<div class="flex items-center gap-1.5 flex-wrap">' +
           '<span class="font-bold text-slate-900 dark:text-white">' + escapeHtml(l.action) + '</span>' +
-          '<span class="px-1.5 py-0.2 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-mono text-[10px]">👤 ' + escapeHtml(l.user) + '</span>' +
+          '<span class="px-1.5 py-0.2 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-mono text-[12px]">👤 ' + escapeHtml(l.user) + '</span>' +
         '</div>' +
-        (l.details ? '<p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 break-words">' + escapeHtml(l.details) + '</p>' : '') +
+        (l.details ? '<p class="text-slate-600 dark:text-slate-300 text-[12px] mt-0.5 break-words">' + escapeHtml(l.details) + '</p>' : '') +
       '</div>' +
-      '<span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono shrink-0">' + formatLogDate(l.timestamp) + '</span>' +
+      '<span class="text-[12px] text-slate-400 dark:text-slate-500 font-mono shrink-0">' + formatLogDate(l.timestamp) + '</span>' +
     '</div>';
   });
   listEl.innerHTML = html;
@@ -687,8 +687,34 @@ function setIdleLockMinutes(minutes) {
     localStorage.setItem(key, JSON.stringify(prefs));
   } catch (e) {}
 }
+let idleWarnTimer = null;
+function clearIdleWarnTimer() {
+  if (idleWarnTimer) { clearTimeout(idleWarnTimer); idleWarnTimer = null; }
+}
+function ensureIdleWarnModal() {
+  let modal = document.getElementById('idleLockWarningModal');
+  if (modal) return modal;
+  modal = document.createElement('div');
+  modal.id = 'idleLockWarningModal';
+  modal.className = 'hidden counter-overlay';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-labelledby', 'idleLockWarningTitle');
+  modal.innerHTML = '<div class="counter-dialog"><h2 id="idleLockWarningTitle">El puesto se bloqueará pronto</h2><p class="counter-help">Hay una entrega digital activa. El bloqueo no la borra, pero si caduca mientras estás fuera o se cierra el puesto, tendrás que generarla de nuevo.</p><div class="counter-dialog-actions"><button type="button" id="idleLockKeep" class="counter-primary">Mantener la entrega abierta</button><button type="button" id="idleLockNow" class="counter-secondary">Bloquear ahora</button></div></div>';
+  document.body.append(modal);
+  document.getElementById('idleLockKeep').onclick = function () { closeModal('idleLockWarningModal'); armIdleLockTimer(); };
+  document.getElementById('idleLockNow').onclick = function () { closeModal('idleLockWarningModal'); lockScreenForInactivity(); };
+  return modal;
+}
+function warnIdleLockIfDelivery() {
+  idleWarnTimer = null;
+  const delivery = window.RealScanCounter?.getActiveDelivery?.();
+  if (!delivery) return;
+  try { ensureIdleWarnModal(); openModal('idleLockWarningModal'); } catch (_) { /* El bloqueo sigue su curso. */ }
+}
 function armIdleLockTimer() {
   if (idleLockTimer) { clearTimeout(idleLockTimer); idleLockTimer = null; }
+  clearIdleWarnTimer();
+  if (typeof closeModal === 'function') { const warnModal = document.getElementById('idleLockWarningModal'); if (warnModal && !warnModal.classList.contains('hidden')) closeModal('idleLockWarningModal'); }
   const minutes = getIdleLockMinutes();
   if (!minutes || minutes <= 0) return;
   const auth = getAuthData();
@@ -697,8 +723,13 @@ function armIdleLockTimer() {
   // En entornos Node (suites de regresión) el temporizador no debe retener el
   // proceso; en el navegador setTimeout devuelve un número y esto no actúa.
   if (idleLockTimer && typeof idleLockTimer.unref === 'function') idleLockTimer.unref();
+  const warnMs = minutes >= 2 ? (minutes - 1) * 60 * 1000 : 30000;
+  idleWarnTimer = setTimeout(warnIdleLockIfDelivery, warnMs);
+  if (idleWarnTimer && typeof idleWarnTimer.unref === 'function') idleWarnTimer.unref();
 }
 function lockScreenForInactivity() {
+  clearIdleWarnTimer();
+  if (typeof closeModal === 'function') closeModal('idleLockWarningModal');
   const auth = getAuthData();
   if (!auth.sessionToken) return;
   auth.sessionToken = null;
