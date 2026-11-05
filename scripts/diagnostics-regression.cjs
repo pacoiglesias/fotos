@@ -80,7 +80,10 @@ const diag = factory(windowStub, documentStub, navigatorStub, localStorageStub, 
   assert(!clipboardText.includes('SECRETO') && !clipboardText.includes('paperless.ejemplo') && !clipboardText.includes('Ana'), 'copiar no debe filtrar datos sensibles');
   console.log('PASS copiar genera texto técnico sin datos sensibles');
 
-  // 4. Tope de 200 eventos: los más viejos se descartan.
+  // 4. Tope de 200 eventos: los más viejos se descartan. Los clics solo se
+  // registran con la depuración explícita activada (Q2), así que el test la
+  // enciende antes de medir el tope.
+  diag.setDebugClicks(true);
   for (let i = 0; i < 210; i++) diag.record('ui.click', 'info', {});
   events = JSON.parse(localStorageStub.getItem('realscan_diagnostics_v1') || '[]');
   assert.equal(events.length, 200);

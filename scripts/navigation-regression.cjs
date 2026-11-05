@@ -226,6 +226,7 @@ const pass = name => { checks.push(name); console.log('PASS ' + name); };
   assert.equal(await page.locator('#loginOverlay').isVisible(), true);
   pass('Recovery preserves the login lock and does not bypass authentication');
   const logging = await page.evaluate(() => {
+    RealScanDiagnostics.setDebugClicks(true);
     for(let i=0;i<250;i++) RealScanDiagnostics.record('ui.click','info',{control:'btnThemeToggle'});
     const bounded=RealScanDiagnostics.snapshot().events.length;
     const original=Storage.prototype.setItem;

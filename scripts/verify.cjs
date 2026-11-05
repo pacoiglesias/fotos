@@ -16,6 +16,7 @@ try {
     "paperless-intake-regression",
     "ine-pair-detect-test",
     "regression",
+    "diagnostics-regression",
     "photo-layout-regression",
     "counter-desk-regression",
     "counter-desk-webkit-regression",

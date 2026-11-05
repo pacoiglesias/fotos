@@ -3,16 +3,29 @@
    registro técnico (Copiar, Actualizar, Descargar, Borrar). No toca
    counter-desk.js: añade la entrada en tiempo de ejecución, igual que
    mobile-entry.js añade la suya. Si el menú aún no existe cuando este
-   módulo arranca, lo espera con un observador y se retira al colocarla. */
+   módulo arranca, lo espera con un observador sin límite de tiempo y
+   reintenta en cada apertura del menú «Más»; la entrada queda primera
+   del menú y la pestaña activa se verifica tras cambiar a Auditoría. */
 (function () {
   'use strict';
   function openDiagnostics() {
     try { window.closeModal?.('counterMoreModal'); } catch (_) { /* Seguir sin cerrar el menú. */ }
     try { window.openModal?.('settingsModal'); } catch (_) { /* El aviso de abajo lo cubre. */ }
-    try { if (typeof window.switchSettingsTab === 'function') window.switchSettingsTab('log'); } catch (_) { /* Queda la pestaña que estuviera abierta. */ }
+    try {
+      if (typeof window.switchSettingsTab === 'function') {
+        window.switchSettingsTab('log');
+        const logTab = document.getElementById('tabContentLog'), logBtn = document.getElementById('tabBtnLog');
+        if ((logTab && logTab.classList.contains('hidden')) || (logBtn && !logBtn.classList.contains('is-active'))) window.switchSettingsTab('log');
+      }
+    } catch (_) { /* Queda la pestaña que estuviera abierta. */ }
     const modal = document.getElementById('settingsModal');
     if (modal && modal.classList.contains('hidden')) {
       window.showToast?.('No se pudo abrir Ajustes. Abre Ajustes y entra en Auditoría para ver el diagnóstico.', 'warning');
+      return;
+    }
+    const logTab = document.getElementById('tabContentLog');
+    if (logTab && logTab.classList.contains('hidden')) {
+      window.showToast?.('No se pudo abrir la pestaña Auditoría. Abre Ajustes y entra en Auditoría para ver el diagnóstico.', 'warning');
       return;
     }
     const title = document.getElementById('diagnosticsTitle');
@@ -28,7 +41,7 @@
     entry.textContent = 'Diagnóstico';
     entry.setAttribute('aria-label', 'Abrir diagnóstico técnico');
     entry.addEventListener('click', openDiagnostics);
-    menu.append(entry);
+    menu.prepend(entry);
     return true;
   }
   document.addEventListener('DOMContentLoaded', function () {
@@ -37,6 +50,6 @@
       if (addEntry()) observer.disconnect();
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    setTimeout(function () { observer.disconnect(); }, 30000);
+    document.getElementById('counterMore')?.addEventListener('click', function () { addEntry(); });
   });
 })();
