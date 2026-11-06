@@ -234,7 +234,7 @@ let browser;
     "Visa digital profile enforces color, JPEG and file-size limits",
     policy,
   );
-  const persistent = await page.evaluate(async () => {
+  const persistentHead = await page.evaluate(async () => {
     state.activeCategory = "photos";
     state.format = Object.keys(FORMAT_SPECS).find(
       (k) => FORMAT_SPECS[k].category === "photos",
@@ -272,7 +272,22 @@ let browser;
       scale: state.outputScalePercent,
     };
     await saveActiveDraft();
-    await new Promise((r) => setTimeout(r, 1000));
+    return { restored, presetResult, scanId: scan.id };
+  });
+  // El guardado del borrador es diferido (750 ms) y asíncrono: esperar en el
+  // lado Node a que el borrador persistido refleje 3A/5B, en lugar de una
+  // espera fija de 1 s que falló de forma intermitente (draft.b = 2) cuando
+  // el hilo principal iba cargado.
+  await page.waitForFunction(
+    () => {
+      const d = getActiveDraft();
+      return d && d.photoCopiesPersonA === 3 && d.photoCopiesPersonB === 5;
+    },
+    null,
+    { timeout: 10000 },
+  );
+  const persistentTail = await page.evaluate(async (scanId) => {
+    const scan = (await getAllScansFromStorage()).find((x) => x.id === scanId);
     const draft = getActiveDraft();
     const backup = JSON.parse(JSON.stringify(scan));
     backup.id = "backup-synthetic";
@@ -285,8 +300,6 @@ let browser;
       (x) => x.id === "backup-synthetic",
     );
     return {
-      restored,
-      presetResult,
       draft: { a: draft.photoCopiesPersonA, b: draft.photoCopiesPersonB },
       imported: {
         a: imported.photoCopiesPersonA,
@@ -295,7 +308,8 @@ let browser;
         warp: imported.pages[0].warpQuad,
       },
     };
-  });
+  }, persistentHead.scanId);
+  const persistent = { ...persistentHead, ...persistentTail };
   assert.equal(persistent.restored.a, 3);
   assert.equal(persistent.restored.b, 5);
   assert.equal(persistent.restored.scale, 75);

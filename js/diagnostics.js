@@ -9,7 +9,8 @@
 (function(global) {
   'use strict';
   const KEY = 'realscan_diagnostics_v1', MAX = 200, TTL = 14 * 86400000;
-  let events = [], persistent = true, build = null;
+  let events = [], persistent = true, build = null, debugClicks = false;
+  try { debugClicks = localStorage.getItem('realscan_debug_clicks') === '1'; } catch (_) { /* Sin depuración de clics. */ }
   const staticIds = new Set(Array.from(document.querySelectorAll('[id]')).map(element=>element.id));
   for(const id of ['counterStart','counterDeliver','counterMore','counterShowDelivery','newServiceStart','newServiceModal','counterMoreModal','pendingDeliveryModal','pendingDeliveryRevoke'])staticIds.add(id);
   const session = global.crypto?.randomUUID?.() || String(Date.now());
@@ -56,6 +57,7 @@
   function record(event, level = 'info', details) {
     try {
       if (!allowedEvents.has(event)) return;
+      if (event === 'ui.click' && !debugClicks) return;
       events.push({at:Date.now(),event:event,level:['info','warning','error'].includes(level)?level:'info',details:cleanDetails(details),build:build?.version || null});
       persist(); render();
     } catch (_) { /* Logging must never block the application. */ }
@@ -87,7 +89,9 @@
     if (summary) summary.textContent = events.length + ' eventos · ' + events.filter(e => e.level === 'error').length + ' errores · ' + (navigator.onLine ? 'Con conexión' : 'Sin conexión') + (persistent ? '' : ' · Registro temporal: almacenamiento no disponible');
     if (list) {
       list.replaceChildren();
-      events.slice(-12).reverse().forEach(e => { const row = document.createElement('p'); row.textContent = new Date(e.at).toLocaleTimeString() + ' · ' + ({info:'Información',warning:'Aviso',error:'Error'}[e.level]) + ' · ' + (labels[e.event] || {'counter.new-service':'Nuevo servicio preparado','layout.guides':'Guías de corte cambiadas','image.fit':'Ajuste proporcional cambiado','output.pdf':'Hoja PDF preparada','output.raster':'Hoja de imagen preparada'}[e.event] || 'Evento del sistema'); list.appendChild(row); });
+      const errorsOnly = !!document.getElementById('chkDiagnosticsErrorsOnly')?.checked;
+      const shown = errorsOnly ? events.filter(e => e.level === 'error') : events;
+      shown.slice(-50).reverse().forEach(e => { const row = document.createElement('p'); row.textContent = new Date(e.at).toLocaleTimeString() + ' · ' + ({info:'Información',warning:'Aviso',error:'Error'}[e.level]) + ' · ' + (labels[e.event] || {'counter.new-service':'Nuevo servicio preparado','layout.guides':'Guías de corte cambiadas','image.fit':'Ajuste proporcional cambiado','output.pdf':'Hoja PDF preparada','output.raster':'Hoja de imagen preparada'}[e.event] || 'Evento del sistema'); list.appendChild(row); });
     }
   }
   function exportReport() {
@@ -131,7 +135,11 @@
       global.showToast?.('Diagnóstico copiado. Pégalo en el chat para revisarlo.','success');
     } catch (_) { exportReport(); }
   }
-  global.RealScanDiagnostics = {record,snapshot,render,exportReport,copyReport,reload,recover};
+  function setDebugClicks(value) {
+    debugClicks = !!value;
+    try { localStorage.setItem('realscan_debug_clicks', debugClicks ? '1' : '0'); } catch (_) { /* Solo en memoria. */ }
+  }
+  global.RealScanDiagnostics = {record,snapshot,render,exportReport,copyReport,reload,recover,setDebugClicks};
   global.addEventListener('error',function(e) {
     if (e.target && e.target !== global && ['SCRIPT','LINK'].includes(e.target.tagName)) record('runtime.resource_failed','error',{file:e.target.src || e.target.href});
     else record('runtime.error','error',{errorType:e.error?.name,file:e.filename,line:e.lineno,column:e.colno});
@@ -148,6 +156,9 @@
     document.getElementById('btnClearDiagnostics')?.addEventListener('click',()=>{if(confirm('¿Borrar sólo el diagnóstico técnico? Tus trabajos se conservan.')){events=[];persist();render();}});
     document.getElementById('btnCopyDiagnostics')?.addEventListener('click',copyReport);
     document.getElementById('btnRefreshDiagnostics')?.addEventListener('click',reload);
+    document.getElementById('chkDiagnosticsErrorsOnly')?.addEventListener('change',render);
+    const debugClicksBox = document.getElementById('chkDiagnosticsDebugClicks');
+    if (debugClicksBox) { debugClicksBox.checked = debugClicks; debugClicksBox.addEventListener('change',function() { setDebugClicks(debugClicksBox.checked); }); }
     render();
     fetch('version.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(value=>{if(value && /^realscan-[a-f0-9]{16}$/.test(value.version) && /^[a-f0-9]{40}$/.test(value.sourceCommit))build={version:value.version,sourceCommit:value.sourceCommit};}).catch(()=>{});
   });

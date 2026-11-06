@@ -20,7 +20,7 @@ const id=await p.evaluate(async()=>{const e=await RealScanPrint.prepare();window
 const frameInfo=await p.evaluate(()=>{const f=document.querySelector('iframe#realscan_print_sheet');const svg=f.contentDocument.querySelector('svg');const rects=[...svg.querySelectorAll('rect[fill="white"]')];const imgs=[...svg.querySelectorAll('image')];return {rects:rects.map(r=>({w:+r.getAttribute('width'),h:+r.getAttribute('height')})),imgs:imgs.map(i=>({w:+i.getAttribute('width'),h:+i.getAttribute('height')}))};});
 assert.equal(frameInfo.imgs.length,8);assert(frameInfo.imgs.every(i=>i.w===25&&i.h===30));assert(frameInfo.rects.some(r=>(r.h<=2&&r.w<101.6)||(r.w<=2&&r.h<152.4)));pass('White frame strips exist around 25 x 30 mm photos without changing their size');
 /* Historial: etiqueta, búsqueda, entregado y pendientes. */
-await p.evaluate(()=>RealScanDesk.openHistory());await wait(p,()=>document.getElementById('deskHistory')?.open);
+await p.evaluate(()=>RealScanDesk.openHistory());await wait(p,()=>!document.getElementById('deskHistory').classList.contains('hidden'));
 let rowsText=await p.locator('#deskHistoryRows').innerText();assert(rowsText.includes('Prueba Cliente'));assert(rowsText.includes('recoge a las 5'));pass('History shows client and note');
 await p.locator('#deskHistorySearch').fill('Prueba');await wait(p,()=>document.getElementById('deskHistoryRows').innerText.includes('Prueba Cliente'));
 await p.locator('#deskHistorySearch').fill('zzz-sin-coincidencia');await wait(p,()=>document.getElementById('deskHistoryRows').innerText.includes('Sin resultados'));
@@ -28,22 +28,22 @@ await p.locator('#deskHistorySearch').fill('');await wait(p,()=>document.getElem
 await p.evaluate(id=>RealScanDesk.setStatus(id,'done'),id);await wait(p,()=>document.getElementById('deskHistoryRows').innerText.includes('Marcar entregado'));
 await p.getByRole('button',{name:'Marcar entregado',exact:true}).evaluate(e=>e.click());await wait(p,async id=>(await RealScanDesk.list()).find(r=>r.id===id)?.status==='delivered',id);
 assert.equal((await p.evaluate(()=>RealScanDesk.totals())).jobs,1);pass('Delivered jobs keep counting in the daily close');
-await p.getByRole('button',{name:'Pendientes de entrega',exact:true}).evaluate(e=>e.click());await wait(p,()=>document.getElementById('deskHistoryRows').innerText.includes('Sin resultados'));
+await p.getByRole('button',{name:'Listos para entregar',exact:true}).evaluate(e=>e.click());await wait(p,()=>document.getElementById('deskHistoryRows').innerText.includes('Sin resultados'));
 await p.getByRole('button',{name:'Ver todo el historial',exact:true}).evaluate(e=>e.click());await wait(p,()=>document.getElementById('deskHistoryRows').innerText.includes('Prueba Cliente'));pass('Pending-delivery filter hides delivered jobs and back');
 await p.locator('#deskHistory button').filter({hasText:'Cerrar'}).evaluate(e=>e.click());
 /* Respaldo: exportar e importar sin duplicar. */
-await p.evaluate(()=>RealScanDesk.openHistory());await wait(p,()=>document.getElementById('deskHistory')?.open);
+await p.evaluate(()=>RealScanDesk.openHistory());await wait(p,()=>!document.getElementById('deskHistory').classList.contains('hidden'));
 const [download]=await Promise.all([p.waitForEvent('download'),p.getByRole('button',{name:'Exportar respaldo',exact:true}).evaluate(e=>e.click())]);assert(download.suggestedFilename().startsWith('RealScan_Respaldo_'));pass('Backup export downloads RealScan_Respaldo_<fecha>.json');
 const backupPath=path.join(out,'import-test.json');const today=new Date();const stamp=Date.UTC(today.getFullYear(),today.getMonth(),today.getDate());fs.writeFileSync(backupPath,JSON.stringify({app:'RealScan',kind:'desk-backup',version:1,jobs:[{id:'import-test-1',createdAt:Date.now(),status:'done',confirmedAt:Date.now(),title:'Importado prueba',paper:'a4',format:'document',sheets:1,units:1,profile:'Sin perfil',client:'',note:'',html:null}]}));
 await p.evaluate(()=>{document.getElementById('deskImportFile').hidden=false;});await p.locator('#deskImportFile').setInputFiles(backupPath);await wait(p,async()=>(await RealScanDesk.list()).some(r=>r.id==='import-test-1'));
 const beforeCount=await p.evaluate(async()=>(await RealScanDesk.list()).length);
-await p.evaluate(()=>{document.getElementById('deskImportFile').hidden=false;});await p.locator('#deskImportFile').setInputFiles(backupPath);await p.waitForTimeout(1500);assert.equal(await p.evaluate(async()=>(await RealScanDesk.list()).length),beforeCount);pass('Backup import adds new jobs and skips duplicates');
+await p.evaluate(()=>{document.getElementById('deskImportFile').hidden=false;});await p.locator('#deskImportFile').setInputFiles(backupPath);await wait(p,()=>document.getElementById('statusToast').textContent.includes('0 trabajo(s) nuevo(s), 1 duplicado(s)'));assert.equal(await p.evaluate(async()=>(await RealScanDesk.list()).length),beforeCount);pass('Backup import adds new jobs and skips duplicates');
 await p.locator('#deskHistory button').filter({hasText:'Cerrar'}).evaluate(e=>e.click());
 /* Reimprimir solo una hoja de un trabajo de dos hojas. */
 await p.evaluate(async()=>{RealScanDeskPresets.apply('infantil',16);updateUI();RealScanStudio.update();});await wait(p,()=>RealScanWorkflow.describe().ready);
 const id16=await p.evaluate(async()=>{const e=await RealScanPrint.prepare();return RealScanDesk.record(e.frame,{title:'Infantil 16 hojas',paper:'photo_4x6',format:'photo_infantil',units:16,queued:true});});await wait(p,async id=>(await RealScanDesk.list()).some(r=>r.id===id),id16);
-await p.evaluate(id=>RealScanDesk.reprint(id),id16);await wait(p,()=>document.getElementById('deskRetry')?.open);
+await p.evaluate(id=>RealScanDesk.reprint(id),id16);await wait(p,()=>!document.getElementById('deskRetry').classList.contains('hidden'));
 const sheetBtns=await p.locator('#deskRetrySheets button').all();assert.equal(sheetBtns.length,2);pass('Reprint dialog offers one button per sheet');
-await p.locator('#deskRetrySheets button').filter({hasText:'Hoja 1'}).evaluate(e=>e.click());await wait(p,()=>document.getElementById('deskRetry')?.open&&document.querySelector('iframe[title="Copia exacta para reimprimir"]')?.contentDocument.querySelectorAll('section').length===1);
+await p.locator('#deskRetrySheets button').filter({hasText:'Hoja 1'}).evaluate(e=>e.click());await wait(p,()=>!document.getElementById('deskRetry').classList.contains('hidden')&&document.querySelector('iframe[title="Copia exacta para reimprimir"]')?.contentDocument.querySelectorAll('section').length===1);
 assert((await p.evaluate(()=>document.getElementById('deskRetryInfo').textContent)).includes('hoja 1'));await p.locator('#deskRetry button').filter({hasText:'Cerrar'}).evaluate(e=>e.click());pass('Single-sheet reprint prepares exactly one sheet');
 assert.deepEqual(errors,[]);fs.writeFileSync(path.join(out,engine+'-results.json'),JSON.stringify({engine,checks,errors},null,2));})().catch(async e=>{console.error(e);process.exitCode=1;}).finally(async()=>{await browser?.close();server.close();});

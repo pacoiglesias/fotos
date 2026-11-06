@@ -62,5 +62,5 @@
     }
     return draft;
   }
-  root.RealScanDraftStore = { read: async () => unpack(await transaction("readonly", (s) => s.get("active"))), write: (d) => transaction("readwrite", (s) => s.put(pack(d), "active")), remove: () => transaction("readwrite", (s) => s.delete("active")) };
+  root.RealScanDraftStore = { read: async () => unpack(await transaction("readonly", (s) => s.get("active"))), write: (d) => transaction("readwrite", (s) => s.put(pack(d), "active")), remove: () => transaction("readwrite", (s) => s.delete("active")), readKey: (key) => transaction("readonly", (s) => s.get(key)), writeKey: (key, value) => transaction("readwrite", (s) => s.put(value, key)), removeKey: (key) => transaction("readwrite", (s) => s.delete(key)) };
 })(window);

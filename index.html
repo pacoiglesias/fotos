@@ -2184,6 +2184,10 @@
               <button type="button" id="btnClearDiagnostics" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-xs">Borrar diagnóstico</button>
               <button type="button" id="btnRecoverControls" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-xs">Recuperar controles</button>
             </div>
+            <div class="flex flex-wrap gap-4 text-xs text-slate-600 dark:text-slate-300">
+              <label class="flex items-center gap-2"><input type="checkbox" id="chkDiagnosticsErrorsOnly"> Solo errores</label>
+              <label class="flex items-center gap-2"><input type="checkbox" id="chkDiagnosticsDebugClicks"> Registrar clics (depuración)</label>
+            </div>
             <p class="text-xs text-slate-500">Si una ventana no responde: pulsa Esc. También puedes usar Alt + Mayús + R para cerrar las ventanas y recuperar los controles sin recargar ni borrar el trabajo.</p>
             <div id="diagnosticsEvents" class="text-xs space-y-1 max-h-36 overflow-auto"></div>
           </section>
