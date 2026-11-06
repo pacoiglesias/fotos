@@ -126,7 +126,7 @@
       desde ahí. El diálogo solo aparece cuando hace falta seguir: primera
       pasada de dúplex manual o lote en curso. */
    if(first||batching)openModal('flowPrintResult');
-   else root.showToast?.('Impresión registrada en el historial como «Comprobar resultado». Confírmala cuando revises el papel.','info');
+   else showToast('Impresión registrada en el historial como «Comprobar resultado». Confírmala cuando revises el papel.','info');
   });
   document.addEventListener('realscan:studio-updated',update);document.addEventListener('realscan:document-updated',update);
   document.addEventListener('change',()=>requestAnimationFrame(update));document.addEventListener('click',()=>requestAnimationFrame(update));
