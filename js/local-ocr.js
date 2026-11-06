@@ -99,7 +99,7 @@
       const result = await Promise.race([w.recognize(canvas), new Promise((_, reject) => { timeout = setTimeout(() => reject(Error('timeout')), 90000); })]);
       if (revision !== epoch || job !== (state._jobRevision || 0)||documentRevision!==root.RealScanDocuments?.status().revision) return;
       $("ocrText").value = result.data.text;
-      lastSuggestion={job:state._jobRevision,documentRevision,suggestion:suggestDocument(result.data.text)};document.dispatchEvent(new CustomEvent('realscan:ocr-completed',{detail:{requestId,suggestion:structuredClone(lastSuggestion.suggestion)}}));
+      lastSuggestion={job:state._jobRevision,documentRevision,suggestion:suggestDocument(result.data.text,new Date(),root.RealScanDocuments?.status().active?'docs':(state.activeCategory==='photos'?'photos':'id'))};document.dispatchEvent(new CustomEvent('realscan:ocr-completed',{detail:{requestId,suggestion:structuredClone(lastSuggestion.suggestion)}}));
       $("ocrStatus").textContent = result.data.text.trim() ? "Texto listo para revisar. Confianza estimada: " + Math.round(result.data.confidence) + " %. Comprueba los datos contra la imagen." : "No se encontró texto legible. Endereza la página, mejora la luz y vuelve a intentar.";
       root.RealScanDiagnostics?.record('ocr.completed', 'info', {language: $("ocrLanguage").value, confidence: Math.round(result.data.confidence)});
     } catch {
@@ -152,13 +152,17 @@
       if (canvas) canvas.width = canvas.height = 0;
     }
   }
-  function suggestDocument(text='',date=new Date()) {
+  /* A7: el servicio activo (id/fotos/docs) fija el tipo base cuando el OCR no
+     reconoce nada concreto; los patrones de texto siguen teniendo prioridad. */
+  function suggestDocument(text='',date=new Date(),service='') {
     const value=String(text).slice(0,60000).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
     const day=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
     let type='Documento',tags=[];
     if(/INSTITUTO NACIONAL ELECTORAL|CREDENCIAL PARA VOTAR|\bINE\b|\bDNI\b/.test(value)){type='Identificación';tags=['Identificación','INE'];}
     else if(/ACTA.{0,35}NACIMIENTO|REGISTRO CIVIL/.test(value)){type='Acta de nacimiento';tags=['Actas','Nacimiento'];}
     else if(/COMPROBANTE.{0,25}DOMICILIO|COMISION FEDERAL DE ELECTRICIDAD|RECIBO.{0,20}(LUZ|AGUA|TELEFONO)/.test(value)){type='Comprobante de domicilio';tags=['Comprobantes','Domicilio'];}
+    else if(service==='id'){type='Identificación';tags=['Identificación','INE'];}
+    else if(service==='photos'){type='Fotografía';tags=['Fotografía'];}
     return {title:type+' · '+day,documentType:type,tags,source:'local-suggestion'};
   }
   root.RealScanOcr = { open, cancel, suggestDocument, recognizeText, getSuggestion(){return lastSuggestion&&lastSuggestion.job===state._jobRevision&&lastSuggestion.documentRevision===root.RealScanDocuments?.status().revision?structuredClone(lastSuggestion.suggestion):null;} };
