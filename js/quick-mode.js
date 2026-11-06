@@ -214,7 +214,25 @@ function update(){
   }
   const fileBtn=$('quickFileBtn');if(fileBtn)fileBtn.hidden=!miss.length;
   const cur=miss[0]||null;
-  if(prevMissing==='front'&&cur==='back'){const s=$('quickScanBtn');s?.scrollIntoView({block:'center',behavior:'auto'});s?.focus({preventScroll:true});}
+  /* A4: al confirmar el frente, abrir directamente la cámara del reverso
+     (modo ambas caras). El operador puede omitirlo con «Solo frente» o
+     cerrando la cámara; se reintenta si aún hay un diálogo abierto. */
+  if(prevMissing==='front'&&cur==='back'&&root.state.printMode!=='single'){
+   const jobRev=root.state._jobRevision;let tries=0;
+   const tryAdvance=()=>{
+    tries++;
+    if(!quick||!unlocked())return;
+    if(root.state._jobRevision!==jobRev)return;
+    if((describe().missing||[])[0]!=='back')return;
+    if(document.querySelector('dialog[open]')||document.querySelector('.counter-overlay:not(.hidden)')){
+     if(tries<3)setTimeout(tryAdvance,700);
+     return;
+    }
+    root.showToast?.('Frente listo. Abriendo la cámara del reverso — toca «Solo frente» si no lo necesitas.','info');
+    scanSide('back');
+   };
+   setTimeout(tryAdvance,700);
+  }
   else if(prevMissing&&!cur&&w.ready){document.querySelector('#colStageWorkspace .stage-canvas-area')?.closest('section')?.scrollIntoView({block:'center',behavior:'auto'});}
   prevMissing=cur;
   moveBannerIn();
