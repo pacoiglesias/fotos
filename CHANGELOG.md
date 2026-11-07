@@ -1,3 +1,9 @@
+## 3.40.1 — La conexión con el NAS se vuelve a ver
+
+- El semáforo del mostrador recupera el diseño «puntos con luz real»: cada estado (comprobando, conectado, revisar, sin acceso) se distingue por el color de fondo de la luz, el texto y el punto con resplandor, también en modo oscuro. En la 3.40.0 esas reglas nunca se aplicaban: perdían la cascada CSS frente a redesign-333.css por especificidad, el mismo fallo que la PR #24 corrigió tres veces para el botón Cámara.
+- El resultado de «Comprobar acceso» a Paperless deja de ser una línea de texto gris: ahora es un banner con el estado (comprobando en índigo pulsante, conexión correcta en verde, error en rojo), y al abrir los ajustes muestra en verde que el token está guardado, sin mostrarlo nunca (se mantiene la protección F3 de la PR #27).
+- Sin cambios de lógica: la comprobación de acceso, el archivado en Paperless y el resto de funciones quedan intactos.
+
 ## 3.40.0 — Rediseño visual espectacular
 
 - Nuevo aspecto visual del mostrador: nueva hoja css/visual-espectacular.css con un diseño moderno y espectacular en todo el flujo de trabajo.
