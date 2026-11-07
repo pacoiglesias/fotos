@@ -578,6 +578,10 @@ html.dark body.rs-next.rs-counter330 #studioReady[data-ready="true"] {
      quedar por encima del pie fijo; se recuperan 12px del margen
      inferior de la barra de pasos. No toca el test ni el flujo. */
   body.rs-next.rs-counter330 #guidedStepsBar { margin-bottom: 16px; }
+  /* Fallback (WebKit, 390px): si los 12px anteriores no bastan, la
+     barra de trabajo se compacta 8px más (padding 22px→10px vertical).
+     Total 20px de holgura para el botón Cámara. No toca el test ni el flujo. */
+  body.rs-next.rs-counter330.rs-desk336 #workbenchBar { padding: 10px 14px; }
   #quickMode { padding: 18px 16px; border-radius: 20px; }
   #quickMode .quick-giant, #quickActions .quick-giant { min-height: 84px; }
   #quickMode .quick-steps { gap: 6px; }
