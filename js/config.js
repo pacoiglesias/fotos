@@ -9,8 +9,9 @@ window.AUDIT_STORAGE_KEY = 'realscan_audit_log_v1';
 window.PREFS_KEY = 'realscan_prefs_v2';
 window.DEFAULT_USER = 'admin';
 // Seguridad (v3.12.0): ya NO existe ninguna credencial por defecto en el código.
-// En el primer uso la app exige crear la cuenta de administrador; las instalaciones
-// que aún usan la clave de fábrica se detectan en auth.js y se fuerza su cambio.
+// En el primer uso la app exige crear la cuenta de administrador; las
+// contraseñas heredadas (SHA-256 sin sal) se migran a PBKDF2 con sal en el
+// primer inicio de sesión y las claves de fábrica antiguas se eliminaron.
 window.AUTH_GUARD_KEY = 'realscan_auth_guard_v1';
 window.AUTH_MAX_FAILED_ATTEMPTS = 5;
 window.AUTH_LOCKOUT_MS = 5 * 60 * 1000; // bloqueo temporal tras 5 intentos fallidos
