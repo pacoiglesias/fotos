@@ -122,7 +122,18 @@ function createSandbox() {
           const str = Buffer.from(data).toString('utf-8');
           const hash = Buffer.from(str).toString('hex').padStart(64, '0');
           return Buffer.from(hash, 'hex');
+        },
+        importKey: async (format, keyData) => Buffer.from(keyData),
+        deriveBits: async (params, keyMaterial, lengthBits) => {
+          // Mock PBKDF2-SHA256 real para el hash de contraseñas (auth.js)
+          const derived = require('crypto').pbkdf2Sync(Buffer.from(keyMaterial), Buffer.from(params.salt), params.iterations, lengthBits / 8, 'sha256');
+          return derived.buffer.slice(derived.byteOffset, derived.byteOffset + derived.byteLength);
         }
+      },
+      getRandomValues: (buf) => {
+        const bytes = require('crypto').randomBytes(buf.length);
+        buf.set(bytes);
+        return buf;
       }
     }
   };
@@ -248,7 +259,7 @@ async function runTests() {
     sb.window.DEFAULT_USER = 'admin';
 
     sb.$('inputAddUserName').value = 'cajero1';
-    sb.$('inputAddUserPass').value = 'pin1234';
+    sb.$('inputAddUserPass').value = 'PinCajero2026';
     sb.$('selectAddUserRole').value = 'operador';
     await sb.handleAddUser();
 
@@ -265,7 +276,7 @@ async function runTests() {
 
     // 4. Operador intenta crear un nuevo administrador -> Debe ser bloqueado
     sb.$('inputAddUserName').value = 'admin_hacker';
-    sb.$('inputAddUserPass').value = 'hacked123';
+    sb.$('inputAddUserPass').value = 'HackedPass2026';
     sb.$('selectAddUserRole').value = 'admin';
     await sb.handleAddUser();
 

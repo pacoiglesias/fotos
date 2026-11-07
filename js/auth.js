@@ -1,8 +1,60 @@
 /* ============================================================
-   RealScan Pro — Módulo de Seguridad, Autenticación y Auditoría (SHA-256)
+   RealScan Pro — Módulo de Seguridad, Autenticación y Auditoría (PBKDF2)
    Desarrollado por Paco Iglesias • Escala 1:1 Calibrada
    ============================================================ */
 
+/* Derivación de contraseñas: PBKDF2-SHA256 con sal aleatoria por usuario
+   (210.000 iteraciones, mismo patrón que el respaldo cifrado de
+   js/backup-crypto.js). El formato guardado es:
+     pbkdf2$<iteraciones>$<sal en hex>$<clave en hex>
+   y `passwordVersion` distingue el esquema: 2 = PBKDF2, 1 = SHA-256 sin sal
+   (esquema anterior), 0 = sin contraseña verificable.
+   Las claves de fábrica antiguas YA NO ESTÁN en el código: sus hashes
+   SHA-256 se eliminaron (F2). Un hash heredado se reconoce por su formato
+   (64 caracteres hex), no por su valor. */
+const PBKDF2_ITERATIONS = 210000;
+const PBKDF2_SALT_BYTES = 16;
+const PBKDF2_KEY_BYTES = 32;
+const MIN_PASSWORD_LENGTH = 12;
+const PASSWORD_VERSION_PBKDF2 = 2;
+const PASSWORD_VERSION_LEGACY_SHA256 = 1;
+const PASSWORD_VERSION_NONE = 0;
+
+function bytesToHex(bytes) {
+  return Array.from(bytes).map(function(b){ return b.toString(16).padStart(2, '0'); }).join('');
+}
+function hexToBytes(hex) {
+  if (typeof hex !== 'string' || hex.length % 2 !== 0 || !/^[0-9a-f]+$/i.test(hex)) return null;
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+  return bytes;
+}
+function getWebCrypto() {
+  try {
+    if (typeof window !== 'undefined' && window.crypto) return window.crypto;
+    if (typeof crypto !== 'undefined') return crypto;
+  } catch (e) {}
+  return null;
+}
+function randomBytes(length) {
+  const webCrypto = getWebCrypto();
+  const buf = new Uint8Array(length);
+  if (webCrypto && typeof webCrypto.getRandomValues === 'function') {
+    webCrypto.getRandomValues(buf);
+    return buf;
+  }
+  // Sin WebCrypto no hay aleatoriedad segura: último recurso, solo para no
+  // dejar el mostrador sin sesión. La contraseña (PBKDF2) sí exige WebCrypto.
+  for (let i = 0; i < length; i++) buf[i] = Math.floor(Math.random() * 256);
+  return buf;
+}
+/* Token de sesión impredecible: 256 bits aleatorios, no fecha + Math.random. */
+function generateSessionToken() {
+  return 'sess_' + bytesToHex(randomBytes(32));
+}
+
+/* SHA-256 sin sal: SOLO para verificar contraseñas guardadas con el esquema
+   anterior durante la migración. Nunca se usa para guardar nada nuevo. */
 async function computeSha256(str) {
   if (!window.crypto || !window.crypto.subtle) {
     let h = 0;
@@ -14,19 +66,53 @@ async function computeSha256(str) {
   return Array.from(new Uint8Array(hashBuf)).map(function(b){ return b.toString(16).padStart(2, '0'); }).join('');
 }
 
-/* Hashes de las claves de fábrica que versiones anteriores traían publicadas.
-   Se conservan SOLO como detector: si una instalación existente aún usa una de
-   estas claves, se marca mustChangePassword y el acceso obliga a cambiarla antes
-   de entrar. Nunca se usan para crear cuentas nuevas ni como credencial de
-   respaldo: las instalaciones nuevas nacen sin usuarios y exigen crear la
-   cuenta de administrador en el primer uso. El texto plano ya no existe en el
-   código. */
-const LEGACY_FACTORY_HASHES = [
-  '1cfafff6d51a03662b85b93dc3417f51687034ba9a46682f5328257eff7133ed',
-  '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab'
-];
-function isFactoryPasswordHash(hash) {
-  return !!hash && LEGACY_FACTORY_HASHES.indexOf(hash) !== -1;
+async function derivePbkdf2(password, salt, iterations, keyBytes) {
+  const webCrypto = getWebCrypto();
+  if (!webCrypto || !webCrypto.subtle || typeof webCrypto.subtle.importKey !== 'function' || typeof webCrypto.subtle.deriveBits !== 'function') {
+    throw new Error('Este navegador no permite guardar la contraseña de forma segura (WebCrypto no disponible). Usa HTTPS o un navegador actualizado.');
+  }
+  const material = await webCrypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await webCrypto.subtle.deriveBits({ name: 'PBKDF2', salt: salt, iterations: iterations, hash: 'SHA-256' }, material, keyBytes * 8);
+  return new Uint8Array(bits);
+}
+
+/* Hash nuevo: PBKDF2-SHA256 con sal aleatoria por usuario. */
+async function hashPassword(password) {
+  const salt = randomBytes(PBKDF2_SALT_BYTES);
+  const key = await derivePbkdf2(password, salt, PBKDF2_ITERATIONS, PBKDF2_KEY_BYTES);
+  return 'pbkdf2$' + PBKDF2_ITERATIONS + '$' + bytesToHex(salt) + '$' + bytesToHex(key);
+}
+
+function constantTimeEqual(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+  return diff === 0;
+}
+
+/* Verifica una contraseña contra el hash guardado, sea PBKDF2 o el SHA-256
+   heredado. Devuelve { match, legacy }: legacy=true significa que el hash
+   es del esquema anterior y el llamador debe migrarlo a PBKDF2. */
+async function verifyPassword(password, stored) {
+  if (!stored || typeof stored !== 'string') return { match: false, legacy: false };
+  if (stored.indexOf('pbkdf2$') === 0) {
+    const parts = stored.split('$');
+    if (parts.length !== 4) return { match: false, legacy: false };
+    const iterations = parseInt(parts[1], 10);
+    const salt = hexToBytes(parts[2]);
+    const expected = hexToBytes(parts[3]);
+    if (!iterations || iterations <= 0 || !salt || !expected) return { match: false, legacy: false };
+    let derived;
+    try {
+      derived = await derivePbkdf2(password, salt, iterations, expected.length);
+    } catch (e) { return { match: false, legacy: false }; }
+    return { match: constantTimeEqual(derived, expected), legacy: false };
+  }
+  if (/^[a-f0-9]{64}$/.test(stored)) {
+    const legacyHash = await computeSha256(password);
+    return { match: legacyHash === stored, legacy: true };
+  }
+  return { match: false, legacy: false };
 }
 
 function getAuthData() {
@@ -35,17 +121,22 @@ function getAuthData() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.users) && parsed.users.length > 0) {
-        // Migración: sin hash -> se asume clave de fábrica; con hash de fábrica ->
-        // cambio obligatorio. NUNCA se reescribe el hash de una clave ya elegida
-        // por el operador: su contraseña se respeta tal cual.
+        // Migración: un usuario sin hash no tiene contraseña que verificar,
+        // así que no puede autenticar hasta que un administrador recree su
+        // cuenta. NUNCA se le asigna ninguna contraseña por defecto: las
+        // claves de fábrica se eliminaron del código. A los demás se les
+        // anota la marca de versión de su esquema (2 = PBKDF2, 1 = SHA-256
+        // heredado) para que el login sepa si debe migrarlos.
         let migrated = false;
         parsed.users.forEach(function(u) {
           if (!u.passwordHash) {
-            u.passwordHash = LEGACY_FACTORY_HASHES[0];
             u.mustChangePassword = true;
+            u.passwordVersion = PASSWORD_VERSION_NONE;
             migrated = true;
-          } else if (isFactoryPasswordHash(u.passwordHash) && u.mustChangePassword !== true) {
-            u.mustChangePassword = true;
+          } else if (u.passwordVersion == null) {
+            u.passwordVersion = u.passwordHash.indexOf('pbkdf2$') === 0
+              ? PASSWORD_VERSION_PBKDF2
+              : PASSWORD_VERSION_LEGACY_SHA256;
             migrated = true;
           }
         });
@@ -59,10 +150,10 @@ function getAuthData() {
     const oldRaw = localStorage.getItem('realscan_auth_v1');
     if (oldRaw) {
       const old = JSON.parse(oldRaw);
-      const oldHash = old.passwordHash || LEGACY_FACTORY_HASHES[0];
+      const oldHash = old.passwordHash || null;
       const migrated = {
         users: [
-          { username: old.username || window.DEFAULT_USER, passwordHash: oldHash, role: 'admin', mustChangePassword: isFactoryPasswordHash(oldHash) }
+          { username: old.username || window.DEFAULT_USER, passwordHash: oldHash, passwordVersion: oldHash ? (oldHash.indexOf('pbkdf2$') === 0 ? PASSWORD_VERSION_PBKDF2 : PASSWORD_VERSION_LEGACY_SHA256) : PASSWORD_VERSION_NONE, role: 'admin', mustChangePassword: !oldHash }
         ],
         currentUsername: old.username || window.DEFAULT_USER,
         sessionToken: old.sessionToken || null,
@@ -90,11 +181,9 @@ function saveAuthData(data) {
   } catch(e) {}
 }
 
-/* Política mínima para claves nuevas: 6+ caracteres y nunca una clave de fábrica. */
+/* Política mínima para claves nuevas: 12+ caracteres. */
 async function validateNewPassword(newPass) {
-  if (!newPass || newPass.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
-  const hash = await computeSha256(newPass);
-  if (isFactoryPasswordHash(hash)) return 'Esa es la clave de fábrica antigua. Elige una contraseña distinta.';
+  if (!newPass || newPass.length < MIN_PASSWORD_LENGTH) return 'La contraseña debe tener al menos 12 caracteres.';
   return null;
 }
 
@@ -357,10 +446,11 @@ async function handleAddUser(e) {
     return;
   }
 
-  const hash = await computeSha256(newPass);
+  const hash = await hashPassword(newPass);
   auth.users.push({
     username: newName,
     passwordHash: hash,
+    passwordVersion: PASSWORD_VERSION_PBKDF2,
     role: newRole
   });
   saveAuthData(auth);
@@ -478,11 +568,11 @@ async function createInitialAdmin(username, password) {
   if (!name) throw new Error('Ingresa un nombre de usuario.');
   const policyError = await validateNewPassword(password);
   if (policyError) throw new Error(policyError);
-  const hash = await computeSha256(password);
+  const hash = await hashPassword(password);
   const data = {
-    users: [{ username: name, passwordHash: hash, role: 'admin', mustChangePassword: false }],
+    users: [{ username: name, passwordHash: hash, passwordVersion: PASSWORD_VERSION_PBKDF2, role: 'admin', mustChangePassword: false }],
     currentUsername: name,
-    sessionToken: 'token_' + Date.now() + '_' + Math.random().toString(36).substring(2),
+    sessionToken: generateSessionToken(),
     sessionExpiry: Date.now() + 12 * 60 * 60 * 1000
   };
   saveAuthData(data);
@@ -555,7 +645,7 @@ function clearLoginFailures(username) {
 let pendingForcedChangeUser = null;
 function grantSession(auth, matched, remember) {
   auth.currentUsername = matched.username;
-  auth.sessionToken = 'token_' + Date.now() + '_' + Math.random().toString(36).substring(2);
+  auth.sessionToken = generateSessionToken();
   auth.sessionExpiry = remember ? (Date.now() + 30 * 24 * 60 * 60 * 1000) : (Date.now() + 12 * 60 * 60 * 1000);
   saveAuthData(auth);
   const overlay = $('loginOverlay');
@@ -600,13 +690,27 @@ async function handleLoginSubmit(e) {
     return;
   }
 
-  const passHash = await computeSha256(pass);
-  const matched = auth.users.find(function(u) {
-    return u.username.toLowerCase() === user.toLowerCase() && u.passwordHash === passHash;
-  });
+  // Verificación con el esquema guardado (PBKDF2, o SHA-256 heredado).
+  // Un hash heredado que coincide se migra en silencio a PBKDF2 con sal:
+  // el usuario entra sin interrupción y su contraseña queda re-protegida.
+  let matched = null, matchedLegacy = false;
+  for (let i = 0; i < auth.users.length; i++) {
+    const candidate = auth.users[i];
+    if (candidate.username.toLowerCase() !== user.toLowerCase()) continue;
+    const check = await verifyPassword(pass, candidate.passwordHash);
+    if (check.match) { matched = candidate; matchedLegacy = check.legacy; break; }
+  }
 
   if (matched) {
     clearLoginFailures(user);
+    if (matchedLegacy) {
+      try {
+        matched.passwordHash = await hashPassword(pass);
+        matched.passwordVersion = PASSWORD_VERSION_PBKDF2;
+        saveAuthData(auth);
+        logActivity('Migración de Contraseña', 'La contraseña de ' + matched.username + ' se actualizó al formato seguro (PBKDF2 con sal).');
+      } catch (e) { /* Se reintentará en el próximo inicio de sesión. */ }
+    }
     if (errorBox) errorBox.classList.add('hidden');
     $('loginPassInput').value = '';
 
@@ -616,7 +720,7 @@ async function handleLoginSubmit(e) {
       showLoginPanel('change');
       const newPassInput = $('forcedNewPassInput');
       if (newPassInput && newPassInput.focus) setTimeout(function(){ newPassInput.focus(); }, 100);
-      logActivity('Cambio Obligatorio Pendiente', 'El usuario ' + matched.username + ' debe cambiar la clave de fábrica antes de entrar');
+      logActivity('Cambio Obligatorio Pendiente', 'El usuario ' + matched.username + ' debe cambiar su contraseña antes de entrar');
       return;
     }
 
@@ -634,7 +738,7 @@ async function handleLoginSubmit(e) {
   }
 }
 
-/* ---------- Cambio de contraseña obligatorio (clave de fábrica) ---------- */
+/* ---------- Cambio de contraseña obligatorio ---------- */
 async function handleForcedChangeSubmit(e) {
   if (e) e.preventDefault();
   const errorBox = $('forcedErrorMsg');
@@ -654,7 +758,8 @@ async function handleForcedChangeSubmit(e) {
   });
   if (!target) { fail('No se encontró el usuario. Vuelve a iniciar sesión.'); showLoginPanel('login'); return; }
 
-  target.passwordHash = await computeSha256(newPass);
+  target.passwordHash = await hashPassword(newPass);
+  target.passwordVersion = PASSWORD_VERSION_PBKDF2;
   target.mustChangePassword = false;
   pendingForcedChangeUser = null;
   $('forcedNewPassInput').value = '';
@@ -783,12 +888,12 @@ async function handleUpdateCredentials(e) {
   if (newPass !== confirmPass) { showAlert('La nueva contraseña y su confirmación no coinciden', false); return; }
 
   const auth = getAuthData();
-  const currentHash = await computeSha256(currentPass);
   const activeUser = auth.users.find(function(u) {
     return u.username.toLowerCase() === (auth.currentUsername || window.DEFAULT_USER).toLowerCase();
   });
 
-  const isAuthorized = activeUser && (currentHash === activeUser.passwordHash);
+  const currentCheck = activeUser ? await verifyPassword(currentPass, activeUser.passwordHash) : { match: false, legacy: false };
+  const isAuthorized = activeUser && currentCheck.match;
   if (!isAuthorized) {
     showAlert('La contraseña actual es incorrecta', false);
     return;
@@ -800,8 +905,9 @@ async function handleUpdateCredentials(e) {
     return;
   }
 
-  const newHash = await computeSha256(newPass);
+  const newHash = await hashPassword(newPass);
   activeUser.passwordHash = newHash;
+  activeUser.passwordVersion = PASSWORD_VERSION_PBKDF2;
   activeUser.mustChangePassword = false;
   saveAuthData(auth);
 
@@ -822,7 +928,7 @@ function openSettingsModal() {
   const activeUser = auth.users.find(function(u) { return u.username.toLowerCase() === (auth.currentUsername || window.DEFAULT_USER).toLowerCase(); });
   if (alertBox) {
     if (activeUser && activeUser.mustChangePassword) {
-      alertBox.textContent = '⚠️ Estás usando la clave inicial. Por seguridad, cámbiala ahora.';
+      alertBox.textContent = '⚠️ Tu contraseña debe actualizarse por seguridad. Cámbiala ahora.';
       alertBox.className = 'p-2 rounded-xl text-center font-semibold text-xs bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-200 border border-amber-200';
       alertBox.classList.remove('hidden');
     } else {
@@ -899,6 +1005,10 @@ if (typeof window !== 'undefined') {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     computeSha256,
+    hashPassword,
+    verifyPassword,
+    generateSessionToken,
+    validateNewPassword,
     getAuthData,
     saveAuthData,
     getCurrentUserRole,

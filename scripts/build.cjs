@@ -25,6 +25,7 @@ function copy(src, dst) {
     "mobile-scan.html",
     "manifest.json",
     "robots.txt",
+    ".well-known/security.txt",
   ])
     copy(path.join(root, file), path.join(dist, file));
   copy(path.join(root, "js"), path.join(dist, "js"));

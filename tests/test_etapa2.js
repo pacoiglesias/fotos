@@ -43,7 +43,22 @@ const sandbox = {
         const crypto = require('crypto');
         const hash = crypto.createHash('sha256').update(Buffer.from(buf)).digest();
         return hash.buffer.slice(hash.byteOffset, hash.byteOffset + hash.byteLength);
+      },
+      importKey: async function(format, keyData) {
+        return Buffer.from(keyData);
+      },
+      deriveBits: async function(params, keyMaterial, lengthBits) {
+        // Mock PBKDF2-SHA256 real para el hash de contraseñas (auth.js)
+        const crypto = require('crypto');
+        const derived = crypto.pbkdf2Sync(Buffer.from(keyMaterial), Buffer.from(params.salt), params.iterations, lengthBits / 8, 'sha256');
+        return derived.buffer.slice(derived.byteOffset, derived.byteOffset + derived.byteLength);
       }
+    },
+    getRandomValues: function(buf) {
+      const crypto = require('crypto');
+      const bytes = crypto.randomBytes(buf.length);
+      buf.set(bytes);
+      return buf;
     }
   },
   TextEncoder: require('util').TextEncoder,

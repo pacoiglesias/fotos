@@ -3,9 +3,15 @@
    vive en IndexedDB y la app funciona sin conexión; la nube es una COPIA
    asociada a la cuenta del operador en SU proyecto fotos-cobertores-pro.
    - Identidad: la cuenta local se espeja en Firebase Auth con correo
-     <usuario>@realscan.local. La vinculación es explícita y por equipo
-     (botón en Ajustes): se pide la contraseña una sola vez para vincular;
-     nunca se guarda la contraseña, solo el token de refresco de Firebase.
+     <usuario>@realscan.local. La contraseña de Firebase NO es la
+     contraseña local ni se deriva de ella: al vincular se genera una
+     credencial aleatoria propia de la nube (256 bits) que solo vive en
+     este equipo, junto al token de refresco. Cambiar la contraseña local
+     ya no rompe el enlace ni la conoce quien conozca esa contraseña. Las
+     cuentas creadas antes de este cambio (con la contraseña local) migran
+     una sola vez: al vincular se pide la contraseña anterior para rotar
+     la credencial a la aleatoria. Si se pierde el equipo sin su respaldo,
+     la copia en nube queda huérfana: la vinculación es por equipo.
    - Datos: metadatos en Realtime Database (users/<uid>/scans/<id>) y las
      fotos en Firebase Storage (users/<uid>/scans/<id>/<cara>.jpg), por
      REST con el token de la sesión. Las reglas (database.rules.json y
@@ -64,10 +70,23 @@
       body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(l.refreshToken)
     });
     const data = await res.json().catch(function () { return {}; });
-    if (!res.ok || !data.id_token) return false;
+    if (!res.ok || !data.id_token) {
+      // El token de refresco caducó o se revocó: si este equipo guarda la
+      // credencial propia de la nube, la sesión se recupera con ella.
+      if (l.cloudPassword) {
+        try {
+          const signedIn = await authRequest('accounts:signInWithPassword', { email: l.email, password: l.cloudPassword, returnSecureToken: true });
+          idToken = signedIn.idToken;
+          idTokenExpiry = Date.now() + (parseInt(signedIn.expiresIn, 10) || 3600) * 1000 - 60000;
+          setLink({ email: l.email, uid: signedIn.localId || l.uid, refreshToken: signedIn.refreshToken, cloudPassword: l.cloudPassword });
+          return true;
+        } catch (e) { /* La credencial guardada ya no vale: hay que vincular de nuevo. */ }
+      }
+      return false;
+    }
     idToken = data.id_token;
     idTokenExpiry = Date.now() + (parseInt(data.expires_in, 10) || 3600) * 1000 - 60000;
-    if (data.refresh_token && data.refresh_token !== l.refreshToken) setLink({ email: l.email, uid: l.uid, refreshToken: data.refresh_token });
+    if (data.refresh_token && data.refresh_token !== l.refreshToken) setLink({ email: l.email, uid: l.uid, refreshToken: data.refresh_token, cloudPassword: l.cloudPassword });
     return true;
   }
 
@@ -77,23 +96,52 @@
     return null;
   }
 
-  async function linkWithPassword(password) {
+  /* Credencial propia de la nube: 256 bits aleatorios. No es la contraseña
+     local ni se deriva de ella: conocer la contraseña local no da acceso a
+     la cuenta de Firebase. Vive en este equipo junto al token de refresco
+     (que ya da el mismo acceso), así que guardarla ahí no amplía la
+     exposición; y cambiar la contraseña local ya no rompe el enlace. */
+  function generateCloudPassword() {
+    const bytes = new Uint8Array(32);
+    if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(bytes);
+    else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+    return Array.from(bytes).map(function(b){ return b.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  async function promptPreviousCloudPassword() {
+    if (!window.RealScanBackupCrypto || typeof window.RealScanBackupCrypto.promptBackupPassword !== 'function') return null;
+    return window.RealScanBackupCrypto.promptBackupPassword({
+      title: 'Vincular la copia en la nube (cuenta anterior)',
+      message: 'Tu cuenta de nube se creó con tu contraseña anterior de RealScan. Escríbela una sola vez para cambiarla por una credencial propia de la nube; después ya no se te pedirá y tu contraseña local quedará separada de la nube.',
+      confirm: false, confirmText: 'Vincular'
+    });
+  }
+
+  async function linkWithCloudCredential() {
     const email = currentUsername().toLowerCase().replace(/[^a-z0-9._-]/g, '') + '@realscan.local';
+    const cloudPassword = generateCloudPassword();
     let data;
     try {
-      data = await authRequest('accounts:signInWithPassword', { email: email, password: password, returnSecureToken: true });
+      data = await authRequest('accounts:signUp', { email: email, password: cloudPassword, returnSecureToken: true });
     } catch (e) {
-      if (e.code === 'EMAIL_NOT_FOUND' || e.code === 'INVALID_LOGIN_CREDENTIALS') {
-        try { data = await authRequest('accounts:signUp', { email: email, password: password, returnSecureToken: true }); }
-        catch (e2) {
-          if (e2.code === 'EMAIL_EXISTS') throw new Error('La cuenta de nube ya existe con otra contraseña (¿cambiaste tu contraseña local?). Vincula con la contraseña anterior o pide restablecer el enlace.');
+      if (e.code === 'EMAIL_EXISTS') {
+        // Cuenta anterior, creada con la contraseña local: se pide UNA vez
+        // para rotarla a la credencial aleatoria propia de la nube.
+        const previousPassword = await promptPreviousCloudPassword();
+        if (!previousPassword) throw new Error('Vinculación cancelada: la cuenta de nube anterior sigue con su contraseña antigua.');
+        let signedIn;
+        try {
+          signedIn = await authRequest('accounts:signInWithPassword', { email: email, password: previousPassword, returnSecureToken: true });
+        } catch (e2) {
+          if (e2.code === 'INVALID_PASSWORD' || e2.code === 'INVALID_LOGIN_CREDENTIALS') throw new Error('La contraseña anterior no coincide con la de tu cuenta de nube.');
           throw e2;
         }
+        data = await authRequest('accounts:update', { idToken: signedIn.idToken, password: cloudPassword, returnSecureToken: true });
       } else throw e;
     }
     idToken = data.idToken;
     idTokenExpiry = Date.now() + (parseInt(data.expiresIn, 10) || 3600) * 1000 - 60000;
-    setLink({ email: email, uid: data.localId, refreshToken: data.refreshToken });
+    setLink({ email: email, uid: data.localId, refreshToken: data.refreshToken, cloudPassword: cloudPassword });
     return data.localId;
   }
 
@@ -317,29 +365,25 @@
   }
 
   async function linkFlow() {
-    if (!window.RealScanBackupCrypto || typeof window.RealScanBackupCrypto.promptBackupPassword !== 'function') {
-      showToast('El módulo de seguridad no está listo. Recarga la página.', 'error'); return;
-    }
-    const password = await window.RealScanBackupCrypto.promptBackupPassword({
-      title: 'Vincular la copia en la nube',
-      message: 'Escribe tu contraseña de RealScan para vincular este equipo con tu nube de Firebase. Se pide solo al vincular: después la copia es automática y tu contraseña no se guarda.',
-      confirm: false, confirmText: 'Vincular'
-    });
-    if (!password) return;
+    // La vinculación ya no pide la contraseña local: la nube usa su propia
+    // credencial aleatoria. Solo las cuentas anteriores (creadas con la
+    // contraseña local) piden la contraseña anterior una vez, dentro de
+    // linkWithCloudCredential, para rotar la credencial.
     setStatus('vinculando…');
     try {
-      await linkWithPassword(password);
+      await linkWithCloudCredential();
       showToast('☁️ Equipo vinculado. Sincronizando tu historial…', 'success');
       await syncNow();
     } catch (e) {
       console.error('Error al vincular la nube:', e);
       setStatus('no se pudo vincular');
       const code = (e && e.code) || '';
+      const message = (e && e.message) || '';
       let friendly = 'No se pudo vincular la nube. Revisa tu conexión a internet e inténtalo de nuevo.';
-      if (code === 'INVALID_PASSWORD' || code === 'INVALID_LOGIN_CREDENTIALS') friendly = 'La contraseña no coincide con la de tu cuenta de nube. Si cambiaste tu contraseña de RealScan, vincula primero con la anterior o pide ayuda para restablecer el enlace.';
-      else if (code === 'WEAK_PASSWORD') friendly = 'Tu contraseña es demasiado corta para la nube (mínimo 6 caracteres). Cámbiala en Ajustes y vuelve a vincular.';
+      if (/anterior no coincide/.test(message)) friendly = 'La contraseña anterior no coincide con la de tu cuenta de nube. Sin ella no se puede recuperar el enlace anterior (el trabajo local está a salvo).';
+      else if (/cancelada/.test(message)) friendly = 'Vinculación cancelada. Tu cuenta de nube sigue como estaba.';
       else if (code === 'TOO_MANY_ATTEMPTS_TRY_LATER') friendly = 'Demasiados intentos seguidos: espera unos minutos y vuelve a intentarlo.';
-      else if (code === 'EMAIL_EXISTS') friendly = 'Tu cuenta de nube ya existe con otra contraseña. Vincula con la contraseña anterior.';
+      else if (code === 'EMAIL_EXISTS') friendly = 'Tu cuenta de nube ya existe. Vuelve a intentarlo para migrarla con tu contraseña anterior.';
       showToast(friendly, 'error');
     }
   }
