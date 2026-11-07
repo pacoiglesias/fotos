@@ -1,0 +1,143 @@
+# Despliegue automático de RealScan Pro (repo fotos)
+#
+# BORRADOR — ruta final en el repo: .github/workflows/deploy.yml
+# (lo tiene que meter Paco: el conector de GitHub de Muse no tiene
+#  permiso de Workflows y no puede crear/editar archivos .github/workflows/).
+#
+# Modelo: .github/workflows/deploy.yml de Alacena (estructura: checkout,
+# Node, npm ci, build, firebase deploy --non-interactive), con dos
+# diferencias deliberadas:
+#   1. Alacena usa el secreto FIREBASE_SERVICE_ACCOUNT (JSON de clave).
+#      Aquí se usa Workload Identity Federation (WIF): sin secretos
+#      de larga duración; la identidad es efímera por ejecución.
+#   2. Fotos despliega SOLO Hosting a DOS proyectos Firebase
+#      (fotos-cobertores-pro y cobertores-web). No hay Functions en
+#      este repo (no existe carpeta functions/ ni bloque "functions"
+#      en firebase.json), así que no se piden roles de Functions.
+#
+# Puerta de seguridad (heredada de desplegar.ps1, que es la que manda):
+#   - El despliegue SOLO se dispara con push a una rama release/<version>.
+#   - La rama release/<version> debe coincidir con el HEAD de main:
+#     el job "gate" compara el SHA de origin/main (git ls-remote) con
+#     el SHA del push y ABORTA si difieren. Así nunca se publica un
+#     main con mejoras pendientes de verificar, igual que el .ps1
+#     ("Hay mejoras en main pendientes de verificar...").
+#   - La versión de package.json debe coincidir con el nombre de la
+#     rama (release/3.39.1 <=> "version": "3.39.1").
+#   - El propio `npm run publish` vuelve a imponer: árbol limpio,
+#     verify.cjs completo (build + toda la suite Playwright),
+#     check-release.cjs (dist/version.json.sourceCommit == HEAD) y
+#     verificación de /version.json (version + sourceCommit) en los
+#     4 hosts tras desplegar. El deploy no se da por bueno sin eso.
+# El workflow check.yml ya corre en push a cualquier rama (incluidas
+# las release/*), pero el deploy NO depende de él: publish.cjs ejecuta
+# la misma verificación dentro del propio job, así que no hay carrera
+# entre workflows ni espera externa.
+#
+# Placeholders que hay que rellenar antes del primer despliegue:
+#   - 322224562095  = nº de proyecto GCP de fotos-cobertores-pro
+#   - 406682059694    = nº de proyecto GCP de cobertores-web
+#   (no están en ningún archivo local; se leen en Firebase Console >
+#    Configuración del proyecto > General > "Número de proyecto", o con
+#    `firebase projects:list`. NO inventarlos.)
+# El pool/provider viven en fotos-cobertores-pro (proyecto primario);
+# la misma service account se autoriza en cobertores-web con un grant
+# IAM entre proyectos (ver setup en el informe que acompaña).
+
+name: Desplegar Fotos (RealScan Pro)
+
+on:
+  push:
+    branches:
+      - 'release/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # obligatorio para WIF (google-github-actions/auth)
+
+concurrency:
+  group: fotos-deploy
+  cancel-in-progress: false # nunca cancelar un despliegue a medias
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      # Proyecto primario (pool WIF + service account viven aquí).
+      GCP_PROJECT_NUMBER: '322224562095'
+      WIF_PROVIDER: 'projects/322224562095/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+      WIF_SERVICE_ACCOUNT: 'fotos-deploy@fotos-cobertores-pro.iam.gserviceaccount.com'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # publish.cjs / check-release.cjs usan git rev-parse HEAD
+
+      - name: Puerta release == main (igual que desplegar.ps1)
+        run: |
+          set -euo pipefail
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          echo "Rama: $BRANCH"
+          case "$BRANCH" in release/*) ;; *)
+            echo "La rama debe ser release/<version>"; exit 1;;
+          esac
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "package.json version: $VERSION"
+          test "$BRANCH" = "release/$VERSION" || {
+            echo "La rama $BRANCH no coincide con la version $VERSION de package.json"; exit 1; }
+          echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || {
+            echo "Version local no valida: $VERSION"; exit 1; }
+          MAIN_SHA="$(git ls-remote --exit-code origin refs/heads/main | awk '{print $1}')"
+          echo "main HEAD:  $MAIN_SHA"
+          echo "release HEAD: ${GITHUB_SHA}"
+          test "$MAIN_SHA" = "$GITHUB_SHA" || {
+            echo "Hay mejoras en main pendientes de verificar. Espera al CI en verde y a su respaldo antes de publicar; este workflow no instalara una version anterior."; exit 1; }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24' # desplegar.ps1 exige Node 24+; check.yml usa 24
+          cache: npm
+
+      - name: Autenticar en GCP con WIF (sin secretos)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
+
+      - name: Instalar Firebase CLI (misma version que usa desplegar.ps1)
+        run: npm install -g firebase-tools@15.26.0
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar navegadores Playwright (chromium + webkit, como check.yml)
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Instalar librerias de sistema de WebKit (igual que check.yml)
+        run: sudo apt-get update && sudo apt-get install -y libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-bad libevent-2.1-7t64 libenchant-2-2 libavif16 libsoup-3.0-0 libmanette-0.2-0 libgles2
+
+      - name: Publicar (build + pruebas + deploy a los 2 proyectos + verificacion)
+        # npm run publish = verify.cjs completo, check-release.cjs,
+        # firebase deploy --only hosting a fotos-cobertores-pro y a
+        # cobertores-web (--config firebase.secondary.json), y
+        # comprobacion de /version.json en los 4 hosts. Si cualquier
+        # paso falla, el job falla y NO se da el despliegue por bueno.
+        # La autenticacion la toma firebase-tools de las credenciales
+        # de aplicacion (ADC) que deja el paso WIF; NO usa `firebase login`.
+        run: npm run publish
+
+      - name: Verificacion post-despliegue de /version.json (explícita, en el log)
+        run: |
+          set -euo pipefail
+          EXPECTED_VERSION="$(node -p "JSON.parse(require('fs').readFileSync('dist/version.json','utf8')).version")"
+          EXPECTED_COMMIT="$(node -p "JSON.parse(require('fs').readFileSync('dist/version.json','utf8')).sourceCommit")"
+          echo "Esperado: $EXPECTED_VERSION $EXPECTED_COMMIT"
+          for HOST in fotos-cobertores-pro.web.app fotos-cobertores.web.app; do
+            for ATTEMPT in 1 2 3; do
+              BODY="$(curl -fsSL --max-time 15 "https://$HOST/version.json")" && break || sleep 5
+            done
+            echo "$HOST -> $BODY"
+            echo "$BODY" | grep -q "\"version\":\"$EXPECTED_VERSION\"" || { echo "$HOST: version distinta"; exit 1; }
+            echo "$BODY" | grep -q "\"sourceCommit\":\"$EXPECTED_COMMIT\"" || { echo "$HOST: commit distinto"; exit 1; }
+            echo "VERIFICADO https://$HOST $EXPECTED_VERSION $EXPECTED_COMMIT"
+          done
