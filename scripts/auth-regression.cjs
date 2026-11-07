@@ -72,6 +72,28 @@ const fs = require("fs"),
     "Changed password must still work",
   );
   results.push("Current password accepted");
+  // F1: el login con un hash heredado (SHA-256) migra en silencio a PBKDF2
+  // con sal, y el token de sesión es aleatorio (no Date.now()+Math.random).
+  assert.ok(
+    context.getAuthData().users[0].passwordHash.startsWith("pbkdf2$210000$"),
+    "Legacy hash must migrate to PBKDF2 on first login",
+  );
+  assert.ok(
+    context.getAuthData().sessionToken.startsWith("sess_"),
+    "Session token must be random, not Date.now()+Math.random()",
+  );
+  results.push("Legacy password migrated to PBKDF2 with salt on login");
+  // F1: mínimo de 12 caracteres para contraseñas nuevas.
+  assert.ok(
+    (await context.validateNewPassword("corta")) !== null,
+    "Passwords shorter than 12 must be rejected",
+  );
+  assert.equal(
+    await context.validateNewPassword("DoceCaracteres"),
+    null,
+    "A 12+ character password must be accepted",
+  );
+  results.push("New passwords require at least 12 characters");
   context.saveAuthData({
     users: [
       {
