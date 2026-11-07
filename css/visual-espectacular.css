@@ -597,3 +597,59 @@ html.dark body.rs-next.rs-counter330 #studioReady[data-ready="true"] {
 @media (max-width: 1023px) {
   body.rs-quick #workbenchBar > div:last-child { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
 }
+
+/* ---------- 14. Conexión NAS · Paperless: el estado por fin se ve ----------
+   Causa raíz (3.40.1): la sección 6 diseñó «puntos con luz real» con
+   selectores de clase simples (.desk-light.ok = 0,2,0) y nunca ganó la
+   cascada frente a redesign-333.css, que pinta el semáforo con
+   body.rs-next.rs-counter330 #deskSemaphore button.desk-light (1,1,1) y
+   ... .desk-light.ok .rs-dot (1,4,1). Resultado medido en la 3.40.0: la
+   luz «ok» salía con fondo blanco y texto tinta, sin tinte de estado ni
+   forma de píldora; el estado solo se intuía por el punto. Es el mismo
+   fallo que la PR #24 documentó tres veces con el botón Cámara («reglas
+   no-op por especificidad»). Aquí se repite el diseño de la sección 6
+   con la especificidad ganadora y SOLO propiedades que no alteran la
+   geometría (fondo, color, borde, sombra, radio): ni un píxel del flujo
+   de mostrador se mueve. */
+body.rs-next.rs-counter330 #deskSemaphore .desk-light { border-radius: 999px; }
+body.rs-next.rs-counter330 #deskSemaphore .desk-light.ok { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+body.rs-next.rs-counter330 #deskSemaphore .desk-light.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+body.rs-next.rs-counter330 #deskSemaphore .desk-light.bad { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+body.rs-next.rs-counter330 #deskSemaphore .desk-light.checking { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
+body.rs-next.rs-counter330 #deskSemaphore .desk-light.ok .rs-dot { background: #10b981; }
+body.rs-next.rs-counter330 #deskSemaphore .desk-light.warn .rs-dot { background: #f59e0b; }
+body.rs-next.rs-counter330 #deskSemaphore .desk-light.bad .rs-dot { background: #ef4444; }
+body.rs-next.rs-counter330 #deskSemaphore .desk-light.checking .rs-dot { background: #6366f1; }
+html.dark body.rs-next.rs-counter330 #deskSemaphore .desk-light.ok { background: #052e16; border-color: #166534; color: #86efac; }
+html.dark body.rs-next.rs-counter330 #deskSemaphore .desk-light.warn { background: #422006; border-color: #854d0e; color: #fde68a; }
+html.dark body.rs-next.rs-counter330 #deskSemaphore .desk-light.bad { background: #450a0a; border-color: #7f1d1d; color: #fecaca; }
+html.dark body.rs-next.rs-counter330 #deskSemaphore .desk-light.checking { background: #1e1b4b; border-color: #4338ca; color: #c7d2fe; }
+
+/* El resultado de «Comprobar acceso» era una línea de texto gris que se
+   perdía en el diálogo (así en la 3.39.1 y en la 3.40.0). Ahora el estado
+   de la conexión es un banner con el mismo lenguaje de puntos del
+   semáforo: índigo pulsante mientras comprueba, verde con luz si el NAS
+   responde y rojo si falla. También sustituye a la confirmación visual
+   que se perdió con F3 (el campo ya no muestra el token guardado): al
+   abrir, el banner verde dice «Token guardado en este navegador» sin
+   exponer el token. */
+#paperlessSettings #paperlessStatus.paperless-status {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; margin: 14px 0;
+  border: 1px solid #e2e8f0; border-radius: 12px;
+  background: #f8fafc; color: #334155; font-weight: 650;
+}
+#paperlessSettings #paperlessStatus.paperless-status::before {
+  content: ""; width: 12px; height: 12px; border-radius: 50%;
+  background: #94a3b8; flex: none;
+}
+#paperlessSettings #paperlessStatus.paperless-status[data-state="checking"] { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
+#paperlessSettings #paperlessStatus.paperless-status[data-state="checking"]::before { background: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, .25); animation: vx-dot-pulse 1.4s infinite ease-in-out; }
+#paperlessSettings #paperlessStatus.paperless-status[data-state="ok"] { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+#paperlessSettings #paperlessStatus.paperless-status[data-state="ok"]::before { background: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, .25), 0 0 10px rgba(16, 185, 129, .8); }
+#paperlessSettings #paperlessStatus.paperless-status[data-state="error"] { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+#paperlessSettings #paperlessStatus.paperless-status[data-state="error"]::before { background: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, .25), 0 0 10px rgba(239, 68, 68, .8); }
+html.dark #paperlessSettings #paperlessStatus.paperless-status { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+html.dark #paperlessSettings #paperlessStatus.paperless-status[data-state="checking"] { background: #1e1b4b; border-color: #4338ca; color: #c7d2fe; }
+html.dark #paperlessSettings #paperlessStatus.paperless-status[data-state="ok"] { background: #052e16; border-color: #166534; color: #86efac; }
+html.dark #paperlessSettings #paperlessStatus.paperless-status[data-state="error"] { background: #450a0a; border-color: #7f1d1d; color: #fecaca; }

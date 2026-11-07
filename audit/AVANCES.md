@@ -1,3 +1,7 @@
+## 3.40.1 — En publicación
+
+Restaurada la retroalimentación visual de la conexión con el NAS/Paperless: las reglas «puntos con luz real» de la PR #24 (css/visual-espectacular.css §6) nunca ganaban la cascada frente a redesign-333.css y el semáforo se veía plano; la nueva §14 las restablece con la especificidad ganadora sin alterar la geometría, y el estado de «Comprobar acceso» pasa a ser un banner con estado (comprobando/conectado/error) en el diálogo de Paperless, que además muestra el token guardado sin exponerlo (F3 intacto). Sin cambios de lógica.
+
 ## 3.40.0 — En publicación
 
 Rediseño visual espectacular (PR #24) y endurecimiento de seguridad (PR #27: contraseña mínima de 12 caracteres con PBKDF2 y sal, token de sesión de 256 bits, credencial de nube separada de la contraseña local, cabeceras de seguridad). Versión alineada en package.json, package-lock.json, js/config.js, metadatos de las páginas móviles y portada.
