@@ -1,3 +1,9 @@
+## 3.40.0 — Rediseño visual espectacular
+
+- Nuevo aspecto visual del mostrador: nueva hoja css/visual-espectacular.css con un diseño moderno y espectacular en todo el flujo de trabajo.
+- El botón de Cámara queda siempre visible por encima del pie fijo sin desplazar, también en WebKit a 390px (paperless-intake): ajustes de espaciado en la barra de pasos guiados, la barra de trabajo, la recepción y el encabezado del mostrador.
+- Incluye las mejoras de seguridad de la PR #27 (contraseñas PBKDF2 con sal, sesiones con token aleatorio de 256 bits, token de Paperless sin prellenar en el DOM y cabeceras de seguridad).
+
 ## 3.39.1 — Entrada clara y envío a Paperless resistente a fallos
 
 - Tarjeta de entrada con dos pasos explicados: qué preparar y de dónde cargarlo; recepción y archivado separados.
