@@ -54,6 +54,7 @@ try {
     "journey-regression",
     "navigation-regression",
     "capture-regression",
+    "quick-photos-regression",
     "iphone-capture-regression",
     "document-regression",
     "mobile-local-regression",

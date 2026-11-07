@@ -69,6 +69,21 @@ function build(){
  +'<button type="button" id="quickSettingsBtn" class="quick-gear" aria-label="Ajustes"><svg class="rs-ic" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h.01a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h.01a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.01a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>'
  +'<button type="button" id="quickFullModeBtn" class="quick-link">Modo completo</button></div>'
  +'</div>'
+ +'<div class="quick-photos" hidden>'
+ +'<p class="quick-kicker">MODO RÁPIDO</p><h2>Fotos — listas para imprimir</h2>'
+ +'<div class="quick-steps" aria-hidden="true"><span id="quickPhotoStep1" class="quick-step" data-state="current">1 · Trabajo</span><span id="quickPhotoStep2" class="quick-step" data-state="todo">2 · Foto</span><span id="quickPhotoStep3" class="quick-step" data-state="todo">3 · Entregar</span></div>'
+ +'<p id="quickPhotoMeta" class="quick-meta"></p><p id="quickPhotoStatus" class="quick-status" role="status"></p>'
+ +'<div class="quick-slots" style="grid-template-columns:repeat(3,1fr)">'
+ +'<button type="button" class="quick-slot-btn" data-quick-photo="passport" aria-pressed="false"><span class="quick-slot-thumb"><span class="quick-slot-plus">🛂</span></span><strong>Pasaporte</strong><small>×4 · 3,5 × 4,5 cm</small></button>'
+ +'<button type="button" class="quick-slot-btn" data-quick-photo="infantil" aria-pressed="false"><span class="quick-slot-thumb"><span class="quick-slot-plus">👶</span></span><strong>Infantil</strong><small>×6 · 2,5 × 3,0 cm</small></button>'
+ +'<button type="button" class="quick-slot-btn" data-quick-photo="photo10x15" aria-pressed="false"><span class="quick-slot-thumb"><span class="quick-slot-plus">🖼️</span></span><strong>10 × 15</strong><small>×1 · 100 × 150 mm</small></button>'
+ +'</div>'
+ +'<div class="quick-job-options"><label>Fotos por juego<input id="quickPhotoCount" type="number" min="1" max="48" step="1" value="4" inputmode="numeric"></label><label>Juegos<input id="quickPhotoSets" type="number" min="1" max="10" step="1" value="1" inputmode="numeric"></label></div>'
+ +'<div class="quick-slots" style="grid-template-columns:1fr"><article class="quick-slot"><button type="button" class="quick-slot-btn" id="quickPhotoSlotBtn" aria-label="Captura de la foto"><span class="quick-slot-thumb"><span class="quick-slot-plus">+</span><img alt="" hidden><span class="quick-slot-check" hidden>✓</span></span><strong>Foto</strong><small>Pendiente</small></button><div class="quick-slot-tools"><button type="button" id="quickPhotoRotate">↻ Girar</button><button type="button" id="quickPhotoReplace">Cambiar foto</button></div></article></div>'
+ +'<button type="button" id="quickPhotoScanBtn" class="quick-giant quick-scan"><span class="quick-giant-main">📷 Escanear foto</span><span class="quick-giant-sub">Toca para abrir la cámara</span></button>'
+ +'<button type="button" id="quickPhotoFileBtn" class="quick-link">o subir un archivo</button>'
+ +'<div class="quick-foot"><button type="button" id="quickPhotoOtherService" class="quick-link">Otro servicio (INE/documento)</button><button type="button" id="quickPhotoFullModeBtn" class="quick-link">Modo completo</button></div>'
+ +'</div>'
  +'<div class="quick-blocked" hidden><p class="quick-kicker">MODO RÁPIDO</p><h2>INE / DNI — tamaño real</h2>'
  +'<p id="quickBlockedText" class="quick-status"></p>'
  +'<button type="button" id="quickBlockedExit" class="quick-giant quick-scan">Volver al modo completo</button></div>';
@@ -76,7 +91,7 @@ function build(){
  const actions=document.createElement('section');
  actions.id='quickActions';actions.setAttribute('aria-label','Entregar trabajo rápido');
  actions.innerHTML=
- '<p class="quick-stamp">✓ Tamaño real · 85.60 × 53.98 mm · <span id="quickScale">100%</span></p>'
+ '<p class="quick-stamp"><span id="quickStampText">✓ Tamaño real · 85.60 × 53.98 mm · </span><span id="quickScale">100%</span></p>'
  +'<p id="quickPrinter" class="quick-printer"></p>'
  +'<div class="quick-deliver">'
  +'<button type="button" id="quickPrintBtn" class="quick-giant quick-print"><svg class="rs-ic" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg> Imprimir</button>'
@@ -103,17 +118,24 @@ function exitQuick(){if(document.body.classList.contains('rs-quick'))$('workbenc
 function printQuick(){
  if(!unlocked())return;const w=describe();
  if(w.busy)return;
- if((w.missing||[]).length||!w.ready){root.showToast?.('Completa el frente y el reverso antes de imprimir.','info');return;}
+ if((w.missing||[]).length||!w.ready){root.showToast?.(root.state.activeCategory==='photos'?'Captura la foto antes de imprimir.':'Completa el frente y el reverso antes de imprimir.','info');return;}
  root.handlePrintDirect?.();
 }
 function pdfQuick(){
  if(!unlocked())return;const w=describe();
  if(w.busy)return;
- if((w.missing||[]).length||!w.ready){root.showToast?.('Completa el frente y el reverso antes de guardar el PDF.','info');return;}
+ if((w.missing||[]).length||!w.ready){root.showToast?.(root.state.activeCategory==='photos'?'Captura la foto antes de guardar el PDF.':'Completa el frente y el reverso antes de guardar el PDF.','info');return;}
  root.handleExportPDF?.(false,true);
 }
 async function newScan(){
  if(!unlocked())return;
+ if(root.state.activeCategory==='photos'){
+  try{await root.RealScanCounter?.startPrepared('photos',true);}
+  catch(e){root.showToast?.(e.message||'No se pudo preparar el nuevo escaneo.','warning');return;}
+  postPrint=false;update();
+  document.getElementById('quickMode')?.scrollIntoView({block:'start',behavior:'auto'});
+  return;
+ }
  try{await root.RealScanCounter?.startPrepared('id',true);}
  catch(e){root.showToast?.(e.message||'No se pudo preparar el nuevo escaneo.','warning');return;}
  applyQuickDefaults();postPrint=false;update();
@@ -127,6 +149,16 @@ function wire(){
  $('quickSendBtn').onclick=()=>{if(unlocked()&&describe().ready&&!describe().busy)root.RealScanPdfDelivery?.open({destination:'digital'});};
  $('quickArchiveBtn').onclick=()=>{if(unlocked()&&describe().ready&&!describe().busy)root.RealScanPdfDelivery?.open({destination:'paperless'});};
  $('quickScanBtn').onclick=()=>scanSide(pendingSide());
+ for(const b of document.querySelectorAll('[data-quick-photo]'))b.onclick=()=>{if(!unlocked()||describe().busy)return;const kind=b.dataset.quickPhoto;try{root.RealScanDeskPresets?.apply(kind,kind==='infantil'?6:undefined);}catch(e){}postPrint=false;refreshAll();update();};
+ $('quickPhotoCount').onchange=e=>{if(!unlocked()||describe().busy)return;root.setPhotoCopies?.(Math.max(1,Math.min(48,Math.round(Number(e.target.value)||1))));postPrint=false;refreshAll();update();};
+ $('quickPhotoSets').onchange=e=>{if(!unlocked()||describe().busy)return;root.state.outputSets=Math.max(1,Math.min(10,Math.round(Number(e.target.value)||1)));postPrint=false;refreshAll();update();};
+ $('quickPhotoScanBtn').onclick=()=>scanSide('front');
+ $('quickPhotoFileBtn').onclick=()=>fileFor('front');
+ $('quickPhotoSlotBtn').onclick=()=>{if(!unlocked())return;if(imgOf('front'))root.RealScanCapturePreviews?.open('front');else scanSide('front');};
+ $('quickPhotoRotate').onclick=()=>{if(!unlocked())return;root.RealScanStudio?.selectSlot('front');document.querySelector('[data-rotate="front"]')?.click();};
+ $('quickPhotoReplace').onclick=()=>{if(unlocked())fileFor('front');};
+ $('quickPhotoOtherService').onclick=exitQuick;
+ $('quickPhotoFullModeBtn').onclick=exitQuick;
  $('quickFileBtn').onclick=()=>fileFor(pendingSide());
  for(const side of ['front','back']){
   $('quickSlot'+(side==='front'?'Front':'Back')).onclick=()=>{
@@ -180,9 +212,13 @@ function update(){
  try{
   const card=document.querySelector('#colStageWorkspace .stage-canvas-area')?.closest('section'),actions=$('quickActions');
   if(card&&actions&&actions.previousElementSibling!==card)card.after(actions);
-  const blocked=docActive()||(hasImages()&&root.state.activeCategory!=='docs');
+  const blocked=docActive()||(hasImages()&&root.state.activeCategory!=='docs'&&root.state.activeCategory!=='photos');
   const main=$('quickMode')?.querySelector('.quick-main'),blk=$('quickMode')?.querySelector('.quick-blocked');
-  if(main)main.hidden=blocked;if(blk)blk.hidden=!blocked;
+  const photosMode=root.state.activeCategory==='photos';
+ const photosView=$('quickMode')?.querySelector('.quick-photos');
+ if(photosView)photosView.hidden=!photosMode;
+ if(main)main.hidden=blocked||photosMode;if(blk)blk.hidden=!blocked||photosMode;
+ if(photosMode){updatePhotos();restoreBanner();return;}
   if(blocked){
    setText('quickBlockedText',docActive()?'El modo rápido es para INE / DNI. Termina o cierra el documento para usarlo.':'Tienes un trabajo abierto que no es INE / DNI. Termínalo o guárdalo y vuelve al modo rápido.');
    restoreBanner();return;
@@ -238,7 +274,8 @@ function update(){
   moveBannerIn();
   const name=$('quickName');
   if(name&&document.activeElement!==name&&name.value!==(root.state.documentCustomTitle||''))name.value=root.state.documentCustomTitle||'';
-  setText('quickScale',scale+'%');
+  setText('quickStampText','✓ Tamaño real · 85.60 × 53.98 mm · ');
+ setText('quickScale',scale+'%');
   const printer=$('quickPrinter');
   if(printer){const st=$('workspacePrinterStatus')?.textContent||'';if(printer.textContent!==st)printer.textContent=st;}
   const busy=!!w.busy,ok=!miss.length&&!!w.ready&&!busy;
@@ -250,9 +287,55 @@ function update(){
   if(deliver)deliver.hidden=postPrint;if(post)post.hidden=!postPrint;
  }finally{updating=false;}
 }
+function renderPhotoSlot(src){
+ const btn=$('quickPhotoSlotBtn');if(!btn)return;
+ const img=btn.querySelector('img'),plus=btn.querySelector('.quick-slot-plus'),small=btn.querySelector('small'),check=btn.querySelector('.quick-slot-check');
+ if(img){img.hidden=!src;if(src)setSrc(img,src);}
+ if(plus)plus.hidden=!!src;
+ if(check)check.hidden=!src;
+ if(small)small.textContent=src?'Lista':'Pendiente';
+ btn.dataset.filled=String(!!src);
+ const rot=$('quickPhotoRotate');if(rot)rot.disabled=!src;
+}
+/* B2: vista rápida de fotos — 3 trabajos habituales con sus valores por
+   defecto, un botón gigante de escaneo y entrega directa. Reutiliza el mismo
+   panel de entrega que el modo INE (#quickActions) y los mismos motores. */
+function updatePhotos(){
+ const w=describe(),miss=w.missing||[],front=imgOf('front');
+ const cur=root.state.format;
+ for(const b of document.querySelectorAll('[data-quick-photo]')){
+  const kind=b.dataset.quickPhoto;
+  const active=(kind==='passport'&&cur==='photo_passport')||(kind==='infantil'&&cur==='photo_infantil')||(kind==='photo10x15'&&cur==='photo_10x15');
+  b.setAttribute('aria-pressed',String(active));b.dataset.filled=String(active);
+ }
+ const spec=root.getActiveSpec?.();
+ setText('quickPhotoMeta',(spec?spec.shortName:'')+' · '+(root.state.photoCopies||1)+' foto(s) por juego · '+(root.state.outputSets||1)+' juego(s) · '+paperName());
+ setText('quickPhotoStatus',!front?'Elige el trabajo y toca Escanear foto':w.ready?'Foto lista. Revisa la hoja antes de imprimir.':'Preparando la foto…');
+ const statusEl=$('quickPhotoStatus');if(statusEl)statusEl.classList.toggle('is-ready',!!w.ready);
+ const setStep=(id,state)=>{const el=$(id);if(el)el.dataset.state=state;};
+ setStep('quickPhotoStep1',cur?'done':'current');
+ setStep('quickPhotoStep2',!front?'todo':w.ready?'done':'current');
+ setStep('quickPhotoStep3',postPrint?'done':w.ready?'current':'todo');
+ renderPhotoSlot(front);
+ const scan=$('quickPhotoScanBtn');
+ if(scan){const main=scan.querySelector('.quick-giant-main');if(main)main.textContent=front?'📷 Repetir foto':'📷 Escanear foto';}
+ const count=$('quickPhotoCount');if(count&&document.activeElement!==count)count.value=root.state.photoCopies||1;
+ const sets=$('quickPhotoSets');if(sets&&document.activeElement!==sets)sets.value=root.state.outputSets||1;
+ setText('quickStampText','✓ Foto a tamaño real · '+(spec?spec.shortName:'')+' · ');
+ setText('quickScale',(root.state.outputScalePercent||100)+'%');
+ const ok=!miss.length&&!!w.ready&&!w.busy;
+ const actions=$('quickActions');
+ if(actions)actions.dataset.ready=String(ok);if($('quickMode'))$('quickMode').dataset.ready=String(ok);
+ const print=$('quickPrintBtn'),pdf=$('quickPdfBtn');
+ if(print)print.disabled=!ok;if(pdf)pdf.disabled=!ok;for(const id of ['quickSendBtn','quickArchiveBtn'])if($(id))$(id).disabled=!ok;
+ setText('quickDeliverHint',postPrint?'':(!front?'Toca Escanear foto para empezar.':miss.length?'Falta la foto.':w.busy?'Preparando la foto…':'Revisa la hoja y elige cómo entregar.'));
+ const deliver=$('quickActions')?.querySelector('.quick-deliver'),post=$('quickActions')?.querySelector('.quick-postprint');
+ if(deliver)deliver.hidden=postPrint;if(post)post.hidden=!postPrint;
+}
 function enter(){
  quick=true;
  if(!unlocked()){update();return;}
+ if(root.state.activeCategory==='photos'){prevMissing=(describe().missing||[])[0]||null;update();return;}
  if(docActive()||(hasImages()&&root.state.activeCategory!=='docs')){prevMissing=(describe().missing||[])[0]||null;update();return;}
  if(!hasImages()){
   try{root.RealScanDeskPresets?.apply('ine');}catch(e){}

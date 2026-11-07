@@ -40,7 +40,14 @@
     if (codes.includes(details.code)) result.code = details.code;
     if (typeof details.file === 'string') {
       const file = details.file.split(/[?#]/)[0].split('/').pop();
-      const known = Array.from(document.scripts).some(script => script.src && script.src.split(/[?#]/)[0].split('/').pop() === file);
+      // B4: los scripts propios viven en js/bundle.js; su tag lista los
+      // nombres originales en data-bundle-files para que el diagnóstico
+      // siga atribuyendo el fichero original sin exponer nada más.
+      const known = Array.from(document.scripts).some(script => {
+        if (script.src && script.src.split(/[?#]/)[0].split('/').pop() === file) return true;
+        const bundled = script.dataset && script.dataset.bundleFiles;
+        return !!bundled && bundled.split(',').includes(file);
+      });
       if (known && /^[a-zA-Z0-9_-]+\.(js|mjs)$/.test(file)) result.file = file;
     }
     return result;

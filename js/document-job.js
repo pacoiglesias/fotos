@@ -293,6 +293,38 @@
     root.RealScanCounter?.update();
     document.dispatchEvent(new Event('realscan:document-updated'));
   }
+  /* B3: captura por lotes — tras confirmar una página con la cámara, se
+     pregunta si añadir otra; solo «Terminar» vuelve al panel. La cámara se
+     reabre directamente, sin pasar por el panel entre páginas. */
+  function showBatchPrompt(){
+    let modal=$('docBatchPrompt');
+    if(!modal){
+      modal=document.createElement('div');
+      modal.id='docBatchPrompt';
+      modal.className='hidden counter-overlay';
+      modal.setAttribute('role','dialog');
+      modal.setAttribute('aria-labelledby','docBatchTitle');
+      modal.innerHTML='<div class="counter-dialog"><h2 id="docBatchTitle">Página guardada</h2><p id="docBatchStatus"></p><div class="document-actions"><button type="button" id="docBatchAdd" class="counter-primary">Añadir otra página</button><button type="button" id="docBatchDone" class="counter-secondary">Terminar</button></div></div>';
+      document.body.append(modal);
+      $('docBatchAdd').onclick=()=>{closeModal('docBatchPrompt');openDocCamera();};
+      $('docBatchDone').onclick=()=>{closeModal('docBatchPrompt');};
+    }
+    $('docBatchStatus').textContent='Página '+pages.length+' guardada · '+pages.length+' en total. ¿Añades otra?';
+    openModal('docBatchPrompt');
+  }
+  function openDocCamera(){
+    if(busy)return;
+    const revision=epoch;
+    RealScanCapture.open({photoMode:false,onNative:()=>$('docNativeCamera').click(),onAccept:async data=>{
+      if(revision!==epoch)return;
+      const blob=await(await fetch(data)).blob();
+      const before=pages.length;
+      if(await addFiles([new File([blob],'Captura.jpg',{type:blob.type})])&&pages.length===before+1){
+        pages[before].reviewed=true;persist();render();
+        showBatchPrompt();
+      }
+    }});
+  }
   document.addEventListener('DOMContentLoaded',()=>{
     const area=document.createElement('section');area.id='documentWorkspace';area.hidden=true;area.className='document-workspace';area.innerHTML=`<div class="document-heading"><div><p class="counter-kicker">DOCUMENTO COMPLETO</p><h2>De la primera página a la entrega</h2><p id="docSummary"></p></div><div class="document-actions"><button type="button" id="docImport">＋ Añadir archivos</button><button type="button" id="docCamera">Escanear otra página</button><button type="button" id="docReceive">Recibir por QR</button><button type="button" id="docCancel" hidden>Cancelar proceso</button></div></div>
       <p class="counter-help">Arrastra JPG, PNG, WebP o PDF. Importa hasta 40 páginas; cada PDF se convierte en imágenes para poder revisarlo. El original permanece disponible. No se infieren las medidas físicas de una fotografía: el documento se encaja sin deformarlo en el papel elegido.</p>
@@ -302,7 +334,7 @@
     const historyBar=document.createElement('div');historyBar.className='document-history document-actions';historyBar.innerHTML='<button type="button" id="docUndo">↶ Deshacer</button><button type="button" id="docRedo">↷ Rehacer</button><span>Toca una miniatura para seleccionarla. Arrastra para ordenar; Anterior/Siguiente también funcionan con teclado.</span><input id="docReplaceFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>';$('docPages').before(historyBar);const qualityButton=document.createElement('button');qualityButton.id='docAnalyzeQuality';qualityButton.type='button';qualityButton.textContent='Revisar calidad de páginas';qualityButton.onclick=analyzeQuality;historyBar.append(qualityButton);const blankButton=document.createElement('button');blankButton.id='docRemoveBlankPages';blankButton.type='button';blankButton.textContent='Quitar páginas en blanco';blankButton.onclick=()=>reviewBlankPages();const batchReview=document.createElement('button');batchReview.id='docReviewBatch';batchReview.type='button';batchReview.textContent='Revisar lote · vacías, duplicadas y orientación';batchReview.onclick=()=>reviewBlankPages({reviewAll:true});historyBar.append(batchReview);historyBar.append(blankButton);$('docUndo').onclick=()=>travel();$('docRedo').onclick=()=>travel(true);$('docReplaceFile').onchange=e=>{const file=e.target.files[0];e.target.value='';replaceFile(file);};
     const banner=document.createElement('aside');banner.id='docRecovery';banner.className='document-recovery';banner.hidden=true;banner.innerHTML='<p>Hay un documento de varias páginas pendiente en este dispositivo.</p><button type="button" id="docRecover">Recuperar documento</button><button type="button" id="docDiscard">Descartar este borrador</button>';$('counterService').after(banner);
     $('docImport').onclick=()=>$('docFiles').click();$('docFiles').onchange=e=>{const files=[...e.target.files];e.target.value='';addFiles(files);};
-    $('docCamera').onclick=()=>{if(busy)return;const revision=epoch;RealScanCapture.open({photoMode:false,onNative:()=>$('docNativeCamera').click(),onAccept:async data=>{if(revision!==epoch)return;const blob=await(await fetch(data)).blob();const before=pages.length;if(await addFiles([new File([blob],'Captura.jpg',{type:blob.type})])&&pages.length===before+1){pages[before].reviewed=true;persist();render();}}});};
+    $('docCamera').onclick=()=>openDocCamera();
     $('docNativeCamera').onchange=e=>{const files=[...e.target.files];e.target.value='';addFiles(files);};$('docReceive').onclick=()=>$('btnOpenReceiveModal').click();
     $('docCancel').onclick=()=>{root.RealScanSearchable?.cancel();epoch++;task?.destroy?.();task=null;busy=false;render();say('Proceso cancelado. Las páginas anteriores se conservan.');};
     for(const [control,key]of [['docPaper','paper'],['docOrientation','orientation'],['docMargin','margin'],['docQuality','quality']])$(control).onchange=()=>{checkpoint();options[key]=key==='margin'?Math.max(0,Math.min(25,Number($(control).value)||0)):$(control).value;persist();render();};

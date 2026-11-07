@@ -18,6 +18,32 @@
  function fileNameFor(title,blob){const ext=({'image/png':'png','image/jpeg':'jpg','image/webp':'webp','text/plain':'txt'})[blob.type]||'pdf';return (String(title||'RealScan_Entrega').replace(/[\x00-\x1f<>:"/\\|?*]/g,'').replace(/\.(pdf|png|jpe?g|webp|txt)$/i,'').trim().slice(0,80)||'RealScan_Entrega')+'.'+ext;}
  function check(guard,isCurrent){if(!unlocked()||guard!==epoch||!isCurrent())throw Error('El trabajo o la sesión cambió. Se conserva la copia.');}
  async function request(path,options={},isCurrent=()=>true,consume=null){const guard=epoch;check(guard,isCurrent);const token=getToken();if(!token)throw Error('Configura primero el acceso a Paperless.');const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),options.method==='POST'?180000:30000);controllers.add(controller);try{const r=await fetch(getBase()+path,{redirect:'error',cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',...options,headers:{Authorization:'Token '+token,...options.headers},signal:controller.signal});check(guard,isCurrent);if(!r.ok){const e=Error(readableError(null,r.status));e.status=r.status;throw e;}const value=consume?await consume(r):r;check(guard,isCurrent);return value;}finally{clearTimeout(timer);controllers.delete(controller);}}
+ function mb(bytes){return (bytes/1048576).toFixed(1)+' MB';}
+ // B7: la subida a Paperless usa XHR cuando existe para informar del
+ // progreso (fetch no expone el progreso de subida). El progreso llega por
+ // el mismo canal onStatus que ya usaba send(): «Enviando a Paperless…
+ // 1,2 MB de 4,5 MB (27 %)», un aviso por cada punto porcentual. Sin XHR
+ // (pruebas unitarias en Node) se usa el fetch de request(): sin progreso
+ // pero con el mismo resultado y el mismo tiempo límite de 180 s
+ // (xhr.timeout). XHR sigue las redirecciones (fetch las rechazaba); el
+ // endpoint de subida de Paperless responde 200 directamente. El bloqueo
+ // de sesión (lock) aborta la subida igual que los fetch: el adaptador
+ // se registra en controllers.
+ async function requestUpload(path,form,isCurrent,onStatus){
+  if(typeof XMLHttpRequest!=='function')return request(path,{method:'POST',body:form},isCurrent,r=>r.text());
+  const guard=epoch;check(guard,isCurrent);const token=getToken();if(!token)throw Error('Configura primero el acceso a Paperless.');
+  return new Promise((resolve,reject)=>{
+   const xhr=new XMLHttpRequest(),aborter={abort(){try{xhr.abort();}catch{}}};controllers.add(aborter);
+   let settled=false,lastPct=-1;const done=(fn,value)=>{if(settled)return;settled=true;controllers.delete(aborter);fn(value);};
+   xhr.open('POST',getBase()+path);xhr.setRequestHeader('Authorization','Token '+token);xhr.timeout=180000;xhr.responseType='text';
+   xhr.upload.onprogress=e=>{if(!e.lengthComputable)return;const pct=Math.round(e.loaded/e.total*100);if(pct===lastPct)return;lastPct=pct;onStatus?.('Enviando a Paperless… '+mb(e.loaded)+' de '+mb(e.total)+' ('+pct+' %)');};
+   xhr.onload=()=>{try{check(guard,isCurrent);}catch(err){done(reject,err);return;}if(xhr.status>=200&&xhr.status<300)done(resolve,xhr.responseText);else{const err=Error(readableError(null,xhr.status));err.status=xhr.status;done(reject,err);}};
+   xhr.onerror=()=>done(reject,Error(readableError(null)));
+   const aborted=()=>{const err=Error('El envío no se pudo confirmar. Comprueba Paperless antes de repetirlo.');err.name='AbortError';done(reject,err);};
+   xhr.ontimeout=aborted;xhr.onabort=aborted;
+   try{xhr.send(form);}catch(err){done(reject,err);}
+  });
+ }
  async function checkAccess(onStatus){onStatus?.('Comprobando acceso…');try{await request('/api/documents/?page_size=1',{},()=>true,r=>r.json());onStatus?.('Conexión correcta con Paperless.');return true;}catch(e){onStatus?.(e.status?e.message:readableError(e));return false;}}
  async function checkTask(taskId,{isCurrent=()=>true}={}){if(!/^[0-9a-f-]{36}$/i.test(taskId))throw Error('Identificador de archivo pendiente no válido.');const data=await request('/api/tasks/?task_id='+encodeURIComponent(taskId),{},isCurrent,r=>r.json()),list=Array.isArray(data)?data:data.results||[],task=list.find(t=>t.task_id===taskId);if(!task)return {taskId,status:'processing'};const status=String(task.status||'').toUpperCase();if(['FAILURE','FAILED','REVOKED'].includes(status))return {taskId,status:'failed',message:taskError(task)};const rawId=task.related_document||task.related_document_id||task.document_id,documentId=Number.isSafeInteger(Number(rawId))&&Number(rawId)>0?Number(rawId):null;return {taskId,status:status==='SUCCESS'?'archived':'processing',documentId};}
  function taskError(task){const result=typeof task.result==='string'?task.result:JSON.stringify(task.result||{});if(/MissingDependencyError|language data/i.test(result))return 'Paperless recibió el archivo, pero su OCR no pudo procesarlo. Revisa el idioma spa+eng sin espacios y los idiomas instalados en el contenedor del NAS. El original se conserva.';return 'Paperless recibió el archivo, pero falló al procesarlo. Revisa el detalle en su cola de tareas. El original se conserva.';}
@@ -36,7 +62,7 @@
    if(!receipt||receipt.fingerprint!==fingerprint||receipt.status==='failed'){
     if(!hasToken()){openSettings('Configura el acceso y vuelve a enviar.');throw Error('Falta el acceso a Paperless.');}
     notify({key,status:'sending',at:Date.now()});root.RealScanDiagnostics?.record('paperless.send');onStatus?.('Enviando a Paperless…');const form=new FormData();form.append('document',blob,fileNameFor(title,blob));form.append('title',metadata.title||String(title||'RealScan_Entrega').slice(0,200));for(const tag of metadata.tags)form.append('tags',String(tag));if(metadata.documentType)form.append('document_type',String(metadata.documentType));if(metadata.created)form.append('created',metadata.created);
-    try{const raw=await request('/api/documents/post_document/',{method:'POST',body:form},isCurrent,r=>r.text());let data;try{data=JSON.parse(raw);}catch{data=raw.trim();}const taskId=typeof data==='string'?data:data?.task_id||data?.id;if(!/^[0-9a-f-]{36}$/i.test(taskId||'')){keep(key,{fingerprint,status:'unknown'});throw Error('Paperless recibió la solicitud sin un identificador válido. Comprueba su cola antes de repetir.');}receipt=keep(key,{fingerprint,taskId,status:'processing'});}catch(e){if(!e.status)keep(key,{fingerprint,status:'unknown'});root.RealScanDiagnostics?.record('paperless.failed','error',{errorType:e.name});throw Error(e.status?e.message:e.message?.includes('identificador')?e.message:readableError(e));}
+    try{const raw=await requestUpload('/api/documents/post_document/',form,isCurrent,onStatus);let data;try{data=JSON.parse(raw);}catch{data=raw.trim();}const taskId=typeof data==='string'?data:data?.task_id||data?.id;if(!/^[0-9a-f-]{36}$/i.test(taskId||'')){keep(key,{fingerprint,status:'unknown'});throw Error('Paperless recibió la solicitud sin un identificador válido. Comprueba su cola antes de repetir.');}receipt=keep(key,{fingerprint,taskId,status:'processing'});}catch(e){if(!e.status)keep(key,{fingerprint,status:'unknown'});root.RealScanDiagnostics?.record('paperless.failed','error',{errorType:e.name});throw Error(e.status?e.message:e.message?.includes('identificador')?e.message:readableError(e));}
    }
    onStatus?.('Recibido por Paperless · procesando…');
    for(let attempt=0;attempt<12;attempt++){

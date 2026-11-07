@@ -35,9 +35,9 @@
   function validPreset(p) {
     return p && typeof p.name==='string' && p.name.length<=48 && ['id','photos'].includes(p.kind) &&
       typeof p.format==='string' && Object.hasOwn(FORMAT_SPECS,p.format) && typeof p.paper==='string' && Object.hasOwn(PAPER_SPECS,p.paper) && Number.isInteger(p.copies) && p.copies>=1 && p.copies<=48 &&
-      ['both','single','both_separate','multi'].includes(p.sides)&&(!p.settings||window.RealScanDeskConfig?.valid(p.settings));
+      ['both','single','both_separate','multi'].includes(p.sides)&&(p.sets===undefined||(Number.isInteger(p.sets)&&p.sets>=1&&p.sets<=10))&&(!p.settings||window.RealScanDeskConfig?.valid(p.settings));
   }
-  function savedPresets() { try { const p=JSON.parse(localStorage.getItem(PRESETS_KEY)||'[]');return Array.isArray(p)?p.filter(validPreset).slice(0,6).map(v=>({name:v.name,kind:v.kind,format:v.format,paper:v.paper,copies:v.copies,sides:v.sides,...(v.settings?{settings:{...v.settings}}:{})})):[]; } catch(e) {return [];} }
+  function savedPresets() { try { const p=JSON.parse(localStorage.getItem(PRESETS_KEY)||'[]');return Array.isArray(p)?p.filter(validPreset).slice(0,6).map(v=>({name:v.name,kind:v.kind,format:v.format,paper:v.paper,copies:v.copies,sides:v.sides,...(Number.isInteger(v.sets)?{sets:v.sets}:{}),...(v.settings?{settings:{...v.settings}}:{})})):[]; } catch(e) {return [];} }
   function applyPreset(p) {
     const kind=state.activeCategory==='photos'?'photos':'id';
     if(occupied() && (p.kind!==kind||window.RealScanDocuments?.status().active)) {
@@ -46,7 +46,7 @@
     }
     engaged=true;
     if(p.kind!==kind)switchIntent(p.kind);
-    selectFormat(p.format);setPaperSize(p.paper);if(p.kind==='photos')setPhotoCopies(p.copies);else setPrintMode(p.sides);
+    selectFormat(p.format);setPaperSize(p.paper);if(p.kind==='photos')setPhotoCopies(p.copies);else setPrintMode(p.sides);state.outputSets=Number.isInteger(p.sets)?Math.max(1,Math.min(10,p.sets)):1;
     window.RealScanDeskConfig?.apply(p.settings);window.updateUI();window.RealScanJourney?.update();update();showToast('Formato aplicado: '+p.name,'success');
   }
   function renderPresets() {
@@ -59,16 +59,16 @@
     for(const [i,p] of [...defaults,...savedPresets()].entries()) {
       const wrap=node('div','studio-preset-wrap'), b=action('studioPreset'+i,'',null,()=>applyPreset(p));
       b.classList.add('studio-preset');b.append(node('span','studio-preset-mark',p.kind==='photos'?'▦':'▤'));
-      const copy=node('span');copy.append(node('strong','',p.name),node('small','',FORMAT_SPECS[p.format].shortName+' · '+PAPER_SPECS[p.paper].shortName));b.append(copy);wrap.append(b);
+      const copy=node('span');copy.append(node('strong','',p.name),node('small','',FORMAT_SPECS[p.format].shortName+' · '+PAPER_SPECS[p.paper].shortName+(p.sets>1?' · '+p.sets+' juegos':'')));b.append(copy);wrap.append(b);
       if(i>=defaults.length){const remove=action('studioRemovePreset'+i,'Eliminar '+p.name,null,()=>{try{const saved=savedPresets();saved.splice(i-defaults.length,1);localStorage.setItem(PRESETS_KEY,JSON.stringify(saved));renderPresets();}catch(e){showToast('No se pudo actualizar el formato guardado.','warning');}});remove.className='studio-preset-remove';remove.textContent='×';remove.setAttribute('aria-label','Eliminar formato '+p.name);wrap.append(remove);}
       list.append(wrap);
     }
   }
   function savePreset() {
     if(window.RealScanDocuments?.status().active||!FORMAT_SPECS[state.format]){showToast('Guarda formatos de fotografía o identificación desde su espacio de trabajo.','info');return;}
-    const p={name:getActiveSpec().shortName+' · '+(state.activeCategory==='photos'?state.photoCopies+' fotos':'identificación'),kind:state.activeCategory==='photos'?'photos':'id',format:state.format,paper:state.paperSize,copies:Math.max(1,Math.min(48,Number(state.photoCopies)||1)),sides:state.printMode};
+    const p={name:getActiveSpec().shortName+' · '+(state.activeCategory==='photos'?state.photoCopies+' fotos':'identificación'),kind:state.activeCategory==='photos'?'photos':'id',format:state.format,paper:state.paperSize,copies:Math.max(1,Math.min(48,Number(state.photoCopies)||1)),sides:state.printMode,sets:Math.max(1,Math.min(10,Math.round(Number(state.outputSets)||1)))};
     p.settings=window.RealScanDeskConfig?.capture();p.name=p.name.slice(0,48);if(!validPreset(p))return;
-    try { const saved=savedPresets().filter(x=>!(x.format===p.format&&x.paper===p.paper&&x.copies===p.copies&&x.sides===p.sides));saved.unshift(p);localStorage.setItem(PRESETS_KEY,JSON.stringify(saved.slice(0,6)));renderPresets();showToast('Formato guardado en este equipo. No contiene fotos ni datos del cliente.','success'); }
+    try { const saved=savedPresets().filter(x=>!(x.format===p.format&&x.paper===p.paper&&x.copies===p.copies&&x.sides===p.sides&&(x.sets||1)===p.sets));saved.unshift(p);localStorage.setItem(PRESETS_KEY,JSON.stringify(saved.slice(0,6)));renderPresets();showToast('Formato guardado en este equipo. No contiene fotos ni datos del cliente.','success'); }
     catch(e){showToast('El navegador no permite guardar preferencias en este momento.','warning');}
   }
   function selectSlot(side) {

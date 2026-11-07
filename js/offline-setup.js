@@ -8,6 +8,14 @@
  // defined». NO vuelven al precaché inicial: la primera carga sigue ligera
  // y solo se descargan cuando el usuario pulsa «Preparar sin conexión».
  const EXPORT=['vendor/jspdf.umd.min.js','vendor/jszip.min.js','vendor/jsqr.js'];
+ // B6 revisado: el PDF con texto (buscable) necesita la fuente estándar
+ // LiberationSans-Regular, que searchable-pdf.js descarga bajo demanda.
+ // Sin ella, guardar un PDF buscable sin conexión falla y no hay descarga.
+ // Es un fichero directo (136 KB), así que la cadena es idéntica a la que
+ // pide el runtime: la preparación y el uso comparten la misma clave de
+ // caché. No va al precaché inicial del SW (B6): solo se descarga cuando
+ // el usuario pulsa «Preparar sin conexión», como OCR y EXPORT.
+ const PDF=['vendor/standard_fonts/LiberationSans-Regular.ttf'];
  // Fondo blanco con IA en el dispositivo: grupo SEGMENT, best-effort y
  // DESPUÉS de OCR y EXPORT. Si su descarga falla, la preparación principal
  // NO falla: se registra segment:false y «Fondo blanco» seguirá usando el
@@ -21,18 +29,19 @@
   return new Promise((resolve,reject)=>{const channel=new MessageChannel(),timer=setTimeout(()=>{channel.port1.close();reject(Error('Actualiza la app con conexión antes de preparar el modo local.'));},8000);channel.port1.onmessage=e=>{clearTimeout(timer);channel.port1.close();/^realscan-[a-f0-9]{16}$/.test(e.data?.name)?resolve(e.data):reject(Error('No se pudo identificar esta versión.'));};registration.active.postMessage({type:'REALSCAN_CACHE_INFO'},[channel.port2]);});
  }
  async function readMarker(cache){const marker=await cache.match('offline-ready.json');if(!marker)return null;try{return await marker.json();}catch{return null;}}
- async function status(){const current=await info(),cache=await caches.open(current.name),data=await readMarker(cache),has=async list=>(await Promise.all(list.map(asset=>cache.match(asset)))).every(Boolean);return {core:true,ocr:!!data&&await has(OCR),exports:data?.export===true&&await has(EXPORT),segment:data?.segment===true&&await has(SEGMENT),version:current.name};}
+ async function status(){const current=await info(),cache=await caches.open(current.name),data=await readMarker(cache),has=async list=>(await Promise.all(list.map(asset=>cache.match(asset)))).every(Boolean);return {core:true,ocr:!!data&&await has(OCR),exports:data?.export===true&&await has(EXPORT),pdf:data?.pdf===true&&await has(PDF),segment:data?.segment===true&&await has(SEGMENT),version:current.name};}
  async function prepare(progress){
   if(preparing)throw Error('La preparación ya está en curso.');preparing=true;
   try{const current=await info(),cache=await caches.open(current.name),estimate=await navigator.storage?.estimate?.();if(estimate?.quota&&estimate.quota-estimate.usage<30*1024*1024)throw Error('Libera al menos 30 MB en el navegador y vuelve a intentar.');
    for(let i=0;i<OCR.length;i++){progress?.('Preparando lector sin conexión · '+(i+1)+'/'+OCR.length);const response=await fetch(OCR[i],{cache:'reload'});if(!response.ok)throw Error('No se pudo descargar el lector. Comprueba internet y reintenta.');await cache.put(OCR[i],response);}
    for(let i=0;i<EXPORT.length;i++){progress?.('Preparando exportación sin conexión · '+(i+1)+'/'+EXPORT.length);const response=await fetch(EXPORT[i],{cache:'reload'});if(!response.ok)throw Error('No se pudo descargar una librería de exportación. Comprueba internet y reintenta.');await cache.put(EXPORT[i],response);}
+   for(let i=0;i<PDF.length;i++){progress?.('Preparando fuente del PDF con texto sin conexión · '+(i+1)+'/'+PDF.length);const response=await fetch(PDF[i],{cache:'reload'});if(!response.ok)throw Error('No se pudo descargar la fuente del PDF. Comprueba internet y reintenta.');await cache.put(PDF[i],response);}
    // Only mark ready when every required resource is present in this exact build cache.
-   for(const asset of [...OCR,...EXPORT])if(!await cache.match(asset))throw Error('Faltan recursos. Reintenta la preparación.');
+   for(const asset of [...OCR,...EXPORT,...PDF])if(!await cache.match(asset))throw Error('Faltan recursos. Reintenta la preparación.');
    // SEGMENT (best-effort): cualquier fallo aquí no tumba la preparación.
    let segment=false;
    try{for(let i=0;i<SEGMENT.length;i++){progress?.('Preparando fondo con IA sin conexión · '+(i+1)+'/'+SEGMENT.length);const response=await fetch(SEGMENT[i],{cache:'reload'});if(!response.ok)throw Error('segment download failed');await cache.put(SEGMENT[i],response);}for(const asset of SEGMENT)if(!await cache.match(asset))throw Error('segment incomplete');segment=true;}catch{segment=false;}
-   await cache.put('offline-ready.json',new Response(JSON.stringify({version:current.name,ocr:true,export:true,segment,preparedAt:Date.now()}),{headers:{'Content-Type':'application/json'}}));
+   await cache.put('offline-ready.json',new Response(JSON.stringify({version:current.name,ocr:true,export:true,pdf:true,segment,preparedAt:Date.now()}),{headers:{'Content-Type':'application/json'}}));
    await navigator.storage?.persist?.().catch(()=>{});progress?.(segment?'Listo para capturar, guardar PDF, reconocer español e inglés y aplicar fondo con IA sin internet en este navegador.':'Listo para capturar, guardar PDF y reconocer español e inglés sin internet en este navegador. El fondo con IA no se pudo preparar; se usará el fondo blanco clásico sin conexión.');return {version:current.name,segment};
   }finally{preparing=false;}
  }

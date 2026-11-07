@@ -110,7 +110,6 @@ function cameraFixture() {
   await page.keyboard.press("ArrowRight");
   await page.screenshot({ path: path.join(out, "desktop-corners.png") });
   await page.locator(".scan-dialog [data-act=accept]").click();
-  await page.locator(".scan-dialog [data-act=confirm]").click();
   await page.locator(".scan-dialog").waitFor({ state: "detached" });
   await page.waitForFunction(() => !!state.images.front.processedDataUrl);
   const dimensions = await page.evaluate(() => ({ w: state.images.front.naturalWidth, h: state.images.front.naturalHeight }));
@@ -190,7 +189,6 @@ function cameraFixture() {
   await phone.screenshot({ path: path.join(out, "phone-corners.png") });
   assert(await phone.evaluate(() => document.querySelector(".scan-dialog").getBoundingClientRect().right <= innerWidth));
   await phone.locator(".scan-dialog [data-act=accept]").click();
-  await phone.locator(".scan-dialog [data-act=confirm]").click();
   await phone.waitForFunction(() => document.getElementById("filesCount").textContent === "1" && !document.getElementById("btnSendFiles").disabled);
   assert.equal(await phone.evaluate(() => __sent), 0);
   assert.equal(await phone.locator("#thumbnailsList img").count(), 1);
@@ -199,6 +197,18 @@ function cameraFixture() {
   await phone.locator("#successBox").waitFor({ state: "visible" });
   assert.equal(await phone.evaluate(() => __sent), 1);
   pass("Phone capture fits viewport, shows corrected thumbnail and sends only after explicit confirmation");
+  await page.evaluate(() => { window.__mode = "normal"; RealScanCapture.open({}); });
+  await page.waitForFunction(() => !document.querySelector(".scan-dialog [data-act=capture]").disabled);
+  await page.locator(".scan-dialog [data-act=capture]").click();
+  await page.locator(".scan-corner").first().waitFor();
+  await page.locator(".scan-dialog [data-act=preview]").click();
+  await page.locator(".scan-dialog [data-act=confirm]").waitFor();
+  assert(await page.locator(".scan-dialog [data-act=confirm]").isVisible());
+  await page.locator(".scan-dialog [data-act=edit]").click();
+  await page.locator(".scan-dialog [data-act=accept]").waitFor();
+  await page.locator(".scan-dialog [data-act=accept]").click();
+  await page.locator(".scan-dialog").waitFor({ state: "detached" });
+  pass("Preview shows the corrected result on demand and returning to review still delivers with one tap");
   assert.deepEqual(errors, []);
   fs.writeFileSync(path.join(out, "results.json"), JSON.stringify({ checks, dimensions, errors }, null, 2));
 })().catch(async (e) => {

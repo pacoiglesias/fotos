@@ -136,6 +136,109 @@ function copy(src, dst) {
     [cli, "-i", "css/tailwind.css", "-o", "dist/css/tailwind.css", "--minify"],
     { cwd: root, stdio: "inherit" },
   );
+  // B5: versiona las URLs dinámicas de /vendor/ (cargadores diferidos) con
+  // el hash de contenido, igual que versionAsset hace con las estáticas.
+  // Así las reglas immutable de firebase.json no pueden servir nunca una
+  // librería obsoleta tras una actualización. Las bases de directorio
+  // (wasm de segment, core/lang de OCR, cmaps, standard_fonts) las
+  // construyen las librerías a partir de una ruta base y no admiten ?v=:
+  // siguen bajo no-cache y se versionan por el caché del SW, no por HTTP.
+  // La misma URL versionada va a los cargadores y a los grupos de
+  // js/offline-setup.js: la clave de caché debe ser idéntica en ambos.
+  const vendorDigests = new Map();
+  function vendorDigest(relative) {
+    if (!vendorDigests.has(relative)) {
+      const target = path.join(dist, relative);
+      if (!fs.existsSync(target)) throw Error("Missing vendor asset: " + relative);
+      vendorDigests.set(relative, crypto.createHash("sha256").update(fs.readFileSync(target)).digest("hex").slice(0, 16));
+    }
+    return vendorDigests.get(relative);
+  }
+  function versionVendorUrls(file, pairs) {
+    const target = path.join(dist, file);
+    let source = fs.readFileSync(target, "utf8");
+    for (const [plain, vendorPath] of pairs) {
+      // Solo dentro de comillas: no tocar los comentarios que mencionan la ruta.
+      const quoted = new RegExp("([\'\"])" + plain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([\'\"])", "g");
+      if (!quoted.test(source)) throw Error("Vendor URL not found in " + file + ": " + plain);
+      quoted.lastIndex = 0;
+      source = source.replace(quoted, "$1" + plain + "?v=" + vendorDigest(vendorPath) + "$2");
+    }
+    fs.writeFileSync(target, source);
+  }
+  versionVendorUrls("js/vendor-loader.js", [
+    ["vendor/jspdf.umd.min.js", "vendor/jspdf.umd.min.js"],
+    ["vendor/jszip.min.js", "vendor/jszip.min.js"],
+    ["vendor/jsqr.js", "vendor/jsqr.js"],
+  ]);
+  versionVendorUrls("js/segment-loader.js", [
+    ["vendor/segment/vision_bundle.mjs", "vendor/segment/vision_bundle.mjs"],
+    ["vendor/segment/selfie_segmenter.tflite", "vendor/segment/selfie_segmenter.tflite"],
+  ]);
+  versionVendorUrls("js/pdf-loader.mjs", [
+    ["../vendor/pdf.mjs", "vendor/pdf.mjs"],
+    ["../vendor/pdf.worker.mjs", "vendor/pdf.worker.mjs"],
+  ]);
+  versionVendorUrls("js/document-tools.js", [
+    ["../vendor/pdf.mjs", "vendor/pdf.mjs"],
+    ["vendor/pdf.worker.mjs", "vendor/pdf.worker.mjs"],
+  ]);
+  versionVendorUrls("js/pdf-delivery.js", [
+    ["../vendor/pdf.mjs", "vendor/pdf.mjs"],
+    ["vendor/pdf.worker.mjs", "vendor/pdf.worker.mjs"],
+  ]);
+  versionVendorUrls("js/local-ocr.js", [
+    ["vendor/ocr/tesseract.min.js", "vendor/ocr/tesseract.min.js"],
+    ["vendor/ocr/worker.min.js", "vendor/ocr/worker.min.js"],
+  ]);
+  // searchable-pdf.js: también worker.min.js. Si quedara sin versionar,
+  // Tesseract lo pediría sin ?v= mientras la preparación offline guarda
+  // la forma versionada: el PDF buscable fallaría sin conexión.
+  versionVendorUrls("js/searchable-pdf.js", [
+    ["vendor/ocr/tesseract.min.js", "vendor/ocr/tesseract.min.js"],
+    ["vendor/ocr/worker.min.js", "vendor/ocr/worker.min.js"],
+  ]);
+  versionVendorUrls("js/doc-identify.js", [
+    ["vendor/ocr/tesseract.min.js", "vendor/ocr/tesseract.min.js"],
+    ["vendor/ocr/worker.min.js", "vendor/ocr/worker.min.js"],
+  ]);
+  versionVendorUrls("js/offline-setup.js", [
+    ["vendor/ocr/tesseract.min.js", "vendor/ocr/tesseract.min.js"],
+    ["vendor/ocr/worker.min.js", "vendor/ocr/worker.min.js"],
+    ["vendor/jspdf.umd.min.js", "vendor/jspdf.umd.min.js"],
+    ["vendor/jszip.min.js", "vendor/jszip.min.js"],
+    ["vendor/jsqr.js", "vendor/jsqr.js"],
+    ["vendor/segment/vision_bundle.mjs", "vendor/segment/vision_bundle.mjs"],
+    ["vendor/segment/selfie_segmenter.tflite", "vendor/segment/selfie_segmenter.tflite"],
+  ]);
+  // B4: un solo bundle minificado con los scripts propios de index.html.
+  // Los ficheros individuales se quedan en dist/: las páginas del teléfono
+  // (phone-upload/download/local, mobile-scan) los cargan directamente y
+  // no se pueden borrar. El bundle se precachea junto a ellos; B6 compensa
+  // de sobra el coste (−3,2 MB de worker/fuentes frente a +1,2 MB de bundle;
+  // el núcleo pdf.mjs se queda precacheado en forma versionada).
+  // El tag lleva data-bundle-files con los nombres originales para que
+  // js/diagnostics.js siga atribuyendo el fichero en los errores.
+  const indexFile = path.join(dist, "index.html");
+  const indexSource = fs.readFileSync(indexFile, "utf8");
+  const bundleTag = /<script\b[^>]*\bsrc="(js\/[^"]+\.js)"[^>]*><\/script>/g;
+  const bundleNames = [];
+  const bundleSources = [];
+  for (const match of indexSource.matchAll(bundleTag)) {
+    bundleNames.push(match[1].split("/").pop());
+    bundleSources.push(fs.readFileSync(path.join(dist, match[1]), "utf8"));
+  }
+  if (bundleSources.length < 2) throw Error("B4: no se encontraron scripts para el bundle");
+  const bundled = await esbuild.transform(bundleSources.join("\n;\n"), { minify: true, target: "es2022", loader: "js" });
+  fs.writeFileSync(path.join(dist, "js", "bundle.js"), bundled.code);
+  let bundlePlaced = false;
+  fs.writeFileSync(indexFile, indexSource.replace(bundleTag, () => {
+    if (!bundlePlaced) {
+      bundlePlaced = true;
+      return '<script defer src="js/bundle.js" data-bundle-files="' + bundleNames.join(",") + '"></script>';
+    }
+    return "";
+  }));
   // Content-addressed URLs cannot be mistaken for scripts from an older worker.
   // Keep both URL forms offline: dynamic loaders still use their stable paths.
   const versionedAssets = new Set();
@@ -182,10 +285,17 @@ function copy(src, dst) {
     // Precaché ligero: NO se precargan los archivos de volumen de pdf.js
     // (cmaps y wasm, ~250 ficheros) ni el OCR (49 MB); el service worker
     // los cachea bajo demanda en el primer uso (ver sw.js, caché /vendor/).
-    // SÍ se precachean el NÚCLEO de pdf.js (pdf.mjs + pdf.worker.mjs) y las
-    // fuentes estándar (16 ficheros, 816 KB): la app expone pdfjsLib desde
-    // el arranque, dibuja PDFs con esas fuentes e incrusta LiberationSans
-    // en los PDF buscables, también sin conexión.
+    // B6: el trabajador de pdf.js (pdf.worker.mjs 2,42 MB) y las fuentes
+    // estándar (16 ficheros, 816 KB) NO se precachean: −3,2 MB de
+    // instalación. Compromiso: el primer uso de PDF (dibujar, PDF buscable)
+    // necesita conexión una vez; después el SW lo sirve sin conexión desde
+    // su caché bajo demanda, igual que el OCR. El NÚCLEO (pdf.mjs 1,07 MB)
+    // SÍ se precachea en su forma versionada (la URL que piden los
+    // cargadores B5): el lector debe existir sin conexión desde el arranque
+    // (lo guarda regression.cjs) y el calentamiento perezoso puede correr
+    // antes de que el SW tome el control, así que sin precaché el primer
+    // uso sin conexión fallaría. La forma sin versionar no se precachea:
+    // nada en la app la pide ya (solo un test, en línea).
     // v3.13.1: tampoco se precargan las librerías de carga diferida de
     // vendor-loader.js (jsPDF 420 KB, JSZip 98 KB y el lector jsQR 257 KB;
     // −775 KB de instalación): se descargan la primera vez que una función
@@ -197,8 +307,11 @@ function copy(src, dst) {
       !f.startsWith("vendor/segment/") &&
       f !== "vendor/jspdf.umd.min.js" &&
       f !== "vendor/jszip.min.js" &&
-      f !== "vendor/jsqr.js"
-    ).map((f) => "./" + f), ...versionedAssets])])) ;
+      f !== "vendor/jsqr.js" &&
+      f !== "vendor/pdf.mjs" &&
+      f !== "vendor/pdf.worker.mjs" &&
+      !f.startsWith("vendor/standard_fonts/")
+    ).map((f) => "./" + f), ...versionedAssets, "./vendor/pdf.mjs?v=" + vendorDigest("vendor/pdf.mjs")])])) ;
   const sourceCommit = cp
     .execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })
     .trim();

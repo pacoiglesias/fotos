@@ -130,7 +130,7 @@
       <label class="scan-auto"><input type="checkbox"> Capturar al mantener el documento estable</label>
       <div class="scan-actions"><button type="button" data-act="capture">Tomar foto</button><button type="button" data-act="focus">Reintentar enfoque</button><button type="button" data-act="torch" hidden>Linterna</button><button type="button" data-act="native">Cámara del teléfono</button>
       <button type="button" data-act="left" hidden>Girar izquierda</button><button type="button" data-act="right" hidden>Girar derecha</button><button type="button" data-act="reset" hidden>Restaurar original</button><button type="button" data-act="enhance" hidden>Mejorar imagen</button><button type="button" data-act="confirm" hidden>Usar esta imagen</button><button type="button" data-act="edit" hidden>Volver a ajustar</button>
-      <button type="button" data-act="retry" hidden>Repetir</button><button type="button" data-act="original" hidden>Usar completa</button><button type="button" data-act="accept" hidden>Enderezar y usar</button></div>`;
+      <button type="button" data-act="retry" hidden>Repetir</button><button type="button" data-act="original" hidden>Usar completa</button><button type="button" data-act="accept" hidden>Enderezar y usar</button><button type="button" data-act="preview" hidden>Ver resultado</button></div>`;
     const settings = document.createElement('details');
     settings.className = 'scan-settings';
     settings.innerHTML = '<summary>Opciones de captura y ayuda</summary><div class="scan-settings-content"></div>';
@@ -468,6 +468,7 @@
         for (const a2 of ["retry", "original"]) btn(a2).hidden = false;
         btn("retry").hidden = !!options.sourceDataUrl;
         btn("accept").hidden = !!options.photoMode;
+        btn("preview").hidden = false;
         handles.replaceChildren();
         handles.hidden = !!options.photoMode;
         if (!options.photoMode) quad.forEach((p, i) => {
@@ -512,12 +513,7 @@
         busy = false;
       }
     }
-    async function accept(crop) {
-      if (busy || !captured) return;
-      magnifier.hidden=true;
-      busy = true;
-      btn("accept").disabled = btn("original").disabled = true;
-      try {
+    async function prepareResult(crop) {
         let result = captured;
         if (crop) {
           const q = quad.map((p) => ({ x: p.x * canvas.width, y: p.y * canvas.height }));
@@ -551,7 +547,10 @@
           ctx.drawImage(image, 0, 0);
           result = output.toDataURL("image/jpeg", 0.96);
         }
-        if (disposed) return;
+        if (disposed) return null;
+      return result;
+    }
+    async function showConfirm(result) {
         pendingResult = result;enhanceBase = result;
         phase('confirm');
         savedQuad = quad.map((p) => ({ ...p }));
@@ -568,15 +567,50 @@
         svg.setAttribute('hidden','');
         $(".scan-filter").hidden = true;
         $(".scan-format").hidden = true;
-        for (const action of ["left", "right", "reset", "retry", "original", "accept"]) btn(action).hidden = true;
+        for (const action of ["left", "right", "reset", "retry", "original", "accept", "preview"]) btn(action).hidden = true;
         btn("confirm").hidden = btn("edit").hidden = false;btn("enhance").hidden=!root.RealScanEnhance;btn("enhance").disabled=!!(options.photoMode&&typeof getActiveSpec==='function'&&getActiveSpec().noRetouch);
         status.textContent = "Vista previa del resultado. Comprueba que el contenido y sus proporciones sean correctos antes de usarlo.";
-        return;
+    }
+    async function deliver(result) {
+      root.RealScanDiagnostics?.record("camera.corrected");
+      finish();
+      try {
+        await options.onAccept?.(result);
+        root.showToast?.('Imagen lista en el trabajo. Deshacer disponible en el estudio.','success');
+      } catch (e) {
+        options.onError?.(e);
+      }
+    }
+    async function accept(crop) {
+      if (busy || !captured) return;
+      magnifier.hidden=true;
+      busy = true;
+      btn("accept").disabled = btn("original").disabled = btn("preview").disabled = true;
+      try {
+        const result = await prepareResult(crop);
+        if (!result || disposed) return;
+        await deliver(result);
       } catch (e) {
         if (!disposed) status.textContent = e.message;
       } finally {
         busy = false;
-        btn("accept").disabled = btn("original").disabled = false;
+        btn("accept").disabled = btn("original").disabled = btn("preview").disabled = false;
+      }
+    }
+    async function previewResult(crop) {
+      if (busy || !captured) return;
+      magnifier.hidden=true;
+      busy = true;
+      btn("accept").disabled = btn("original").disabled = btn("preview").disabled = true;
+      try {
+        const result = await prepareResult(crop);
+        if (!result || disposed) return;
+        await showConfirm(result);
+      } catch (e) {
+        if (!disposed) status.textContent = e.message;
+      } finally {
+        busy = false;
+        btn("accept").disabled = btn("original").disabled = btn("preview").disabled = false;
       }
     }
     btn('enhance').onclick=async()=>{if(disposed||!pendingResult)return;const base=enhanceBase||pendingResult;try{enhancement=await root.RealScanEnhance.open({sourceDataUrl:base,photoMode:!!options.photoMode,isCurrent:()=>!disposed,onAccept:async data=>{const image=new Image();image.src=data;await image.decode();if(disposed)throw Error('La captura cambió.');pendingResult=data;canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;canvas.getContext('2d').drawImage(image,0,0);fitStage();status.textContent='Mejora aplicada. Revisa el resultado antes de usar la imagen.';}});}catch(e){if(!disposed)status.textContent=e.message;}};
@@ -640,6 +674,7 @@
       start();
     };
     btn("accept").onclick = () => accept(true);
+    btn("preview").onclick = () => previewResult(!options.photoMode);
     btn("original").onclick = () => accept(false);
     btn("switch").onclick = () => {
       facing = facing === "environment" ? "user" : "environment";
