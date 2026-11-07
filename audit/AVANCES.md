@@ -1,3 +1,7 @@
+## 3.40.0 — En publicación
+
+Rediseño visual espectacular (PR #24) y endurecimiento de seguridad (PR #27: contraseña mínima de 12 caracteres con PBKDF2 y sal, token de sesión de 256 bits, credencial de nube separada de la contraseña local, cabeceras de seguridad). Versión alineada en package.json, package-lock.json, js/config.js, metadatos de las páginas móviles y portada.
+
 ## 3.39.1 — Publicada y verificada
 
 Entrada más clara, ventanas de Paperless y OCR accesibles, recuperación de envíos y limpieza de cachés históricas. Publicador: 488 marcas PASS, 0 FAIL. Cinco direcciones y 95 comparaciones de archivos verificadas. Fuente 5f95fd5447fe7a1e560ae033a2f3e124949c378a, contenido realscan-a405d66782f5c9c2. [Entrega y límites](ENTREGA_3391.md). El OCR real del NAS y la prueba física de la HP siguen pendientes.
