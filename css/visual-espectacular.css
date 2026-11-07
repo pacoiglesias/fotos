@@ -275,7 +275,10 @@ body.rs-quick #workflowGuide,
 body.rs-quick #rsTodayPanel,
 body.rs-quick #draftStorageStatus,
 body.rs-quick .mobile-local-launch,
-body.rs-quick footer { display: none !important; }
+body.rs-quick main footer { display: none !important; }
+/* Solo el pie de página (dentro de <main>): los diálogos también llevan
+   <footer> con sus botones de acción y se cuelgan de <body>, fuera de
+   <main> — ocultarlos dejaba sin "Volver" la entrega del PDF. */
 
 /* El panel rápido: tarjeta elevada con franja de marca arriba */
 #quickMode {
