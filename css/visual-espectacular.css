@@ -575,13 +575,16 @@ html.dark body.rs-next.rs-counter330 #studioReady[data-ready="true"] {
   .workbench-bar { padding: 16px; border-radius: 18px; }
   .workbench-bar strong { font-size: 19px; }
   /* paperless-intake-regression (WebKit, 390px): el botón Cámara debe
-     quedar por encima del pie fijo; se recuperan 12px del margen
-     inferior de la barra de pasos. No toca el test ni el flujo. */
-  body.rs-next.rs-counter330 #guidedStepsBar { margin-bottom: 16px; }
-  /* Fallback (WebKit, 390px): si los 12px anteriores no bastan, la
-     barra de trabajo se compacta 8px más (padding 22px→10px vertical).
-     Total 20px de holgura para el botón Cámara. No toca el test ni el flujo. */
-  body.rs-next.rs-counter330.rs-desk336 #workbenchBar { padding: 10px 14px; }
+     quedar por encima del pie fijo. Las dos reglas anteriores NO se
+     aplicaban en el estado del test: el margen de #guidedStepsBar lo
+     ganaba la regla rs-evolved (20px) y el padding de #workbenchBar lo
+     ganaba desk-experience con !important (8px 12px). Por eso el CI
+     seguía en rojo. Se compacta el espaciado real que empuja el botón
+     hacia abajo (~40px en Chromium: 744px → ~704px, umbral 770px). */
+  body.rs-next.rs-counter330.rs-evolved #guidedStepsBar { margin-bottom: 8px; }
+  body.rs-next.rs-counter330.rs-desk336 #workbenchBar { margin-bottom: 6px; }
+  body.rs-next.rs-counter330.rs-evolved #counterIntake { padding-top: 8px; row-gap: 8px; }
+  body.rs-next.rs-counter330.rs-desk336 #deskStart .desk-heading { margin-bottom: 8px !important; }
   #quickMode { padding: 18px 16px; border-radius: 20px; }
   #quickMode .quick-giant, #quickActions .quick-giant { min-height: 84px; }
   #quickMode .quick-steps { gap: 6px; }
