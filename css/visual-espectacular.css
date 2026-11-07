@@ -574,6 +574,10 @@ html.dark body.rs-next.rs-counter330 #studioReady[data-ready="true"] {
 @media (max-width: 639px) {
   .workbench-bar { padding: 16px; border-radius: 18px; }
   .workbench-bar strong { font-size: 19px; }
+  /* paperless-intake-regression (WebKit, 390px): el botón Cámara debe
+     quedar por encima del pie fijo; se recuperan 12px del margen
+     inferior de la barra de pasos. No toca el test ni el flujo. */
+  body.rs-next.rs-counter330 #guidedStepsBar { margin-bottom: 16px; }
   #quickMode { padding: 18px 16px; border-radius: 20px; }
   #quickMode .quick-giant, #quickActions .quick-giant { min-height: 84px; }
   #quickMode .quick-steps { gap: 6px; }
