@@ -1,6 +1,6 @@
 {
   "name": "realscan",
-  "version": "3.40.1",
+  "version": "3.40.2",
   "private": true,
   "scripts": {
     "build": "node scripts/build.cjs",
@@ -30,7 +30,7 @@
     "@tesseract.js-data/spa": "1.0.0",
     "jspdf": "4.2.1",
     "jszip": "3.10.2",
-    "pdfjs-dist": "6.4.299",
+    "pdfjs-dist": "6.5.438",
     "qrcode-generator": "2.0.4",
     "tesseract.js": "7.0.0"
   },
