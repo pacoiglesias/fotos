@@ -653,3 +653,57 @@ html.dark #paperlessSettings #paperlessStatus.paperless-status { background: #1e
 html.dark #paperlessSettings #paperlessStatus.paperless-status[data-state="checking"] { background: #1e1b4b; border-color: #4338ca; color: #c7d2fe; }
 html.dark #paperlessSettings #paperlessStatus.paperless-status[data-state="ok"] { background: #052e16; border-color: #166534; color: #86efac; }
 html.dark #paperlessSettings #paperlessStatus.paperless-status[data-state="error"] { background: #450a0a; border-color: #7f1d1d; color: #fecaca; }
+
+/* ---------- 15. El mismo banner de estado en las demás ventanas de
+   Paperless y en el botón NAS de la cabecera (3.40.2) ----------
+   La búsqueda en el NAS (#nasStatus) y la ventana de metadatos al
+   archivar (#nasMetadataStatus) seguían mostrando el estado como texto
+   plano tras la 3.40.1. Aquí reciben el mismo banner de la sección 14
+   (punto con luz: índigo pulsante al comprobar/buscar, verde si el NAS
+   responde, rojo si falla), con selectores por id para mantener la
+   especificidad ganadora. Solo propiedades visuales: la geometría de
+   ambas ventanas no cambia. El botón NAS de la cabecera (#headerNas)
+   enseña además un punto con el último estado conocido de
+   checkAccess(), que js/paperless.js mantiene en su data-state. */
+#paperlessBrowser #nasStatus.paperless-status,
+#paperlessMetadata #nasMetadataStatus.paperless-status {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; margin: 14px 0;
+  border: 1px solid #e2e8f0; border-radius: 12px;
+  background: #f8fafc; color: #334155; font-weight: 650;
+}
+#paperlessBrowser #nasStatus.paperless-status::before,
+#paperlessMetadata #nasMetadataStatus.paperless-status::before {
+  content: ""; width: 12px; height: 12px; border-radius: 50%;
+  background: #94a3b8; flex: none;
+}
+#paperlessBrowser #nasStatus.paperless-status[data-state="checking"],
+#paperlessMetadata #nasMetadataStatus.paperless-status[data-state="checking"] { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
+#paperlessBrowser #nasStatus.paperless-status[data-state="checking"]::before,
+#paperlessMetadata #nasMetadataStatus.paperless-status[data-state="checking"]::before { background: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, .25); animation: vx-dot-pulse 1.4s infinite ease-in-out; }
+#paperlessBrowser #nasStatus.paperless-status[data-state="ok"],
+#paperlessMetadata #nasMetadataStatus.paperless-status[data-state="ok"] { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+#paperlessBrowser #nasStatus.paperless-status[data-state="ok"]::before,
+#paperlessMetadata #nasMetadataStatus.paperless-status[data-state="ok"]::before { background: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, .25), 0 0 10px rgba(16, 185, 129, .8); }
+#paperlessBrowser #nasStatus.paperless-status[data-state="error"],
+#paperlessMetadata #nasMetadataStatus.paperless-status[data-state="error"] { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+#paperlessBrowser #nasStatus.paperless-status[data-state="error"]::before,
+#paperlessMetadata #nasMetadataStatus.paperless-status[data-state="error"]::before { background: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, .25), 0 0 10px rgba(239, 68, 68, .8); }
+html.dark #paperlessBrowser #nasStatus.paperless-status,
+html.dark #paperlessMetadata #nasMetadataStatus.paperless-status { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+html.dark #paperlessBrowser #nasStatus.paperless-status[data-state="checking"],
+html.dark #paperlessMetadata #nasMetadataStatus.paperless-status[data-state="checking"] { background: #1e1b4b; border-color: #4338ca; color: #c7d2fe; }
+html.dark #paperlessBrowser #nasStatus.paperless-status[data-state="ok"],
+html.dark #paperlessMetadata #nasMetadataStatus.paperless-status[data-state="ok"] { background: #052e16; border-color: #166534; color: #86efac; }
+html.dark #paperlessBrowser #nasStatus.paperless-status[data-state="error"],
+html.dark #paperlessMetadata #nasMetadataStatus.paperless-status[data-state="error"] { background: #450a0a; border-color: #7f1d1d; color: #fecaca; }
+
+body.rs-next.rs-counter330 .header-nas { position: relative; }
+body.rs-next.rs-counter330 .header-nas::after {
+  content: ""; position: absolute; top: 5px; right: 5px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #94a3b8; box-shadow: 0 0 0 2px rgba(148, 163, 184, .3);
+}
+body.rs-next.rs-counter330 .header-nas[data-state="checking"]::after { background: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, .3); animation: vx-dot-pulse 1.4s infinite ease-in-out; }
+body.rs-next.rs-counter330 .header-nas[data-state="ok"]::after { background: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, .3), 0 0 8px rgba(16, 185, 129, .8); }
+body.rs-next.rs-counter330 .header-nas[data-state="error"]::after { background: #ef4444; box-shadow: 0 0 0 2px rgba(239, 68, 68, .3), 0 0 8px rgba(239, 68, 68, .8); }

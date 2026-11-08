@@ -1,3 +1,10 @@
+## 3.40.2 — El estado del NAS se ve en todas las ventanas
+
+- La búsqueda en Paperless y la ventana de metadatos al archivar dejan el texto plano: su estado es ahora el mismo banner con punto de luz del diálogo principal (índigo pulsante mientras busca o consulta, verde si el NAS responde, rojo si falla), también en modo oscuro (css/visual-espectacular.css §15).
+- El botón NAS de la cabecera enseña un punto con el último estado conocido de la conexión (sin comprobar, comprobando, conectado o error), que se actualiza con cada «Comprobar acceso» y vuelve a neutro al quitar el token o cerrar la sesión.
+- Auditoría de selectores de css/visual-espectacular.css: las 236 reglas se contrastaron contra el HTML/JS real y ningún selector está demostrablemente muerto; no se elimina ninguno.
+- pdfjs-dist actualizado de 6.4.299 a 6.5.438 (con su dependencia opcional @napi-rs/canvas a 1.1.0).
+
 ## 3.40.1 — La conexión con el NAS se vuelve a ver
 
 - El semáforo del mostrador recupera el diseño «puntos con luz real»: cada estado (comprobando, conectado, revisar, sin acceso) se distingue por el color de fondo de la luz, el texto y el punto con resplandor, también en modo oscuro. En la 3.40.0 esas reglas nunca se aplicaban: perdían la cascada CSS frente a redesign-333.css por especificidad, el mismo fallo que la PR #24 corrigió tres veces para el botón Cámara.
