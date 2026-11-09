@@ -10,6 +10,11 @@
 'use strict';
 const $=id=>document.getElementById(id);
 let mounted=false,attempts=0,quick=false,postPrint=false,prevMissing=null,bannerHome=null,lastQuick=false,updating=false;
+let updateRuns=0,updateQueued=false,bannerRelocating=false;
+let resumeDismissed=false,metricsStart=0,metricsTaps=0,metricsService='id';
+function currentService(){return docActive()?'docs':root.state.activeCategory==='photos'?'photos':'id';}
+function metricsReset(){metricsStart=Date.now();metricsTaps=0;metricsService=currentService();}
+function metrics(){return {service:metricsService,taps:metricsTaps,seconds:metricsStart?Math.round((Date.now()-metricsStart)/1000):0};}
 let optionHistory=[],historyJob=null;
 function rememberOptions(){if(historyJob!==root.state._jobRevision){optionHistory=[];historyJob=root.state._jobRevision;}optionHistory.push({mode:root.state.printMode,paper:root.state.paperSize,sets:root.state.outputSets||1,scale:root.state.outputScalePercent||100});optionHistory=optionHistory.slice(-10);}
 const unlocked=()=>$('loginOverlay')?.classList.contains('hidden')&&(!$('setupOverlay')||$('setupOverlay').classList.contains('hidden'));
@@ -54,7 +59,9 @@ function build(){
  const slots=document.createElement('section');
  slots.id='quickMode';slots.setAttribute('aria-label','Modo rápido INE DNI');
  slots.innerHTML=
- '<div class="quick-main">'
+ '<nav class="quick-services" aria-label="Servicio del modo rápido"><button type="button" data-quick-service="id" aria-pressed="true">🪪 INE / DNI</button><button type="button" data-quick-service="photos" aria-pressed="false">📷 Fotos</button><button type="button" data-quick-service="docs" aria-pressed="false">📄 Documentos</button></nav>'
+ +'<p id="quickResume" class="quick-resume" hidden><span id="quickResumeText"></span> <button type="button" id="quickResumeGo">Seguir donde iba</button> <button type="button" id="quickResumeNew">Empezar nuevo</button></p>'
+ +'<div class="quick-main">'
  +'<p class="quick-kicker">MODO RÁPIDO</p><h2>INE / DNI — tamaño real</h2>'
  +'<div class="quick-steps" aria-hidden="true"><span id="quickStep1" class="quick-step" data-state="current">1 · Frente</span><span id="quickStep2" class="quick-step" data-state="todo">2 · Reverso</span><span id="quickStep3" class="quick-step" data-state="todo">3 · Entregar</span></div>'
  +'<p id="quickMeta" class="quick-meta"></p><p id="quickStatus" class="quick-status" role="status"></p>'
@@ -84,9 +91,19 @@ function build(){
  +'<button type="button" id="quickPhotoFileBtn" class="quick-link">o subir un archivo</button>'
  +'<div class="quick-foot"><button type="button" id="quickPhotoOtherService" class="quick-link">Otro servicio (INE/documento)</button><button type="button" id="quickPhotoFullModeBtn" class="quick-link">Modo completo</button></div>'
  +'</div>'
+ +'<div class="quick-docs" hidden>'
+ +'<p class="quick-kicker">MODO RÁPIDO</p><h2>Documentos — por páginas</h2>'
+ +'<div class="quick-steps" aria-hidden="true"><span id="quickDocStep1" class="quick-step" data-state="current">1 · Páginas</span><span id="quickDocStep2" class="quick-step" data-state="todo">2 · Revisar</span><span id="quickDocStep3" class="quick-step" data-state="todo">3 · Entregar</span></div>'
+ +'<p id="quickDocMeta" class="quick-meta"></p><p id="quickDocStatus" class="quick-status" role="status"></p>'
+ +'<ul id="quickDocPages" class="quick-doc-pages"></ul>'
+ +'<button type="button" id="quickDocScanBtn" class="quick-giant quick-scan"><span class="quick-giant-main">📷 Escanear página</span><span class="quick-giant-sub">Tras guardarla, el sistema pregunta si añades otra</span></button>'
+ +'<button type="button" id="quickDocFileBtn" class="quick-link">o añadir archivos</button>'
+ +'<label class="quick-name">Nombre (opcional)<input id="quickDocName" type="text" maxlength="48" placeholder="Ej. Contrato de arrendamiento" autocomplete="off"></label>'
+ +'<p id="quickDocHint" class="quick-hint"></p>'
+ +'<div class="quick-foot"><button type="button" id="quickDocFullModeBtn" class="quick-link">Modo completo</button></div></div>'
  +'<div class="quick-blocked" hidden><p class="quick-kicker">MODO RÁPIDO</p><h2>INE / DNI — tamaño real</h2>'
  +'<p id="quickBlockedText" class="quick-status"></p>'
- +'<button type="button" id="quickBlockedExit" class="quick-giant quick-scan">Volver al modo completo</button></div>';
+ +'<button type="button" id="quickBlockedNew" class="quick-giant quick-scan">Empezar un trabajo nuevo</button><button type="button" id="quickBlockedExit" class="quick-link">Volver al modo completo</button></div>';
  intake.insertBefore(slots,intake.firstChild);
  const actions=document.createElement('section');
  actions.id='quickActions';actions.setAttribute('aria-label','Entregar trabajo rápido');
@@ -116,13 +133,17 @@ function scanSide(side){
 function fileFor(side){const input=$({front:'fileInputFront',back:'fileInputBack'}[side]);if(input)input.click();}
 function exitQuick(){if(document.body.classList.contains('rs-quick'))$('workbenchQuick')?.click();}
 function printQuick(){
- if(!unlocked())return;const w=describe();
+ if(!unlocked())return;
+ if(docActive()){if(root.RealScanDocuments?.status().ready)$('docPrint')?.click();else root.showToast?.('Revisa y confirma todas las páginas antes de imprimir.','info');return;}
+ const w=describe();
  if(w.busy)return;
  if((w.missing||[]).length||!w.ready){root.showToast?.(root.state.activeCategory==='photos'?'Captura la foto antes de imprimir.':'Completa el frente y el reverso antes de imprimir.','info');return;}
  root.handlePrintDirect?.();
 }
 function pdfQuick(){
- if(!unlocked())return;const w=describe();
+ if(!unlocked())return;
+ if(docActive()){if(root.RealScanDocuments?.status().ready)$('docPdf')?.click();else root.showToast?.('Revisa y confirma todas las páginas antes de guardar el PDF.','info');return;}
+ const w=describe();
  if(w.busy)return;
  if((w.missing||[]).length||!w.ready){root.showToast?.(root.state.activeCategory==='photos'?'Captura la foto antes de guardar el PDF.':'Completa el frente y el reverso antes de guardar el PDF.','info');return;}
  root.handleExportPDF?.(false,true);
@@ -147,7 +168,7 @@ function wire(){
  $('quickJobPaper').onchange=e=>{if(!unlocked()||describe().busy)return;rememberOptions();root.setPaperSize(e.target.value,true);postPrint=false;refreshAll();update();};
  $('quickSets').onchange=e=>{if(!unlocked()||describe().busy)return;rememberOptions();root.state.outputSets=Math.max(1,Math.min(10,Math.round(Number(e.target.value)||1)));postPrint=false;refreshAll();update();};
  $('quickSendBtn').onclick=()=>{if(unlocked()&&describe().ready&&!describe().busy)root.RealScanPdfDelivery?.open({destination:'digital'});};
- $('quickArchiveBtn').onclick=()=>{if(unlocked()&&describe().ready&&!describe().busy)root.RealScanPdfDelivery?.open({destination:'paperless'});};
+ $('quickArchiveBtn').onclick=()=>{if(!unlocked())return;if(docActive()){archiveQuickDoc();return;}if(describe().ready&&!describe().busy)root.RealScanPdfDelivery?.open({destination:'paperless'});};
  $('quickScanBtn').onclick=()=>scanSide(pendingSide());
  for(const b of document.querySelectorAll('[data-quick-photo]'))b.onclick=()=>{if(!unlocked()||describe().busy)return;const kind=b.dataset.quickPhoto;try{root.RealScanDeskPresets?.apply(kind,kind==='infantil'?6:undefined);}catch(e){}postPrint=false;refreshAll();update();};
  $('quickPhotoCount').onchange=e=>{if(!unlocked()||describe().busy)return;root.setPhotoCopies?.(Math.max(1,Math.min(48,Math.round(Number(e.target.value)||1))));postPrint=false;refreshAll();update();};
@@ -174,6 +195,16 @@ function wire(){
  }
  $('quickName').addEventListener('input',e=>{root.state.documentCustomTitle=e.target.value;});
  $('quickName').addEventListener('change',()=>{try{root.saveActiveDraft?.();}catch(e){}});
+ for(const b of document.querySelectorAll('[data-quick-service]'))b.onclick=()=>switchService(b.dataset.quickService);
+ $('quickDocScanBtn').onclick=()=>{if(unlocked()&&!root.RealScanDocuments?.status().busy)$('docCamera')?.click();};
+ $('quickDocFileBtn').onclick=()=>{if(unlocked())$('docImport')?.click();};
+ $('quickDocName').addEventListener('input',e=>{root.state.documentCustomTitle=e.target.value;});
+ $('quickDocName').addEventListener('change',()=>{try{root.saveActiveDraft?.();}catch(e){}});
+ $('quickDocFullModeBtn').onclick=exitQuick;
+ $('quickResumeGo').onclick=()=>{resumeDismissed=true;const r=$('quickResume');if(r)r.hidden=true;document.getElementById('quickMode')?.scrollIntoView({block:'start',behavior:'auto'});};
+ $('quickResumeNew').onclick=async()=>{if(!unlocked())return;if(!confirm('Se empezará un trabajo nuevo del mismo servicio. ¿Continuar?'))return;resumeDismissed=true;try{await root.RealScanCounter?.startPrepared(currentService()==='docs'?'document':currentService(),true);if(currentService()==='id')applyQuickDefaults();metricsReset();update();}catch(e){root.showToast?.(e.message||'No se pudo empezar de nuevo.','warning');}};
+ document.addEventListener('click',e=>{if(!quick)return;const t=e.target.closest?.('#quickMode,#quickActions');if(t){metricsTaps++;if(e.target.closest?.('#quickPrintBtn,#quickPdfBtn,#quickArchiveBtn,#quickSendBtn'))root.RealScanDiagnostics?.record('quick.metrics','info',metrics());}},true);
+ $('quickBlockedNew').onclick=async()=>{if(!unlocked())return;if(!confirm('Se empezará un trabajo nuevo de INE / DNI. El trabajo actual se conserva en el historial de borradores si estaba guardado. ¿Continuar?'))return;try{await root.RealScanCounter?.startPrepared('id',true);applyQuickDefaults();postPrint=false;update();}catch(e){root.showToast?.(e.message||'No se pudo empezar el trabajo nuevo.','warning');}};
  $('quickOtherService').onclick=exitQuick;
  $('quickFullModeBtn').onclick=exitQuick;
  $('quickBlockedExit').onclick=exitQuick;
@@ -184,11 +215,35 @@ function wire(){
  $('quickHistoryBtn').onclick=()=>{if(unlocked())root.RealScanDesk?.openHistory();};
  $('quickKeepBtn').onclick=()=>{postPrint=false;update();};
 }
+async function switchService(kind){
+ if(!unlocked()||describe().busy)return;
+ const target=kind==='docs'?'document':kind;
+ const current=docActive()?'document':root.state.activeCategory==='photos'?'photos':'id';
+ if(current===target){update();return;}
+ try{await root.RealScanCounter?.startPrepared(target,false);}
+ catch(e){
+  if(!confirm('Cambiar de servicio guardará el trabajo actual como borrador. ¿Continuar?'))return;
+  try{await root.RealScanCounter?.startPrepared(target,true);}catch(e2){root.showToast?.(e2.message||'No se pudo cambiar de servicio.','warning');return;}
+ }
+ if(target==='id')applyQuickDefaults();
+ postPrint=false;metricsReset();update();
+ document.getElementById('quickMode')?.scrollIntoView({block:'start',behavior:'auto'});
+}
+async function archiveQuickDoc(){
+ if(!unlocked())return;const docs=root.RealScanDocuments;if(!docs?.status().ready){root.showToast?.('Revisa y confirma todas las páginas antes de archivar.','info');return;}
+ try{
+  const pdf=await docs.makePdf();const blob=pdf.output('blob');
+  const meta=await root.RealScanPaperlessMetadata?.review(root.state.documentCustomTitle||'Documento',{});
+  if(!meta)return;
+  const receipt=await root.RealScanPaperless?.send(blob,meta.title,null,{metadata:meta,operationId:'quick-doc-'+Date.now()});
+  root.showToast?.(receipt?.status==='archived'?'Documento archivado en Paperless.':'Paperless está procesando el documento.','info');
+ }catch(e){root.showToast?.(e.message||'No se pudo archivar el documento.','warning');}
+}
 function moveBannerIn(){
  const banner=document.querySelector('.ine-pair-banner'),host=$('quickPairHost');
- if(!banner||!host||banner.parentElement===host)return;
- bannerHome={parent:banner.parentElement,next:banner.nextSibling};
- host.append(banner);
+ if(!banner||!host||banner.parentElement===host||bannerRelocating)return;
+ bannerRelocating=true;
+ try{bannerHome={parent:banner.parentElement,next:banner.nextSibling};host.append(banner);}finally{bannerRelocating=false;}
 }
 function restoreBanner(){
  const banner=document.querySelector('.ine-pair-banner');
@@ -208,19 +263,27 @@ function renderSlot(side,label,src){
  const rot=document.querySelector('[data-quick-rotate="'+side+'"]');if(rot)rot.disabled=!src;
 }
 function update(){
- if(!quick||updating)return;updating=true;
+ if(!quick)return;
+ if(updating){updateQueued=true;return;}
+ updating=true;updateRuns++;
  try{
   const card=document.querySelector('#colStageWorkspace .stage-canvas-area')?.closest('section'),actions=$('quickActions');
   if(card&&actions&&actions.previousElementSibling!==card)card.after(actions);
-  const blocked=docActive()||(hasImages()&&root.state.activeCategory!=='docs'&&root.state.activeCategory!=='photos');
+  const docsMode=docActive();
+  const photosMode=!docsMode&&root.state.activeCategory==='photos';
+  const blocked=!docsMode&&!photosMode&&hasImages()&&root.state.activeCategory==='custom';
   const main=$('quickMode')?.querySelector('.quick-main'),blk=$('quickMode')?.querySelector('.quick-blocked');
-  const photosMode=root.state.activeCategory==='photos';
  const photosView=$('quickMode')?.querySelector('.quick-photos');
+ const docsView=$('quickMode')?.querySelector('.quick-docs');
+ for(const b of document.querySelectorAll('[data-quick-service]'))b.setAttribute('aria-pressed',String((b.dataset.quickService==='docs'&&docsMode)||(b.dataset.quickService==='photos'&&photosMode)||(b.dataset.quickService==='id'&&!docsMode&&!photosMode)));
  if(photosView)photosView.hidden=!photosMode;
- if(main)main.hidden=blocked||photosMode;if(blk)blk.hidden=!blocked||photosMode;
+ if(docsView)docsView.hidden=!docsMode;
+ if(main)main.hidden=blocked||photosMode||docsMode;if(blk)blk.hidden=!blocked;
+ {const resume=$('quickResume');if(resume){const pending=hasImages()||(root.RealScanDocuments?.status().count||0)>0;resume.hidden=!pending||resumeDismissed;if(pending&&!resumeDismissed)setText('quickResumeText','Tienes un trabajo rápido sin terminar ('+(currentService()==='docs'?(root.RealScanDocuments?.status().count||0)+' página(s)':'capturas en curso')+').');}}
  if(photosMode){updatePhotos();restoreBanner();return;}
+ if(docsMode){updateDocs();restoreBanner();return;}
   if(blocked){
-   setText('quickBlockedText',docActive()?'El modo rápido es para INE / DNI. Termina o cierra el documento para usarlo.':'Tienes un trabajo abierto que no es INE / DNI. Termínalo o guárdalo y vuelve al modo rápido.');
+   setText('quickBlockedText','Tienes un trabajo abierto de otro tipo. Puedes empezar un trabajo nuevo sin salir del modo rápido, o volver al modo completo.');
    restoreBanner();return;
   }
   const w=describe(),miss=w.missing||[],front=imgOf('front'),back=imgOf('back');
@@ -236,7 +299,7 @@ function update(){
   let meta=paperName()+' · '+scale+'% · '+(root.state.outputSets||1)+' juego(s) · '+w.layout.pages.length+' hoja(s)';
   if(root.RealScanPrinterProfiles?.getActive()&&rulerVerified()===false)meta+=' · Falta medir la regla de 50 mm';
   setText('quickMeta',meta);
-  setText('quickStatus',!front?'Captura o sube el frente':single?(w.ready?'Frente listo para entregar.':'Preparando el frente…'):!back?'Frente listo · Ahora el reverso':(w.ready?'Capturas listas. Revisa la hoja antes de imprimir.':'Revisa la hoja antes de entregar.'));
+  setText('quickStatus',!front?'Paso 1 de 3 · Frente: captura o sube el frente':single?(w.ready?'Paso 3 de 3 · Entregar: frente listo.':'Paso 2 de 3 · Revisar el frente…'):!back?'Paso 2 de 3 · Reverso: frente listo, ahora el reverso':(w.ready?'Paso 3 de 3 · Entregar: capturas listas, revisa la hoja.':'Paso 2 de 3 · Revisar la hoja antes de entregar.'));
   const statusEl=$('quickStatus');if(statusEl)statusEl.classList.toggle('is-ready',!!w.ready);
   const setStep=(id,state)=>{const el=$(id);if(el)el.dataset.state=state;};
   setStep('quickStep1',front?'done':'current');
@@ -285,7 +348,26 @@ function update(){
   setText('quickDeliverHint',postPrint?'':(!front&&!back?'Toca Escanear frente para empezar.':miss.length?'Falta '+(miss[0]==='back'?'el reverso':'el frente')+'.':busy?'Preparando imágenes…':'Revisa la hoja y elige cómo entregar.'));
   const deliver=$('quickActions')?.querySelector('.quick-deliver'),post=$('quickActions')?.querySelector('.quick-postprint');
   if(deliver)deliver.hidden=postPrint;if(post)post.hidden=!postPrint;
- }finally{updating=false;}
+ }finally{updating=false;if(updateQueued){updateQueued=false;update();}}
+}
+function updateDocs(){
+ const st=root.RealScanDocuments?.status()||{count:0,reviewed:0,ready:false,busy:false};
+ const pages=root.RealScanDocuments?.listPages()||[];
+ setText('quickDocMeta',st.count+' página(s) · '+st.reviewed+' revisada(s)');
+ setText('quickDocStatus',!st.count?'Paso 1 de 3 · Páginas: escanea la primera página o añade archivos':st.busy?'Preparando páginas…':st.ready?'Paso 3 de 3 · Entregar: documento listo.':'Página '+st.count+' escaneada · '+st.reviewed+' de '+st.count+' revisadas · ¿otra página o terminar? Revisa las que falten para entregar.');
+ const setStep=(id,state)=>{const el=$(id);if(el)el.dataset.state=state;};
+ setStep('quickDocStep1',st.count?'done':'current');
+ setStep('quickDocStep2',!st.count?'todo':st.ready?'done':'current');
+ setStep('quickDocStep3',st.ready?'current':'todo');
+ const list=$('quickDocPages');
+ if(list){list.replaceChildren();pages.forEach((p,i)=>{const li=document.createElement('li');li.textContent='Página '+(i+1);list.append(li);});}
+ const scan=$('quickDocScanBtn');if(scan){const main=scan.querySelector('.quick-giant-main');if(main)main.textContent=st.count?'📷 Escanear otra página':'📷 Escanear página';scan.disabled=!!st.busy;}
+ setText('quickDocHint',st.count&&!st.ready?'Las páginas se confirman al escanearlas en lote; si alguna queda sin revisar, ábrela en el modo completo.':'');
+ setText('quickStampText','✓ Documento · '+st.count+' página(s) · ');
+ setText('quickScale','');
+ {const ok=!!st.ready&&!st.busy;const print=$('quickPrintBtn'),pdf=$('quickPdfBtn');if(print)print.disabled=!ok;if(pdf)pdf.disabled=!ok;for(const id of ['quickSendBtn','quickArchiveBtn'])if($(id))$(id).disabled=!ok;const actions=$('quickActions');if(actions)actions.dataset.ready=String(ok);
+  setText('quickDeliverHint',!st.count?'Escanea la primera página para empezar.':st.ready?'Revisa y elige cómo entregar: Imprimir, Guardar PDF o Guardar en NAS.':'Faltan páginas por revisar ('+st.reviewed+' de '+st.count+' confirmadas).');}
+ const name=$('quickDocName');if(name&&document.activeElement!==name&&name.value!==(root.state.documentCustomTitle||''))name.value=root.state.documentCustomTitle||'';
 }
 function renderPhotoSlot(src){
  const btn=$('quickPhotoSlotBtn');if(!btn)return;
@@ -310,7 +392,7 @@ function updatePhotos(){
  }
  const spec=root.getActiveSpec?.();
  setText('quickPhotoMeta',(spec?spec.shortName:'')+' · '+(root.state.photoCopies||1)+' foto(s) por juego · '+(root.state.outputSets||1)+' juego(s) · '+paperName());
- setText('quickPhotoStatus',!front?'Elige el trabajo y toca Escanear foto':w.ready?'Foto lista. Revisa la hoja antes de imprimir.':'Preparando la foto…');
+ setText('quickPhotoStatus',!front?'Paso 1 de 3 · Trabajo: elige el trabajo y toca Escanear foto':w.ready?'Paso 3 de 3 · Entregar: foto lista, revisa la hoja.':'Paso 2 de 3 · Foto: preparando la foto…');
  const statusEl=$('quickPhotoStatus');if(statusEl)statusEl.classList.toggle('is-ready',!!w.ready);
  const setStep=(id,state)=>{const el=$(id);if(el)el.dataset.state=state;};
  setStep('quickPhotoStep1',cur?'done':'current');
@@ -333,10 +415,10 @@ function updatePhotos(){
  if(deliver)deliver.hidden=postPrint;if(post)post.hidden=!postPrint;
 }
 function enter(){
- quick=true;
+ quick=true;metricsReset();resumeDismissed=false;
  if(!unlocked()){update();return;}
- if(root.state.activeCategory==='photos'){prevMissing=(describe().missing||[])[0]||null;update();return;}
- if(docActive()||(hasImages()&&root.state.activeCategory!=='docs')){prevMissing=(describe().missing||[])[0]||null;update();return;}
+ if(root.state.activeCategory==='photos'||docActive()){prevMissing=(describe().missing||[])[0]||null;update();return;}
+ if(hasImages()&&root.state.activeCategory==='custom'){prevMissing=null;update();return;}
  if(!hasImages()){
   try{root.RealScanDeskPresets?.apply('ine');}catch(e){}
   setCleanFlags();refreshAll();
@@ -365,13 +447,23 @@ function init(){
  document.addEventListener('realscan:document-updated',update);
  document.addEventListener('realscan:print-dialog-closed',()=>{if(quick){postPrint=true;update();}});
  /* El banner par INE se crea de forma asíncrona (promesa de detección) sin
-    disparar ningún evento: sin este observador, en modo rápido podía quedarse
-    anclado tras paneles ocultos y el operador nunca lo vería. */
- new MutationObserver(()=>{
-  if(!quick||!document.getElementsByClassName('ine-pair-banner').length)return;
-  moveBannerIn();
- }).observe(document.body,{childList:true,subtree:true});
- root.RealScanQuickMode={update,exit:exitQuick};
+    disparar ningún evento. CAUSA RAÍZ de la traba (3.41): el observador
+    anterior vigilaba childList+subtree de TODO el body, así que cada
+    mutación de la app (y las del propio update()) lo disparaba, y su
+    moveBannerIn competía con restoreBanner() en un ping-pong de DOM.
+    Ahora se observa SOLO la lista de hijos (sin subtree) de los padres de
+    los anclas donde el banner se inserta (tras #capturePreviewRail,
+    #studioImageTray o #deskStart): barato, acotado y sin realimentación
+    (al moverlo, el banner ya está en su destino y la guarda lo detiene). */
+ const bannerParents=new Set();
+ for(const id of ['capturePreviewRail','studioImageTray','deskStart']){const a=$(id);if(a?.parentElement)bannerParents.add(a.parentElement);}
+ const bannerObserver=new MutationObserver(()=>{
+  if(!quick||bannerRelocating)return;
+  const banner=document.querySelector('.ine-pair-banner');
+  if(banner&&banner.parentElement!==$('quickPairHost'))moveBannerIn();
+ });
+ for(const p of bannerParents)bannerObserver.observe(p,{childList:true});
+ root.RealScanQuickMode={update,exit:exitQuick,stats:()=>({runs:updateRuns,queued:updateQueued}),metrics};
 }
 if(document.readyState==='complete')setTimeout(init,250);
 else document.addEventListener('DOMContentLoaded',()=>setTimeout(init,250));
