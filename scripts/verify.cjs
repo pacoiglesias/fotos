@@ -13,6 +13,8 @@ try {
     "backup-tag-regression",
     "audio-activation-regression",
     "paperless-regression",
+    "paperless-ingest-regression",
+    "paperless-explore-regression",
     "paperless-intake-regression",
     "ine-pair-detect-test",
     "regression",

@@ -111,10 +111,47 @@ function setPaperlessStatus(state,text){paintStatus(document.getElementById('pap
   document.body.append(modal);modal.showModal();list();
  }
 
+ // 3.41: primitivas de lote y explorador. La subida de lote NO usa los
+ // recibos de entregas (tope 100, pensados para trabajos del mostrador):
+ // devuelve el task_id y el sondeo lo gobierna la cola de ingesta.
+ async function uploadBatch(blob,{title='',tags=[],onProgress=null}={}){
+  if(!blob?.size)throw Error('No hay archivo preparado.');if(blob.size>30*1024*1024)throw Error('Paperless admite archivos de hasta 30 MB desde RealScan.');if(!unlocked())throw Error('Desbloquea el puesto.');if(!hasToken()){openSettings('Configura el acceso y vuelve a intentarlo.');throw Error('Falta el acceso a Paperless.');}
+  const form=new FormData();form.append('document',blob,blob.name||fileNameFor(title,blob));form.append('title',String(title||blob.name||'Documento').slice(0,200));for(const tag of tags)form.append('tags',String(tag));
+  const raw=await requestUpload('/api/documents/post_document/',form,()=>true,onProgress);let data;try{data=JSON.parse(raw);}catch{data=String(raw||'').trim();}
+  const taskId=typeof data==='string'?data:data?.task_id||data?.id;if(!/^[0-9a-f-]{36}$/i.test(taskId||'')){const e=Error('Paperless recibió la solicitud sin un identificador válido. Comprueba su cola antes de repetir.');e.unknown=true;throw e;}
+  return {taskId};
+ }
+ async function checkTaskDetailed(taskId,{isCurrent=()=>true}={}){
+  if(!/^[0-9a-f-]{36}$/i.test(taskId))throw Error('Identificador de archivo pendiente no válido.');
+  const data=await request('/api/tasks/?task_id='+encodeURIComponent(taskId),{},isCurrent,r=>r.json()),list=Array.isArray(data)?data:data.results||[],task=list.find(t=>t.task_id===taskId);
+  if(!task)return {taskId,status:'processing'};
+  const status=String(task.status||'').toUpperCase();
+  if(['FAILURE','FAILED','REVOKED'].includes(status)){const raw=typeof task.result==='string'?task.result:JSON.stringify(task.result||{});if(/duplicate|checksum|already exists|duplicad/i.test(raw))return {taskId,status:'duplicate',message:'Ya estaba en Paperless (duplicado por suma de comprobación).'};return {taskId,status:'failed',message:taskError(task)};}
+  const rawId=task.related_document||task.related_document_id||task.document_id,documentId=Number.isSafeInteger(Number(rawId))&&Number(rawId)>0?Number(rawId):null;
+  return {taskId,status:status==='SUCCESS'?'archived':'processing',documentId};
+ }
+ async function browse({query='',page=1,documentType=null,tag=null,correspondent=null,createdFrom='',createdTo='',pageSize=12}={}){
+  if(!Number.isInteger(page)||page<1||page>10000)throw Error('Página no válida.');
+  const params=new URLSearchParams({page_size:String(pageSize),page:String(page)});
+  if(String(query).trim())params.set('query',String(query).trim().slice(0,160));
+  if(documentType)params.set('document_type__id',String(documentType));
+  if(correspondent)params.set('correspondent__id',String(correspondent));
+  if(tag)params.set('tags__id__all',String(tag));
+  if(/^\d{4}-\d{2}-\d{2}$/.test(createdFrom))params.set('created__gte',createdFrom);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(createdTo))params.set('created__lte',createdTo);
+  const data=await request('/api/documents/?'+params.toString(),{},()=>true,r=>r.json());
+  return {count:Math.max(0,Number(data.count)||0),next:!!data.next,results:(Array.isArray(data.results)?data.results:[]).slice(0,pageSize).filter(v=>Number.isSafeInteger(v.id)&&v.id>0).map(v=>({id:v.id,title:String(v.title||'Documento '+v.id).slice(0,200),created:String(v.created||'').slice(0,40),correspondent:Number.isSafeInteger(v.correspondent)?v.correspondent:null,documentType:Number.isSafeInteger(v.document_type)?v.document_type:null,tags:(Array.isArray(v.tags)?v.tags:[]).filter(t=>Number.isSafeInteger(t)),snippet:String(v.content||'').replace(/\s+/g,' ').trim().slice(0,240)}))};
+ }
+ async function asset(id,kind){
+  if(!Number.isSafeInteger(id)||id<1)throw Error('Documento no válido.');if(!['thumb','preview'].includes(kind))throw Error('Recurso no válido.');
+  const r=await request('/api/documents/'+id+'/'+kind+'/',{},()=>true);const limit=30*1024*1024;
+  if(Number(r.headers.get('content-length'))>limit){await r.body?.cancel();throw Error('El recurso supera 30 MB.');}
+  const blob=await r.blob();if(!blob.size||blob.size>limit)throw Error('Recurso vacío o demasiado grande.');return blob;
+ }
  function cleanMetadata(value={}){if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Metadatos no válidos.');const tags=value.tags||[];if(!Array.isArray(tags)||tags.length>12||tags.some(id=>!Number.isSafeInteger(id)||id<1))throw Error('Etiquetas no válidas.');if(value.documentType!=null&&(!Number.isSafeInteger(value.documentType)||value.documentType<1))throw Error('Tipo de documento no válido.');const created=String(value.created||'');if(created&&(!/^\d{4}-\d{2}-\d{2}$/.test(created)||!Number.isFinite(new Date(created+'T00:00:00Z').getTime())||new Date(created+'T00:00:00Z').toISOString().slice(0,10)!==created))throw Error('Fecha no válida.');return {title:String(value.title||'').replace(/[\x00-\x1f]/g,'').trim().slice(0,200),tags:[...new Set(tags)],documentType:value.documentType||null,created};}
- async function catalog({isCurrent=()=>true}={}){async function list(kind){const result=[];for(let page=1;page<=5;page++){const data=await request('/api/'+kind+'/?page_size=100&page='+page,{},isCurrent,r=>r.json());for(const value of Array.isArray(data.results)?data.results:[])if(Number.isSafeInteger(value.id)&&value.id>0)result.push({id:value.id,name:String(value.name||'').slice(0,80)});if(!data.next)break;}return result.slice(0,500);}const [tags,documentTypes]=await Promise.all([list('tags'),list('document_types')]);return {tags,documentTypes};}
+ async function catalog({isCurrent=()=>true}={}){async function list(kind){const result=[];for(let page=1;page<=5;page++){const data=await request('/api/'+kind+'/?page_size=100&page='+page,{},isCurrent,r=>r.json());for(const value of Array.isArray(data.results)?data.results:[])if(Number.isSafeInteger(value.id)&&value.id>0)result.push({id:value.id,name:String(value.name||'').slice(0,80)});if(!data.next)break;}return result.slice(0,500);}const [tags,documentTypes,correspondents]=await Promise.all([list('tags'),list('document_types'),list('correspondents')]);return {tags,documentTypes,correspondents};}
  function mountEntry(){const anchor=document.getElementById('btnOpenReceiveModal');if(!anchor||document.getElementById('headerNas'))return;const b=document.createElement('button');b.id='headerNas';b.type='button';b.className='header-nas';b.dataset.state=accessState;b.setAttribute('aria-label','Cargar desde NAS · Paperless');b.title='Buscar y abrir una copia desde Paperless';b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 4h16v16H4zM4 9h16M9 13h6M9 17h4"/></svg><span>NAS</span>';b.onclick=openBrowser;anchor.before(b);const update=()=>b.disabled=!unlocked();for(const id of ['loginOverlay','setupOverlay']){const e=document.getElementById(id);if(e)new MutationObserver(update).observe(e,{attributes:true,attributeFilter:['class']});}document.addEventListener('realscan:auth-lock',update);update();}
  function lock(){epoch++;reportAccess('idle');for(const c of controllers)c.abort();document.getElementById('paperlessSettings')?.close();document.getElementById('paperlessBrowser')?.close();document.getElementById('paperlessMetadata')?.close();const token=document.getElementById('paperlessToken');if(token)token.value='';}
  document.addEventListener('realscan:auth-lock',lock);root.addEventListener('pagehide',lock);document.addEventListener('DOMContentLoaded',()=>{mountEntry();for(const id of ['loginOverlay','setupOverlay']){const el=document.getElementById(id);if(el)new MutationObserver(()=>{if(!unlocked())lock();}).observe(el,{attributes:true,attributeFilter:['class']});}});
- root.RealScanPaperless={setStatusBanner:paintStatus,removeToken,transfers:()=>unlocked()?Object.entries(receipts()).filter(([key,r])=>/^[a-f0-9]{64}$/.test(key)&&r&&Number.isFinite(r.at)&&['processing','archived','failed','unknown'].includes(r.status)).map(([key,r])=>({key,at:r.at,status:r.status,canCheck:!!r.taskId&&r.status==='processing'})).sort((a,b)=>b.at-a.at):[],async resumeTransfer(key){if(!unlocked()||!Object.hasOwn(receipts(),key))throw Error('Envío no disponible.');if(running.has(key))return running.get(key).promise;const receipt=receipts()[key],guard=epoch;if(!receipt?.taskId||receipt.status!=='processing')return receipt;const result=await checkTask(receipt.taskId);check(guard,()=>true);return keep(key,{...result,fingerprint:receipt.fingerprint});},catalog,cleanMetadata,DEFAULT_BASE,getBase,hasToken,isAutoBackup,save,send,search,retrieve,openBrowser,checkAccess,checkTask,openSettings};
+ root.RealScanPaperless={setStatusBanner:paintStatus,removeToken,transfers:()=>unlocked()?Object.entries(receipts()).filter(([key,r])=>/^[a-f0-9]{64}$/.test(key)&&r&&Number.isFinite(r.at)&&['processing','archived','failed','unknown'].includes(r.status)).map(([key,r])=>({key,at:r.at,status:r.status,canCheck:!!r.taskId&&r.status==='processing'})).sort((a,b)=>b.at-a.at):[],async resumeTransfer(key){if(!unlocked()||!Object.hasOwn(receipts(),key))throw Error('Envío no disponible.');if(running.has(key))return running.get(key).promise;const receipt=receipts()[key],guard=epoch;if(!receipt?.taskId||receipt.status!=='processing')return receipt;const result=await checkTask(receipt.taskId);check(guard,()=>true);return keep(key,{...result,fingerprint:receipt.fingerprint});},catalog,cleanMetadata,DEFAULT_BASE,getBase,hasToken,isAutoBackup,save,send,search,retrieve,openBrowser,checkAccess,checkTask,openSettings,uploadBatch,checkTaskDetailed,browse,asset,fingerprint:hash};
 })(window);
