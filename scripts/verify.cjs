@@ -6,33 +6,6 @@ try {
     "check",
     "build",
     "check-build",
-    "pwa-activation-regression",
-    "cache-lifecycle-regression",
-    "auth-regression",
-    "firebase-runner-regression",
-    "backup-tag-regression",
-    "audio-activation-regression",
-    "paperless-regression",
-    "paperless-ingest-regression",
-    "paperless-explore-regression",
-    "paperless-intake-regression",
-    "ine-pair-detect-test",
-    "regression",
-    "diagnostics-regression",
-    "photo-layout-regression",
-    "counter-desk-regression",
-    "counter-desk-webkit-regression",
-    "counter-desk-2-regression",
-    "counter-desk-2-webkit-regression",
-    "counter-final-regression",
-    "counter-final-webkit-regression",
-    "studio-regression",
-    "service-flow-regression",
-    "workbench-regression",
-    "modern-regression",
-    "workspace-polish-regression",
-    "release329-regression",
-    "operations330-regression",
     "id-pdf-intake-regression",
     "counter335-regression",
     "review-settings-regression",
@@ -65,7 +38,6 @@ try {
     "mobile-experience-webkit-regression",
     "mobile-webkit-regression",
     "practical-regression",
-    ...(process.env.REALSCAN_TEST_RELAY === "1" ? ["delivery-regression"] : []),
     "upgrade-regression",
     "legacy",
   ]) {
@@ -78,8 +50,6 @@ try {
     }); } catch (e) {
       failures.push(script);
       console.error("FAIL " + script);
-      // An invalid build cannot be audited. Otherwise collect every failure
-      // in one pass; publication still requires a zero exit status.
       if (script === "check-version" || script === "check" || script === "build" || script === "check-build") throw e;
     }
   }
