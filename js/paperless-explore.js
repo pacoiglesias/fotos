@@ -37,8 +37,8 @@
     const d = document.createElement('dialog');
     d.id = 'reviewTray'; d.className = 'desk-dialog review-tray';
     d.setAttribute('aria-label', 'Bandeja por revisar');
-    d.innerHTML = '<header><div><small>PACK 1 · TRANSPARENCIA</small><h2>Bandeja «Por revisar»</h2></div><button type="button" data-a="close">Cerrar</button></header>'
-      + '<p>Todo lo traído de Paperless / NAS, con su estado: qué se hizo y qué falta.</p>'
+    d.innerHTML = '<header><div><small>LO QUE TRAJISTE</small><h2>Bandeja «Por revisar»</h2></div><button type="button" data-a="close">Cerrar</button></header>'
+      + '<p>Lo que trajiste, con su estado: qué se hizo y qué falta.</p>'
       + '<div data-a="items"></div><p class="paperless-status" role="status" data-state="idle" data-a="status"></p>';
     document.body.append(d);
     const q = s => d.querySelector('[data-a="' + s + '"]');
@@ -55,7 +55,7 @@
         const actions = document.createElement('div');
         const mk = (label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.onclick = fn; actions.append(b); };
         mk('Abrir en Fotos', () => openInRealScan(it, status));
-        mk('Dejar perfecto', () => dejarPerfecto(it, status, render));
+        mk('Dejar perfecto y re-archivar', () => dejarPerfectoYArchivar(it, status, render));
         mk('Marcar impreso', () => { traySetStatus(it.key, 'impreso'); render(); });
         mk('Re-archivar mejorado', () => rearchive(it, status, render));
         card.append(actions); box.append(card);
@@ -97,6 +97,40 @@
           statusFn('ok', 'Mejora aceptada tras la comparativa. El original traído se conserva.');
         }
       });
+    } catch (e) { statusFn('error', e.message); }
+  }
+
+  // 3.42: «Dejar perfecto» en un solo paso confirmado: mejora con
+  // comparativa, guarda en la bandeja y re-archiva en Paperless con la
+  // ficha propuesta ya puesta; el operador solo confirma la ficha.
+  async function dejarPerfectoYArchivar(it, statusFn, render) {
+    const P = root.RealScanPaperless; const entry = blobs.get(it.key);
+    if (!entry) { statusFn('error', 'Vuelve a traer el documento en esta sesión para mejorarlo.'); return; }
+    if (!entry.blob.type.startsWith('image/')) { statusFn('idle', '«Dejar perfecto» directo es para imágenes. Para un PDF, ábrelo en Fotos y mejora página a página.'); return; }
+    traySetStatus(it.key, 'en-revision'); render?.();
+    const sourceBlob = entry.enhancedBlob || entry.blob;
+    const dataUrl = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(sourceBlob); });
+    let accepted = false;
+    try {
+      await root.RealScanEnhance.open({
+        sourceDataUrl: dataUrl, photoMode: false,
+        onAccept: async data => {
+          accepted = true;
+          if (data !== dataUrl) { const blob = await (await fetch(data)).blob(); entry.enhancedBlob = blob; entry.enhancedDataUrl = data; }
+          traySetStatus(it.key, 'mejorado'); render?.();
+        }
+      });
+    } catch (e) { statusFn('error', e.message); return; }
+    if (!accepted) { statusFn('idle', 'Sin cambios: no se re-archivó nada.'); return; }
+    const proposal = proposeMetadata(it);
+    statusFn('idle', 'Mejora guardada. Confirma la ficha propuesta para re-archivarla en Paperless.');
+    const meta = await root.RealScanPaperlessMetadata.review(proposal.title, { preset: { title: proposal.title, documentType: proposal.documentType, tags: proposal.tags } });
+    if (!meta) { statusFn('idle', 'Mejora guardada en la bandeja. El re-archivo se canceló: no se envió nada.'); return; }
+    const blob = entry.enhancedBlob || entry.blob;
+    try {
+      const receipt = await P.send(blob, meta.title, m => statusFn('checking', m), { metadata: meta, operationId: 'perfect-rearchive-' + it.key + '-' + Date.now() });
+      if (receipt?.status === 'archived') { traySetStatus(it.key, 'rearchivado'); render?.(); statusFn('ok', 'Perfecto y re-archivado como documento NUEVO #' + (receipt.documentId || '') + ', enlazado al de origen. El original no se ha tocado.'); }
+      else statusFn('idle', 'Paperless lo está procesando o no lo confirmó: compruébalo en la bandeja de envíos antes de repetir.');
     } catch (e) { statusFn('error', e.message); }
   }
 
@@ -218,6 +252,13 @@
           const key = trayAdd(origin);
           blobs.set(key, { blob });
           status('ok', 'Traído a la bandeja «Por revisar» conservando su referencia: Paperless #' + row.id + '. El original del NAS no se ha tocado.');
+          // 3.42: traer desemboca en la bandeja, sin viaje manual.
+          setTimeout(() => {
+            if (!d.isConnected) return;
+            d.close(); openTray();
+            const st = document.querySelector('#reviewTray [data-a="status"]');
+            if (st) { st.dataset.state = 'ok'; st.textContent = 'Traído ahora: ' + row.title + ' · Paperless #' + row.id + '. El original del NAS no se ha tocado.'; }
+          }, 900);
         } catch (e) { status('error', e.message); } finally { bring.disabled = false; }
       };
       box.append(bring);

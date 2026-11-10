@@ -119,8 +119,8 @@
     const dialog = document.createElement("dialog");
     dialog.className = "scan-dialog";
     dialog.setAttribute("aria-label", "Captura y encuadre de documento");
-    dialog.innerHTML = `<div class="scan-head"><div><strong>${options.photoMode?'Fotografía sin deformaciones':'Escáner de documentos'}</strong><small>Captura privada · Revisión antes de usar</small></div><button type="button" data-act="close" aria-label="Cerrar cámara">×</button></div>
-      <ol class="scan-steps" aria-label="Progreso de captura"><li data-phase="capture">1 · Capturar</li><li data-phase="review">2 · Revisar</li><li data-phase="confirm">3 · Confirmar</li></ol>
+    dialog.innerHTML = `<div class="scan-head"><div><strong>${options.photoMode?'Fotografía sin deformaciones':'Escáner de documentos'}</strong><small>Captura privada · Ajuste y uso en un solo paso</small></div><button type="button" data-act="close" aria-label="Cerrar cámara">×</button></div>
+      <ol class="scan-steps" aria-label="Progreso de captura"><li data-phase="capture">1 · Capturar</li><li data-phase="review">2 · Ajustar y usar</li></ol>
       <label class="scan-format">Forma del documento <select aria-label="Forma del documento"><option value="auto">Automática / Otro documento</option><option value="card">Tarjeta (INE / licencia)</option><option value="a4">Hoja A4</option><option value="letter">Hoja Carta</option></select></label>
       <label class="scan-filter">Aspecto <select aria-label="Aspecto de la imagen"><option value="color">Color original</option><option value="gray">Escala de grises</option><option value="document">Documento contrastado</option></select></label>
       <div class="scan-preview-area"><div class="scan-stage"><video autoplay playsinline webkit-playsinline muted></video><canvas class="scan-still" hidden></canvas><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="scan-shade" fill-rule="evenodd"/><polygon/></svg><div class="scan-corners" hidden></div></div><button type="button" data-act="switch" class="scan-switch-cam" aria-label="Cambiar entre cámara frontal y trasera" title="Cambiar entre cámara frontal y trasera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 7.5h10l-2.6-2.6M16.5 16.5h-10l2.6 2.6"/><circle cx="12" cy="12" r="3.1"/></svg><span class="scan-switch-label">Trasera</span></button></div>
@@ -130,7 +130,7 @@
       <label class="scan-auto"><input type="checkbox"> Capturar al mantener el documento estable</label>
       <div class="scan-actions"><button type="button" data-act="capture">Tomar foto</button><button type="button" data-act="focus">Reintentar enfoque</button><button type="button" data-act="torch" hidden>Linterna</button><button type="button" data-act="native">Cámara del teléfono</button>
       <button type="button" data-act="left" hidden>Girar izquierda</button><button type="button" data-act="right" hidden>Girar derecha</button><button type="button" data-act="reset" hidden>Restaurar original</button><button type="button" data-act="enhance" hidden>Mejorar imagen</button><button type="button" data-act="confirm" hidden>Usar esta imagen</button><button type="button" data-act="edit" hidden>Volver a ajustar</button>
-      <button type="button" data-act="retry" hidden>Repetir</button><button type="button" data-act="original" hidden>Usar completa</button><button type="button" data-act="accept" hidden>Enderezar y usar</button><button type="button" data-act="preview" hidden>Ver resultado</button></div>`;
+      <button type="button" data-act="retry" hidden>Repetir</button><button type="button" data-act="original" hidden>Usar completa</button><button type="button" data-act="accept" hidden>Enderezar y usar</button><button type="button" data-act="preview" hidden>Ver grande</button></div>`;
     const settings = document.createElement('details');
     settings.className = 'scan-settings';
     settings.innerHTML = '<summary>Opciones de captura y ayuda</summary><div class="scan-settings-content"></div>';
@@ -139,7 +139,7 @@
     for (const selector of ['.scan-format','.scan-filter','.scan-help','.scan-focus-info']) settings.lastElementChild.append(dialog.querySelector(selector));
     dialog.querySelector('.scan-actions').before(settings);
     if(typeof options.title==='string'&&options.title.trim())dialog.querySelector('.scan-head strong').textContent=options.title.trim().slice(0,80);
-    const guidance = document.createElement('p');guidance.className='scan-guidance';guidance.textContent=options.photoMode?'Coloca el rostro centrado y busca luz uniforme. Revisa el enfoque antes de confirmar.':'Documento plano, cuatro bordes visibles y sin reflejos. Tras capturar, ajusta las esquinas antes de confirmar.';dialog.querySelector('.scan-preview-area').before(guidance);
+    const guidance = document.createElement('p');guidance.className='scan-guidance';guidance.textContent=options.photoMode?'Coloca el rostro centrado y busca luz uniforme. Revisa el enfoque antes de usar la foto.':'Documento plano, cuatro bordes visibles y sin reflejos. Tras capturar, ajusta las esquinas y pulsa «Enderezar y usar»: la imagen queda puesta al momento, sin otro paso de confirmación.';dialog.querySelector('.scan-preview-area').before(guidance);
     document.body.append(dialog);
     const oldOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';
@@ -552,7 +552,7 @@
     }
     async function showConfirm(result) {
         pendingResult = result;enhanceBase = result;
-        phase('confirm');
+        phase('review');
         savedQuad = quad.map((p) => ({ ...p }));
         const preview = new Image();
         preview.src = result;
@@ -569,7 +569,7 @@
         $(".scan-format").hidden = true;
         for (const action of ["left", "right", "reset", "retry", "original", "accept", "preview"]) btn(action).hidden = true;
         btn("confirm").hidden = btn("edit").hidden = false;btn("enhance").hidden=!root.RealScanEnhance;btn("enhance").disabled=!!(options.photoMode&&typeof getActiveSpec==='function'&&getActiveSpec().noRetouch);
-        status.textContent = "Vista previa del resultado. Comprueba que el contenido y sus proporciones sean correctos antes de usarlo.";
+        status.textContent = "Vista grande de la imagen ya ajustada (paso opcional). «Usar esta imagen» la deja puesta en el trabajo; «Volver a ajustar» regresa a las esquinas.";
     }
     async function deliver(result) {
       root.RealScanDiagnostics?.record("camera.corrected");

@@ -1,0 +1,44 @@
+/* 3.42 · Cierre de la auditoría: cabecera con una sola puerta «Archivo»,
+   hero compacto en modo rápido, suelo táctil de 44 px y atajos del
+   mostrador con tamaño y texto reales. Se carga la última a propósito. */
+
+/* Un solo botón «Archivo»: etiqueta completa también en móvil. */
+.header-archive { white-space: nowrap; min-height: 44px; }
+body > header button { min-height: 44px; }
+body > header button span { white-space: nowrap; }
+@media (max-width: 700px) {
+  /* En la cabecera móvil de 3.30 los botones se reparten la fila: «Archivo»
+     entra en ese reparto con su parte justa y suelo de 44 px, sin que su
+     etiqueta se corte («Archi…») ni quede aplastado junto a «Nuevo». */
+  body.rs-next.rs-counter330 > header #headerArchive { flex: 1 1 0; min-width: 96px; min-height: 44px !important; }
+  body.rs-next.rs-counter330 > header button { min-height: 44px !important; }
+}
+
+/* Centro «Archivo»: pestañas y acciones. */
+.archivo-hub { width: min(680px, calc(100vw - 24px)); }
+.archivo-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.archivo-tabs button { min-height: 44px; padding: 10px 18px; font-weight: 700; }
+.archivo-tabs button.active { background: #155bd5; color: #fff; border-color: #155bd5; }
+.archivo-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.archivo-actions button { min-height: 48px; }
+.archivo-notes { margin-top: 14px; }
+.archivo-notes dt { font-weight: 700; margin-top: 8px; }
+.archivo-notes dd { margin: 2px 0 0; }
+
+/* Pestañas del historial único en «Trabajos». */
+.jobs-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.jobs-tabs button { min-height: 44px; padding: 8px 16px; font-weight: 700; }
+.jobs-tabs button[aria-pressed="true"] { background: #155bd5; color: #fff; border-color: #155bd5; }
+
+/* Hero compacto en modo rápido: la franja oscura deja de ser una barra
+   vacía de ~90 px y el panel rápido sube a la primera pantalla. */
+body.rs-quick #workbenchBar,
+body.rs-next.rs-counter330.rs-evolved.rs-quick #workbenchBar { padding: 6px 14px; margin-bottom: 10px; border-radius: 12px; }
+body.rs-quick #workbenchBar strong,
+body.rs-next.rs-counter330.rs-evolved.rs-quick #workbenchBar strong { font-size: 17px; }
+body.rs-quick .workbench-bar .workbench-kicker,
+body.rs-quick #counterIntro { display: none; }
+
+/* Fila de atajos del mostrador: botones táctiles de tamaño real. */
+#deskStart .desk-shortcuts { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 9px; margin-top: 14px; }
+body.rs-next.rs-counter330 #deskStart .desk-shortcuts > button { min-height: 48px !important; font-size: 14px !important; padding: 10px 16px !important; }

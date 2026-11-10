@@ -21,23 +21,21 @@
   /* A7: el servicio activo (INE, fotos o documento) como tipo base de Paperless;
      el OCR solo refina la sugerencia cuando reconoce algo concreto. */
   const activeService=()=>!root.RealScanMobile&&RealScanDocuments.status().active?'docs':(state.activeCategory==='photos'?'photos':'id');
-  /* A5: marca «Confirmar y archivar» como acción principal cuando el archivado
-     directo aplica (título útil y tipo inferido en el catálogo del NAS); la
-     revisión de metadatos queda como secundaria («Revisar datos»). */
+  /* 3.42 (antes A5): «Confirmar y archivar» es la acción principal siempre
+     que haya un título útil; el tipo se infiere del servicio activo (INE →
+     Identificación, Fotos → Fotografía, Documento → Documento) y el OCR solo
+     lo refina. La revisión de metadatos queda como secundaria («Revisar
+     datos») en el botón de enviar. */
   async function refreshDirectArchive(){
    const stamp=++directCheck,archive=q('pdfDeliveryArchive'),paperless=q('pdfDeliveryPaperless');
    const reset=()=>{archive.classList.remove('annotation-primary');paperless.textContent='Enviar a Paperless';};
    if(!prepared||!current()||!root.RealScanPaperless||!root.RealScanPaperless.hasToken()){reset();return;}
    const baseName=fileName().replace(/\.(pdf|png|jpg|jpeg|webp)$/i,'');
    if(!baseName||baseName==='RealScan_Entrega'){reset();return;}
-   try{
-    const suggestion=root.RealScanOcr?.suggestDocument(baseName,new Date(),activeService())||{documentType:'',tags:[]};
-    const catalog=await root.RealScanPaperless.catalog({isCurrent:current});
-    if(stamp!==directCheck||!current())return;
-    const type=catalog.documentTypes.find(v=>normalized(v.name)===normalized(suggestion.documentType));
-    if(type){archive.classList.add('annotation-primary');paperless.textContent='Revisar datos';}
-    else reset();
-   }catch{reset();}
+   // El título útil basta para el camino feliz: el tipo inferido del
+   // servicio se resuelve contra el catálogo al archivar, no bloquea aquí.
+   if(stamp!==directCheck||!current())return;
+   archive.classList.add('annotation-primary');paperless.textContent='Revisar datos';
   }
   function current(){return !disposed&&allowed()&&adapter.revision()===initial;}
   const pageView=root.RealScanReviewWorkflow?.pager(dialog,current);
@@ -74,9 +72,10 @@
    if(!prepared||paperlessBusy||archiveBusy||!current())return;if(!root.RealScanPaperless){q('pdfDeliveryStatus').textContent='Paperless no está disponible. Puedes descargar o imprimir normalmente.';return;}
    const retryFailed=q('pdfDeliveryPaperless').dataset.failed==='true';if(retryFailed&&!confirm('Corrige primero el error en Paperless y comprueba que el archivo no esté archivado. ¿Reenviar este mismo archivo?'))return;paperlessBusy=true;stateButtons();q('pdfDeliveryStatus').textContent='Revisa los datos antes de enviar. Puedes volver sin perder tu archivo.';const artifact=prepared,name=fileName();try{const metadata=await root.RealScanPaperlessMetadata?.review(name,{isCurrent:current,ocrSource:RealScanDocuments.status().active?RealScanDocuments.annotationPages().find(p=>artifact.pageKeys?.includes(p.key))?.data:state.images.front.originalSrc});if(!metadata){q('pdfDeliveryStatus').textContent='No se envió el archivo. Puedes imprimir, descargar o volver a archivar.';if(!root.RealScanPaperless.hasToken()&&!paperlessResume){paperlessResume=()=>{document.removeEventListener('realscan:paperless-changed',paperlessResume);paperlessResume=null;if(!disposed&&current()&&root.RealScanPaperless.hasToken()){document.getElementById('paperlessSettings')?.close();q('pdfDeliveryStatus').textContent='Acceso guardado. Reanudando el envío…';q('pdfDeliveryPaperless').click();}};document.addEventListener('realscan:paperless-changed',paperlessResume);q('pdfDeliveryStatus').textContent='Guarda el token en Ajustes y el envío se reanudará solo.';}return;}if(!current())return;const result=await RealScanPaperless.send(artifact.blob,name,m=>{if(!disposed)q('pdfDeliveryStatus').textContent=m;},{retryFailed,metricsToken:nasMeasurement||(nasMeasurement=root.RealScanCounterEvolution?.beginDelivery?.('nas')),metadata,operationId:'delivery:'+initial+'|'+artifact.asset+'|'+q('pdfDeliveryScope').value+'|'+q('pdfDeliveryRange').value,isCurrent:current});showNasResult(result);}catch(e){if(!disposed)q('pdfDeliveryStatus').textContent=e.message;}finally{paperlessBusy=false;if(!disposed)stateButtons();}
   };
-  /* Un solo Confirmar y archivar cuando el título y el tipo ya son razonables:
-     título propio (no el de defecto) y tipo inferido que existe en el catálogo
-     del NAS: se archiva directo. Si no, cae al diálogo de revisión habitual. */
+  /* Un solo Confirmar y archivar en el camino feliz: título propio (no el
+     de defecto) y tipo inferido del servicio activo, resuelto contra el
+     catálogo del NAS si existe allí. Sin título útil, cae al diálogo de
+     revisión habitual («Revisar datos»). */
   q('pdfDeliveryArchive').onclick=async()=>{
    if(!prepared||archiveBusy||paperlessBusy||!current())return;if(q('pdfDeliveryPaperless').dataset.failed==='true'){sendToPaperlessFallback();return;}
    if(!root.RealScanPaperless){q('pdfDeliveryStatus').textContent='Paperless no está disponible. Puedes descargar o imprimir normalmente.';return;}
@@ -88,7 +87,7 @@
     try{
      const catalog=await root.RealScanPaperless.catalog({isCurrent:current});
      const type=catalog.documentTypes.find(v=>normalized(v.name)===normalized(suggestion.documentType));
-     if(type&&baseName!==''&&baseName!=='RealScan_Entrega')direct=root.RealScanPaperless.cleanMetadata({title:baseName,tags:catalog.tags.filter(t=>suggestion.tags.some(sn=>normalized(sn)===normalized(t.name))).map(t=>t.id),documentType:Number(type.id),created:''});
+     if(baseName!==''&&baseName!=='RealScan_Entrega')direct=root.RealScanPaperless.cleanMetadata({title:baseName,tags:catalog.tags.filter(t=>suggestion.tags.some(sn=>normalized(sn)===normalized(t.name))).map(t=>t.id),documentType:type?Number(type.id):null,created:''});
     }catch{}
     if(direct){
      const artifact=prepared;

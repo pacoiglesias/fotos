@@ -194,7 +194,7 @@ async function saveScanToStorage(customTitle, retentionDays) {
       return null;
     }
 
-    const days = (typeof retentionDays === 'number') ? retentionDays : 3;
+    const days = (typeof retentionDays === 'number') ? retentionDays : 7;
     const now = Date.now();
     const expiresAt = days > 0 ? (now + days * 24 * 60 * 60 * 1000) : 0;
     const projectTitle = (customTitle || '').trim() || (spec.shortName + ' (' + pages.length + ' ' + (pages.length === 1 ? 'cara' : 'caras/págs') + ')');
