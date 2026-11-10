@@ -11,7 +11,7 @@
 const $=id=>document.getElementById(id);
 let mounted=false,attempts=0,quick=false,postPrint=false,prevMissing=null,bannerHome=null,lastQuick=false,updating=false;
 let updateRuns=0,updateQueued=false,bannerRelocating=false;
-let resumeDismissed=false,metricsStart=0,metricsTaps=0,metricsService='id';
+let resumeDismissed=false,resumeArmed=false,metricsStart=0,metricsTaps=0,metricsService='id';
 function currentService(){return docActive()?'docs':root.state.activeCategory==='photos'?'photos':'id';}
 function metricsReset(){metricsStart=Date.now();metricsTaps=0;metricsService=currentService();}
 function metrics(){return {service:metricsService,taps:metricsTaps,seconds:metricsStart?Math.round((Date.now()-metricsStart)/1000):0};}
@@ -60,7 +60,7 @@ function build(){
  slots.id='quickMode';slots.setAttribute('aria-label','Modo rápido INE DNI');
  slots.innerHTML=
  '<nav class="quick-services" aria-label="Servicio del modo rápido"><button type="button" data-quick-service="id" aria-pressed="true">🪪 INE / DNI</button><button type="button" data-quick-service="photos" aria-pressed="false">📷 Fotos</button><button type="button" data-quick-service="docs" aria-pressed="false">📄 Documentos</button></nav>'
- +'<p id="quickResume" class="quick-resume" hidden><span id="quickResumeText"></span> <button type="button" id="quickResumeGo">Seguir donde iba</button> <button type="button" id="quickResumeNew">Empezar nuevo</button></p>'
+ +'<p id="quickResume" class="quick-resume" hidden><span id="quickResumeText"></span> <button type="button" id="quickResumeGo" aria-label="Seguir donde iba">Seguir</button> <button type="button" id="quickResumeNew" aria-label="Empezar un trabajo nuevo">Nuevo</button></p>'
  +'<div class="quick-main">'
  +'<p class="quick-kicker">MODO RÁPIDO</p><h2>INE / DNI — tamaño real</h2>'
  +'<div class="quick-steps" aria-hidden="true"><span id="quickStep1" class="quick-step" data-state="current">1 · Frente</span><span id="quickStep2" class="quick-step" data-state="todo">2 · Reverso</span><span id="quickStep3" class="quick-step" data-state="todo">3 · Entregar</span></div>'
@@ -279,7 +279,7 @@ function update(){
  if(photosView)photosView.hidden=!photosMode;
  if(docsView)docsView.hidden=!docsMode;
  if(main)main.hidden=blocked||photosMode||docsMode;if(blk)blk.hidden=!blocked;
- {const resume=$('quickResume');if(resume){const pending=hasImages()||(root.RealScanDocuments?.status().count||0)>0;resume.hidden=!pending||resumeDismissed;if(pending&&!resumeDismissed)setText('quickResumeText','Tienes un trabajo rápido sin terminar ('+(currentService()==='docs'?(root.RealScanDocuments?.status().count||0)+' página(s)':'capturas en curso')+').');}}
+ {const resume=$('quickResume');if(resume){const pending=hasImages()||(root.RealScanDocuments?.status().count||0)>0;if(!pending)resumeArmed=false;resume.hidden=!(pending&&resumeArmed)||resumeDismissed;if(pending&&resumeArmed&&!resumeDismissed)setText('quickResumeText','⏸ Trabajo rápido sin terminar');}}
  if(photosMode){updatePhotos();restoreBanner();return;}
  if(docsMode){updateDocs();restoreBanner();return;}
   if(blocked){
@@ -299,7 +299,7 @@ function update(){
   let meta=paperName()+' · '+scale+'% · '+(root.state.outputSets||1)+' juego(s) · '+w.layout.pages.length+' hoja(s)';
   if(root.RealScanPrinterProfiles?.getActive()&&rulerVerified()===false)meta+=' · Falta medir la regla de 50 mm';
   setText('quickMeta',meta);
-  setText('quickStatus',!front?'Paso 1 de 3 · Frente: captura o sube el frente':single?(w.ready?'Paso 3 de 3 · Entregar: frente listo.':'Paso 2 de 3 · Revisar el frente…'):!back?'Paso 2 de 3 · Reverso: frente listo, ahora el reverso':(w.ready?'Paso 3 de 3 · Entregar: capturas listas, revisa la hoja.':'Paso 2 de 3 · Revisar la hoja antes de entregar.'));
+  setText('quickStatus',!front?'Paso 1 de 3 · Frente: captura o sube el frente':single?(w.ready?'Paso 3 de 3 · Entregar: Frente listo.':'Paso 2 de 3 · Revisar el frente…'):!back?'Paso 2 de 3 · Reverso: frente listo, ahora el reverso':(w.ready?'Paso 3 de 3 · Entregar: capturas listas, revisa la hoja.':'Paso 2 de 3 · Revisar la hoja antes de entregar.'));
   const statusEl=$('quickStatus');if(statusEl)statusEl.classList.toggle('is-ready',!!w.ready);
   const setStep=(id,state)=>{const el=$(id);if(el)el.dataset.state=state;};
   setStep('quickStep1',front?'done':'current');
@@ -416,6 +416,9 @@ function updatePhotos(){
 }
 function enter(){
  quick=true;metricsReset();resumeDismissed=false;
+ // La recuperación solo se ofrece si el trabajo ya existía al entrar
+ // (p. ej. tras una traba o un cierre); nunca sobre el trabajo en curso.
+ resumeArmed=hasImages()||(root.RealScanDocuments?.status().count||0)>0;
  if(!unlocked()){update();return;}
  if(root.state.activeCategory==='photos'||docActive()){prevMissing=(describe().missing||[])[0]||null;update();return;}
  if(hasImages()&&root.state.activeCategory==='custom'){prevMissing=null;update();return;}
