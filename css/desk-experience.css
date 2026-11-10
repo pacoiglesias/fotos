@@ -188,3 +188,24 @@
 }
 
 @media screen{#localOcrModal select,#localOcrModal textarea{border:1px solid var(--work-line,#cbd5e1);border-radius:10px;padding:10px;background:var(--work-surface,#fff);color:var(--work-ink,#172233)}#localOcrModal p{font-size:14px;line-height:1.6}}
+
+/* 3.41.0 CI geometry: on narrow screens the intake stack must leave the primary
+   receive action (Cámara) comfortably above the fixed footer in any font
+   environment. Measured locally at 390x900 the button bottom sat at 754px
+   against a 770px limit (16px of headroom); on the CI runner, with fallback
+   fonts, it crossed the limit and paperless-intake-regression failed. This
+   block compacts only the intake column at <=767px so the invariant holds
+   with real headroom (~70px locally) instead of a razor-thin margin. */
+@media screen and (max-width:767px){
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake{padding:10px!important;gap:10px!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake :is(h1,h2){margin-bottom:5px!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake :is(#deskServiceHint,#deskSourceHint){margin:0 0 8px!important;font-size:12px!important;line-height:1.4!important}
+ body.rs-next.rs-counter330.rs-evolved #counterIntake .operator-task{min-height:46px!important;padding:6px 8px!important}
+ body.rs-next.rs-counter330.rs-evolved #guidedStepsBar{margin-bottom:10px!important}
+ body.rs-next.rs-counter330.rs-evolved #guidedStepsBar button{min-height:40px!important}
+ body.rs-next.rs-counter330.rs-desk336 #workbenchBar{padding:10px 14px!important;margin-bottom:10px!important}
+ body.rs-next.rs-counter330.rs-desk336 #counterIntake #deskReceive #operatorReceiveActions>button{min-height:56px!important}
+ body.rs-next.rs-counter330.rs-desk336 #deskPresets{margin-top:6px!important}
+ body.rs-next.rs-counter330.rs-desk336 #deskPresets h3{margin-bottom:4px!important}
+ body.rs-next.rs-counter330.rs-desk336 #captureFirstOpen{min-height:36px!important;padding:5px!important;margin-top:6px!important}
+}
