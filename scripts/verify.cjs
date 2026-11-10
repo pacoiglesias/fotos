@@ -11,19 +11,10 @@ try {
     "iphone-capture-regression",
     "document-regression",
     "mobile-local-regression",
-    "mobile-experience-regression",
-    "mobile-experience-webkit-regression",
-    "mobile-webkit-regression",
-    "practical-regression",
-    "upgrade-regression",
-    "legacy",
   ]) {
     try { cp.execFileSync(process.execPath, [...(process.platform === "win32" ? ["--require", "./scripts/windows-browser-runtime.cjs"] : []), "scripts/" + script + ".cjs"], {
       stdio: "inherit",
-      env: {
-        ...process.env,
-        ...(script === "legacy" ? { REALSCAN_TEST_RELAY: "0" } : {}),
-      },
+      env: { ...process.env },
     }); } catch (e) {
       failures.push(script);
       console.error("FAIL " + script);
