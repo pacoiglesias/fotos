@@ -53,8 +53,13 @@ const checks = []; function pass(v) { checks.push(v); console.log('PASS ' + v); 
   assert.equal(await page.evaluate(() => document.getElementById('selectRetentionDays').value), '7');
   await page.evaluate(() => document.getElementById('btnOpenHistory').click()); await page.locator('#workspaceJobs').waitFor({ state: 'visible' });
   for (const tab of ['Pedidos', 'Impresiones', 'Escaneos']) assert((await page.locator('#workspaceJobs').textContent()).includes(tab));
+  // El estado lo escribe renderJobs() DESPUÉS de leer IndexedDB (async):
+  // se espera la condición, no se lee en vacío (en CI lento la lectura
+  // inmediata veía el texto aún vacío; en local ganaba la carrera).
+  await page.waitForFunction(() => document.getElementById('workspaceJobsStatus').textContent.includes('7 días'));
   const jobsStatus = await page.locator('#workspaceJobsStatus').textContent(); assert(jobsStatus.includes('7 días'), jobsStatus);
-  await page.locator('#workspaceJobs [data-jobs-tab="scans"]').click(); await page.waitForTimeout(300);
+  await page.locator('#workspaceJobs [data-jobs-tab="scans"]').click();
+  await page.waitForFunction(() => document.getElementById('workspaceJobsStatus').textContent.includes('escaneos guardados'));
   const scansStatus = await page.locator('#workspaceJobsStatus').textContent(); assert(scansStatus.includes('7 días'), scansStatus);
   await page.keyboard.press('Escape');
   pass('single history: Trabajos tabs Pedidos/Impresiones/Escaneos, one 7-day retention everywhere');
