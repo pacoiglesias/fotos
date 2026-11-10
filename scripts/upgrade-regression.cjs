@@ -55,8 +55,27 @@ const server = http.createServer((req, res) => {
   const context = await browser.newContext(),
     page = await context.newPage();
   await page.goto("http://127.0.0.1:5518");
-  await page.evaluate(() => navigator.serviceWorker.ready);
-  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  // CI (runner lento + precache del shell más pesado desde 3.41.0, con
+  // paperless-ingest/explore y paperless-341.css) demostró que las esperas
+  // cortas o sin cota de esta suite queman el job: `serviceWorker.ready`
+  // dentro de evaluate() no tiene timeout propio en Playwright y puede no
+  // resolverse nunca. Todas las esperas quedan acotadas y por condición
+  // (polling), sin sleeps fijos: se sale en cuanto la condición se cumple.
+  const swReady = await page.evaluate(() =>
+    Promise.race([
+      navigator.serviceWorker.ready.then(() => "ready"),
+      new Promise((resolve) => setTimeout(() => resolve("timeout"), 60000)),
+    ]),
+  );
+  assert.equal(
+    swReady,
+    "ready",
+    "El service worker anterior no llegó a estar listo en 60 s",
+  );
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, {
+    timeout: 60000,
+    polling: 250,
+  });
   assert(await page.evaluate(async () => !!(await caches.match("/js/app.js"))));
   await page.evaluate(async()=>{localStorage.setItem('user-private-test-marker','keep');const c=await caches.open('unrelated-cache-for-test');await c.put('/unrelated-test',new Response('keep'));});
   phase = "new";
@@ -64,7 +83,10 @@ const server = http.createServer((req, res) => {
   await page.waitForFunction(
     expected => typeof updateUI === "function" && window.APP_VERSION === expected,
     "v" + require("../package.json").version,
-    { timeout: 45000 },
+    // 45 s se quedó corto en CI: la activación del worker nuevo espera a
+    // que el precache (cache.addAll del shell) termine en un runner lento.
+    // Espera por condición con polling: no añade demora cuando va bien.
+    { timeout: 120000, polling: 250 },
   );
   const expectedBuild = JSON.parse(fs.readFileSync("dist/version.json")).version;
   // Current JS can load before service-worker installation and activation finish.
@@ -79,11 +101,14 @@ const server = http.createServer((req, res) => {
       controller.postMessage({type: 'REALSCAN_CACHE_INFO'}, [channel.port2]);
     });
     return info?.name === expected;
-  }, expectedBuild, {timeout: 45000, polling: 200});
+  }, expectedBuild, {timeout: 120000, polling: 200});
   assert.equal(await page.evaluate(()=>window.__OLD_CONFIG_EXECUTED),undefined,'Old cached configuration must never execute in the new page');
   assert.equal(await page.evaluate(()=>localStorage.getItem('user-private-test-marker')),'keep');
   // Observe CacheStorage from the caller too: activation may still be completing.
-  let keys=[];const cleanupDeadline=Date.now()+10000;
+  // La limpieza del caché obsoleto ocurre al activar el worker nuevo; con el
+  // precache más pesado y el runner de CI lento, 10 s no bastaban. Se sigue
+  // sondeando la condición (cada 100 ms) con un plazo mayor, sin sleeps.
+  let keys=[];const cleanupDeadline=Date.now()+60000;
   do{keys=await page.evaluate(()=>caches.keys());if(!keys.includes("realscan-cache-v3.3.0"))break;await page.waitForTimeout(100);}while(Date.now()<cleanupDeadline);
   assert(keys.includes('unrelated-cache-for-test'),'Unrelated application caches must be preserved');
   assert(!keys.includes("realscan-cache-v3.3.0"), "Obsolete cache remains: "+keys.join(", "));
@@ -103,6 +128,12 @@ const server = http.createServer((req, res) => {
     process.exitCode = 1;
   })
   .finally(async () => {
-    if (browser) await browser.close();
+    // browser.close() tampoco debe poder colgar el job (visto en CI): si el
+    // navegador no cierra en 15 s, se sigue y el proceso termina igualmente.
+    if (browser)
+      await Promise.race([
+        browser.close(),
+        new Promise((resolve) => setTimeout(resolve, 15000)),
+      ]);
     server.close();
   });
