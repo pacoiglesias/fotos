@@ -55,12 +55,12 @@ const server = http.createServer((req, res) => {
   const context = await browser.newContext(),
     page = await context.newPage();
   await page.goto("http://127.0.0.1:5518");
-  // CI (runner lento + precache del shell más pesado desde 3.41.0, con
-  // paperless-ingest/explore y paperless-341.css) demostró que las esperas
-  // cortas o sin cota de esta suite queman el job: `serviceWorker.ready`
-  // dentro de evaluate() no tiene timeout propio en Playwright y puede no
-  // resolverse nunca. Todas las esperas quedan acotadas y por condición
-  // (polling), sin sleeps fijos: se sale en cuanto la condición se cumple.
+  // `serviceWorker.ready` dentro de evaluate() no tiene timeout propio en
+  // Playwright y podría no resolverse nunca: queda acotado por una carrera
+  // con aserción. El resto de esperas se amplían como protección en runners
+  // lentos, siempre por condición (polling), sin sleeps fijos. (El fallo
+  // demostrado de esta suite en CI fue otro: el ENOENT al escribir la
+  // evidencia sin crear el directorio, corregido abajo con su mkdirSync.)
   const swReady = await page.evaluate(() =>
     Promise.race([
       navigator.serviceWorker.ready.then(() => "ready"),
@@ -115,6 +115,10 @@ const server = http.createServer((req, res) => {
   assert(
     keys.includes(JSON.parse(fs.readFileSync("dist/version.json")).version),
   );
+  // La suite debe crear su propio directorio de evidencia (como hacen
+  // auth-regression y legacy): sin esto, en un checkout limpio sin suites
+  // previas que lo creen, el PASS moría con ENOENT al escribir el JSON.
+  fs.mkdirSync(".audit/repair-evidence", { recursive: true });
   fs.writeFileSync(
     ".audit/repair-evidence/upgrade.json",
     JSON.stringify({ recovered: true, caches: keys }, null, 2),
