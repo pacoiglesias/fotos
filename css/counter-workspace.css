@@ -24,7 +24,12 @@
  body.rs-next.rs-counter330 #studioWelcome .studio-welcome-heading,body.rs-next.rs-counter330 #deskStart .desk-heading{padding:0!important;margin:0 0 16px!important;border:0;min-height:0}
  body.rs-next.rs-counter330 #studioWelcome h1,body.rs-next.rs-counter330 #deskStart .desk-heading h2{font-size:14px!important;line-height:1.4;font-weight:700!important;letter-spacing:-.015em;margin:0}
  body.rs-next.rs-counter330 #studioWelcome :is(.studio-eyebrow,.studio-version,.studio-card-arrow,.modern-service-number),body.rs-next.rs-counter330 #deskStart .desk-heading :is(small,span),body.rs-next.rs-counter330 #studioWelcomeHint{display:none!important}
- body.rs-next.rs-counter330 #studioWelcome .operator-tasks{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ body.rs-next.rs-counter330 #studioWelcome .operator-tasks{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+ body.rs-next.rs-counter330 #studioWelcome .operator-passport-choices{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+ body.rs-next.rs-counter330 #studioWelcome .operator-passport-choices[hidden]{display:none!important}
+ body.rs-next.rs-counter330 #studioWelcome .operator-passport-choice{flex:1 1 200px;display:flex;flex-direction:column;gap:2px;align-items:flex-start;text-align:left;min-height:52px;padding:10px 12px;border:1px solid var(--work-accent);border-radius:11px;background:var(--work-soft);color:var(--work-ink);cursor:pointer}
+ body.rs-next.rs-counter330 #studioWelcome .operator-passport-choice strong{font-size:13px;font-weight:650}
+ body.rs-next.rs-counter330 #studioWelcome .operator-passport-choice small{font-size:11px;color:var(--work-muted)}
  body.rs-next.rs-counter330 #studioWelcome .operator-task{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:9px;position:relative;min-height:94px!important;padding:12px 8px!important;border:1px solid var(--work-line)!important;border-radius:11px!important;box-shadow:none!important;background:var(--work-surface)!important;color:var(--work-ink)!important;text-align:center;min-width:0}
  body.rs-next.rs-counter330 #studioWelcome .operator-task[aria-pressed=true]{background:var(--work-soft)!important;border-color:var(--work-accent)!important;color:var(--work-accent)!important;box-shadow:inset 0 0 0 1px var(--work-accent)!important}
  body.rs-next.rs-counter330 #studioWelcome .operator-task strong{font-size:13px!important;letter-spacing:-.02em;font-weight:650}

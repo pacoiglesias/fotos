@@ -252,6 +252,14 @@ html.dark #jobQueueModal .document-actions{background:#0f172a;border-bottom-colo
 @media(max-width:639px){
  #jobQueueModal .document-actions{top:-20px;margin:0 -20px 12px;padding:12px 20px}
 }
+/* Revisión de documento (3.42.1): las acciones quedan fijas al pie del diálogo,
+   siempre visibles sin scroll, con objetivos táctiles de 44 px. */
+#documentPrintReview .counter-dialog>.document-actions{position:sticky;bottom:-28px;margin:14px -28px -28px;padding:14px 28px 28px;background:#fff;border-top:1px solid #e2e8f0;box-shadow:0 -6px 20px #17223314;z-index:2}
+#documentPrintReview .counter-dialog>.document-actions button{min-height:44px}
+html.dark #documentPrintReview .counter-dialog>.document-actions{background:#0f172a;border-top-color:#334155}
+@media(max-width:639px){
+ #documentPrintReview .counter-dialog>.document-actions{bottom:-20px;margin:14px -20px -20px;padding:12px 20px 20px}
+}
 
 /* ============ O2: mostrador por secciones ============ */
 .rs-o2-details{margin:14px 0;border:1px solid var(--work-line,#dce2e9);border-radius:16px;background:var(--work-surface,#fff);box-shadow:0 2px 12px #1722330d;overflow:hidden}

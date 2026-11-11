@@ -59,6 +59,7 @@ try {
     "quick-photos-regression",
     "quick-mode-docs-regression",
     "final342-regression",
+    "fixes3421-regression",
     "iphone-capture-regression",
     "document-regression",
     "mobile-local-regression",
