@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  let signature = '', focusGeneration = 0;
+  let signature = '', focusGeneration = 0, passportToggle = null;
   const unlocked = () => $('loginOverlay')?.classList.contains('hidden') && (!$('setupOverlay') || $('setupOverlay').classList.contains('hidden'));
   const icons={id:'M4 5h16v14H4z M8 9a2 2 0 1 0 0 4a2 2 0 1 0 0-4 M5 17c0-4 6-4 6 0 M14 9h3 M14 13h3',photos:'M4 4h16v16H4z M4 16l5-5 4 4 3-3 4 4 M15 8h.01',document:'M6 3h8l4 4v14H6z M14 3v5h4 M9 12h6 M9 16h6',camera:'M3 7h4l2-3h6l2 3h4v13H3z M16 13a4 4 0 1 1-8 0a4 4 0 1 1 8 0',file:'M3 7h7l2 2h9v11H3z M3 7V4h7l2 3',qr:'M3 3h6v6H3z M15 3h6v6h-6z M3 15h6v6H3z M15 15h3v3h3v3h-6z'};
   function icon(kind){const span=document.createElement('span');span.className='task-icon';span.setAttribute('aria-hidden','true');span.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+icons[kind]+'"/></svg>';return span;}
@@ -63,14 +63,37 @@
     for(const side of work.wanted){const tag=document.createElement('button');tag.type='button';tag.className='job-status-chip';const missing=work.missing.includes(side);tag.dataset.ready=String(!missing);tag.textContent=(missing?'○ ':'✓ ')+(photos?(side==='back'?'Foto B':'Foto'):({front:'Frente',back:'Reverso',page3:'Página 3',page4:'Página 4'}[side]))+(missing?' · añadir':' · lista');tag.onclick=()=>RealScanWorkflow.moveTo(2,side);$('operatorStatus').append(tag);}
     $('operatorStatus').hidden=!!doc?.active;
     $('operatorNotices').textContent=work.warnings.join(' ');$('operatorNotices').hidden=!work.warnings.length||!!doc?.active;
-    for(const b of document.querySelectorAll('[data-task]'))b.setAttribute('aria-pressed',String(doc?.active?b.dataset.task==='document':b.dataset.task===(photos?'photos':'id')));
+    for(const b of document.querySelectorAll('[data-task]'))b.setAttribute('aria-pressed',String(doc?.active?b.dataset.task==='document':b.dataset.task===(photos?'photos':['passport_open','passport'].includes(state.format)?'passport':'id')));
+    for(const b of document.querySelectorAll('#passportChoices button'))b.disabled=!allowed||busy;
   }
   document.addEventListener('DOMContentLoaded', () => {
     const quick = document.createElement('div'); quick.className = 'operator-tasks'; quick.setAttribute('aria-label','Comenzar por tarea');
     for (const [kind,title,hint,source] of [['id','Identificación','Frente y reverso','choose'],['photos','Fotografías','Tamaño y copias','choose'],['document','Documentos','Varias páginas','choose']]) {
-      const b = button('', () => {const occupied=Object.values(state.images).some(i=>i.originalSrc||i.processedDataUrl||i._reading)||RealScanDocuments.status().active||RealScanQrSync.getInboxFiles().length;if(occupied||kind==='document'){RealScanCounter.openNewService(kind,source);return;}switchIntent(kind);RealScanCounter.setOutput('print');RealScanWorkflow.moveTo(2,'front');update();window.RealScanStudio?.update();window.RealScanServiceFlow?.update();}, 'operator-task'); b.dataset.task = kind;
+      const b = button('', () => {const pc=$('passportChoices');if(pc)pc.hidden=true;document.querySelector('[data-task="passport"]')?.setAttribute('aria-expanded','false');const occupied=Object.values(state.images).some(i=>i.originalSrc||i.processedDataUrl||i._reading)||RealScanDocuments.status().active||RealScanQrSync.getInboxFiles().length;if(occupied||kind==='document'){RealScanCounter.openNewService(kind,source);return;}switchIntent(kind);RealScanCounter.setOutput('print');RealScanWorkflow.moveTo(2,'front');update();window.RealScanStudio?.update();window.RealScanServiceFlow?.update();}, 'operator-task'); b.dataset.task = kind;
       const strong = document.createElement('strong'), small = document.createElement('small'),copy=document.createElement('span'); strong.textContent = title; small.textContent = hint;copy.append(strong,small); b.append(icon(kind),copy); quick.append(b);
     }
+    // 3.42.1: el pasaporte vuelve a la mesa. Los formatos existen desde
+    // siempre (passport_open y passport en FORMAT_SPECS, con su selector
+    // completo en #serviceFormats), pero el diseño de flujo oculta ese
+    // selector y la mesa 3.41/3.42 solo ofrecía INE, Fotografías y
+    // Documentos: el pasaporte solo se alcanzaba, y solo el abierto,
+    // desde el modal de servicio nuevo. Tarjeta propia con los dos
+    // formatos elegibles ANTES de capturar, en dos toques.
+    const passportCard = button('', () => {
+      const occupied=Object.values(state.images).some(i=>i.originalSrc||i.processedDataUrl||i._reading)||RealScanDocuments.status().active||RealScanQrSync.getInboxFiles().length;
+      if(occupied){RealScanCounter.openNewService('multi','choose');return;}
+      passportToggle?.();
+    }, 'operator-task');
+    passportCard.dataset.task='passport';passportCard.setAttribute('aria-expanded','false');
+    {const strong=document.createElement('strong'),small=document.createElement('small'),copy=document.createElement('span');strong.textContent='Pasaporte';small.textContent='Abierto o por páginas';copy.append(strong,small);passportCard.append(icon('document'),copy);}
+    quick.append(passportCard);
+    const passportChoices=document.createElement('div');passportChoices.id='passportChoices';passportChoices.className='operator-passport-choices';passportChoices.hidden=true;passportChoices.setAttribute('aria-label','Tipo de pasaporte');
+    passportToggle=()=>{const show=passportChoices.hidden;passportChoices.hidden=!show;passportCard.setAttribute('aria-expanded',String(show));};
+    for(const [formatKey,title,hint] of [['passport_open','Pasaporte abierto','Las dos páginas de la libreta en una hoja'],['passport','Pasaporte (1 página)','Una página por hoja · también visas']]){
+      const b=button('',()=>{passportChoices.hidden=true;passportCard.setAttribute('aria-expanded','false');if(formatKey==='passport_open')switchIntent('multi');else{switchCategory('docs');selectFormat('passport');savePreferences();}RealScanCounter.setOutput('print');RealScanWorkflow.moveTo(2,'front');update();window.RealScanStudio?.update();window.RealScanServiceFlow?.update();window.RealScanWorkspacePolish?.showStage?.('prepare');},'operator-passport-choice');
+      const strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=title;small.textContent=hint;b.append(strong,small);passportChoices.append(b);
+    }
+    quick.append(passportChoices);
     $('counterService').append(quick);
     const panel = document.createElement('section'); panel.id = 'operatorJourney'; panel.className = 'operator-journey'; panel.setAttribute('aria-label','Recorrido del servicio');
     // v3.16.0: la fila de recepción (Cámara / Archivo / otro celular) va
@@ -115,5 +138,5 @@
     window.addEventListener('online',update); window.addEventListener('offline',update);
     document.addEventListener('realscan:studio-updated',update);document.addEventListener('realscan:document-updated',update);
   });
-  window.RealScanJourney = {update,go};
+  window.RealScanJourney = {update,go,togglePassport:()=>passportToggle?.()};
 })();

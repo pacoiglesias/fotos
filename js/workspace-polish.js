@@ -18,6 +18,10 @@
   if(k==='photos'||p.clean){state.includeRulerFooter=false;state.includeDocLabels=false;state.hideSheetTitle=true;state.documentCustomTitle='';state.includeCutMarks=true;}root.RealScanDeskConfig?.apply(p.settings?{...p.settings,printer:root.RealScanPrinterProfiles?.getActiveId()||''}:null);
  }
  async function choose(k){
+  // 3.42.1: la tarjeta Pasaporte no cambia de servicio al instante: abre el
+  // selector de formato (abierto / 1 página) para elegir ANTES de capturar.
+  // Con un trabajo en curso conserva el camino de servicio nuevo ('multi').
+  if(k==='passport'){if(!unlocked()||busy()||changing)return;const occupied=Object.values(state.images).some(p=>p.originalSrc||p.processedDataUrl)||doc().count>0;if(occupied){root.RealScanCounter.openNewService('multi','choose');return;}root.RealScanJourney?.togglePassport?.();return;}
   if(!unlocked()||busy()||changing)return;remember();const sourceRevision=state._jobRevision;const previous={kind:kind(),draft:root.snapshotActiveDraft?.(),document:doc().active?RealScanDocuments.exportSnapshot():null};changing=true;update();
   try{
    if(k==='document'){

@@ -9,7 +9,7 @@
   $('studioWelcome').querySelector('h1').textContent='¿Qué preparamos hoy?';
   $('studioWelcome').querySelector('.studio-eyebrow').textContent='UN SERVICIO. UN RESULTADO CLARO.';
   $('workbenchBar').querySelector('strong').textContent='Tu mostrador, en orden.';
-  const captions={id:['01','Identificaciones','Frente y reverso, a tamaño real'],photos:['02','Fotografías','Elige tamaño, cantidad y papel'],document:['03','Documentos','Organiza, revisa y entrega']};
+  const captions={id:['01','Identificaciones','Frente y reverso, a tamaño real'],photos:['02','Fotografías','Elige tamaño, cantidad y papel'],document:['03','Documentos','Organiza, revisa y entrega'],passport:['04','Pasaporte','Libreta abierta o por páginas']};
   for(const b of document.querySelectorAll('.studio-services [data-task]')){
    const [number,label,help]=captions[b.dataset.task];b.querySelector('strong').textContent=label;b.querySelector('small').textContent=help;
    const n=document.createElement('span');n.className='modern-service-number';n.textContent=number;n.setAttribute('aria-hidden','true');b.prepend(n);
