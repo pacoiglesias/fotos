@@ -18,6 +18,12 @@
     if (!t.some(x => x.key === key)) { t.unshift({ key, status: 'traido', addedAt: new Date().toISOString(), ...item }); saveTray(t); }
     return key;
   }
+  // Memoria de sesión de las copias traídas: la usa también el camino
+  // común de apertura (paperless-import) para que una copia abierta
+  // desde el buscador clásico se pueda re-archivar desde la bandeja.
+  // Solo se guarda si aún no hay copia: nunca pisa una mejora aceptada.
+  function rememberCopy(key, blob) { if (key && blob && !blobs.has(key)) blobs.set(key, { blob }); }
+  function hasCopy(key) { return blobs.has(key); }
   function traySetStatus(key, status) {
     if (!STATUSES.includes(status)) throw Error('Estado no válido.');
     const t = loadTray(); const it = t.find(x => x.key === key);
@@ -54,7 +60,7 @@
         card.append(head, meta);
         const actions = document.createElement('div');
         const mk = (label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.onclick = fn; actions.append(b); };
-        mk('Abrir en Fotos', () => openInRealScan(it, status));
+        mk('Abrir y revisar ahora', () => openInRealScan(it, status));
         mk('Dejar perfecto y re-archivar', () => dejarPerfectoYArchivar(it, status, render));
         mk('Marcar impreso', () => { traySetStatus(it.key, 'impreso'); render(); });
         mk('Re-archivar mejorado', () => rearchive(it, status, render));
@@ -64,14 +70,13 @@
     async function openInRealScan(it, statusFn) {
       const entry = blobs.get(it.key);
       if (!entry) { statusFn('error', 'La copia vive en esta sesión: vuelve a traer el documento desde el explorador para abrirlo.'); return; }
-      if (!root.RealScanCounter || !root.RealScanDocuments) { statusFn('error', 'El módulo de documentos no está listo.'); return; }
-      if (!confirm('Se abrirá como un trabajo nuevo. Guarda primero el trabajo actual. ¿Continuar?')) return;
+      if (!root.RealScanPaperlessImport) { statusFn('error', 'El módulo de apertura de copias no está listo.'); return; }
+      // 3.43: mismo camino que el buscador clásico — sin confirm()
+      // nativo, con el trabajo actual guardado solo y aterrizaje
+      // visual sobre las páginas de la copia.
       try {
-        await root.RealScanCounter.startPrepared('document', true);
         const blob = entry.enhancedBlob || entry.blob;
-        const added = await root.RealScanDocuments.addFiles([new File([blob], it.title, { type: blob.type })]);
-        if (!added) throw Error('No se pudo abrir la copia.');
-        traySetStatus(it.key, 'en-revision'); d.close(); root.RealScanJourney?.go('review');
+        await root.RealScanPaperlessImport.openCopy({ blob, title: it.title, sourceId: it.sourceId, documentType: it.documentType, correspondent: it.correspondent, tags: it.tags, closeSource: () => d.close() });
       } catch (e) { statusFn('error', e.message); }
     }
     render();
@@ -243,7 +248,7 @@
         view.src = u; view.className = 'explore-preview'; if (view.tagName === 'IMG') view.alt = 'Vista previa';
         box.append(view); status('ok', 'Vista previa dentro de Fotos.');
       } catch { status('idle', 'Sin vista previa para este documento; puedes traerlo igualmente.'); }
-      const bring = document.createElement('button'); bring.type = 'button'; bring.textContent = 'Traer a Fotos';
+      const bring = document.createElement('button'); bring.type = 'button'; bring.textContent = 'Traer a la bandeja';
       bring.onclick = async () => {
         bring.disabled = true; status('checking', 'Trayendo el original…');
         try {
@@ -262,6 +267,18 @@
         } catch (e) { status('error', e.message); } finally { bring.disabled = false; }
       };
       box.append(bring);
+      // 3.43: el gesto completo en un toque — traer Y abrir sobre las
+      // páginas, por el mismo camino sin muros que el buscador clásico.
+      const bringOpen = document.createElement('button'); bringOpen.type = 'button'; bringOpen.className = 'explore-bring-open'; bringOpen.textContent = 'Traer y abrir ahora';
+      bringOpen.onclick = async () => {
+        if (!root.RealScanPaperlessImport) { status('error', 'El módulo de apertura de copias no está listo.'); return; }
+        bringOpen.disabled = true; bring.disabled = true; status('checking', 'Trayendo el original para abrirlo…');
+        try {
+          const blob = await P.retrieve(row.id);
+          await root.RealScanPaperlessImport.openCopy({ blob, title: row.title, sourceId: row.id, documentType: row.documentType, correspondent: row.correspondent, tags: row.tags, closeSource: () => d.close() });
+        } catch (e) { status('error', e.message); bringOpen.disabled = false; bring.disabled = false; }
+      };
+      box.append(bringOpen);
       box.scrollIntoView({ block: 'nearest' });
     }
     d.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
@@ -296,5 +313,5 @@
     }
   }
   document.addEventListener('DOMContentLoaded', mount);
-  root.RealScanPaperlessExplore = { openExplore, openTray, trayAdd, traySetStatus, loadTray, proposeMetadata, STATUSES };
+  root.RealScanPaperlessExplore = { openExplore, openTray, trayAdd, traySetStatus, loadTray, proposeMetadata, rememberCopy, hasCopy, STATUSES };
 })(window);
