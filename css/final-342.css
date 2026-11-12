@@ -42,3 +42,42 @@ body.rs-quick #counterIntro { display: none; }
 /* Fila de atajos del mostrador: botones táctiles de tamaño real. */
 #deskStart .desk-shortcuts { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 9px; margin-top: 14px; }
 body.rs-next.rs-counter330 #deskStart .desk-shortcuts > button { min-height: 48px !important; font-size: 14px !important; padding: 10px 16px !important; }
+
+/* ============================================================
+   3.43 · Traer de Paperless y abrir la copia, súper visual.
+   - Miniaturas de página del documento legibles de verdad: el
+     trabajo ES mirar páginas; a 72 px no se revisa nada.
+   - La vista previa grande de la página elegida queda fuera de la
+     ayuda plegable (js/document-job.js) y se presenta con título.
+   - Banda de origen de la copia de Paperless sobre el documento.
+   - Acciones de apertura de copia: primarias y sobre la previa.
+   ============================================================ */
+.document-pages .document-page { grid-template-columns: 150px minmax(0, 1fr); }
+.document-pages .document-page img { width: 150px; height: 200px; }
+.document-preview-title { font-size: 14px; font-weight: 700; margin: 14px 0 6px; }
+@media (max-width: 767px) {
+  .document-pages .document-page { grid-template-columns: 104px minmax(0, 1fr); }
+  .document-pages .document-page img { width: 104px; height: 138px; }
+  /* En el teléfono las páginas van PRIMERO en su columna: las barras
+     de historial y de lote (útiles, pero secundarias) quedan debajo
+     de la lista, no empujándola fuera de la primera pantalla. */
+  .document-grid > div:first-child { display: flex; flex-direction: column; }
+  .document-grid > div:first-child > #docPages { order: -1; flex: none; }
+  .paperless-origin-banner { padding: 10px 12px; gap: 8px; }
+  .paperless-origin-banner p { font-size: 13px; line-height: 1.35; }
+  .paperless-origin-actions { flex-wrap: nowrap; width: 100%; }
+  .paperless-origin-actions button { flex: 1; min-height: 44px; }
+  #docPages .document-page { scroll-margin-top: 84px; }
+}
+#paperlessOriginBanner { scroll-margin-top: 88px; }
+.paperless-origin-banner { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; border: 1.5px solid #15815d; background: #e9f9f1; color: #0c3b2e; border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; }
+.paperless-origin-banner p { margin: 0; font-size: 13.5px; line-height: 1.45; flex: 1 1 320px; }
+.paperless-origin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.paperless-origin-actions button { min-height: 44px; }
+html.dark .paperless-origin-banner { background: #0b3527; color: #bbf7d0; border-color: #15815d; }
+.nas-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.nas-actions button { min-height: 48px; flex: 1 1 200px; }
+.nas-import-primary, .explore-bring-open { background: #155bd5 !important; color: #fff !important; border-color: #155bd5 !important; font-weight: 700; }
+.explore-bring-open { min-height: 48px; margin-left: 8px; }
+.review-tray article > div { display: flex; gap: 8px; flex-wrap: wrap; }
+.review-tray article > div button:first-child { background: #155bd5; color: #fff; border-color: #155bd5; font-weight: 700; }

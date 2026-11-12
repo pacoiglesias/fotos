@@ -15,6 +15,7 @@ try {
     "paperless-regression",
     "paperless-ingest-regression",
     "paperless-explore-regression",
+    "paperless-import-regression",
     "paperless-intake-regression",
     "ine-pair-detect-test",
     "regression",
@@ -80,12 +81,23 @@ try {
     }); } catch (e) {
       failures.push(script);
       console.error("FAIL " + script);
+      // Anotación legible en la página de la ejecución de CI: nombra la
+      // suite caída sin tener que abrir el registro completo.
+      console.error("::error title=verify-fail::" + script);
       // An invalid build cannot be audited. Otherwise collect every failure
       // in one pass; publication still requires a zero exit status.
       if (script === "check-version" || script === "check" || script === "build" || script === "check-build") throw e;
     }
   }
   if (failures.length) { console.error("Failed checks: " + failures.join(", ")); process.exitCode = 1; }
+  // En GitHub Actions, el resumen del job es legible sin abrir el log:
+  // deja ahí el veredicto completo (suites fallidas o todo verde).
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    try {
+      require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+        "## RealScan verify\n\n" + (failures.length ? "Failed checks: " + failures.join(", ") + "\n" : "All checks passed.\n"));
+    } catch {}
+  }
 } catch (e) {
   process.exitCode = 1;
 }
