@@ -76,6 +76,9 @@ async function waitDoc(page, count = 3) {
   // se espera a que el scroll se quede quieto antes de medir, para que
   // la medición sea la del estado final y no la de un frame intermedio.
   await page.waitForFunction(() => { const y = scrollY; if (window.__lastY === y) { window.__stable = (window.__stable || 0) + 1; } else { window.__stable = 0; window.__lastY = y; } return window.__stable >= 3; }, null, { timeout: 10000, polling: 120 }).catch(() => {});
+  // Y la primera miniatura quieta: el contenido puede crecer sin que
+  // cambie scrollY (imágenes que terminan de decodificar).
+  await page.waitForFunction(() => { const r = document.querySelector('#docPages .document-page img')?.getBoundingClientRect(); if (!r) return false; const k = Math.round(r.top) + 'x' + Math.round(r.width); if (window.__lastT === k) { window.__stableT = (window.__stableT || 0) + 1; } else { window.__stableT = 0; window.__lastT = k; } return window.__stableT >= 3; }, null, { timeout: 10000, polling: 120 }).catch(() => {});
   await page.waitForTimeout(250);
 }
 async function landing(page, minThumb) {

@@ -140,6 +140,9 @@
       };
       requestAnimationFrame(() => requestAnimationFrame(settle));
       setTimeout(settle, 120);
+      // Segundo asiento tardío: fuentes e imágenes que terminan de
+      // cargar pueden mover la rejilla unos píxeles tras el primero.
+      setTimeout(settle, 650);
       const count = root.RealScanDocuments.status().count;
       root.showToast?.('Copia abierta: ' + count + ' página(s) de «' + String(title || name) + '». Revisa cada página y entrégala desde aquí.', 'success');
       return { opened: true, count, trayKey };
