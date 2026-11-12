@@ -87,6 +87,14 @@ try {
     }
   }
   if (failures.length) { console.error("Failed checks: " + failures.join(", ")); process.exitCode = 1; }
+  // En GitHub Actions, el resumen del job es legible sin abrir el log:
+  // deja ahí el veredicto completo (suites fallidas o todo verde).
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    try {
+      require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+        "## RealScan verify\n\n" + (failures.length ? "Failed checks: " + failures.join(", ") + "\n" : "All checks passed.\n"));
+    } catch {}
+  }
 } catch (e) {
   process.exitCode = 1;
 }
