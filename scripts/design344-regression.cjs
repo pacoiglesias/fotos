@@ -240,6 +240,105 @@ async function stableRect(page, selector) {
     await context.close();
   }
 
+  // ===== E6/M3 · I9 (3.44.1): el semáforo del estudio es UNA línea =====
+  async function loadStudioDocument(page) {
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas'); c.width = 1040; c.height = 736; const x = c.getContext('2d');
+      x.fillStyle = '#1f3a7a'; x.fillRect(0, 0, 1040, 736); x.fillStyle = '#f5eeda'; x.fillRect(40, 40, 960, 656);
+      x.fillStyle = '#222'; x.font = 'bold 64px Arial'; x.fillText('DOCUMENTO', 90, 150); x.font = '44px Arial'; x.fillText('Página de prueba', 90, 240);
+      const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+      RealScanDocuments.activate();
+      await RealScanDocuments.addFiles([new File([blob], 'prueba.png', { type: 'image/png' })]);
+    });
+    await page.waitForFunction(() => document.body.dataset.workspaceLoaded === 'true' && RealScanDocuments.status().count === 1 && !RealScanDocuments.status().busy, null, { timeout: 30000 });
+  }
+  async function semaphoreState(page) {
+    await stableRect(page, '#deskSemaphore');
+    return page.evaluate(() => {
+      const sem = document.getElementById('deskSemaphore');
+      const r = sem.getBoundingClientRect();
+      const lights = [...sem.querySelectorAll('.desk-light')].map(b => { const br = b.getBoundingClientRect(); const lab = b.querySelector('.desk-light-label'); const lr = lab?.getBoundingClientRect(); return { text: lab?.textContent || '', top: Math.round(br.top), labelH: lr ? Math.round(lr.height) : null }; });
+      const refresh = document.getElementById('deskSemaphoreRefresh');
+      const rr = refresh?.getBoundingClientRect();
+      const ws = document.getElementById('documentWorkspace')?.getBoundingClientRect();
+      return {
+        blockH: Math.round(r.height), lights,
+        refreshVisible: !!rr && rr.height > 0 && getComputedStyle(refresh).display !== 'none',
+        pendingInside: sem.contains(document.getElementById('deskPaperlessPending')),
+        measurementInside: sem.contains(document.getElementById('deskPrinterMeasurement')),
+        semDisplay: getComputedStyle(sem).display,
+        workspaceTop: ws ? Math.round(ws.top) : null,
+      };
+    });
+  }
+  function assertStudioStrip(st, viewportH, tag) {
+    assert(st.blockH <= 64, tag + ': el bloque del estudio mide ≤64 px: ' + st.blockH);
+    assert.equal(st.lights.length, 3, tag + ': tres luces');
+    assert(st.lights.every(l => Math.abs(l.top - st.lights[0].top) <= 2), tag + ': las tres luces en una sola fila: ' + JSON.stringify(st.lights));
+    assert(st.lights.every(l => l.labelH !== null && l.labelH <= 22), tag + ': ninguna etiqueta se parte en dos líneas: ' + JSON.stringify(st.lights));
+    assert.deepEqual(st.lights.map(l => l.text), ['Impresora', 'Paperless', 'NAS'], tag + ': etiquetas cortas de la franja: ' + JSON.stringify(st.lights.map(l => l.text)));
+    assert.equal(st.refreshVisible, false, tag + ': sin botón «Actualizar» propio en el estudio');
+    assert.equal(st.pendingInside, false, tag + ': el aviso de Paperless fuera del bloque');
+    assert.equal(st.measurementInside, false, tag + ': la nota de medición fuera del bloque');
+    assert(st.workspaceTop !== null && st.workspaceTop < viewportH, tag + ': el trabajo entra en el primer pantallazo: top=' + st.workspaceTop);
+  }
+  function assertMesaSemaphore(st, tag) {
+    assert.equal(st.refreshVisible, true, tag + ': la mesa conserva su botón «Actualizar»');
+    assert.equal(st.pendingInside, true, tag + ': en la mesa el aviso de Paperless vive dentro del bloque');
+    assert.equal(st.measurementInside, true, tag + ': en la mesa la nota de medición vive dentro del bloque');
+    assert(st.lights[0].text.includes('Elegir perfil') || st.lights[0].text.includes('Perfil seleccionado'), tag + ': en la mesa las frases son completas: ' + st.lights[0].text);
+    assert(st.lights[2].text.length > 3, tag + ': en la mesa la luz NAS lleva su frase completa: ' + st.lights[2].text);
+  }
+  {
+    const { context, page, errors } = await login(browser, { width: 1366, height: 900 }, pdfBytes);
+    assertMesaSemaphore(await semaphoreState(page), 'E6 mesa escritorio');
+    pass('E6 counter (mesa) keeps the full semaphore: own refresh button, notes inside, full labels');
+    await loadStudioDocument(page);
+    assertStudioStrip(await semaphoreState(page), 900, 'E6 estudio escritorio');
+    pass('E6 studio semaphore is one line (≤64 px): short labels, no own button, notes below the strip, work in the first viewport');
+    // La franja entera es el acceso: tocarla (fuera de las luces) recomprueba sin romper la línea.
+    const box = await page.locator('#deskSemaphore').boundingBox();
+    await page.mouse.click(box.x + box.width - 4, box.y + box.height / 2);
+    await page.waitForTimeout(400);
+    assertStudioStrip(await semaphoreState(page), 900, 'E6 estudio tras tocar la franja');
+    pass('E6 tapping the strip itself re-checks and the line stays one row');
+    assert.deepEqual(errors, [], 'sin errores: ' + errors.join('|'));
+    await context.close();
+  }
+  {
+    // E7 · El modo rápido sigue ocultando el semáforo entero (y sus notas)
+    // aunque haya trabajo cargado; al salir, la franja del estudio vuelve.
+    const { context, page, errors } = await login(browser, { width: 1366, height: 900 }, pdfBytes);
+    await loadStudioDocument(page);
+    assertStudioStrip(await semaphoreState(page), 900, 'E7 estudio antes del modo rápido');
+    await page.locator('#workbenchQuick').click();
+    await page.waitForFunction(() => document.body.classList.contains('rs-quick'), null, { timeout: 10000 });
+    const quick = await page.evaluate(() => {
+      const sem = document.getElementById('deskSemaphore');
+      const inside = [document.getElementById('deskPaperlessPending'), document.getElementById('deskPrinterMeasurement')].every(el => sem.contains(el));
+      return { display: getComputedStyle(sem).display, notesBackInside: inside };
+    });
+    assert.equal(quick.display, 'none', 'E7: en modo rápido el semáforo sigue oculto: ' + quick.display);
+    assert.equal(quick.notesBackInside, true, 'E7: en modo rápido las notas vuelven dentro del bloque oculto');
+    pass('E7 quick mode still hides the whole semaphore (notes back inside) with work loaded');
+    await page.locator('#workbenchQuick').click();
+    await page.waitForFunction(() => !document.body.classList.contains('rs-quick'), null, { timeout: 10000 });
+    assertStudioStrip(await semaphoreState(page), 900, 'E7 estudio tras salir del modo rápido');
+    pass('E7 leaving quick mode restores the one-line studio strip');
+    assert.deepEqual(errors, [], 'sin errores: ' + errors.join('|'));
+    await context.close();
+  }
+  {
+    const { context, page, errors } = await login(browser, { width: 390, height: 844 }, pdfBytes);
+    assertMesaSemaphore(await semaphoreState(page), 'M3 mesa móvil');
+    pass('M3 counter (mesa) keeps the full semaphore on mobile');
+    await loadStudioDocument(page);
+    assertStudioStrip(await semaphoreState(page), 844, 'M3 estudio móvil');
+    pass('M3 mobile studio semaphore is one line (≤64 px) with unwrapped short labels and no own button');
+    assert.deepEqual(errors, [], 'sin errores: ' + errors.join('|'));
+    await context.close();
+  }
+
   console.log('design344-regression: ' + checks.length + ' PASS');
   await browser.close(); server.close();
 })().catch(e => { console.error(e); process.exit(1); });
