@@ -71,7 +71,7 @@
       text.innerHTML = '';
       const strong = document.createElement('strong'); strong.textContent = 'Copia de Paperless · ' + origin.title;
       const span = document.createElement('span');
-      span.textContent = ' · Paperless #' + origin.sourceId + ' · está en tu bandeja «Por revisar» como En revisión. El original del NAS no se ha tocado: trabaja sobre esta copia y entrégala desde esta misma pantalla.';
+      span.textContent = ' · de Paperless · está en tu bandeja «Por revisar» como En revisión. El original del NAS no se ha tocado: trabaja sobre esta copia y entrégala desde esta misma pantalla.';
       text.append(strong, span);
       const actions = document.createElement('div'); actions.className = 'paperless-origin-actions';
       const tray = document.createElement('button'); tray.type = 'button'; tray.textContent = 'Abrir la bandeja «Por revisar»';

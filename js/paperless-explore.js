@@ -34,7 +34,7 @@
   // si lo hay; nunca se aplica sin la confirmación del diálogo de metadatos.
   function proposeMetadata(origin) {
     const base = String(origin.title || 'Documento').replace(/\.[a-z0-9]{2,5}$/i, '');
-    const linked = origin.origin === 'paperless' && origin.sourceId ? base + ' · sustituye a Paperless #' + origin.sourceId : base;
+    const linked = origin.origin === 'paperless' && origin.sourceId ? base + ' · sustituye al original de Paperless' : base;
     return { title: linked.slice(0, 200), documentType: origin.documentType || null, correspondent: origin.correspondent || null, tags: Array.isArray(origin.tags) ? origin.tags.slice(0, 12) : [] };
   }
 
@@ -56,7 +56,7 @@
         const card = document.createElement('article'); card.dataset.status = it.status;
         const head = document.createElement('h3'); head.textContent = it.title;
         const meta = document.createElement('p');
-        meta.textContent = (it.origin === 'paperless' ? 'Paperless #' + it.sourceId : 'NAS · ' + (it.sourceId || '')) + ' · ' + STATUS_LABEL[it.status] + ' · traído el ' + String(it.addedAt || '').slice(0, 10);
+        meta.textContent = (it.origin === 'paperless' ? 'De Paperless' : 'NAS · ' + (it.sourceId || '')) + ' · ' + STATUS_LABEL[it.status] + ' · traído el ' + String(it.addedAt || '').slice(0, 10);
         card.append(head, meta);
         const actions = document.createElement('div');
         const mk = (label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.onclick = fn; actions.append(b); };
@@ -256,13 +256,13 @@
           const origin = { origin: 'paperless', sourceId: row.id, title: row.title, documentType: row.documentType, correspondent: row.correspondent, tags: row.tags };
           const key = trayAdd(origin);
           blobs.set(key, { blob });
-          status('ok', 'Traído a la bandeja «Por revisar» conservando su referencia: Paperless #' + row.id + '. El original del NAS no se ha tocado.');
+          status('ok', 'Traído a la bandeja «Por revisar». El original del NAS no se ha tocado.');
           // 3.42: traer desemboca en la bandeja, sin viaje manual.
           setTimeout(() => {
             if (!d.isConnected) return;
             d.close(); openTray();
             const st = document.querySelector('#reviewTray [data-a="status"]');
-            if (st) { st.dataset.state = 'ok'; st.textContent = 'Traído ahora: ' + row.title + ' · Paperless #' + row.id + '. El original del NAS no se ha tocado.'; }
+            if (st) { st.dataset.state = 'ok'; st.textContent = 'Traído ahora: ' + row.title + '. El original del NAS no se ha tocado.'; }
           }, 900);
         } catch (e) { status('error', e.message); } finally { bring.disabled = false; }
       };

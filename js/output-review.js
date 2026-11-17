@@ -17,7 +17,7 @@
       if (state.activeCategory === 'photos') {
         const perSet=state.mixTwoPhotos?(Number(state.photoCopiesPersonA)||0)+(Number(state.photoCopiesPersonB)||0):(Number(state.photoCopies)||1),sets=Math.max(1,Math.min(10,Math.round(Number(state.outputSets)||1)));pairs.push(['Fotos por juego',state.mixTwoPhotos?(state.photoCopiesPersonA||0)+' de A + '+(state.photoCopiesPersonB||0)+' de B':String(perSet)],['Juegos completos',String(sets)],['Total de fotos',String(perSet*sets)],['Copias en la impresora','1 · los juegos ya están incluidos']);
       } else {
-        pairs.push(["Copias", (state.outputSets||1)+" juego(s) en el archivo · usa 1 copia en la impresora"]);
+        const nCopias=state.outputSets||1; pairs.push(["Copias", nCopias+(nCopias===1?" juego":" juegos")+" en el archivo · usa 1 copia en la impresora"]);
       }
       const activeProfile = window.RealScanPrinterProfiles?.getActive();
       pairs.push(["Perfil de impresora", activeProfile ? activeProfile.name : "Sin corrección"]);

@@ -161,7 +161,7 @@ const pass = (t) => {
     await page.waitForFunction(() => RealScanDocuments.status().ready);
     await page.evaluate(() => RealScanPdfDelivery.open());
     await page.waitForFunction(() => !document.getElementById("pdfDeliveryTools").disabled);
-    assert((await page.locator("#pdfDeliveryFileCheck").textContent()).includes("3 página(s) comprobadas"));
+    assert((await page.locator("#pdfDeliveryFileCheck").textContent()).includes("3 páginas comprobadas"));
     const download = async (locator) => {
       const event = page.waitForEvent("download");
       await locator.click();

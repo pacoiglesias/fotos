@@ -296,7 +296,8 @@ function update(){
   setText('quickSidesHint',single?'Solo se entregará el frente. El reverso capturado se conserva al cambiar.':(root.state.printMode==='both_separate'?'Una cara por hoja, conservando tamaño real.':'Ambas caras, juntas en una hoja y a tamaño real.'));
   setText('quickStep2',single?'2 · Revisar':'2 · Reverso');
   const scale=root.state.outputScalePercent||100;
-  let meta=paperName()+' · '+scale+'% · '+(root.state.outputSets||1)+' juego(s) · '+w.layout.pages.length+' hoja(s)';
+  const nSets=root.state.outputSets||1,nPages=w.layout.pages.length;
+  let meta=paperName()+' · '+scale+'% · '+nSets+(nSets===1?' juego':' juegos')+' · '+nPages+(nPages===1?' hoja':' hojas');
   if(root.RealScanPrinterProfiles?.getActive()&&rulerVerified()===false)meta+=' · Falta medir la regla de 50 mm';
   setText('quickMeta',meta);
   setText('quickStatus',!front?'Paso 1 de 3 · Frente: captura o sube el frente':single?(w.ready?'Paso 3 de 3 · Entregar: Frente listo.':'Paso 2 de 3 · Revisar el frente…'):!back?'Paso 2 de 3 · Reverso: frente listo, ahora el reverso':(w.ready?'Paso 3 de 3 · Entregar: capturas listas, revisa la hoja.':'Paso 2 de 3 · Revisar la hoja antes de entregar.'));
@@ -353,7 +354,7 @@ function update(){
 function updateDocs(){
  const st=root.RealScanDocuments?.status()||{count:0,reviewed:0,ready:false,busy:false};
  const pages=root.RealScanDocuments?.listPages()||[];
- setText('quickDocMeta',st.count+' página(s) · '+st.reviewed+' revisada(s)');
+ setText('quickDocMeta',st.count+(st.count===1?' página':' páginas')+' · '+st.reviewed+(st.reviewed===1?' revisada':' revisadas'));
  setText('quickDocStatus',!st.count?'Paso 1 de 3 · Páginas: escanea la primera página o añade archivos':st.busy?'Preparando páginas…':st.ready?'Paso 3 de 3 · Entregar: documento listo.':'Página '+st.count+' escaneada · '+st.reviewed+' de '+st.count+' revisadas · ¿otra página o terminar? Revisa las que falten para entregar.');
  const setStep=(id,state)=>{const el=$(id);if(el)el.dataset.state=state;};
  setStep('quickDocStep1',st.count?'done':'current');
@@ -363,7 +364,7 @@ function updateDocs(){
  if(list){list.replaceChildren();pages.forEach((p,i)=>{const li=document.createElement('li');li.textContent='Página '+(i+1);list.append(li);});}
  const scan=$('quickDocScanBtn');if(scan){const main=scan.querySelector('.quick-giant-main');if(main)main.textContent=st.count?'📷 Escanear otra página':'📷 Escanear página';scan.disabled=!!st.busy;}
  setText('quickDocHint',st.count&&!st.ready?'Las páginas se confirman al escanearlas en lote; si alguna queda sin revisar, ábrela en el modo completo.':'');
- setText('quickStampText','✓ Documento · '+st.count+' página(s) · ');
+ setText('quickStampText','✓ Documento · '+st.count+(st.count===1?' página':' páginas')+' · ');
  setText('quickScale','');
  {const ok=!!st.ready&&!st.busy;const print=$('quickPrintBtn'),pdf=$('quickPdfBtn');if(print)print.disabled=!ok;if(pdf)pdf.disabled=!ok;for(const id of ['quickSendBtn','quickArchiveBtn'])if($(id))$(id).disabled=!ok;const actions=$('quickActions');if(actions)actions.dataset.ready=String(ok);
   setText('quickDeliverHint',!st.count?'Escanea la primera página para empezar.':st.ready?'Revisa y elige cómo entregar: Imprimir, Guardar PDF o Guardar en NAS.':'Faltan páginas por revisar ('+st.reviewed+' de '+st.count+' confirmadas).');}
@@ -391,7 +392,8 @@ function updatePhotos(){
   b.setAttribute('aria-pressed',String(active));b.dataset.filled=String(active);
  }
  const spec=root.getActiveSpec?.();
- setText('quickPhotoMeta',(spec?spec.shortName:'')+' · '+(root.state.photoCopies||1)+' foto(s) por juego · '+(root.state.outputSets||1)+' juego(s) · '+paperName());
+ const nCop=root.state.photoCopies||1,nSet2=root.state.outputSets||1;
+ setText('quickPhotoMeta',(spec?spec.shortName:'')+' · '+nCop+(nCop===1?' foto':' fotos')+' por juego · '+nSet2+(nSet2===1?' juego':' juegos')+' · '+paperName());
  setText('quickPhotoStatus',!front?'Paso 1 de 3 · Trabajo: elige el trabajo y toca Escanear foto':w.ready?'Paso 3 de 3 · Entregar: foto lista, revisa la hoja.':'Paso 2 de 3 · Foto: preparando la foto…');
  const statusEl=$('quickPhotoStatus');if(statusEl)statusEl.classList.toggle('is-ready',!!w.ready);
  const setStep=(id,state)=>{const el=$(id);if(el)el.dataset.state=state;};
