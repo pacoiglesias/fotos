@@ -37,7 +37,7 @@ const fs = require('fs'), vm = require('vm'), assert = require('assert');
 
   // Ficha propuesta: título enlazado al origen, tipo/corresponsal/etiquetas heredados.
   const proposal = api.proposeMetadata({ origin: 'paperless', sourceId: 1334, title: 'Contrato.pdf', documentType: 3, correspondent: 2, tags: [5, 7] });
-  assert.equal(proposal.title, 'Contrato · sustituye a Paperless #1334');
+  assert.equal(proposal.title, 'Contrato · sustituye al original de Paperless');
   assert.equal(proposal.documentType, 3);
   assert.equal(proposal.correspondent, 2);
   assert.deepEqual(proposal.tags, [5, 7]);

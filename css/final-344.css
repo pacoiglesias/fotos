@@ -1,0 +1,116 @@
+/* RealScan Pro 3.44.0 — vara de diseño transversal (12 nov 2026).
+   Un solo acento (índigo de marca #4f46e5), textos sin jerga, móvil al nivel
+   del escritorio. Esta capa carga la última a propósito: gana a las capas
+   3.30–3.43 en lo que aquí se declara, sin tocar lo que ya funciona. */
+
+/* I3 · Un solo acento en tema claro (el oscuro conserva su acento claro). */
+html:not(.dark) body.rs-next {
+  --work-accent: #4f46e5 !important;
+  --work-soft: #eef2ff !important;
+  --desk-accent: #4f46e5;
+  --rs-accent: #4f46e5;
+  --rs-accent-text: #4338ca;
+  --rs-accent-soft: #eef2ff;
+}
+html:not(.dark) body.rs-next .counter-primary {
+  background: #4f46e5 !important;
+  background-image: none !important;
+  border-color: #4f46e5 !important;
+}
+html:not(.dark) body.rs-next #quickMode .quick-kicker,
+html:not(.dark) body.rs-next #quickMode .quick-step[data-state="current"] {
+  background: #4f46e5 !important;
+  background-image: none !important;
+  border-color: #4f46e5 !important;
+  color: #fff !important;
+}
+html:not(.dark) body.rs-next #quickMode .quick-giant.quick-scan {
+  background: #4f46e5 !important;
+  background-image: none !important;
+}
+html:not(.dark) body.rs-next .workspace-jobs .jobs-view-toggle button[aria-pressed="true"] {
+  background: #4f46e5 !important;
+  background-image: none !important;
+  color: #fff !important;
+}
+
+/* I6 · La barra «Paso N de 3» deja de ser un bloque oscuro: línea de texto. */
+#quickMode .quick-status {
+  background: transparent !important;
+  color: #3c4b5c !important;
+  padding: 2px 2px 10px !important;
+  border-radius: 0 !important;
+  font-size: 15px !important;
+  box-shadow: none !important;
+}
+#quickMode .quick-status.is-ready { background: transparent !important; color: #047857 !important; }
+html.dark #quickMode .quick-status { background: transparent !important; color: #cbd5e1 !important; }
+html.dark #quickMode .quick-status.is-ready { background: transparent !important; color: #6ee7b7 !important; }
+
+/* I7 · Ningún título nace bajo la cabecera fija. El modo rápido queda
+   fuera a propósito: su scroll propio asienta la captura sobre el dock
+   de entrega y el margen lo desplazaba ~88 px (regresión medida por
+   counter335: la captura quedaba tapada por las acciones móviles). */
+body.rs-next main > * { scroll-margin-top: 88px; }
+#documentJob, #documentWorkspace, #colControlPanel { scroll-margin-top: 88px; }
+
+/* I8 · En vista Tablero manda el tablero: fuera el select duplicado «Ver». */
+.workspace-jobs:has(#workspaceJobsRows[data-view="board"]) > label { display: none !important; }
+
+/* La versión vive en el pie y en Ajustes una sola vez: fuera el duplicado del título de Ajustes. */
+#labelActiveVersionSettings { display: none !important; }
+
+/* I9 · En el estudio el semáforo se compacta a una línea (la mesa lo conserva completo). */
+body.rs-next.rs-counter330[data-workspace-loaded="true"] #deskSemaphore { padding: 8px 12px !important; margin-top: 10px !important; }
+body.rs-next.rs-counter330[data-workspace-loaded="true"] #deskSemaphore h3 { display: none !important; }
+body.rs-next.rs-counter330[data-workspace-loaded="true"] #deskSemaphore .desk-light { min-height: 36px !important; font-size: 12px !important; padding: 6px 10px !important; }
+body.rs-next.rs-counter330[data-workspace-loaded="true"] #deskSemaphoreRefresh { min-height: 36px !important; font-size: 12px !important; }
+
+/* I1 · Móvil: tarjetas de servicio 2×2 con la etiqueta completa. */
+@media (max-width: 700px) {
+  body.rs-next.rs-counter330 #studioWelcome .operator-tasks {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  body.rs-next.rs-counter330 #studioWelcome .operator-task {
+    min-height: 64px !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    padding: 10px 12px !important;
+  }
+  body.rs-next.rs-counter330 #studioWelcome .operator-task strong {
+    font-size: 13px !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  body.rs-next.rs-counter330 #studioWelcome .studio-service-art { display: block !important; }
+  body.rs-next.rs-counter330[data-workspace-loaded="true"] #counterIntake #studioWelcome .operator-task,
+  body.rs-next.rs-counter330.rs-evolved #counterIntake #studioWelcome .operator-task,
+  body.rs-next.rs-counter330.rs-desk336 #counterIntake #studioWelcome .operator-task { min-height: 56px !important; }
+}
+
+/* I1b · La rejilla 2×2 añade una fila (~72 px) sobre la recepción: la
+   mesa móvil se compacta para que «Cámara» siga alcanzable sobre el pie
+   fijo sin desplazar (requisito fijado por paperless-intake). Las
+   tarjetas conservan su suelo táctil de 56 px y la etiqueta completa. */
+@media (max-width: 700px) {
+  /* El id duplicado es deliberado: capas anteriores fijan estos mismos
+     márgenes con !important y especificidad de un id (p. ej. la regla
+     rs-desk336 de desk-experience); sin el refuerzo, la compactación
+     perdía y «Cámara» quedaba bajo el pie fijo. */
+  body.rs-next.rs-counter330 #studioWelcome#studioWelcome .operator-tasks { gap: 4px !important; padding-top: 4px !important; }
+  body.rs-next.rs-counter330 #studioWelcome#studioWelcome .studio-welcome-heading { margin-bottom: 2px !important; }
+  body.rs-next.rs-counter330 #studioWelcome#studioWelcome #deskServiceHint { margin-top: 0 !important; margin-bottom: 0 !important; }
+  body.rs-next.rs-counter330 #studioWelcome#studioWelcome #deskPresets { margin-top: 2px !important; }
+  body.rs-next.rs-counter330 #studioWelcome#studioWelcome #deskPresets > :first-child { margin-bottom: 0 !important; }
+  body.rs-next.rs-counter330 #studioWelcome#studioWelcome #captureFirstOpen { margin-top: 2px !important; }
+}
+
+/* I2 · El dock inferior nunca tapa texto: resumen en su línea y aire al final. */
+@media (max-width: 760px) {
+  .flow-dock > div { flex-wrap: wrap !important; row-gap: 4px !important; }
+  .flow-dock #flowSummary { flex: 1 1 100% !important; white-space: normal !important; }
+  .flow-dock #receiptOpen { margin-left: auto !important; }
+  body.rs-next main { padding-bottom: 210px !important; }
+}

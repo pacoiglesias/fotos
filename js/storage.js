@@ -1638,7 +1638,7 @@ function runPreflightChecks() {
         issues.push({
           type: 'warning',
           slot: side,
-          message: '⚠️ ' + resolveSlotName(side) + ': Resolución baja (' + minImgDim + ' px). La impresión física podría verse pixelada.'
+          message: '⚠️ ' + resolveSlotName(side) + ': Resolución baja. La impresión podría verse pixelada.'
         });
       }
     } else {

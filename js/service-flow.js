@@ -24,7 +24,7 @@
   const sets=doc.active?(doc.options.sets||1):(state.outputSets||1),pages=doc.active?doc.count:work.layout.pages.length;
   const totalPhotos=(state.mixTwoPhotos?(state.photoCopiesPersonA||0)+(state.photoCopiesPersonB||0):state.photoCopies)*sets;
   const photoLabel=state.format==='photo_infantil'?'fotos infantiles':state.format==='photo_passport'?'fotos pasaporte':state.format==='photo_visa_usa'?'fotos visa USA':'fotos · '+getActiveSpec().shortName;
-  let summary=doc.active?doc.count+' páginas · '+sets+' juego(s) · '+PAPER_SPECS[doc.options.paper].shortName+(doc.options.color==='gray'?' · Blanco y negro':' · Color'):photos?totalPhotos+' '+photoLabel+' · '+pages+(pages===1?' hoja · ':' hojas · ')+work.layout.paper.shortName:getActiveSpec().shortName+' · '+work.wanted.length+' cara(s) · '+pages+(pages===1?' hoja · ':' hojas · ')+work.layout.paper.shortName;
+  let summary=doc.active?doc.count+' páginas · '+sets+(sets===1?' juego':' juegos')+' · '+PAPER_SPECS[doc.options.paper].shortName+(doc.options.color==='gray'?' · Blanco y negro':' · Color'):photos?totalPhotos+' '+photoLabel+' · '+pages+(pages===1?' hoja · ':' hojas · ')+work.layout.paper.shortName:getActiveSpec().shortName+' · '+work.wanted.length+(work.wanted.length===1?' cara':' caras')+' · '+pages+(pages===1?' hoja · ':' hojas · ')+work.layout.paper.shortName;
 
   if(!doc.active&&sets>1)summary+=' · '+sets+' juegos';
   if(!doc.active&&work.scale!==100)summary+=' · Escala '+work.scale+' %';

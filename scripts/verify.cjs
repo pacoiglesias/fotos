@@ -16,6 +16,7 @@ try {
     "paperless-ingest-regression",
     "paperless-explore-regression",
     "paperless-import-regression",
+    "design344-regression",
     "paperless-intake-regression",
     "ine-pair-detect-test",
     "regression",

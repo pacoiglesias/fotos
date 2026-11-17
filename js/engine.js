@@ -576,7 +576,7 @@ function inspectSlotImage(side, img) {
 
   let advice = '';
   const estimatedDpi = Math.round(Math.min(imageW/spec.widthMm,imageH/spec.heightMm)*25.4);
-  let sub = `${w} × ${h} px · ${estimatedDpi} ppp estimados para este tamaño · Revisa la nitidez`;
+  let sub = estimatedDpi < 150 ? 'Resolución baja para este tamaño · Revisa la nitidez' : 'Revisa la nitidez antes de imprimir';
   let actionHtml = '';
 
   if (isPortraitImg !== isPortraitSpec && state.activeCategory === 'photos') {
@@ -617,7 +617,7 @@ function inspectSlotImage(side, img) {
       if (flags.shadow) { reason += ' · Sombra fuerte sobre el documento: cambia la luz de lado'; if (level === 'good') level = 'warn'; }
       const conf = { good: ['🟢', 'border-emerald-300 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:border-emerald-800 dark:text-emerald-100'], warn: ['🟡', 'border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:border-amber-800 dark:text-amber-100'], bad: ['🔴', 'border-red-300 bg-red-50 text-red-900 dark:bg-red-950/50 dark:border-red-800 dark:text-red-100'] }[level];
       strip.className = 'mt-2 px-2.5 py-2 rounded-xl border text-[11px] font-semibold flex items-center gap-2 ' + conf[1];
-      strip.textContent = conf[0] + ' ' + estimatedDpi + ' ppp · ' + reason;
+      strip.textContent = conf[0] + ' ' + reason;
     }
   } catch (e) { /* el semáforo nunca bloquea el flujo */ }
 }
