@@ -60,11 +60,36 @@ body.rs-next main > * { scroll-margin-top: 88px; }
 /* La versión vive en el pie y en Ajustes una sola vez: fuera el duplicado del título de Ajustes. */
 #labelActiveVersionSettings { display: none !important; }
 
-/* I9 · En el estudio el semáforo se compacta a una línea (la mesa lo conserva completo). */
-body.rs-next.rs-counter330[data-workspace-loaded="true"] #deskSemaphore { padding: 8px 12px !important; margin-top: 10px !important; }
-body.rs-next.rs-counter330[data-workspace-loaded="true"] #deskSemaphore h3 { display: none !important; }
-body.rs-next.rs-counter330[data-workspace-loaded="true"] #deskSemaphore .desk-light { min-height: 36px !important; font-size: 12px !important; padding: 6px 10px !important; }
-body.rs-next.rs-counter330[data-workspace-loaded="true"] #deskSemaphoreRefresh { min-height: 36px !important; font-size: 12px !important; }
+/* I9 · En el estudio el semáforo es UNA sola línea (la mesa lo conserva
+   completo): luces en una fila sin partir etiquetas, sin botón
+   «Actualizar» propio — la línea entera es el acceso: cada luz abre lo
+   suyo y tocar la franja vuelve a comprobar — y las notas (aviso de
+   Paperless y nota de medición) fuera del bloque, bajo la franja; el JS
+   del mostrador las reubica mientras dura el trabajo. El modo rápido
+   queda fuera: allí el semáforo sigue oculto entero, como siempre. */
+body.rs-next.rs-counter330:not(.rs-quick)[data-workspace-loaded="true"] #deskSemaphore {
+  display: flex !important; align-items: center; flex-wrap: nowrap;
+  gap: 8px; padding: 6px 10px !important; margin-top: 10px !important; cursor: pointer;
+}
+body.rs-next.rs-counter330:not(.rs-quick)[data-workspace-loaded="true"] #deskSemaphore h3 { display: none !important; }
+body.rs-next.rs-counter330:not(.rs-quick)[data-workspace-loaded="true"] #deskSemaphore .desk-lights {
+  display: flex !important; flex-wrap: nowrap; align-items: center;
+  gap: 6px; flex: 1 1 auto; min-width: 0;
+}
+body.rs-next.rs-counter330:not(.rs-quick)[data-workspace-loaded="true"] #deskSemaphore .desk-light {
+  min-height: 36px !important; font-size: 12px !important; padding: 6px 9px !important;
+  white-space: nowrap; flex: 0 1 auto; min-width: 0; gap: 6px;
+}
+body.rs-next.rs-counter330:not(.rs-quick)[data-workspace-loaded="true"] #deskSemaphore .desk-light-label {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+body.rs-next.rs-counter330:not(.rs-quick)[data-workspace-loaded="true"] #deskSemaphore .rs-dot { width: 12px; height: 12px; flex: none; }
+body.rs-next.rs-counter330:not(.rs-quick)[data-workspace-loaded="true"] #deskSemaphoreRefresh { display: none !important; }
+/* Las notas reubicadas bajo la franja: texto menudo y discreto. */
+body.rs-next.rs-counter330:not(.rs-quick)[data-workspace-loaded="true"] #deskPaperlessPending,
+body.rs-next.rs-counter330:not(.rs-quick)[data-workspace-loaded="true"] #deskPrinterMeasurement {
+  font-size: 12px; line-height: 1.5; color: var(--work-muted, #52627b); margin: 6px 4px 0;
+}
 
 /* I1 · Móvil: tarjetas de servicio 2×2 con la etiqueta completa. */
 @media (max-width: 700px) {
